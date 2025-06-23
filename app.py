@@ -22,7 +22,7 @@ try:
         openai.api_key = st.secrets["OPENAI_API_KEY"]
     else:
         # For local development - replace with your key
-        openai.api_key = "your-openai-api-key-here"  # Replace this with your actual key
+        openai.api_key = "sk-your-actual-openai-key" # Replace this with your actual key
 except:
     st.warning("⚠️ OpenAI API key not configured. Using demo responses.")
 
