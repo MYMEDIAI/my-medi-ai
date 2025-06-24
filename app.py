@@ -1849,41 +1849,74 @@ def main():
         st.title("🚀 Innovation Lab")
         st.info("🧪 Experimental features and cutting-edge health tech innovations - Coming in next update!")
     
-    # Advanced footer with social proof
+    # Fixed footer with proper Streamlit formatting
     st.markdown("---")
-    st.markdown('''
-    <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 15px; margin-top: 2rem;">
-        <h3>🏥 My Medi.AI Pro - The Future of Healthcare is Here</h3>
-        <p style="font-size: 1.1rem; margin: 1rem 0;">Revolutionizing healthcare for 1 billion Indians with cutting-edge AI technology</p>
+    
+    # Create columns for better layout
+    st.markdown("## 🏥 My Medi.AI Pro - The Future of Healthcare is Here")
+    st.markdown("### *Revolutionizing healthcare for 1 billion Indians with cutting-edge AI technology*")
+    
+    # Mission, Vision, Innovation, Impact in columns
+    footer_col1, footer_col2, footer_col3, footer_col4 = st.columns(4)
+    
+    with footer_col1:
+        st.markdown("""
+        **🎯 Mission**
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin: 2rem 0;">
-            <div>
-                <h4>🎯 Mission</h4>
-                <p>Democratize healthcare access through AI innovation</p>
-            </div>
-            <div>
-                <h4>🌟 Vision</h4>
-                <p>World's most trusted healthcare AI platform</p>
-            </div>
-            <div>
-                <h4>💡 Innovation</h4>
-                <p>Breakthrough technologies not available anywhere else</p>
-            </div>
-            <div>
-                <h4>🇮🇳 Impact</h4>
-                <p>Transforming healthcare for emerging markets</p>
-            </div>
-        </div>
+        Democratize healthcare access through AI innovation
+        """)
+    
+    with footer_col2:
+        st.markdown("""
+        **🌟 Vision**
         
-        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #dee2e6;">
-            <p><strong>🏆 Recognition & Awards:</strong></p>
-            <p>🥇 Best Healthcare Innovation 2024 | 🏅 AI Excellence Award | 🌟 Top Startup India</p>
-            <br>
-            <p><strong>📞 Contact:</strong> hello@mediai.pro | <strong>📱 Phone:</strong> +91-98765-43210</p>
-            <p><em>Disclaimer: This is an advanced prototype for demonstration. Always consult qualified healthcare professionals for medical advice.</em></p>
-        </div>
+        World's most trusted healthcare AI platform
+        """)
+    
+    with footer_col3:
+        st.markdown("""
+        **💡 Innovation**
+        
+        Breakthrough technologies not available anywhere else
+        """)
+    
+    with footer_col4:
+        st.markdown("""
+        **🇮🇳 Impact**
+        
+        Transforming healthcare for emerging markets
+        """)
+    
+    # Recognition and contact info
+    st.markdown("---")
+    
+    recognition_col1, recognition_col2 = st.columns([1, 1])
+    
+    with recognition_col1:
+        st.markdown("""
+        **🏆 Recognition & Awards:**
+        - 🥇 Best Healthcare Innovation 2024
+        - 🏅 AI Excellence Award  
+        - 🌟 Top Startup India
+        - 🚀 Next-Gen Health Tech Leader
+        """)
+    
+    with recognition_col2:
+        st.markdown("""
+        **📞 Contact Information:**
+        - 📧 **Email:** hello@mediai.pro
+        - 📱 **Phone:** +91-98765-43210
+        - 🌐 **Website:** www.mediai.pro
+        - 💼 **Investment:** invest@mediai.pro
+        """)
+    
+    # Disclaimer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; background: #f8f9fa; padding: 1rem; border-radius: 10px; margin: 1rem 0;">
+        <p><em><strong>Disclaimer:</strong> This is an advanced prototype for demonstration purposes. Always consult qualified healthcare professionals for medical advice. My Medi.AI Pro is designed to supplement, not replace, professional medical care.</em></p>
     </div>
-    ''', unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
