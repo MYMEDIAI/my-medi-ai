@@ -9,7 +9,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "child_process": "latest",
     "class-variance-authority": "^0.7.1",
