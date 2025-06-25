@@ -9,7 +9,6 @@ import {
   Mic,
   Camera,
   Search,
-  CheckCircle,
   Star,
   Phone,
   Mail,
@@ -20,20 +19,38 @@ import {
   UserCheck,
   Clock,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function LandingPage() {
+  const router = useRouter()
+
+  const handleSignIn = () => {
+    router.push("/auth/login")
+  }
+
+  const handleLearnMore = () => {
+    const element = document.getElementById("features")
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white border-b border-blue-100 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <img src="/images/mymedi-logo.png" alt="My Medi.AI Logo" className="w-10 h-10" />
+            <img src="/images/medi-ai-logo.png" alt="My Medi.AI Logo" className="w-10 h-10" />
             <span className="text-xl font-bold text-blue-900">
               My Medi<span className="text-pink-500">.AI</span>
             </span>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
+            <Link href="/" className="text-gray-600 hover:text-blue-600 transition-colors">
+              Home
+            </Link>
             <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors">
               Features
             </a>
@@ -43,7 +60,9 @@ export default function LandingPage() {
             <a href="#testimonials" className="text-gray-600 hover:text-blue-600 transition-colors">
               Testimonials
             </a>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">Join Waitlist</Button>
+            <Button onClick={handleSignIn} className="bg-blue-600 hover:bg-blue-700 text-white">
+              Sign In
+            </Button>
           </nav>
         </div>
       </header>
@@ -68,13 +87,18 @@ export default function LandingPage() {
             and empathy. Revolutionizing healthcare accessibility with AI-powered solutions - launching soon.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg">
-              Join Waitlist - Get Early Access
+            <Button
+              size="lg"
+              onClick={handleSignIn}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg"
+            >
+              Sign In
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
               variant="outline"
               size="lg"
+              onClick={handleLearnMore}
               className="bg-white text-purple-600 border-purple-200 hover:bg-purple-50 px-8 py-4 text-lg"
             >
               Learn More
@@ -356,16 +380,19 @@ export default function LandingPage() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 to-pink-500">
+      <section id="contact-section" className="py-20 bg-gradient-to-r from-purple-600 to-pink-500">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Join the Waitlist - Get Early Access</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Get Started Today</h2>
           <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-            Be among the first to experience AI-powered healthcare. Join thousands who are already on our waitlist for
-            early access when we launch.
+            Experience the future of healthcare with My Medi.AI. Sign in to access your personalized health dashboard.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg">
-              Join Waitlist Now
+            <Button
+              size="lg"
+              onClick={handleSignIn}
+              className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg"
+            >
+              Sign In
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -377,20 +404,6 @@ export default function LandingPage() {
               Visit mymedi.ai
             </Button>
           </div>
-          <div className="mt-8 flex items-center justify-center space-x-6 text-purple-100">
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              <span>Early Access Priority</span>
-            </div>
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              <span>Launch Updates</span>
-            </div>
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              <span>Exclusive Features</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -400,7 +413,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src="/images/mymedi-logo.png" alt="My Medi.AI Logo" className="w-8 h-8" />
+                <img src="/images/medi-ai-logo.png" alt="My Medi.AI Logo" className="w-8 h-8" />
                 <span className="text-xl font-bold">
                   My Medi<span className="text-pink-400">.AI</span>
                 </span>
@@ -425,27 +438,27 @@ export default function LandingPage() {
               <h3 className="font-semibold mb-4">Features</h3>
               <ul className="space-y-2 text-blue-200">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="#features" className="hover:text-white transition-colors">
                     AI Health Assistant
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="#features" className="hover:text-white transition-colors">
                     Voice Analysis
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="#features" className="hover:text-white transition-colors">
                     Image Analysis
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="#features" className="hover:text-white transition-colors">
                     Family Management
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="#features" className="hover:text-white transition-colors">
                     Early Detection
                   </a>
                 </li>
