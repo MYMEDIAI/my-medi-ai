@@ -2,8 +2,8 @@ import type React from "react"
 import "./globals.css"
 
 export const metadata = {
-  title: "My Medi.AI - Healthcare Demo",
-  description: "Interactive healthcare platform demo",
+  title: "My Medi.AI - AI Healthcare Platform",
+  description: "AI-powered healthcare platform for 1 billion people",
     generator: 'v0.dev'
 }
 
