@@ -25,6 +25,6 @@ Seeking ₹50 lakhs for team expansion and market entry.
 Contact: [harsha.bandarla@gmail.com]
 
 ## 🏃‍♂️ Run Locally
-```bash
+\`\`\`bash
 pip install -r requirements.txt
 streamlit run app.py
