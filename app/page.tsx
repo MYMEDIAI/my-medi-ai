@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  Heart,
   Shield,
   Users,
   Mic,
@@ -44,7 +43,7 @@ export default function LandingPage() {
             <a href="#testimonials" className="text-gray-600 hover:text-blue-600 transition-colors">
               Testimonials
             </a>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">Get Started Free</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">Join Waitlist</Button>
           </nav>
         </div>
       </header>
@@ -52,11 +51,11 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-purple-50 via-white to-pink-50 py-20">
         <div className="container mx-auto px-4 text-center">
-          <Badge className="mb-6 bg-green-100 text-green-800 hover:bg-green-100">
-            100% Free Healthcare AI Platform
+          <Badge className="mb-6 bg-purple-100 text-purple-800 hover:bg-purple-100">
+            Coming Soon - AI Healthcare Platform
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-blue-900 mb-4 leading-tight">
-            Free AI Healthcare for{" "}
+            AI Healthcare for{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
               1 Billion People
             </span>
@@ -66,11 +65,11 @@ export default function LandingPage() {
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
             To empower every Indian with preventive, predictive, and personalized healthcare through technology, data,
-            and empathy. Revolutionizing healthcare accessibility with AI-powered solutions - completely free forever.
+            and empathy. Revolutionizing healthcare accessibility with AI-powered solutions - launching soon.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg">
-              Start Your Free Health Journey
+              Join Waitlist - Get Early Access
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -78,7 +77,7 @@ export default function LandingPage() {
               size="lg"
               className="bg-white text-purple-600 border-purple-200 hover:bg-purple-50 px-8 py-4 text-lg"
             >
-              Visit mymedi.ai
+              Learn More
             </Button>
           </div>
           <div className="mt-12 flex justify-center">
@@ -116,16 +115,16 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white">
             <div>
-              <div className="text-4xl font-bold mb-2">50K+</div>
-              <div className="text-purple-200">Users Served</div>
+              <div className="text-4xl font-bold mb-2">1B+</div>
+              <div className="text-purple-200">Target Users</div>
             </div>
             <div>
-              <div className="text-4xl font-bold mb-2">10K+</div>
-              <div className="text-purple-200">Early Detections</div>
+              <div className="text-4xl font-bold mb-2">24/7</div>
+              <div className="text-purple-200">AI Support</div>
             </div>
             <div>
-              <div className="text-4xl font-bold mb-2">100%</div>
-              <div className="text-purple-200">Free Forever</div>
+              <div className="text-4xl font-bold mb-2">2026</div>
+              <div className="text-purple-200">Launch Year</div>
             </div>
           </div>
         </div>
@@ -198,16 +197,17 @@ export default function LandingPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-green-100 hover:shadow-lg transition-shadow">
+            <Card className="border-orange-100 hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <Heart className="w-6 h-6 text-green-600" />
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                  <Clock className="w-6 h-6 text-orange-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-blue-900 mb-3">100% Free Forever</h3>
+                <h3 className="text-xl font-semibold text-blue-900 mb-3">Coming Soon</h3>
                 <p className="text-gray-600 mb-4">
-                  No hidden costs, no premium plans. Our mission is to make healthcare accessible to everyone in India.
+                  We're working hard to bring you the most advanced AI healthcare platform. Join our waitlist for early
+                  access.
                 </p>
-                <Badge className="bg-green-100 text-green-800">Always Free</Badge>
+                <Badge className="bg-orange-100 text-orange-800">Launch 2026</Badge>
               </CardContent>
             </Card>
 
@@ -276,9 +276,9 @@ export default function LandingPage() {
       <section id="testimonials" className="py-20 bg-gradient-to-br from-purple-50 to-pink-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">What Our Users Say</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">What Healthcare Experts Say</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Real stories from people whose lives have been improved by My Medi.AI
+              Industry professionals are excited about the potential of My Medi.AI
             </p>
           </div>
 
@@ -291,16 +291,16 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-600 mb-4">
-                  "My Medi.AI helped me detect early signs of diabetes. The AI assistant guided me to get proper tests
-                  done. Truly life-saving!"
+                  "AI-powered healthcare accessibility is the future. Platforms like My Medi.AI will revolutionize how
+                  Indians access healthcare."
                 </p>
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
                     <UserCheck className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <div className="font-semibold text-blue-900">Priya Sharma</div>
-                    <div className="text-sm text-gray-500">Mumbai, Maharashtra</div>
+                    <div className="font-semibold text-blue-900">Dr. Priya Sharma</div>
+                    <div className="text-sm text-gray-500">Healthcare Technology Expert</div>
                   </div>
                 </div>
               </CardContent>
@@ -314,16 +314,16 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-600 mb-4">
-                  "Managing my family's health has never been easier. The voice analysis feature is amazing for my
-                  elderly parents."
+                  "The potential for early disease detection through AI could save millions of lives. This is exactly
+                  what India needs."
                 </p>
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center mr-3">
                     <UserCheck className="w-5 h-5 text-pink-600" />
                   </div>
                   <div>
-                    <div className="font-semibold text-blue-900">Rajesh Kumar</div>
-                    <div className="text-sm text-gray-500">Delhi, NCR</div>
+                    <div className="font-semibold text-blue-900">Dr. Rajesh Kumar</div>
+                    <div className="text-sm text-gray-500">Public Health Specialist</div>
                   </div>
                 </div>
               </CardContent>
@@ -337,16 +337,16 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-600 mb-4">
-                  "As a working mother, having 24/7 health support is invaluable. The AI gives me peace of mind about my
-                  children's health."
+                  "Family health management through AI will empower every household. The vision behind My Medi.AI is
+                  inspiring."
                 </p>
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                     <UserCheck className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <div className="font-semibold text-blue-900">Anita Patel</div>
-                    <div className="text-sm text-gray-500">Bangalore, Karnataka</div>
+                    <div className="font-semibold text-blue-900">Dr. Anita Patel</div>
+                    <div className="text-sm text-gray-500">AI in Medicine Researcher</div>
                   </div>
                 </div>
               </CardContent>
@@ -358,14 +358,14 @@ export default function LandingPage() {
       {/* Call to Action Section */}
       <section className="py-20 bg-gradient-to-r from-purple-600 to-pink-500">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Start Your Free Health Journey Today</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Join the Waitlist - Get Early Access</h2>
           <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of Indians who are taking control of their health with AI-powered assistance. No cost, no
-            commitment - just better health.
+            Be among the first to experience AI-powered healthcare. Join thousands who are already on our waitlist for
+            early access when we launch.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg">
-              Get Started Free
+              Join Waitlist Now
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -380,15 +380,15 @@ export default function LandingPage() {
           <div className="mt-8 flex items-center justify-center space-x-6 text-purple-100">
             <div className="flex items-center">
               <CheckCircle className="w-5 h-5 mr-2" />
-              <span>No Credit Card Required</span>
+              <span>Early Access Priority</span>
             </div>
             <div className="flex items-center">
               <CheckCircle className="w-5 h-5 mr-2" />
-              <span>100% Free Forever</span>
+              <span>Launch Updates</span>
             </div>
             <div className="flex items-center">
               <CheckCircle className="w-5 h-5 mr-2" />
-              <span>Instant Access</span>
+              <span>Exclusive Features</span>
             </div>
           </div>
         </div>
