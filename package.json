@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "latest",
+    "autoprefixer": "10.4.16",
     "child_process": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -20,19 +21,19 @@
     "lucide-react": "^0.454.0",
     "next": "14.2.16",
     "path": "latest",
+    "postcss": "8.4.32",
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^2.5.5",
-    "tailwindcss": "3.4.4",
+    "tailwindcss": "3.3.6",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "autoprefixer": "10.4.16",
-    "eslint": "8.57.0",
-    "eslint-config-next": "14.2.3",
+    "eslint": "8.54.0",
+    "eslint-config-next": "14.0.4",
     "postcss": "^8.5",
     "typescript": "^5"
   },
