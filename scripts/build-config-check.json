@@ -1,0 +1,39 @@
+{
+  "name": "Build Configuration Checker",
+  "checks": [
+    {
+      "name": "Next.js Configuration",
+      "files": ["next.config.js", "next.config.mjs"],
+      "required": false,
+      "description": "Next.js configuration file"
+    },
+    {
+      "name": "TypeScript Configuration",
+      "files": ["tsconfig.json"],
+      "required": true,
+      "description": "TypeScript configuration"
+    },
+    {
+      "name": "Tailwind Configuration",
+      "files": ["tailwind.config.js", "tailwind.config.ts"],
+      "required": true,
+      "description": "Tailwind CSS configuration"
+    },
+    {
+      "name": "PostCSS Configuration",
+      "files": ["postcss.config.js"],
+      "required": false,
+      "description": "PostCSS configuration"
+    },
+    {
+      "name": "Package Configuration",
+      "files": ["package.json"],
+      "required": true,
+      "description": "NPM package configuration"
+    }
+  ],
+  "dependencies": {
+    "required": ["next", "react", "react-dom"],
+    "recommended": ["typescript", "@types/node", "@types/react", "@types/react-dom", "tailwindcss", "lucide-react"]
+  }
+}

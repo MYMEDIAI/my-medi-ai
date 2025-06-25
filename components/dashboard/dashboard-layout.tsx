@@ -1,11 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useAuth } from "@/contexts/auth-context"
 import {
   Home,
   FileText,
@@ -17,22 +15,13 @@ import {
   Menu,
   X,
   Bell,
-  LogOut,
+  ArrowLeft,
   Phone,
 } from "lucide-react"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  const handleSignOut = async () => {
-    try {
-      await logout()
-    } catch (error) {
-      console.error("Error signing out:", error)
-    }
-  }
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -40,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: MessageSquare },
     { name: "Vitals Tracking", href: "/dashboard/vitals", icon: Activity },
     { name: "Family Health", href: "/dashboard/family", icon: Users },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Health Goals", href: "/dashboard/goals", icon: Settings },
     { name: "Help & Support", href: "/dashboard/help", icon: HelpCircle },
   ]
 
@@ -94,30 +83,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )
           })}
         </nav>
+
+        {/* Demo Notice */}
+        <div className="p-4 border-t border-gray-200">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+            <div className="text-xs font-medium text-purple-800 mb-1">🎯 Demo Mode</div>
+            <div className="text-xs text-purple-600">
+              This is an interactive demo showcasing AI healthcare features.
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top header */}
         <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm">
-          <button
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-600 md:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          <div className="flex items-center">
+            <button
+              className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-600 md:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <Link
+              href="/"
+              className="ml-2 flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Back to Home
+            </Link>
+          </div>
 
           <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center bg-purple-50 border border-purple-200 rounded-full px-3 py-1">
+              <span className="text-xs font-medium text-purple-800">🎯 Live Demo</span>
+            </div>
+
             <button className="rounded-full bg-white p-1 text-gray-500 hover:text-blue-600">
               <Bell className="h-6 w-6" />
-            </button>
-
-            <button
-              onClick={handleSignOut}
-              className="flex items-center rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
             </button>
 
             <button className="flex items-center rounded-md bg-red-100 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-200">
