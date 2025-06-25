@@ -18,22 +18,27 @@ if (typeof window === "undefined") {
 /*  Browser singleton (avoids multiple GoTrue clients)                        */
 /* -------------------------------------------------------------------------- */
 
-let browserClient: ReturnType<typeof createClient> | null = null
+// let browserClient: ReturnType<typeof createClient> | null = null
 
-export const supabase =
-  typeof window === "undefined"
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : (() => {
-        if (!browserClient) {
-          browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-              persistSession: true,
-              storageKey: "medi-ai-auth",
-            },
-          })
-        }
-        return browserClient
-      })()
+// export const supabase =
+//   typeof window === "undefined"
+//     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+//     : (() => {
+//         if (!browserClient) {
+//           browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+//             auth: {
+//               persistSession: true,
+//               storageKey: "medi-ai-auth",
+//             },
+//           })
+//         }
+//         return browserClient
+//       })()
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 /* -------------------------------------------------------------------------- */
 /*  Helper: cookie-aware server client (anon key - obeys RLS)                 */
