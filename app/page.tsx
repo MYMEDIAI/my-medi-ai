@@ -22,11 +22,11 @@ import {
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
-export default function Home() {
+export default function LandingPage() {
   const router = useRouter()
 
-  const handleViewDemo = () => {
-    router.push("/dashboard")
+  const handleSignIn = () => {
+    router.push("/auth/login")
   }
 
   const handleLearnMore = () => {
@@ -60,8 +60,8 @@ export default function Home() {
             <a href="#testimonials" className="text-gray-600 hover:text-blue-600 transition-colors">
               Testimonials
             </a>
-            <Button onClick={handleViewDemo} className="bg-blue-600 hover:bg-blue-700 text-white">
-              View Demo
+            <Button onClick={handleSignIn} className="bg-blue-600 hover:bg-blue-700 text-white">
+              Sign In
             </Button>
           </nav>
         </div>
@@ -71,7 +71,7 @@ export default function Home() {
       <section className="bg-gradient-to-br from-purple-50 via-white to-pink-50 py-20">
         <div className="container mx-auto px-4 text-center">
           <Badge className="mb-6 bg-purple-100 text-purple-800 hover:bg-purple-100">
-            🚀 Live Demo - AI Healthcare Platform
+            Coming Soon - AI Healthcare Platform
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-blue-900 mb-4 leading-tight">
             AI Healthcare for{" "}
@@ -83,16 +83,16 @@ export default function Home() {
             Your Smart Health Companion for a Better Tomorrow
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
-            Experience the future of healthcare with AI-powered solutions. This interactive demo showcases how
-            technology can make healthcare accessible to everyone.
+            To empower every Indian with preventive, predictive, and personalized healthcare through technology, data,
+            and empathy. Revolutionizing healthcare accessibility with AI-powered solutions - launching soon.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              onClick={handleViewDemo}
+              onClick={handleSignIn}
               className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg"
             >
-              🎯 Try Live Demo
+              Sign In
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -137,12 +137,7 @@ export default function Home() {
       {/* Statistics Section */}
       <section className="py-16 bg-gradient-to-r from-purple-600 to-pink-600">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center text-white">
-            <div>
-              <div className="text-4xl font-bold mb-2">🎯</div>
-              <div className="text-2xl font-bold mb-1">Live Demo</div>
-              <div className="text-purple-200">Interactive Experience</div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white">
             <div>
               <div className="text-4xl font-bold mb-2">1B+</div>
               <div className="text-purple-200">Target Users</div>
@@ -229,13 +224,14 @@ export default function Home() {
             <Card className="border-orange-100 hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                  <Activity className="w-6 h-6 text-orange-600" />
+                  <Clock className="w-6 h-6 text-orange-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-blue-900 mb-3">Interactive Demo</h3>
+                <h3 className="text-xl font-semibold text-blue-900 mb-3">Coming Soon</h3>
                 <p className="text-gray-600 mb-4">
-                  Experience all features in our live demo. No signup required - explore the future of healthcare now.
+                  We're working hard to bring you the most advanced AI healthcare platform. Join our waitlist for early
+                  access.
                 </p>
-                <Badge className="bg-orange-100 text-orange-800">Try Now</Badge>
+                <Badge className="bg-orange-100 text-orange-800">Launch 2026</Badge>
               </CardContent>
             </Card>
 
@@ -262,7 +258,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">How It Works</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Experience AI-powered healthcare in just three simple steps
+              Get started with AI-powered healthcare in just three simple steps
             </p>
           </div>
 
@@ -271,9 +267,9 @@ export default function Home() {
               <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">1</span>
               </div>
-              <h3 className="text-xl font-semibold text-blue-900 mb-4">Try the Demo</h3>
+              <h3 className="text-xl font-semibold text-blue-900 mb-4">Sign Up Free</h3>
               <p className="text-gray-600">
-                Click "View Demo" to instantly access the platform. No registration required.
+                Create your free account in seconds. No credit card required, no hidden fees.
               </p>
             </div>
 
@@ -281,9 +277,9 @@ export default function Home() {
               <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">2</span>
               </div>
-              <h3 className="text-xl font-semibold text-blue-900 mb-4">Explore Features</h3>
+              <h3 className="text-xl font-semibold text-blue-900 mb-4">Share Your Symptoms</h3>
               <p className="text-gray-600">
-                Navigate through health records, AI assistant, vitals tracking, and family management features.
+                Describe your health concerns through text, voice, or images. Our AI understands it all.
               </p>
             </div>
 
@@ -291,9 +287,9 @@ export default function Home() {
               <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">3</span>
               </div>
-              <h3 className="text-xl font-semibold text-blue-900 mb-4">Experience AI Healthcare</h3>
+              <h3 className="text-xl font-semibold text-blue-900 mb-4">Get AI Insights</h3>
               <p className="text-gray-600">
-                Interact with AI-powered health insights, personalized recommendations, and smart health management.
+                Receive personalized health insights, recommendations, and early detection alerts.
               </p>
             </div>
           </div>
@@ -386,17 +382,17 @@ export default function Home() {
       {/* Call to Action Section */}
       <section id="contact-section" className="py-20 bg-gradient-to-r from-purple-600 to-pink-500">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Experience the Future Today</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Get Started Today</h2>
           <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-            Try our interactive demo and see how AI can transform healthcare. No signup required - start exploring now!
+            Experience the future of healthcare with My Medi.AI. Sign in to access your personalized health dashboard.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              onClick={handleViewDemo}
+              onClick={handleSignIn}
               className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg"
             >
-              🎯 Try Live Demo
+              Sign In
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -439,32 +435,32 @@ export default function Home() {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-4">Demo Features</h3>
+              <h3 className="font-semibold mb-4">Features</h3>
               <ul className="space-y-2 text-blue-200">
                 <li>
-                  <Link href="/dashboard" className="hover:text-white transition-colors">
-                    🎯 Interactive Dashboard
-                  </Link>
+                  <a href="#features" className="hover:text-white transition-colors">
+                    AI Health Assistant
+                  </a>
                 </li>
                 <li>
-                  <Link href="/dashboard/ai-assistant" className="hover:text-white transition-colors">
-                    🤖 AI Health Assistant
-                  </Link>
+                  <a href="#features" className="hover:text-white transition-colors">
+                    Voice Analysis
+                  </a>
                 </li>
                 <li>
-                  <Link href="/dashboard/records" className="hover:text-white transition-colors">
-                    📋 Health Records
-                  </Link>
+                  <a href="#features" className="hover:text-white transition-colors">
+                    Image Analysis
+                  </a>
                 </li>
                 <li>
-                  <Link href="/dashboard/vitals" className="hover:text-white transition-colors">
-                    📊 Vitals Tracking
-                  </Link>
+                  <a href="#features" className="hover:text-white transition-colors">
+                    Family Management
+                  </a>
                 </li>
                 <li>
-                  <Link href="/dashboard/family" className="hover:text-white transition-colors">
-                    👨‍👩‍👧‍👦 Family Management
-                  </Link>
+                  <a href="#features" className="hover:text-white transition-colors">
+                    Early Detection
+                  </a>
                 </li>
               </ul>
             </div>
@@ -525,7 +521,6 @@ export default function Home() {
 
           <div className="border-t border-blue-800 mt-12 pt-8 text-center text-blue-200">
             <p>&copy; 2024 My Medi.AI. All rights reserved. Made with ❤️ in Madanapalle for India's health.</p>
-            <p className="mt-2 text-sm">🎯 This is a live demo showcasing AI healthcare features</p>
           </div>
         </div>
       </footer>
