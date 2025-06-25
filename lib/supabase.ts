@@ -3,15 +3,26 @@ import { createServerClient as createSupabaseServerClient, type CookieOptions } 
 import { cookies } from "next/headers"
 
 /* -------------------------------------------------------------------------- */
-/*  Environment variables                                                     */
+/*  Environment variables - Server-side only access                           */
 /* -------------------------------------------------------------------------- */
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
+// These are only accessed server-side
+const getSupabaseUrl = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!url) throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL")
+  return url
+}
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error("Missing Supabase env vars. Check NEXT_PUBLIC_SUPABASE_URL/ANON_KEY")
+const getSupabaseAnonKey = () => {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!key) throw new Error("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  return key
+}
+
+const getServiceRoleKey = () => {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!key) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY")
+  return key
 }
 
 /* -------------------------------------------------------------------------- */
@@ -20,12 +31,20 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
 let browserClient: ReturnType<typeof createClient> | null = null
 
+// For client-side usage (SSR safe)
 export const supabase =
   typeof window === "undefined"
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) // each server request
-    : (() => {
+    ? // Server-side: Create a new client for each request
+      createClient(getSupabaseUrl(), getSupabaseAnonKey())
+    : // Client-side: Use singleton pattern
+      (() => {
         if (!browserClient) {
-          browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          // In the browser, we can safely use the public URL and anon key
+          // which are embedded in the client bundle during build
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+          browserClient = createClient(supabaseUrl, supabaseAnonKey, {
             auth: {
               persistSession: true,
               storageKey: "medi-ai-auth",
@@ -42,7 +61,7 @@ export const supabase =
 export function createServerClient() {
   const store = cookies()
 
-  return createSupabaseServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  return createSupabaseServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {
     cookies: {
       get(name: string) {
         return store.get(name)?.value
@@ -70,16 +89,7 @@ export function createServerClient() {
 /* -------------------------------------------------------------------------- */
 
 export function createAdminClient() {
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY env var")
-  }
-
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  return createClient(getSupabaseUrl(), getServiceRoleKey(), {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 }
-
-/* -------------------------------------------------------------------------- */
-/*  (Optional) re-export generated DB types                                   */
-/* -------------------------------------------------------------------------- */
-/* export type { Database } from "./__generated__/supabase" */
