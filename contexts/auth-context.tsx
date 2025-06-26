@@ -6,9 +6,6 @@ import { createContext, useContext, useState, useEffect } from "react"
 import { createBrowserClient } from "@supabase/ssr"
 import type { Session } from "@supabase/supabase-js"
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
 interface AuthContextType {
   supabase: any
   session: Session | null
@@ -18,23 +15,39 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [supabase] = useState(() =>
-    createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      // options
-    }),
-  )
+  const [supabase] = useState(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn("Supabase environment variables not found")
+      return null
+    }
+
+    return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  })
+
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    if (!supabase) {
+      setIsLoading(false)
+      return
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setIsLoading(false)
     })
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
     })
+
+    return () => subscription.unsubscribe()
   }, [supabase])
 
   return <AuthContext.Provider value={{ supabase, session, isLoading }}>{children}</AuthContext.Provider>

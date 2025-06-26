@@ -1,31 +1,52 @@
 "use client"
 
-/*
-  ProtectedRoute – simple wrapper to guard pages/components that require auth.
-  Redirects unauthenticated users to /login (adjust path if needed).
-*/
+import type React from "react"
 
-import { type ReactNode, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { Loader2 } from "lucide-react"
+import { useEffect, useState } from "react"
 
-export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+interface ProtectedRouteProps {
+  children: React.ReactNode
+}
+
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { session, isLoading } = useAuth()
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login")
-    }
-  }, [user, loading, router])
+    setIsMounted(true)
+  }, [])
 
-  if (loading || !user) {
-    // Simple full-page spinner while checking auth
+  // Don't render anything during SSR/build time
+  if (!isMounted) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="sr-only">{"Loading"}</span>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+          <p className="text-gray-600 mb-4">Please sign in to access this page.</p>
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Go to Home
+          </button>
+        </div>
       </div>
     )
   }

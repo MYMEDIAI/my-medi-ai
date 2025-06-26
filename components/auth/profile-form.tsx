@@ -1,23 +1,25 @@
 "use client"
 
+import { CardDescription } from "@/components/ui/card"
+
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
 import { Eye, EyeOff, Loader2, Check, Trash2, LogOut } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import type { UpdateProfileData, UpdatePasswordData } from "@/types/auth"
 import { validatePassword } from "@/utils/validation"
 
 export default function ProfileForm() {
-  const { user, updateProfile, updatePassword, deleteAccount, logoutAllDevices, loading } = useAuth()
+  const { user, updateProfile, updatePassword, deleteAccount, logoutAllDevices, loading, session, supabase } = useAuth()
 
+  const [isMounted, setIsMounted] = useState(false)
   const [profileData, setProfileData] = useState<UpdateProfileData>({
     firstName: "",
     lastName: "",
@@ -43,6 +45,14 @@ export default function ProfileForm() {
     confirmPassword: "",
   })
 
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    dateOfBirth: "",
+    emergencyContact: "",
+  })
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -63,6 +73,7 @@ export default function ProfileForm() {
   })
 
   useEffect(() => {
+    setIsMounted(true)
     if (user) {
       setProfileData({
         firstName: user.firstName,
@@ -81,6 +92,13 @@ export default function ProfileForm() {
           sms: false,
           push: true,
         },
+      })
+      setFormData({
+        fullName: `${user.firstName} ${user.lastName}`,
+        email: user.email || "",
+        phone: "",
+        dateOfBirth: "",
+        emergencyContact: "",
       })
     }
   }, [user])
@@ -219,6 +237,58 @@ export default function ProfileForm() {
     }
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!session?.user) return
+
+    try {
+      const { error } = await supabase.from("profiles").upsert({
+        id: session.user.id,
+        full_name: formData.fullName,
+        phone: formData.phone,
+        date_of_birth: formData.dateOfBirth,
+        emergency_contact: formData.emergencyContact,
+        updated_at: new Date().toISOString(),
+      })
+
+      if (error) {
+        console.error("Error updating profile:", error)
+        alert("Error updating profile")
+      } else {
+        alert("Profile updated successfully!")
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      alert("Error updating profile")
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  if (!isMounted) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   if (!user) return null
 
   return (
@@ -242,7 +312,7 @@ export default function ProfileForm() {
               <CardTitle>Profile Information</CardTitle>
               <CardDescription>Update your personal information and contact details</CardDescription>
             </CardHeader>
-            <form onSubmit={handleProfileSubmit}>
+            <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
                 {messages.profile.success && (
                   <Alert>
@@ -258,152 +328,69 @@ export default function ProfileForm() {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First name</Label>
+                  <div>
+                    <Label htmlFor="fullName">Full Name</Label>
                     <Input
-                      id="firstName"
-                      name="firstName"
+                      id="fullName"
+                      name="fullName"
                       type="text"
-                      required
-                      value={profileData.firstName}
-                      onChange={(e) => setProfileData((prev) => ({ ...prev, firstName: e.target.value }))}
-                      disabled={isSubmitting.profile || loading}
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      placeholder="Enter your full name"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last name</Label>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      required
-                      value={profileData.lastName}
-                      onChange={(e) => setProfileData((prev) => ({ ...prev, lastName: e.target.value }))}
-                      disabled={isSubmitting.profile || loading}
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={session?.user?.email || ""}
+                      disabled
+                      className="bg-gray-50"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone number</Label>
+                  <div>
+                    <Label htmlFor="phone">Phone Number</Label>
                     <Input
                       id="phone"
                       name="phone"
                       type="tel"
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData((prev) => ({ ...prev, phone: e.target.value }))}
-                      placeholder="Enter phone number"
-                      disabled={isSubmitting.profile || loading}
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="Enter your phone number"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">Date of birth</Label>
+                  <div>
+                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
                     <Input
                       id="dateOfBirth"
                       name="dateOfBirth"
                       type="date"
-                      value={profileData.dateOfBirth}
-                      onChange={(e) => setProfileData((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
-                      disabled={isSubmitting.profile || loading}
+                      value={formData.dateOfBirth}
+                      onChange={handleInputChange}
                     />
                   </div>
-                </div>
 
-                <Separator />
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Address</h3>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="street">Street address</Label>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="emergencyContact">Emergency Contact</Label>
                     <Input
-                      id="street"
-                      name="street"
+                      id="emergencyContact"
+                      name="emergencyContact"
                       type="text"
-                      value={profileData.address?.street || ""}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({
-                          ...prev,
-                          address: { ...prev.address!, street: e.target.value },
-                        }))
-                      }
-                      placeholder="Enter street address"
-                      disabled={isSubmitting.profile || loading}
+                      value={formData.emergencyContact}
+                      onChange={handleInputChange}
+                      placeholder="Emergency contact name and phone"
                     />
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        name="city"
-                        type="text"
-                        value={profileData.address?.city || ""}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({
-                            ...prev,
-                            address: { ...prev.address!, city: e.target.value },
-                          }))
-                        }
-                        placeholder="Enter city"
-                        disabled={isSubmitting.profile || loading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="state">State</Label>
-                      <Input
-                        id="state"
-                        name="state"
-                        type="text"
-                        value={profileData.address?.state || ""}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({
-                            ...prev,
-                            address: { ...prev.address!, state: e.target.value },
-                          }))
-                        }
-                        placeholder="Enter state"
-                        disabled={isSubmitting.profile || loading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="zipCode">ZIP code</Label>
-                      <Input
-                        id="zipCode"
-                        name="zipCode"
-                        type="text"
-                        value={profileData.address?.zipCode || ""}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({
-                            ...prev,
-                            address: { ...prev.address!, zipCode: e.target.value },
-                          }))
-                        }
-                        placeholder="Enter ZIP code"
-                        disabled={isSubmitting.profile || loading}
-                      />
-                    </div>
-                  </div>
                 </div>
 
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={isSubmitting.profile || loading}>
-                    {isSubmitting.profile ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      "Update Profile"
-                    )}
-                  </Button>
-                </div>
+                <Button type="submit" className="w-full">
+                  Update Profile
+                </Button>
               </CardContent>
             </form>
           </Card>
