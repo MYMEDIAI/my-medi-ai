@@ -1,20 +1,13 @@
 "use client"
 
-import { supabase } from "@/lib/supabase"
-import { useEffect, useState } from "react"
+import { createBrowserClient } from "@supabase/ssr"
+import { useState } from "react"
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export function useSupabase() {
-  const [isReady, setIsReady] = useState(false)
+  const [supabaseClient] = useState(() => createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY))
 
-  useEffect(() => {
-    // Ensure we're on the client side and supabase is ready
-    if (typeof window !== "undefined") {
-      setIsReady(true)
-    }
-  }, [])
-
-  return {
-    supabase: isReady ? supabase : null,
-    isReady,
-  }
+  return supabaseClient
 }

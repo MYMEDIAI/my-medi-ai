@@ -2,6 +2,9 @@ import ProtectedRoute from "@/components/auth/protected-route"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import ProfileForm from "@/components/auth/profile-form"
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic"
+
 export default function SettingsPage() {
   return (
     <ProtectedRoute>
