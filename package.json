@@ -6,7 +6,13 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "setup": "node scripts/auto-configure.js",
+    "setup-complete": "node scripts/test-setup.js && echo Setup completed successfully!",
+    "setup-database": "node scripts/test-database.js",
+    "setup-email": "node scripts/setup-email-services.js",
+    "test-build": "node scripts/test-build.js",
+    "verify-setup": "node scripts/verify-build.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "latest",
