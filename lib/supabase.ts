@@ -2,38 +2,43 @@ import { createClient } from "@supabase/supabase-js"
 import { createServerClient as createSupabaseServerClient, type CookieOptions } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-/* -------------------------------------------------------------------------- */
-/*  Environment variables                                                     */
-/* -------------------------------------------------------------------------- */
+// Safe access to environment variables
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error("Missing Supabase env vars. Check NEXT_PUBLIC_SUPABASE_URL/ANON_KEY")
+// Validate environment variables on server only
+if (typeof window === "undefined") {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error("Missing Supabase environment variables")
+  }
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Browser singleton (avoids multiple GoTrue clients)                        */
 /* -------------------------------------------------------------------------- */
 
-let browserClient: ReturnType<typeof createClient> | null = null
+// let browserClient: ReturnType<typeof createClient> | null = null
 
-export const supabase =
-  typeof window === "undefined"
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) // each server request
-    : (() => {
-        if (!browserClient) {
-          browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-              persistSession: true,
-              storageKey: "medi-ai-auth",
-            },
-          })
-        }
-        return browserClient
-      })()
+// export const supabase =
+//   typeof window === "undefined"
+//     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+//     : (() => {
+//         if (!browserClient) {
+//           browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+//             auth: {
+//               persistSession: true,
+//               storageKey: "medi-ai-auth",
+//             },
+//           })
+//         }
+//         return browserClient
+//       })()
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 /* -------------------------------------------------------------------------- */
 /*  Helper: cookie-aware server client (anon key - obeys RLS)                 */
@@ -78,8 +83,3 @@ export function createAdminClient() {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 }
-
-/* -------------------------------------------------------------------------- */
-/*  (Optional) re-export generated DB types                                   */
-/* -------------------------------------------------------------------------- */
-/* export type { Database } from "./__generated__/supabase" */

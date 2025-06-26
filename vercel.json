@@ -1,0 +1,6 @@
+{
+  // use npm (not pnpm) and install only production deps
+  "installCommand": "npm install --omit=dev --no-audit --no-fund",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next"
+}
