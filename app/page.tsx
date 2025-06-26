@@ -9,7 +9,6 @@ import {
   Mic,
   Camera,
   Search,
-  CheckCircle,
   Star,
   Phone,
   Mail,
@@ -20,20 +19,38 @@ import {
   UserCheck,
   Clock,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
-export default function LandingPage() {
+export default function Home() {
+  const router = useRouter()
+
+  const handleViewDemo = () => {
+    router.push("/dashboard")
+  }
+
+  const handleLearnMore = () => {
+    const element = document.getElementById("features")
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white border-b border-blue-100 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <img src="/images/mymedi-logo.png" alt="My Medi.AI Logo" className="w-10 h-10" />
+            <img src="/images/medi-ai-logo.png" alt="My Medi.AI Logo" className="w-10 h-10" />
             <span className="text-xl font-bold text-blue-900">
               My Medi<span className="text-pink-500">.AI</span>
             </span>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
+            <Link href="/" className="text-gray-600 hover:text-blue-600 transition-colors">
+              Home
+            </Link>
             <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors">
               Features
             </a>
@@ -43,7 +60,9 @@ export default function LandingPage() {
             <a href="#testimonials" className="text-gray-600 hover:text-blue-600 transition-colors">
               Testimonials
             </a>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">Join Waitlist</Button>
+            <Button onClick={handleViewDemo} className="bg-blue-600 hover:bg-blue-700 text-white">
+              View Demo
+            </Button>
           </nav>
         </div>
       </header>
@@ -52,7 +71,7 @@ export default function LandingPage() {
       <section className="bg-gradient-to-br from-purple-50 via-white to-pink-50 py-20">
         <div className="container mx-auto px-4 text-center">
           <Badge className="mb-6 bg-purple-100 text-purple-800 hover:bg-purple-100">
-            Coming Soon - AI Healthcare Platform
+            🚀 Live Demo - AI Healthcare Platform
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-blue-900 mb-4 leading-tight">
             AI Healthcare for{" "}
@@ -64,17 +83,22 @@ export default function LandingPage() {
             Your Smart Health Companion for a Better Tomorrow
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
-            To empower every Indian with preventive, predictive, and personalized healthcare through technology, data,
-            and empathy. Revolutionizing healthcare accessibility with AI-powered solutions - launching soon.
+            Experience the future of healthcare with AI-powered solutions. This interactive demo showcases how
+            technology can make healthcare accessible to everyone.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg">
-              Join Waitlist - Get Early Access
+            <Button
+              size="lg"
+              onClick={handleViewDemo}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg"
+            >
+              🎯 Try Live Demo
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
               variant="outline"
               size="lg"
+              onClick={handleLearnMore}
               className="bg-white text-purple-600 border-purple-200 hover:bg-purple-50 px-8 py-4 text-lg"
             >
               Learn More
@@ -113,7 +137,12 @@ export default function LandingPage() {
       {/* Statistics Section */}
       <section className="py-16 bg-gradient-to-r from-purple-600 to-pink-600">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center text-white">
+            <div>
+              <div className="text-4xl font-bold mb-2">🎯</div>
+              <div className="text-2xl font-bold mb-1">Live Demo</div>
+              <div className="text-purple-200">Interactive Experience</div>
+            </div>
             <div>
               <div className="text-4xl font-bold mb-2">1B+</div>
               <div className="text-purple-200">Target Users</div>
@@ -200,14 +229,13 @@ export default function LandingPage() {
             <Card className="border-orange-100 hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                  <Clock className="w-6 h-6 text-orange-600" />
+                  <Activity className="w-6 h-6 text-orange-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-blue-900 mb-3">Coming Soon</h3>
+                <h3 className="text-xl font-semibold text-blue-900 mb-3">Interactive Demo</h3>
                 <p className="text-gray-600 mb-4">
-                  We're working hard to bring you the most advanced AI healthcare platform. Join our waitlist for early
-                  access.
+                  Experience all features in our live demo. No signup required - explore the future of healthcare now.
                 </p>
-                <Badge className="bg-orange-100 text-orange-800">Launch 2026</Badge>
+                <Badge className="bg-orange-100 text-orange-800">Try Now</Badge>
               </CardContent>
             </Card>
 
@@ -234,7 +262,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">How It Works</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Get started with AI-powered healthcare in just three simple steps
+              Experience AI-powered healthcare in just three simple steps
             </p>
           </div>
 
@@ -243,9 +271,9 @@ export default function LandingPage() {
               <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">1</span>
               </div>
-              <h3 className="text-xl font-semibold text-blue-900 mb-4">Sign Up Free</h3>
+              <h3 className="text-xl font-semibold text-blue-900 mb-4">Try the Demo</h3>
               <p className="text-gray-600">
-                Create your free account in seconds. No credit card required, no hidden fees.
+                Click "View Demo" to instantly access the platform. No registration required.
               </p>
             </div>
 
@@ -253,9 +281,9 @@ export default function LandingPage() {
               <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">2</span>
               </div>
-              <h3 className="text-xl font-semibold text-blue-900 mb-4">Share Your Symptoms</h3>
+              <h3 className="text-xl font-semibold text-blue-900 mb-4">Explore Features</h3>
               <p className="text-gray-600">
-                Describe your health concerns through text, voice, or images. Our AI understands it all.
+                Navigate through health records, AI assistant, vitals tracking, and family management features.
               </p>
             </div>
 
@@ -263,9 +291,9 @@ export default function LandingPage() {
               <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl font-bold text-white">3</span>
               </div>
-              <h3 className="text-xl font-semibold text-blue-900 mb-4">Get AI Insights</h3>
+              <h3 className="text-xl font-semibold text-blue-900 mb-4">Experience AI Healthcare</h3>
               <p className="text-gray-600">
-                Receive personalized health insights, recommendations, and early detection alerts.
+                Interact with AI-powered health insights, personalized recommendations, and smart health management.
               </p>
             </div>
           </div>
@@ -356,16 +384,19 @@ export default function LandingPage() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 to-pink-500">
+      <section id="contact-section" className="py-20 bg-gradient-to-r from-purple-600 to-pink-500">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Join the Waitlist - Get Early Access</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Experience the Future Today</h2>
           <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-            Be among the first to experience AI-powered healthcare. Join thousands who are already on our waitlist for
-            early access when we launch.
+            Try our interactive demo and see how AI can transform healthcare. No signup required - start exploring now!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg">
-              Join Waitlist Now
+            <Button
+              size="lg"
+              onClick={handleViewDemo}
+              className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg"
+            >
+              🎯 Try Live Demo
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -377,20 +408,6 @@ export default function LandingPage() {
               Visit mymedi.ai
             </Button>
           </div>
-          <div className="mt-8 flex items-center justify-center space-x-6 text-purple-100">
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              <span>Early Access Priority</span>
-            </div>
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              <span>Launch Updates</span>
-            </div>
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              <span>Exclusive Features</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -400,7 +417,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src="/images/mymedi-logo.png" alt="My Medi.AI Logo" className="w-8 h-8" />
+                <img src="/images/medi-ai-logo.png" alt="My Medi.AI Logo" className="w-8 h-8" />
                 <span className="text-xl font-bold">
                   My Medi<span className="text-pink-400">.AI</span>
                 </span>
@@ -422,32 +439,32 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-4">Features</h3>
+              <h3 className="font-semibold mb-4">Demo Features</h3>
               <ul className="space-y-2 text-blue-200">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    AI Health Assistant
-                  </a>
+                  <Link href="/dashboard" className="hover:text-white transition-colors">
+                    🎯 Interactive Dashboard
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Voice Analysis
-                  </a>
+                  <Link href="/dashboard/ai-assistant" className="hover:text-white transition-colors">
+                    🤖 AI Health Assistant
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Image Analysis
-                  </a>
+                  <Link href="/dashboard/records" className="hover:text-white transition-colors">
+                    📋 Health Records
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Family Management
-                  </a>
+                  <Link href="/dashboard/vitals" className="hover:text-white transition-colors">
+                    📊 Vitals Tracking
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Early Detection
-                  </a>
+                  <Link href="/dashboard/family" className="hover:text-white transition-colors">
+                    👨‍👩‍👧‍👦 Family Management
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -508,6 +525,7 @@ export default function LandingPage() {
 
           <div className="border-t border-blue-800 mt-12 pt-8 text-center text-blue-200">
             <p>&copy; 2024 My Medi.AI. All rights reserved. Made with ❤️ in Madanapalle for India's health.</p>
+            <p className="mt-2 text-sm">🎯 This is a live demo showcasing AI healthcare features</p>
           </div>
         </div>
       </footer>
