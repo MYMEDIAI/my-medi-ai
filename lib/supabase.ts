@@ -1,6 +1,4 @@
 import { createClient } from "@supabase/supabase-js"
-import { createServerClient as createSupabaseServerClient, type CookieOptions } from "@supabase/ssr"
-import { cookies } from "next/headers"
 
 // Safe access to environment variables
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
@@ -14,61 +12,10 @@ if (typeof window === "undefined") {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Browser singleton (avoids multiple GoTrue clients)                        */
-/* -------------------------------------------------------------------------- */
-
-// let browserClient: ReturnType<typeof createClient> | null = null
-
-// export const supabase =
-//   typeof window === "undefined"
-//     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-//     : (() => {
-//         if (!browserClient) {
-//           browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-//             auth: {
-//               persistSession: true,
-//               storageKey: "medi-ai-auth",
-//             },
-//           })
-//         }
-//         return browserClient
-//       })()
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-/* -------------------------------------------------------------------------- */
-/*  Helper: cookie-aware server client (anon key - obeys RLS)                 */
-/* -------------------------------------------------------------------------- */
-
-export function createServerClient() {
-  const store = cookies()
-
-  return createSupabaseServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies: {
-      get(name: string) {
-        return store.get(name)?.value
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        try {
-          store.set({ name, value, ...options })
-        } catch {
-          /* ignored – e.g. during static generation */
-        }
-      },
-      remove(name: string, options: CookieOptions) {
-        try {
-          store.set({ name, value: "", ...options })
-        } catch {
-          /* ignored */
-        }
-      },
-    },
-  })
-}
 
 /* -------------------------------------------------------------------------- */
 /*  Helper: service-role client (bypasses ALL RLS – use in API routes)        */

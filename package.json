@@ -6,11 +6,18 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
+<<<<<<< HEAD
     "start": "next start",
+=======
+>>>>>>> 3522467ec204c6689c929aa6e1d364a3748157b6
     "setup": "node scripts/auto-configure.js",
     "setup-complete": "node scripts/test-setup.js && echo 'Setup completed successfully!'",
     "setup-database": "node scripts/test-database.js",
     "setup-email": "node scripts/setup-email-services.js",
+<<<<<<< HEAD
+=======
+    "start": "next start",
+>>>>>>> 3522467ec204c6689c929aa6e1d364a3748157b6
     "test-build": "node scripts/test-build.js",
     "verify-setup": "node scripts/verify-build.js"
   },
