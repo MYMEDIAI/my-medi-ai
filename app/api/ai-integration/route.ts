@@ -39,8 +39,45 @@ function extractPrompt(body: Record<string, unknown>): { prompt: string; mode: "
 async function callOpenAI(prompt: string, mode: "chat" | "assessment") {
   const systemMessage =
     mode === "assessment"
-      ? "You are a helpful medical AI assistant. Based on the patient assessment provided, give detailed recommendations for: 1) medications (over-the-counter suggestions), 2) doctors/specialists to consult, 3) laboratory tests that might be helpful, 4) pharmacy options, 5) personalized diet plan, 6) exercise recommendations, and 7) general health advice. Always include appropriate medical disclaimers."
-      : "You are a helpful medical AI assistant. Answer the user's health question with accurate, helpful information while emphasizing the importance of consulting healthcare professionals."
+      ? `You are a medical AI assistant. Provide clear, organized recommendations in exactly this format:
+
+MEDICATIONS:
+• [Specific medication name and dosage]
+• [When to take it]
+• [Important warnings]
+
+DOCTORS:
+• [Type of doctor to see]
+• [When to schedule appointment]
+• [What to expect]
+
+LABS:
+• [Specific test name]
+• [Why it's needed]
+• [Normal ranges if relevant]
+
+PHARMACY:
+• [Where to get medications]
+• [Services available]
+• [Cost-saving tips]
+
+DIET:
+• [Specific foods to eat]
+• [Foods to avoid]
+• [Meal timing]
+
+EXERCISE:
+• [Specific activities]
+• [Duration and frequency]
+• [Precautions]
+
+GENERAL ADVICE:
+• [Key action items]
+• [Warning signs to watch]
+• [Follow-up timeline]
+
+Keep each point concise and actionable. Use bullet points only.`
+      : "You are a helpful medical AI assistant. Provide clear, concise health information with appropriate medical disclaimers."
 
   const response = await fetch(OPENAI_API_ENDPOINT, {
     method: "POST",
@@ -55,7 +92,7 @@ async function callOpenAI(prompt: string, mode: "chat" | "assessment") {
         { role: "user", content: prompt },
       ],
       temperature: 0.7,
-      max_tokens: 2048,
+      max_tokens: 1500,
     }),
   })
 
@@ -71,8 +108,45 @@ async function callOpenAI(prompt: string, mode: "chat" | "assessment") {
 async function callGemini(prompt: string, mode: "chat" | "assessment") {
   const systemPreamble =
     mode === "assessment"
-      ? "You are a helpful medical AI assistant. Based on the patient assessment provided, give detailed recommendations for: 1) medications (over-the-counter suggestions), 2) doctors/specialists to consult, 3) laboratory tests that might be helpful, 4) pharmacy options, 5) personalized diet plan, 6) exercise recommendations, and 7) general health advice. Always include appropriate medical disclaimers."
-      : "You are a helpful medical AI assistant. Answer the user's health question with accurate, helpful information while emphasizing the importance of consulting healthcare professionals."
+      ? `You are a medical AI assistant. Provide clear, organized recommendations in exactly this format:
+
+MEDICATIONS:
+• [Specific medication name and dosage]
+• [When to take it]
+• [Important warnings]
+
+DOCTORS:
+• [Type of doctor to see]
+• [When to schedule appointment]
+• [What to expect]
+
+LABS:
+• [Specific test name]
+• [Why it's needed]
+• [Normal ranges if relevant]
+
+PHARMACY:
+• [Where to get medications]
+• [Services available]
+• [Cost-saving tips]
+
+DIET:
+• [Specific foods to eat]
+• [Foods to avoid]
+• [Meal timing]
+
+EXERCISE:
+• [Specific activities]
+• [Duration and frequency]
+• [Precautions]
+
+GENERAL ADVICE:
+• [Key action items]
+• [Warning signs to watch]
+• [Follow-up timeline]
+
+Keep each point concise and actionable. Use bullet points only.`
+      : "You are a helpful medical AI assistant. Provide clear, concise health information with appropriate medical disclaimers."
 
   const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${encodeURIComponent(GEMINI_API_KEY!)}`, {
     method: "POST",
@@ -83,7 +157,7 @@ async function callGemini(prompt: string, mode: "chat" | "assessment") {
         temperature: 0.7,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 1500,
       },
     }),
   })
@@ -114,31 +188,52 @@ export async function POST(req: NextRequest) {
     /*  Local / preview fallback if no API keys are set                  */
     /* ------------------------------------------------------------------ */
     if (NO_API_KEY) {
-      console.warn("⚠️  No AI API keys found – returning enhanced stub data")
+      console.warn("⚠️  No AI API keys found – returning simplified stub data")
 
       const stub =
         mode === "assessment"
           ? {
-              medications:
-                "Based on your symptoms, consider over-the-counter pain relievers like acetaminophen (500mg every 6 hours) or ibuprofen (200-400mg every 6-8 hours) as directed. Always read labels carefully and follow dosing instructions. Avoid if you have allergies to these medications.",
-              doctors:
-                "Recommend scheduling an appointment with your primary care physician within 1-2 weeks for initial evaluation. If symptoms worsen or are severe, consider urgent care. Based on your symptoms, you may need referral to specialists such as cardiology, gastroenterology, or rheumatology.",
-              labs: "Suggested diagnostic tests may include: Complete Blood Count (CBC) to check for infections or anemia, Basic Metabolic Panel (BMP) for kidney and electrolyte function, Thyroid Function Tests (TSH, T3, T4), Vitamin D levels, and inflammatory markers (ESR, CRP) based on your symptoms.",
-              pharmacy:
-                "Visit major pharmacy chains like CVS, Walgreens, Rite Aid, or local independent pharmacies. Many offer health consultations, medication reviews, blood pressure checks, and immunizations. Consider pharmacy apps for prescription management and refill reminders.",
-              dietPlan:
-                "Focus on anti-inflammatory foods: leafy greens (spinach, kale), fatty fish (salmon, mackerel), berries (blueberries, strawberries), nuts (walnuts, almonds), and whole grains. Limit processed foods, refined sugars, and excessive caffeine. Stay hydrated with 8-10 glasses of water daily.",
-              exercise:
-                "Start with 20-30 minutes of moderate activity daily: brisk walking, swimming, or yoga. Gradually increase intensity based on your fitness level. Include strength training 2-3 times per week and flexibility exercises. Listen to your body and adjust based on symptoms.",
-              generalAdvice:
-                "Monitor your symptoms closely and keep a health diary. Maintain regular sleep schedule (7-9 hours nightly), manage stress through meditation or relaxation techniques, and don't hesitate to seek immediate medical attention if symptoms worsen significantly. This AI assessment is not a substitute for professional medical advice.",
+              medications: `• Acetaminophen 500mg every 6 hours for pain
+• Ibuprofen 200mg every 8 hours for inflammation  
+• Take with food to prevent stomach upset
+• Do not exceed recommended dosage`,
+
+              doctors: `• Primary Care Physician - Schedule within 1-2 weeks
+• Urgent Care - If symptoms worsen quickly
+• Specialist referral may be needed based on evaluation
+• Bring list of current medications and symptoms`,
+
+              labs: `• Complete Blood Count (CBC) - Check for infections
+• Basic Metabolic Panel - Kidney and liver function
+• Thyroid Function Tests - If fatigue is present
+• Inflammatory markers (ESR, CRP) if needed`,
+
+              pharmacy: `• CVS, Walgreens, or local pharmacy chains
+• Generic medications available for cost savings
+• Pharmacy consultation services available
+• Prescription delivery options available`,
+
+              dietPlan: `• Anti-inflammatory foods: salmon, berries, leafy greens
+• Avoid processed foods and excess sugar
+• Drink 8-10 glasses of water daily
+• Eat regular meals every 3-4 hours`,
+
+              exercise: `• 20-30 minutes walking daily
+• Light stretching or yoga 3x per week
+• Avoid high-impact activities initially
+• Listen to your body and rest when needed`,
+
+              generalAdvice: `• Monitor symptoms daily and keep a health diary
+• Get 7-9 hours of sleep nightly
+• Seek immediate care if symptoms worsen significantly
+• This is not a substitute for professional medical advice`,
             }
-          : "I'm a medical AI assistant powered by advanced AI technology. I can help answer health-related questions and provide general medical information, but please remember that my responses are for informational purposes only and should not replace professional medical advice. Always consult with qualified healthcare professionals for proper diagnosis and treatment."
+          : "I'm a medical AI assistant. I provide general health information, but always consult healthcare professionals for proper medical advice and treatment."
 
       return NextResponse.json({
         response: stub,
         provider: "stub",
-        message: "Using enhanced stub data. Add OPENAI_API_KEY or GEMINI_API_KEY for live AI responses.",
+        message: "Using simplified demo data. Add OPENAI_API_KEY or GEMINI_API_KEY for live AI responses.",
       })
     }
 

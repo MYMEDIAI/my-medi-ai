@@ -5,46 +5,23 @@ export async function POST(request: NextRequest) {
     const assessment = await request.json()
 
     const prompt = `
-Please analyze this comprehensive health assessment and provide specific, actionable recommendations:
+Analyze this health assessment and provide SIMPLIFIED, ORGANIZED recommendations:
 
-PATIENT PROFILE:
-- Age: ${assessment.age} years old
-- Gender: ${assessment.gender}
-- Weight: ${assessment.weight} kg
-- Height: ${assessment.height} cm
-- Location: ${assessment.location}
+PATIENT: ${assessment.age}yr ${assessment.gender}, ${assessment.weight}kg, ${assessment.height}cm
+LOCATION: ${assessment.location}
+SYMPTOMS: ${assessment.symptoms} (${assessment.symptomDuration}, ${assessment.symptomSeverity})
+CONCERN: ${assessment.primaryConcern}
+CONDITIONS: ${assessment.medicalHistory.length > 0 ? assessment.medicalHistory.join(", ") : "None"}
+MEDICATIONS: ${assessment.currentMedications || "None"}
+ALLERGIES: ${assessment.allergies || "None"}
+ACTIVITY: ${assessment.activityLevel}
+DIET: ${assessment.dietType}
+LIFESTYLE: ${assessment.smokingStatus}, ${assessment.alcoholConsumption}, ${assessment.sleepHours}h sleep
 
-CURRENT SYMPTOMS:
-- Primary symptoms: ${assessment.symptoms}
-- Duration: ${assessment.symptomDuration}
-- Severity level: ${assessment.symptomSeverity}
-- Main concern: ${assessment.primaryConcern}
+Provide CLEAR, BULLET-POINT recommendations in these exact sections:
+MEDICATIONS, DOCTORS, LABS, PHARMACY, DIET, EXERCISE, GENERAL ADVICE
 
-MEDICAL HISTORY:
-- Existing conditions: ${assessment.medicalHistory.length > 0 ? assessment.medicalHistory.join(", ") : "None reported"}
-- Current medications: ${assessment.currentMedications || "None"}
-- Known allergies: ${assessment.allergies || "None"}
-
-LIFESTYLE FACTORS:
-- Physical activity: ${assessment.activityLevel}
-- Diet type: ${assessment.dietType}
-- Smoking status: ${assessment.smokingStatus}
-- Alcohol consumption: ${assessment.alcoholConsumption}
-- Sleep duration: ${assessment.sleepHours} hours per night
-
-ADDITIONAL INFORMATION: ${assessment.additionalNotes || "None provided"}
-
-Please provide detailed, personalized recommendations for each of these categories:
-
-1. MEDICATIONS: Suggest appropriate over-the-counter medications, dosages, and precautions
-2. DOCTORS: Recommend specific types of healthcare providers, specialists, and when to seek care
-3. LABORATORY TESTS: Suggest relevant diagnostic tests, screenings, and monitoring
-4. PHARMACY: Provide guidance on pharmacy services, medication access, and health resources
-5. DIET PLAN: Create a personalized nutrition plan with specific foods and meal suggestions
-6. EXERCISE: Recommend specific physical activities, duration, and intensity suitable for their condition
-7. GENERAL ADVICE: Provide comprehensive health guidance, lifestyle modifications, and next steps
-
-Format your response with clear sections and actionable advice. Include appropriate medical disclaimers about consulting healthcare professionals.
+Keep each point short and actionable. Use bullet points (•) only.
 `
 
     const response = await fetch(`${request.nextUrl.origin}/api/ai-integration`, {
@@ -73,38 +50,31 @@ Format your response with clear sections and actionable advice. Include appropri
       recommendations = {
         medications:
           extractSection(aiResponse, "MEDICATIONS") ||
-          extractSection(aiResponse, "medication") ||
-          "Consult with a healthcare provider for appropriate medications. Over-the-counter pain relievers may help with general discomfort, but professional guidance is recommended for proper dosing and safety.",
+          "• Consult healthcare provider for appropriate medications\n• Follow prescribed dosages carefully\n• Report any side effects immediately",
 
         doctors:
           extractSection(aiResponse, "DOCTORS") ||
-          extractSection(aiResponse, "doctor") ||
-          "Schedule an appointment with your primary care physician for initial evaluation. They may refer you to specialists if needed based on your symptoms and medical history.",
+          "• Schedule appointment with primary care physician\n• Bring list of symptoms and medications\n• Consider specialist if symptoms persist",
 
         labs:
-          extractSection(aiResponse, "LABORATORY") ||
-          extractSection(aiResponse, "lab") ||
-          "Consider basic health screening including complete blood count, metabolic panel, and tests specific to your symptoms as recommended by your healthcare provider.",
+          extractSection(aiResponse, "LABS") ||
+          "• Basic blood work (CBC, metabolic panel)\n• Tests specific to your symptoms\n• Follow up on results with doctor",
 
         pharmacy:
           extractSection(aiResponse, "PHARMACY") ||
-          extractSection(aiResponse, "pharmacy") ||
-          "Visit your local pharmacy for over-the-counter medications and health consultations. Many pharmacies offer health screenings, immunizations, and medication reviews.",
+          "• Visit local pharmacy for medications\n• Ask about generic alternatives\n• Use pharmacy consultation services",
 
         dietPlan:
           extractSection(aiResponse, "DIET") ||
-          extractSection(aiResponse, "nutrition") ||
-          "Focus on a balanced diet rich in fruits, vegetables, lean proteins, and whole grains. Stay hydrated and limit processed foods, excessive sugar, and alcohol.",
+          "• Eat balanced meals with fruits and vegetables\n• Stay hydrated with 8+ glasses water daily\n• Limit processed foods and sugar",
 
         exercise:
           extractSection(aiResponse, "EXERCISE") ||
-          extractSection(aiResponse, "physical") ||
-          "Engage in regular moderate exercise such as walking, swimming, or cycling for 30 minutes most days of the week, adjusted to your current fitness level and health condition.",
+          "• Start with 20-30 minutes daily walking\n• Include stretching or light yoga\n• Gradually increase activity level",
 
         generalAdvice:
-          extractSection(aiResponse, "GENERAL") ||
-          aiResponse ||
-          "Monitor your symptoms closely, maintain good sleep hygiene, manage stress effectively, and don't hesitate to seek immediate medical attention if symptoms worsen. This AI assessment is not a substitute for professional medical advice.",
+          extractSection(aiResponse, "GENERAL ADVICE") ||
+          "• Monitor symptoms and keep health diary\n• Get adequate sleep (7-9 hours)\n• Seek immediate care if symptoms worsen",
       }
     }
 
@@ -122,18 +92,18 @@ Format your response with clear sections and actionable advice. Include appropri
       error: "Failed to process health assessment",
       recommendations: {
         medications:
-          "Unable to provide specific medication recommendations at this time. Please consult a healthcare provider for appropriate treatment options and proper medication guidance.",
+          "• Consult healthcare provider for medication guidance\n• Follow all prescription instructions\n• Report side effects promptly",
         doctors:
-          "Please schedule an appointment with a general practitioner for proper medical evaluation and diagnosis. They can provide personalized care and referrals if needed.",
-        labs: "Basic health screening tests may be beneficial. Your doctor can recommend appropriate diagnostic tests based on your symptoms and medical history.",
+          "• Schedule appointment with general practitioner\n• Prepare list of symptoms and concerns\n• Bring current medications list",
+        labs: "• Basic health screening recommended\n• Discuss appropriate tests with doctor\n• Follow up on all results",
         pharmacy:
-          "Visit your local pharmacy for over-the-counter health products and consultation with a pharmacist about medication options and health resources.",
+          "• Visit local pharmacy for health products\n• Consult pharmacist for medication questions\n• Consider generic alternatives",
         dietPlan:
-          "Maintain a balanced, nutritious diet with plenty of fruits, vegetables, whole grains, and lean proteins. Stay well-hydrated and consider consulting a nutritionist.",
+          "• Maintain balanced, nutritious diet\n• Stay well-hydrated throughout day\n• Limit processed and sugary foods",
         exercise:
-          "Engage in regular, moderate physical activity as tolerated. Start slowly and gradually increase intensity based on your comfort level and health status.",
+          "• Engage in regular moderate activity\n• Start slowly and increase gradually\n• Listen to your body's limits",
         generalAdvice:
-          "This service is temporarily unavailable. Please seek professional medical advice for your health concerns. If you have urgent symptoms, contact your healthcare provider immediately.",
+          "• Service temporarily unavailable\n• Seek professional medical advice\n• Contact healthcare provider for urgent symptoms",
       },
     })
   }
@@ -145,29 +115,33 @@ function extractSection(text: string, sectionName: string): string {
   const sectionContent: string[] = []
 
   for (const line of lines) {
-    const upperLine = line.toUpperCase()
+    const trimmedLine = line.trim()
+    const upperLine = trimmedLine.toUpperCase()
 
-    if (upperLine.includes(sectionName.toUpperCase()) && (upperLine.includes(":") || upperLine.includes("."))) {
+    // Check if this line starts a new section
+    if (upperLine.includes(sectionName.toUpperCase()) && upperLine.includes(":")) {
       inSection = true
+      // If there's content after the colon, include it
       const colonIndex = line.indexOf(":")
       if (colonIndex !== -1 && colonIndex < line.length - 1) {
-        sectionContent.push(line.substring(colonIndex + 1).trim())
+        const afterColon = line.substring(colonIndex + 1).trim()
+        if (afterColon) {
+          sectionContent.push(afterColon)
+        }
       }
       continue
     }
 
-    if (inSection) {
-      if (line.trim() === "" || /^\d+\./.test(line.trim()) || /^[A-Z][A-Z\s]+:/.test(line)) {
-        if (line.trim() !== "" && !/^\d+\./.test(line.trim())) {
-          break
-        }
-      }
+    // Check if we've hit another section header
+    if (inSection && /^[A-Z][A-Z\s]+:/.test(trimmedLine) && !trimmedLine.startsWith("•")) {
+      break
+    }
 
-      if (line.trim() !== "") {
-        sectionContent.push(line.trim())
-      }
+    // Collect content while in the section
+    if (inSection && trimmedLine) {
+      sectionContent.push(trimmedLine)
     }
   }
 
-  return sectionContent.join(" ").trim()
+  return sectionContent.join("\n").trim()
 }

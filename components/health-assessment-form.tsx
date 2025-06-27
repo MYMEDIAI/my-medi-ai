@@ -24,6 +24,7 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle,
+  Zap,
 } from "lucide-react"
 
 interface HealthAssessment {
@@ -83,6 +84,7 @@ export default function HealthAssessmentForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  const [aiProvider, setAiProvider] = useState<string | null>(null)
 
   const medicalConditions = [
     "Diabetes",
@@ -128,10 +130,12 @@ export default function HealthAssessmentForm() {
 
       if (data.success && data.recommendations) {
         setRecommendations(data.recommendations)
+        setAiProvider(data.provider)
       } else {
         setError("Failed to get AI recommendations. Please try again.")
         if (data.recommendations) {
           setRecommendations(data.recommendations)
+          setAiProvider(data.provider)
         }
       }
     } catch (error) {
@@ -140,6 +144,49 @@ export default function HealthAssessmentForm() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const getProviderBadge = () => {
+    if (!aiProvider) return null
+
+    const providerConfig = {
+      openai: { label: "OpenAI GPT-4", color: "bg-green-100 text-green-800", icon: Zap },
+      gemini: { label: "Google Gemini", color: "bg-blue-100 text-blue-800", icon: Bot },
+      stub: { label: "Demo Mode", color: "bg-yellow-100 text-yellow-800", icon: AlertTriangle },
+    }
+
+    const config = providerConfig[aiProvider as keyof typeof providerConfig]
+    if (!config) return null
+
+    const IconComponent = config.icon
+
+    return (
+      <Badge className={config.color}>
+        <IconComponent className="w-3 h-3 mr-1" />
+        {config.label}
+      </Badge>
+    )
+  }
+
+  const formatRecommendation = (text: string) => {
+    return text
+      .split("\n")
+      .map((line, index) => {
+        const trimmedLine = line.trim()
+        if (trimmedLine.startsWith("•")) {
+          return (
+            <li key={index} className="ml-4 mb-2">
+              {trimmedLine.substring(1).trim()}
+            </li>
+          )
+        }
+        return trimmedLine ? (
+          <p key={index} className="mb-2">
+            {trimmedLine}
+          </p>
+        ) : null
+      })
+      .filter(Boolean)
   }
 
   const renderStep1 = () => (
@@ -448,8 +495,11 @@ export default function HealthAssessmentForm() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-        <h3 className="text-2xl font-bold text-blue-900 mb-2">Your Personalized Health Recommendations</h3>
-        <p className="text-gray-600">Based on your assessment, here are AI-powered suggestions</p>
+        <h3 className="text-2xl font-bold text-blue-900 mb-2">Your Health Recommendations</h3>
+        <div className="flex items-center justify-center space-x-2 mb-4">
+          <p className="text-gray-600">AI-powered suggestions</p>
+          {getProviderBadge()}
+        </div>
         {error && (
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-sm text-yellow-800">{error}</p>
@@ -462,13 +512,11 @@ export default function HealthAssessmentForm() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Pill className="w-5 h-5 text-red-600" />
-              <CardTitle className="text-lg">Medication Suggestions</CardTitle>
+              <CardTitle className="text-lg">Medications</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: recommendations?.medications.replace(/\n/g, "<br>") || "" }} />
-            </div>
+            <ul className="space-y-1 text-sm">{formatRecommendation(recommendations?.medications || "")}</ul>
           </CardContent>
         </Card>
 
@@ -476,13 +524,11 @@ export default function HealthAssessmentForm() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Stethoscope className="w-5 h-5 text-blue-600" />
-              <CardTitle className="text-lg">Doctor Recommendations</CardTitle>
+              <CardTitle className="text-lg">Doctors</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: recommendations?.doctors.replace(/\n/g, "<br>") || "" }} />
-            </div>
+            <ul className="space-y-1 text-sm">{formatRecommendation(recommendations?.doctors || "")}</ul>
           </CardContent>
         </Card>
 
@@ -494,9 +540,7 @@ export default function HealthAssessmentForm() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: recommendations?.labs.replace(/\n/g, "<br>") || "" }} />
-            </div>
+            <ul className="space-y-1 text-sm">{formatRecommendation(recommendations?.labs || "")}</ul>
           </CardContent>
         </Card>
 
@@ -504,13 +548,11 @@ export default function HealthAssessmentForm() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <ShoppingCart className="w-5 h-5 text-purple-600" />
-              <CardTitle className="text-lg">Pharmacy Options</CardTitle>
+              <CardTitle className="text-lg">Pharmacy</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: recommendations?.pharmacy.replace(/\n/g, "<br>") || "" }} />
-            </div>
+            <ul className="space-y-1 text-sm">{formatRecommendation(recommendations?.pharmacy || "")}</ul>
           </CardContent>
         </Card>
 
@@ -522,9 +564,7 @@ export default function HealthAssessmentForm() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: recommendations?.dietPlan.replace(/\n/g, "<br>") || "" }} />
-            </div>
+            <ul className="space-y-1 text-sm">{formatRecommendation(recommendations?.dietPlan || "")}</ul>
           </CardContent>
         </Card>
 
@@ -532,13 +572,11 @@ export default function HealthAssessmentForm() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Dumbbell className="w-5 h-5 text-pink-600" />
-              <CardTitle className="text-lg">Exercise Plan</CardTitle>
+              <CardTitle className="text-lg">Exercise</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: recommendations?.exercise.replace(/\n/g, "<br>") || "" }} />
-            </div>
+            <ul className="space-y-1 text-sm">{formatRecommendation(recommendations?.exercise || "")}</ul>
           </CardContent>
         </Card>
       </div>
@@ -547,13 +585,11 @@ export default function HealthAssessmentForm() {
         <CardHeader className="pb-3">
           <div className="flex items-center space-x-2">
             <Bot className="w-5 h-5 text-indigo-600" />
-            <CardTitle className="text-lg">General Health Advice</CardTitle>
+            <CardTitle className="text-lg">General Advice</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: recommendations?.generalAdvice.replace(/\n/g, "<br>") || "" }} />
-          </div>
+          <ul className="space-y-1 text-sm">{formatRecommendation(recommendations?.generalAdvice || "")}</ul>
         </CardContent>
       </Card>
 
@@ -562,10 +598,8 @@ export default function HealthAssessmentForm() {
           <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
           <div>
             <p className="text-sm text-yellow-800">
-              <strong>Important Disclaimer:</strong> These recommendations are AI-generated suggestions based on the
-              information provided. They are not a substitute for professional medical advice, diagnosis, or treatment.
-              Always consult qualified healthcare professionals before making any medical decisions or starting new
-              treatments.
+              <strong>Important:</strong> These are AI-generated suggestions for informational purposes only. Always
+              consult qualified healthcare professionals before making medical decisions.
             </p>
           </div>
         </div>
@@ -577,6 +611,7 @@ export default function HealthAssessmentForm() {
             setRecommendations(null)
             setCurrentStep(1)
             setError(null)
+            setAiProvider(null)
             setAssessment({
               age: "",
               gender: "",
@@ -623,13 +658,10 @@ export default function HealthAssessmentForm() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl text-blue-900">Comprehensive Health Assessment</CardTitle>
+            <CardTitle className="text-2xl text-blue-900">Health Assessment</CardTitle>
             <Badge className="bg-green-100 text-green-800">Step {currentStep} of 4</Badge>
           </div>
-          <p className="text-gray-600">
-            Complete this assessment to get personalized AI recommendations for medications, doctors, labs, diet, and
-            exercise.
-          </p>
+          <p className="text-gray-600">Get personalized AI recommendations in organized, easy-to-read format.</p>
         </CardHeader>
 
         <CardContent className="space-y-6">
