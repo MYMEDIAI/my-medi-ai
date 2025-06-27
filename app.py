@@ -8,13 +8,8 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
 
-# Use SQLite for local development, PostgreSQL for production
-if os.environ.get('NEON_NEON_NEON_DATABASE_URL'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('NEON_DATABASE_URL')
-else:
-    # Local SQLite database
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medi_ai_local.db'
-
+# Use SQLite for local development
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medi_ai_local.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
