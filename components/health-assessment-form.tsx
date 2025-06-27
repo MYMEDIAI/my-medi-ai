@@ -589,91 +589,90 @@ Your AI Healthcare Assistant
       </div>
 
       {/* Step 1: Personal Information */}
-      {currentStep === 1 &&
-        (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-purple-600" />
-                <span>Personal Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="age">Age *</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={assessmentData.age}
-                    onChange={(e) => handleInputChange("age", e.target.value)}
-                    placeholder="Enter your age"
-                    className="focus:ring-purple-500"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="gender">Gender *</Label>
-                  <select
-                    id="gender"
-                    value={assessmentData.gender}
-                    onChange={(e) => handleInputChange("gender", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="weight">Weight (lbs)</Label>
-                  <div className="relative">
-                    <Weight className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <Input
-                      id="weight"
-                      type="number"
-                      value={assessmentData.weight}
-                      onChange={(e) => handleInputChange("weight", e.target.value)}
-                      placeholder="Enter weight"
-                      className="pl-10 focus:ring-purple-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="height">Height</Label>
-                  <div className="relative">
-                    <Ruler className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <Input
-                      id="height"
-                      value={assessmentData.height}
-                      onChange={(e) => handleInputChange("height", e.target.value)}
-                      placeholder="e.g., 5'8\" or 172 cm"
-                      className=\"pl-10 focus:ring-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
+      {currentStep === 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <User className="w-5 h-5 text-purple-600" />
+              <span>Personal Information</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="location">Location (City, State)</Label>
+                <Label htmlFor="age">Age *</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  value={assessmentData.age}
+                  onChange={(e) => handleInputChange("age", e.target.value)}
+                  placeholder="Enter your age"
+                  className="focus:ring-purple-500"
+                />
+              </div>
+              <div>
+                <Label htmlFor="gender">Gender *</Label>
+                <select
+                  id="gender"
+                  value={assessmentData.gender}
+                  onChange={(e) => handleInputChange("gender", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="weight">Weight (lbs)</Label>
                 <div className="relative">
-                  <MapPin className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Weight className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <Input
-                    id="location"
-                    value={assessmentData.location}
-                    onChange={(e) => handleInputChange("location", e.target.value)}
-                    placeholder="e.g., Los Angeles, CA"
+                    id="weight"
+                    type="number"
+                    value={assessmentData.weight}
+                    onChange={(e) => handleInputChange("weight", e.target.value)}
+                    placeholder="Enter weight"
                     className="pl-10 focus:ring-purple-500"
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div>
+                <Label htmlFor="height">Height</Label>
+                <div className="relative">
+                  <Ruler className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="height"
+                    value={assessmentData.height}
+                    onChange={(e) => handleInputChange("height", e.target.value)}
+                    placeholder="e.g., 5'8\" or 172 cm"
+                    className="pl-10 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="location">Location (City, State)</Label>
+              <div className="relative">
+                <MapPin className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="location"
+                  value={assessmentData.location}
+                  onChange={(e) => handleInputChange("location", e.target.value)}
+                  placeholder="e.g., Los Angeles, CA"
+                  className="pl-10 focus:ring-purple-500"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Step 2: Current Symptoms */}
       {currentStep === 2 && (
