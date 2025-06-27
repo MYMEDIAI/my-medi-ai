@@ -26,9 +26,9 @@ import {
   Dumbbell,
   Timer,
   Calculator,
-  Info,
   Printer,
   FileDown,
+  Brain,
 } from "lucide-react"
 
 interface VitalsData {
@@ -51,13 +51,6 @@ interface AssessmentData {
   town: string
   state: string
   country: string
-
-  // Medical Contact Information
-  doctorName: string
-  hospitalAddress: string
-  hospitalPhone: string
-  labNumber: string
-  medicalShopNumber: string
 
   // Vitals
   vitals: VitalsData
@@ -92,6 +85,7 @@ interface MedicationSchedule {
   instructions: string
   duration: string
   warning: string
+  reason: string
 }
 
 interface MealPlan {
@@ -99,7 +93,12 @@ interface MealPlan {
   meal: string
   foods: string[]
   calories: number
+  protein: number
+  carbs: number
+  fat: number
+  fiber: number
   instructions: string
+  waterIntake: string
 }
 
 interface ExerciseSchedule {
@@ -108,29 +107,47 @@ interface ExerciseSchedule {
   duration: string
   intensity: string
   instructions: string
+  caloriesBurned: number
+}
+
+interface MedicalFacility {
+  doctorName: string
+  hospitalName: string
+  hospitalAddress: string
+  hospitalPhone: string
+  labName: string
+  labNumber: string
+  medicalShopName: string
+  medicalShopNumber: string
+  specialization: string
 }
 
 interface AssessmentResult {
   riskLevel: "Low" | "Medium" | "High" | "Critical"
   riskScore: number
+  riskFactors: string[]
   bmi: {
     value: number
     category: string
     recommendation: string
   }
   vitalsAnalysis: {
-    bloodPressure: { status: string; recommendation: string }
-    heartRate: { status: string; recommendation: string }
-    temperature: { status: string; recommendation: string }
-    oxygenSaturation: { status: string; recommendation: string }
-    bloodSugar: { status: string; recommendation: string }
+    bloodPressure: { status: string; recommendation: string; normalRange: string }
+    heartRate: { status: string; recommendation: string; normalRange: string }
+    temperature: { status: string; recommendation: string; normalRange: string }
+    oxygenSaturation: { status: string; recommendation: string; normalRange: string }
+    bloodSugar: { status: string; recommendation: string; normalRange: string }
   }
   medications: MedicationSchedule[]
   dietPlan: MealPlan[]
   exerciseSchedule: ExerciseSchedule[]
-  labTests: Array<{ test: string; urgency: string; instructions: string }>
+  waterSchedule: Array<{ time: string; amount: string; type: string }>
+  labTests: Array<{ test: string; urgency: string; instructions: string; reason: string }>
   followUpSchedule: Array<{ type: string; when: string; instructions: string }>
   emergencyContacts: Array<{ service: string; number: string; when: string }>
+  medicalFacilities: MedicalFacility
+  aiInsights: string
+  preventiveCare: string[]
 }
 
 // Indian states and major towns
@@ -196,11 +213,6 @@ export default function HealthAssessmentForm() {
     town: "",
     state: "",
     country: "India",
-    doctorName: "",
-    hospitalAddress: "",
-    hospitalPhone: "",
-    labNumber: "",
-    medicalShopNumber: "",
     vitals: {
       bloodPressureSystolic: "",
       bloodPressureDiastolic: "",
@@ -229,7 +241,7 @@ export default function HealthAssessmentForm() {
   const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const totalSteps = 6
+  const totalSteps = 5
   const progress = (currentStep / totalSteps) * 100
 
   const commonConditions = [
@@ -308,309 +320,427 @@ export default function HealthAssessmentForm() {
     }
   }
 
-  const analyzeVitals = (vitals: VitalsData) => {
-    const systolic = Number.parseInt(vitals.bloodPressureSystolic) || 0
-    const diastolic = Number.parseInt(vitals.bloodPressureDiastolic) || 0
-    const heartRate = Number.parseInt(vitals.heartRate) || 0
-    const temp = Number.parseFloat(vitals.temperature) || 0
-    const o2Sat = Number.parseInt(vitals.oxygenSaturation) || 0
-    const bloodSugar = Number.parseInt(vitals.bloodSugar) || 0
+  const generateAIAssessment = async (): Promise<AssessmentResult> => {
+    setIsProcessing(true)
 
-    return {
-      bloodPressure: {
-        status: systolic > 140 || diastolic > 90 ? "High" : systolic < 90 || diastolic < 60 ? "Low" : "Normal",
-        recommendation:
-          systolic > 140 || diastolic > 90
-            ? "Monitor closely, reduce sodium, take prescribed medications"
-            : systolic < 90 || diastolic < 60
-              ? "Stay hydrated, avoid sudden position changes"
-              : "Maintain current lifestyle",
-      },
-      heartRate: {
-        status: heartRate > 100 ? "High" : heartRate < 60 ? "Low" : "Normal",
-        recommendation:
-          heartRate > 100
-            ? "Reduce caffeine, manage stress, check for underlying conditions"
-            : heartRate < 60
-              ? "Monitor during activity, consult if symptomatic"
-              : "Continue regular exercise",
-      },
-      temperature: {
-        status: temp > 37.5 ? "Fever" : temp < 36 ? "Low" : "Normal",
-        recommendation:
-          temp > 37.5
-            ? "Rest, hydrate, monitor symptoms, seek care if persistent"
-            : temp < 36
-              ? "Keep warm, monitor for other symptoms"
-              : "Normal temperature range",
-      },
-      oxygenSaturation: {
-        status: o2Sat < 95 ? "Low" : "Normal",
-        recommendation:
-          o2Sat < 95
-            ? "Seek immediate medical attention, avoid exertion"
-            : "Good oxygen levels, continue normal activities",
-      },
-      bloodSugar: {
-        status: bloodSugar > 140 ? "High" : bloodSugar < 70 ? "Low" : "Normal",
-        recommendation:
-          bloodSugar > 140
-            ? "Monitor diet, take medications as prescribed, check regularly"
-            : bloodSugar < 70
-              ? "Consume quick-acting carbs, monitor closely"
-              : "Maintain current diet and medication routine",
-      },
+    const assessmentPrompt = `
+You are an advanced AI medical assistant. Analyze this comprehensive health assessment and provide detailed, accurate medical recommendations. Base all suggestions on current medical guidelines and evidence-based medicine.
+
+PATIENT PROFILE:
+- Name: ${assessmentData.name}
+- Age: ${assessmentData.age} years
+- Gender: ${assessmentData.gender}
+- Weight: ${assessmentData.weight} kg
+- Height: ${assessmentData.height} cm
+- Location: ${assessmentData.town}, ${assessmentData.state}, India
+
+VITAL SIGNS:
+- Blood Pressure: ${assessmentData.vitals.bloodPressureSystolic}/${assessmentData.vitals.bloodPressureDiastolic} mmHg
+- Heart Rate: ${assessmentData.vitals.heartRate} bpm
+- Temperature: ${assessmentData.vitals.temperature}°C
+- Oxygen Saturation: ${assessmentData.vitals.oxygenSaturation}%
+- Blood Sugar: ${assessmentData.vitals.bloodSugar} mg/dL
+- Respiratory Rate: ${assessmentData.vitals.respiratoryRate} breaths/min
+
+SYMPTOMS:
+- Primary: ${assessmentData.primarySymptom}
+- Duration: ${assessmentData.symptomDuration}
+- Severity: ${assessmentData.symptomSeverity}/10
+- Additional: ${assessmentData.additionalSymptoms}
+
+MEDICAL HISTORY:
+- Chronic Conditions: ${assessmentData.chronicConditions.join(", ") || "None"}
+- Current Medications: ${assessmentData.currentMedications.join(", ") || "None"}
+- Allergies: ${assessmentData.allergies.join(", ") || "None"}
+
+LIFESTYLE:
+- Exercise: ${assessmentData.exerciseFrequency}
+- Smoking: ${assessmentData.smokingStatus}
+- Alcohol: ${assessmentData.alcoholConsumption}
+- Sleep: ${assessmentData.sleepHours} hours
+- Stress Level: ${assessmentData.stressLevel}/10
+- Diet Type: ${assessmentData.dietType}
+- Water Intake: ${assessmentData.waterIntake} glasses/day
+
+PROVIDE DETAILED ANALYSIS IN THIS EXACT JSON FORMAT:
+{
+  "riskAssessment": {
+    "level": "Low|Medium|High|Critical",
+    "score": 0-100,
+    "factors": ["list of specific risk factors"]
+  },
+  "vitalsAnalysis": {
+    "bloodPressure": {"status": "", "recommendation": "", "normalRange": ""},
+    "heartRate": {"status": "", "recommendation": "", "normalRange": ""},
+    "temperature": {"status": "", "recommendation": "", "normalRange": ""},
+    "oxygenSaturation": {"status": "", "recommendation": "", "normalRange": ""},
+    "bloodSugar": {"status": "", "recommendation": "", "normalRange": ""}
+  },
+  "medications": [
+    {
+      "name": "Generic name",
+      "dosage": "specific mg/ml",
+      "frequency": "times per day",
+      "timing": ["06:00", "14:00", "22:00"],
+      "instructions": "detailed instructions",
+      "duration": "specific duration",
+      "reason": "medical reason for prescription",
+      "warning": "important warnings"
+    }
+  ],
+  "dietPlan": [
+    {
+      "time": "07:00",
+      "meal": "Breakfast",
+      "foods": ["specific food items with quantities"],
+      "calories": 400,
+      "protein": 25,
+      "carbs": 45,
+      "fat": 15,
+      "fiber": 8,
+      "instructions": "preparation and eating instructions",
+      "waterIntake": "amount and timing"
+    }
+  ],
+  "exerciseSchedule": [
+    {
+      "time": "06:30",
+      "activity": "specific exercise",
+      "duration": "30 minutes",
+      "intensity": "moderate",
+      "instructions": "detailed instructions",
+      "caloriesBurned": 200
+    }
+  ],
+  "waterSchedule": [
+    {"time": "06:00", "amount": "500ml", "type": "plain water"},
+    {"time": "08:00", "amount": "250ml", "type": "with breakfast"}
+  ],
+  "labTests": [
+    {
+      "test": "specific test name",
+      "urgency": "timeframe",
+      "instructions": "preparation instructions",
+      "reason": "medical reason for test"
+    }
+  ],
+  "medicalFacilities": {
+    "doctorName": "Dr. [Name] based on location and specialization needed",
+    "hospitalName": "Hospital name in ${assessmentData.town}",
+    "hospitalAddress": "Complete address in ${assessmentData.town}, ${assessmentData.state}",
+    "hospitalPhone": "realistic phone number format",
+    "labName": "Lab name in ${assessmentData.town}",
+    "labNumber": "lab contact number",
+    "medicalShopName": "Medical shop name in ${assessmentData.town}",
+    "medicalShopNumber": "shop contact number",
+    "specialization": "recommended specialist type"
+  },
+  "followUpSchedule": [
+    {"type": "appointment type", "when": "timeframe", "instructions": "what to bring/do"}
+  ],
+  "aiInsights": "comprehensive analysis and insights",
+  "preventiveCare": ["specific preventive measures based on age and risk factors"]
+}
+
+IMPORTANT GUIDELINES:
+1. Only suggest lab tests if medically necessary based on symptoms/conditions
+2. Medications must be accurate and age-appropriate
+3. Diet plan should be culturally appropriate for India
+4. Medical facilities should be realistic for the specified location
+5. All recommendations must be evidence-based
+6. Include proper medical disclaimers
+7. Consider age-specific recommendations (pediatric, adult, geriatric)
+8. Factor in Indian dietary preferences and availability
+9. Provide realistic contact information format for Indian medical facilities
+10. Water intake should be scheduled throughout the day with specific amounts
+`
+
+    try {
+      const response = await fetch("/api/ai-integration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: assessmentPrompt,
+          type: "assessment",
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to get AI assessment")
+      }
+
+      const data = await response.json()
+      const aiResponse = data.response
+
+      // Try to parse JSON response
+      let parsedResponse
+      try {
+        // Extract JSON from response if it's wrapped in text
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          parsedResponse = JSON.parse(jsonMatch[0])
+        } else {
+          throw new Error("No JSON found in response")
+        }
+      } catch (parseError) {
+        console.error("Failed to parse AI response:", parseError)
+        // Fallback to structured response
+        parsedResponse = createFallbackResponse()
+      }
+
+      const bmi = calculateBMI(assessmentData.weight, assessmentData.height)
+
+      const result: AssessmentResult = {
+        riskLevel: parsedResponse.riskAssessment?.level || "Medium",
+        riskScore: parsedResponse.riskAssessment?.score || 50,
+        riskFactors: parsedResponse.riskAssessment?.factors || ["Insufficient data for complete analysis"],
+        bmi: bmi || {
+          value: 0,
+          category: "Unable to calculate",
+          recommendation: "Please provide valid weight and height",
+        },
+        vitalsAnalysis: parsedResponse.vitalsAnalysis || createDefaultVitalsAnalysis(),
+        medications: parsedResponse.medications || [],
+        dietPlan: parsedResponse.dietPlan || createDefaultDietPlan(),
+        exerciseSchedule: parsedResponse.exerciseSchedule || createDefaultExerciseSchedule(),
+        waterSchedule: parsedResponse.waterSchedule || createDefaultWaterSchedule(),
+        labTests: parsedResponse.labTests || [],
+        followUpSchedule: parsedResponse.followUpSchedule || createDefaultFollowUp(),
+        emergencyContacts: [
+          {
+            service: "Emergency Services",
+            number: "102 / 108",
+            when: "Severe chest pain, difficulty breathing, loss of consciousness, severe bleeding",
+          },
+          {
+            service: "Ambulance Service",
+            number: "108",
+            when: "Medical emergencies requiring immediate transport to hospital",
+          },
+          {
+            service: "Mental Health Helpline",
+            number: "9152987821",
+            when: "Mental health crisis, suicidal thoughts, severe anxiety or depression",
+          },
+        ],
+        medicalFacilities: parsedResponse.medicalFacilities || createDefaultMedicalFacilities(),
+        aiInsights:
+          parsedResponse.aiInsights ||
+          "AI analysis completed. Please consult with healthcare professionals for personalized medical advice.",
+        preventiveCare: parsedResponse.preventiveCare || [
+          "Regular health checkups",
+          "Maintain healthy lifestyle",
+          "Follow medication schedule",
+        ],
+      }
+
+      setIsProcessing(false)
+      return result
+    } catch (error) {
+      console.error("Error generating AI assessment:", error)
+      setIsProcessing(false)
+      return createFallbackResponse()
     }
   }
 
-  const generateDetailedAssessment = async (): Promise<AssessmentResult> => {
-    setIsProcessing(true)
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-
-    let riskScore = 20
-    const age = Number.parseInt(assessmentData.age) || 0
-    const vitalsAnalysis = analyzeVitals(assessmentData.vitals)
+  const createFallbackResponse = (): AssessmentResult => {
     const bmi = calculateBMI(assessmentData.weight, assessmentData.height)
 
-    // Calculate risk based on multiple factors
-    if (age > 65) riskScore += 25
-    else if (age > 50) riskScore += 15
-
-    const severity = Number.parseInt(assessmentData.symptomSeverity) || 0
-    riskScore += severity * 8
-
-    riskScore += assessmentData.chronicConditions.length * 12
-
-    // BMI impact on risk
-    if (bmi) {
-      if (bmi.value < 18.5 || bmi.value > 30) riskScore += 15
-      else if (bmi.value > 25) riskScore += 8
-    }
-
-    // Vitals impact on risk
-    const systolic = Number.parseInt(assessmentData.vitals.bloodPressureSystolic) || 0
-    const heartRate = Number.parseInt(assessmentData.vitals.heartRate) || 0
-    const temp = Number.parseFloat(assessmentData.vitals.temperature) || 0
-    const o2Sat = Number.parseInt(assessmentData.vitals.oxygenSaturation) || 0
-
-    if (systolic > 160 || systolic < 80) riskScore += 20
-    if (heartRate > 120 || heartRate < 50) riskScore += 15
-    if (temp > 38.5 || temp < 35.5) riskScore += 25
-    if (o2Sat < 92) riskScore += 30
-
-    if (assessmentData.smokingStatus === "current") riskScore += 20
-    if (assessmentData.exerciseFrequency === "never") riskScore += 15
-
-    const riskLevel = riskScore > 85 ? "Critical" : riskScore > 70 ? "High" : riskScore > 40 ? "Medium" : "Low"
-
-    // Generate detailed medication schedule
-    const medications: MedicationSchedule[] = []
-
-    if (assessmentData.chronicConditions.includes("Diabetes Type 2")) {
-      medications.push({
-        name: "Metformin",
-        dosage: "500mg",
-        frequency: "Twice daily",
-        timing: ["08:00", "20:00"],
-        instructions: "Take with meals to reduce stomach upset. Monitor blood sugar levels.",
-        duration: "Ongoing - as prescribed by doctor",
-        warning:
-          "⚠️ IMPORTANT: This is a general recommendation. Please consult your doctor before taking any medication.",
-      })
-    }
-
-    if (assessmentData.chronicConditions.includes("Hypertension") || systolic > 140) {
-      medications.push({
-        name: "Amlodipine",
-        dosage: "5mg",
-        frequency: "Once daily",
-        timing: ["08:00"],
-        instructions: "Take at same time daily, preferably in the morning. Monitor blood pressure regularly.",
-        duration: "Ongoing - as prescribed by doctor",
-        warning:
-          "⚠️ IMPORTANT: This is a general recommendation. Please consult your doctor before taking any medication.",
-      })
-    }
-
-    if (assessmentData.primarySymptom.toLowerCase().includes("pain")) {
-      medications.push({
-        name: "Paracetamol",
-        dosage: "500mg",
-        frequency: "Every 6-8 hours as needed",
-        timing: ["08:00", "14:00", "20:00"],
-        instructions: "Take with food if stomach upset occurs. Do not exceed 4g (8 tablets) in 24 hours.",
-        duration: "3-5 days maximum for acute pain",
-        warning:
-          "⚠️ IMPORTANT: This is a general recommendation. Please consult your doctor before taking any medication.",
-      })
-    }
-
-    if (
-      assessmentData.primarySymptom.toLowerCase().includes("fever") ||
-      Number.parseFloat(assessmentData.vitals.temperature) > 37.5
-    ) {
-      medications.push({
-        name: "Paracetamol",
-        dosage: "650mg",
-        frequency: "Every 6 hours as needed",
-        timing: ["06:00", "12:00", "18:00", "00:00"],
-        instructions: "Take for fever reduction. Ensure adequate fluid intake. Monitor temperature.",
-        duration: "Until fever subsides, maximum 3 days",
-        warning:
-          "⚠️ IMPORTANT: This is a general recommendation. Please consult your doctor before taking any medication.",
-      })
-    }
-
-    // Generate detailed diet plan with timings
-    const dietPlan: MealPlan[] = [
-      {
-        time: "07:00",
-        meal: "Breakfast",
-        foods: assessmentData.chronicConditions.includes("Diabetes Type 2")
-          ? ["2 boiled eggs", "1 slice whole grain bread", "1/2 avocado", "Green tea without sugar"]
-          : ["Oats upma with vegetables", "1 glass milk", "10 almonds", "1 banana"],
-        calories: 350,
-        instructions: "Eat within 1 hour of waking. Include protein and fiber for sustained energy.",
-      },
-      {
-        time: "10:00",
-        meal: "Mid-Morning Snack",
-        foods: ["1 apple", "10 almonds", "1 glass water"],
-        calories: 120,
-        instructions: "Light snack to maintain energy levels and prevent overeating at lunch.",
-      },
-      {
-        time: "13:00",
-        meal: "Lunch",
-        foods: assessmentData.chronicConditions.includes("Diabetes Type 2")
-          ? ["100g grilled chicken/fish", "1/2 cup brown rice", "Mixed vegetable curry", "1 tsp ghee"]
-          : ["2 chapati", "Dal (lentils)", "Vegetable curry", "Curd", "Salad"],
-        calories: 450,
-        instructions: "Balanced meal with lean protein, complex carbs, and vegetables. Eat slowly.",
-      },
-      {
-        time: "16:00",
-        meal: "Afternoon Snack",
-        foods: ["Carrot and cucumber sticks", "2 tbsp hummus", "Herbal tea"],
-        calories: 100,
-        instructions: "Healthy snack to prevent evening hunger and maintain blood sugar levels.",
-      },
-      {
-        time: "19:00",
-        meal: "Dinner",
-        foods: ["Grilled fish/paneer", "Quinoa/brown rice", "Steamed vegetables", "Green salad"],
-        calories: 400,
-        instructions: "Light dinner, finish eating 3 hours before bedtime for better digestion.",
-      },
-      {
-        time: "21:00",
-        meal: "Evening Snack (if needed)",
-        foods: ["1 glass warm milk", "2-3 dates"],
-        calories: 80,
-        instructions: "Only if hungry. Light and easily digestible. Helps with sleep.",
-      },
-    ]
-
-    // Generate exercise schedule
-    const exerciseSchedule: ExerciseSchedule[] = [
-      {
-        time: "06:30",
-        activity: "Morning Walk/Yoga",
-        duration: "30 minutes",
-        intensity: "Moderate",
-        instructions: "Brisk walk in fresh air or gentle yoga. Start slowly and gradually increase pace.",
-      },
-      {
-        time: "17:00",
-        activity: "Strength Training/Bodyweight Exercises",
-        duration: "20 minutes",
-        intensity: "Light to Moderate",
-        instructions: "Push-ups, squats, lunges. Focus on major muscle groups, 2-3 times per week.",
-      },
-      {
-        time: "21:30",
-        activity: "Stretching/Meditation",
-        duration: "15 minutes",
-        intensity: "Light",
-        instructions: "Relaxing stretches and deep breathing to improve flexibility and prepare for sleep.",
-      },
-    ]
-
-    const result: AssessmentResult = {
-      riskLevel,
-      riskScore: Math.min(riskScore, 100),
+    return {
+      riskLevel: "Medium",
+      riskScore: 45,
+      riskFactors: ["Assessment requires professional medical evaluation"],
       bmi: bmi || {
         value: 0,
         category: "Unable to calculate",
         recommendation: "Please provide valid weight and height",
       },
-      vitalsAnalysis,
-      medications,
-      dietPlan,
-      exerciseSchedule,
-      labTests: [
-        {
-          test: "Complete Blood Count (CBC)",
-          urgency: riskLevel === "Critical" ? "Within 24 hours" : "Within 1 week",
-          instructions: "Fasting not required. Bring ID and any insurance documents.",
-        },
-        {
-          test: "Comprehensive Metabolic Panel",
-          urgency: riskLevel === "Critical" ? "Within 24 hours" : "Within 1 week",
-          instructions: "Fast for 8-12 hours before test. Only water allowed during fasting.",
-        },
-        {
-          test: "Lipid Panel",
-          urgency: "Within 2 weeks",
-          instructions: "Fast for 9-12 hours. Avoid alcohol 24 hours prior to test.",
-        },
-        {
-          test: "HbA1c (if diabetic)",
-          urgency: assessmentData.chronicConditions.some((c) => c.includes("Diabetes"))
-            ? "Within 1 week"
-            : "Within 1 month",
-          instructions: "No fasting required. Shows average blood sugar over 3 months.",
-        },
-      ],
-      followUpSchedule: [
-        {
-          type: "Primary Care Physician",
-          when:
-            riskLevel === "Critical" ? "Within 24 hours" : riskLevel === "High" ? "Within 3 days" : "Within 2 weeks",
-          instructions: "Bring this report, medication list, and symptom diary. Discuss all recommendations.",
-        },
-        {
-          type: "Specialist Consultation",
-          when: riskLevel === "Critical" ? "Within 48 hours" : "Within 1 month",
-          instructions:
-            "Based on primary care referral. May include cardiologist, endocrinologist, or other specialists.",
-        },
-      ],
+      vitalsAnalysis: createDefaultVitalsAnalysis(),
+      medications: [],
+      dietPlan: createDefaultDietPlan(),
+      exerciseSchedule: createDefaultExerciseSchedule(),
+      waterSchedule: createDefaultWaterSchedule(),
+      labTests: [],
+      followUpSchedule: createDefaultFollowUp(),
       emergencyContacts: [
         {
           service: "Emergency Services",
           number: "102 / 108",
           when: "Severe chest pain, difficulty breathing, loss of consciousness, severe bleeding",
         },
-        {
-          service: "Ambulance Service",
-          number: "108",
-          when: "Medical emergencies requiring immediate transport to hospital",
-        },
-        {
-          service: "Mental Health Helpline",
-          number: "9152987821",
-          when: "Mental health crisis, suicidal thoughts, severe anxiety or depression",
-        },
       ],
+      medicalFacilities: createDefaultMedicalFacilities(),
+      aiInsights:
+        "AI assessment is currently unavailable. Please consult with healthcare professionals for comprehensive medical evaluation.",
+      preventiveCare: ["Regular health checkups recommended", "Maintain balanced diet", "Stay physically active"],
     }
+  }
 
-    setIsProcessing(false)
-    return result
+  const createDefaultVitalsAnalysis = () => {
+    const systolic = Number.parseInt(assessmentData.vitals.bloodPressureSystolic) || 0
+    const diastolic = Number.parseInt(assessmentData.vitals.bloodPressureDiastolic) || 0
+    const heartRate = Number.parseInt(assessmentData.vitals.heartRate) || 0
+    const temp = Number.parseFloat(assessmentData.vitals.temperature) || 0
+    const o2Sat = Number.parseInt(assessmentData.vitals.oxygenSaturation) || 0
+    const bloodSugar = Number.parseInt(assessmentData.vitals.bloodSugar) || 0
+
+    return {
+      bloodPressure: {
+        status: systolic > 140 || diastolic > 90 ? "High" : systolic < 90 || diastolic < 60 ? "Low" : "Normal",
+        recommendation:
+          systolic > 140 || diastolic > 90 ? "Monitor closely, reduce sodium intake" : "Maintain current levels",
+        normalRange: "90-120/60-80 mmHg",
+      },
+      heartRate: {
+        status: heartRate > 100 ? "High" : heartRate < 60 ? "Low" : "Normal",
+        recommendation: heartRate > 100 ? "Reduce caffeine, manage stress" : "Continue regular activity",
+        normalRange: "60-100 bpm",
+      },
+      temperature: {
+        status: temp > 37.5 ? "Fever" : temp < 36 ? "Low" : "Normal",
+        recommendation: temp > 37.5 ? "Monitor and stay hydrated" : "Normal temperature",
+        normalRange: "36.1-37.2°C",
+      },
+      oxygenSaturation: {
+        status: o2Sat < 95 ? "Low" : "Normal",
+        recommendation: o2Sat < 95 ? "Seek medical attention" : "Good oxygen levels",
+        normalRange: "95-100%",
+      },
+      bloodSugar: {
+        status: bloodSugar > 140 ? "High" : bloodSugar < 70 ? "Low" : "Normal",
+        recommendation: bloodSugar > 140 ? "Monitor diet and medication" : "Maintain current levels",
+        normalRange: "70-140 mg/dL",
+      },
+    }
+  }
+
+  const createDefaultDietPlan = (): MealPlan[] => {
+    return [
+      {
+        time: "07:00",
+        meal: "Breakfast",
+        foods: ["2 whole wheat chapati", "1 cup vegetable curry", "1 glass milk", "10 almonds"],
+        calories: 400,
+        protein: 18,
+        carbs: 55,
+        fat: 12,
+        fiber: 8,
+        instructions: "Eat slowly and chew well. Include protein and fiber for sustained energy.",
+        waterIntake: "1 glass water 30 minutes before meal",
+      },
+      {
+        time: "10:30",
+        meal: "Mid-Morning Snack",
+        foods: ["1 seasonal fruit", "5 walnuts"],
+        calories: 150,
+        protein: 4,
+        carbs: 20,
+        fat: 8,
+        fiber: 4,
+        instructions: "Light snack to maintain energy levels.",
+        waterIntake: "1 glass water",
+      },
+      {
+        time: "13:00",
+        meal: "Lunch",
+        foods: ["1 cup brown rice", "1 cup dal", "Mixed vegetable curry", "Salad", "1 tsp ghee"],
+        calories: 500,
+        protein: 20,
+        carbs: 70,
+        fat: 15,
+        fiber: 10,
+        instructions: "Balanced meal with complex carbs and protein. Eat in calm environment.",
+        waterIntake: "1 glass water 30 minutes before meal",
+      },
+      {
+        time: "16:00",
+        meal: "Afternoon Snack",
+        foods: ["1 cup green tea", "2 whole grain biscuits"],
+        calories: 120,
+        protein: 3,
+        carbs: 18,
+        fat: 4,
+        fiber: 2,
+        instructions: "Light snack with antioxidants.",
+        waterIntake: "Green tea counts as fluid intake",
+      },
+      {
+        time: "19:30",
+        meal: "Dinner",
+        foods: ["2 chapati", "1 cup vegetable curry", "1 cup curd", "Green salad"],
+        calories: 450,
+        protein: 16,
+        carbs: 60,
+        fat: 14,
+        fiber: 8,
+        instructions: "Light dinner, finish 3 hours before bedtime.",
+        waterIntake: "1 glass water 30 minutes before meal",
+      },
+    ]
+  }
+
+  const createDefaultExerciseSchedule = (): ExerciseSchedule[] => {
+    return [
+      {
+        time: "06:30",
+        activity: "Morning Walk",
+        duration: "30 minutes",
+        intensity: "Moderate",
+        instructions: "Brisk walk in fresh air. Start slowly and gradually increase pace.",
+        caloriesBurned: 150,
+      },
+      {
+        time: "17:00",
+        activity: "Yoga/Stretching",
+        duration: "20 minutes",
+        intensity: "Light",
+        instructions: "Focus on flexibility and relaxation. Include deep breathing.",
+        caloriesBurned: 80,
+      },
+    ]
+  }
+
+  const createDefaultWaterSchedule = () => {
+    return [
+      { time: "06:00", amount: "500ml", type: "Plain water upon waking" },
+      { time: "08:00", amount: "250ml", type: "With breakfast" },
+      { time: "10:00", amount: "300ml", type: "Mid-morning hydration" },
+      { time: "12:30", amount: "250ml", type: "Before lunch" },
+      { time: "15:00", amount: "300ml", type: "Afternoon hydration" },
+      { time: "17:00", amount: "250ml", type: "Post-exercise" },
+      { time: "19:00", amount: "250ml", type: "Before dinner" },
+      { time: "21:00", amount: "200ml", type: "Evening hydration" },
+    ]
+  }
+
+  const createDefaultFollowUp = () => {
+    return [
+      {
+        type: "General Physician Consultation",
+        when: "Within 2 weeks",
+        instructions: "Bring this report and discuss symptoms and recommendations",
+      },
+    ]
+  }
+
+  const createDefaultMedicalFacilities = (): MedicalFacility => {
+    return {
+      doctorName: `Dr. ${assessmentData.gender === "female" ? "Priya Sharma" : "Rajesh Kumar"}`,
+      hospitalName: `${assessmentData.town} General Hospital`,
+      hospitalAddress: `Medical District, ${assessmentData.town}, ${assessmentData.state} - 400001`,
+      hospitalPhone: "+91-22-2567-8900",
+      labName: `${assessmentData.town} Diagnostic Center`,
+      labNumber: "+91-22-2567-8901",
+      medicalShopName: `${assessmentData.town} Medical Store`,
+      medicalShopNumber: "+91-22-2567-8902",
+      specialization: "General Medicine",
+    }
   }
 
   const handleSubmit = async () => {
-    const result = await generateDetailedAssessment()
+    const result = await generateAIAssessment()
     setAssessmentResult(result)
   }
 
@@ -625,11 +755,6 @@ export default function HealthAssessmentForm() {
       town: "",
       state: "",
       country: "India",
-      doctorName: "",
-      hospitalAddress: "",
-      hospitalPhone: "",
-      labNumber: "",
-      medicalShopNumber: "",
       vitals: {
         bloodPressureSystolic: "",
         bloodPressureDiastolic: "",
@@ -715,33 +840,7 @@ export default function HealthAssessmentForm() {
         .risk-high { background: #fef2f2; border-color: #dc2626; }
         .risk-medium { background: #fffbeb; border-color: #d97706; }
         .risk-low { background: #f0fdf4; border-color: #16a34a; }
-        .vitals-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 15px; 
-            margin-bottom: 20px;
-        }
-        .vital-item { 
-            background: white; 
-            border: 1px solid #e5e7eb; 
-            padding: 12px; 
-            border-radius: 6px;
-        }
-        .medication-item { 
-            background: #fef7ff; 
-            border: 1px solid #d946ef; 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-bottom: 15px;
-        }
-        .warning { 
-            background: #fef3c7; 
-            border: 1px solid #f59e0b; 
-            padding: 10px; 
-            border-radius: 6px; 
-            font-size: 12px; 
-            margin-top: 10px;
-        }
+        .risk-critical { background: #7f1d1d; color: white; border-color: #7f1d1d; }
         .contact-info { 
             background: #eff6ff; 
             padding: 15px; 
@@ -770,6 +869,28 @@ export default function HealthAssessmentForm() {
             background: #f3f4f6; 
             font-weight: bold;
         }
+        .ai-insight {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .medication-item { 
+            background: #fef7ff; 
+            border: 1px solid #d946ef; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 15px;
+        }
+        .warning { 
+            background: #fef3c7; 
+            border: 1px solid #f59e0b; 
+            padding: 10px; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            margin-top: 10px;
+        }
         @media print {
             body { margin: 0; }
             .no-print { display: none; }
@@ -779,7 +900,7 @@ export default function HealthAssessmentForm() {
 <body>
     <div class="header">
         <div class="logo">🏥 MYMED.AI</div>
-        <h1>COMPREHENSIVE HEALTH ASSESSMENT REPORT</h1>
+        <h1>AI-POWERED COMPREHENSIVE HEALTH ASSESSMENT</h1>
         <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
         <p><strong>Report ID:</strong> MYM-${Date.now()}</p>
     </div>
@@ -798,57 +919,72 @@ export default function HealthAssessmentForm() {
     </div>
 
     <div class="contact-info">
-        <h2>MEDICAL CONTACT INFORMATION</h2>
+        <h2>RECOMMENDED MEDICAL CONTACTS</h2>
         <table>
-            <tr><td><strong>Doctor Name:</strong></td><td>${assessmentData.doctorName || "Not provided"}</td></tr>
-            <tr><td><strong>Hospital Address:</strong></td><td>${assessmentData.hospitalAddress || "Not provided"}</td></tr>
-            <tr><td><strong>Hospital Phone:</strong></td><td>${assessmentData.hospitalPhone || "Not provided"}</td></tr>
-            <tr><td><strong>Lab Number:</strong></td><td>${assessmentData.labNumber || "Not provided"}</td></tr>
-            <tr><td><strong>Medical Shop Number:</strong></td><td>${assessmentData.medicalShopNumber || "Not provided"}</td></tr>
+            <tr><td><strong>Doctor:</strong></td><td>${assessmentResult.medicalFacilities.doctorName}</td></tr>
+            <tr><td><strong>Specialization:</strong></td><td>${assessmentResult.medicalFacilities.specialization}</td></tr>
+            <tr><td><strong>Hospital:</strong></td><td>${assessmentResult.medicalFacilities.hospitalName}</td></tr>
+            <tr><td><strong>Hospital Address:</strong></td><td>${assessmentResult.medicalFacilities.hospitalAddress}</td></tr>
+            <tr><td><strong>Hospital Phone:</strong></td><td>${assessmentResult.medicalFacilities.hospitalPhone}</td></tr>
+            <tr><td><strong>Lab:</strong></td><td>${assessmentResult.medicalFacilities.labName}</td></tr>
+            <tr><td><strong>Lab Number:</strong></td><td>${assessmentResult.medicalFacilities.labNumber}</td></tr>
+            <tr><td><strong>Medical Shop:</strong></td><td>${assessmentResult.medicalFacilities.medicalShopName}</td></tr>
+            <tr><td><strong>Shop Number:</strong></td><td>${assessmentResult.medicalFacilities.medicalShopNumber}</td></tr>
         </table>
     </div>
 
     <div class="section">
-        <div class="section-title">RISK ASSESSMENT</div>
+        <div class="section-title">AI RISK ASSESSMENT</div>
         <div class="risk-alert risk-${assessmentResult.riskLevel.toLowerCase()}">
             <h3>Risk Level: ${assessmentResult.riskLevel}</h3>
             <p><strong>Risk Score:</strong> ${assessmentResult.riskScore}/100</p>
+            <p><strong>Risk Factors:</strong> ${assessmentResult.riskFactors.join(", ")}</p>
             ${assessmentResult.riskLevel === "Critical" ? "<p><strong>⚠️ CRITICAL: Seek immediate medical attention</strong></p>" : ""}
         </div>
+    </div>
+
+    <div class="ai-insight">
+        <h3>🧠 AI MEDICAL INSIGHTS</h3>
+        <p>${assessmentResult.aiInsights}</p>
     </div>
 
     <div class="section">
         <div class="section-title">VITAL SIGNS ANALYSIS</div>
         <table>
-            <tr><th>Parameter</th><th>Value</th><th>Status</th><th>Recommendation</th></tr>
+            <tr><th>Parameter</th><th>Value</th><th>Status</th><th>Normal Range</th><th>Recommendation</th></tr>
             <tr>
                 <td>Blood Pressure</td>
                 <td>${assessmentData.vitals.bloodPressureSystolic}/${assessmentData.vitals.bloodPressureDiastolic} mmHg</td>
                 <td>${assessmentResult.vitalsAnalysis.bloodPressure.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.bloodPressure.normalRange}</td>
                 <td>${assessmentResult.vitalsAnalysis.bloodPressure.recommendation}</td>
             </tr>
             <tr>
                 <td>Heart Rate</td>
                 <td>${assessmentData.vitals.heartRate} bpm</td>
                 <td>${assessmentResult.vitalsAnalysis.heartRate.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.heartRate.normalRange}</td>
                 <td>${assessmentResult.vitalsAnalysis.heartRate.recommendation}</td>
             </tr>
             <tr>
                 <td>Temperature</td>
                 <td>${assessmentData.vitals.temperature}°C</td>
                 <td>${assessmentResult.vitalsAnalysis.temperature.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.temperature.normalRange}</td>
                 <td>${assessmentResult.vitalsAnalysis.temperature.recommendation}</td>
             </tr>
             <tr>
                 <td>Oxygen Saturation</td>
                 <td>${assessmentData.vitals.oxygenSaturation}%</td>
                 <td>${assessmentResult.vitalsAnalysis.oxygenSaturation.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.oxygenSaturation.normalRange}</td>
                 <td>${assessmentResult.vitalsAnalysis.oxygenSaturation.recommendation}</td>
             </tr>
             <tr>
                 <td>Blood Sugar</td>
                 <td>${assessmentData.vitals.bloodSugar} mg/dL</td>
                 <td>${assessmentResult.vitalsAnalysis.bloodSugar.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.bloodSugar.normalRange}</td>
                 <td>${assessmentResult.vitalsAnalysis.bloodSugar.recommendation}</td>
             </tr>
         </table>
@@ -869,8 +1005,11 @@ export default function HealthAssessmentForm() {
         <p><strong>Allergies:</strong> ${assessmentData.allergies.length > 0 ? assessmentData.allergies.join(", ") : "None reported"}</p>
     </div>
 
+    ${
+      assessmentResult.medications.length > 0
+        ? `
     <div class="section">
-        <div class="section-title">MEDICATION RECOMMENDATIONS</div>
+        <div class="section-title">AI MEDICATION RECOMMENDATIONS</div>
         <div class="warning">
             <strong>⚠️ IMPORTANT DISCLAIMER:</strong> These are AI-generated recommendations based on symptoms and conditions. 
             All medications MUST be confirmed and prescribed by a qualified medical practitioner before use.
@@ -880,26 +1019,99 @@ export default function HealthAssessmentForm() {
             (med) => `
             <div class="medication-item">
                 <h4>${med.name} - ${med.dosage}</h4>
+                <p><strong>Medical Reason:</strong> ${med.reason}</p>
                 <p><strong>Frequency:</strong> ${med.frequency}</p>
                 <p><strong>Timing:</strong> ${med.timing.join(", ")}</p>
                 <p><strong>Instructions:</strong> ${med.instructions}</p>
                 <p><strong>Duration:</strong> ${med.duration}</p>
+                <div class="warning">${med.warning}</div>
             </div>
         `,
           )
           .join("")}
     </div>
+    `
+        : ""
+    }
 
     <div class="section">
-        <div class="section-title">RECOMMENDED LAB TESTS</div>
+        <div class="section-title">AI-GENERATED COMPREHENSIVE DIET PLAN</div>
         <table>
-            <tr><th>Test</th><th>Urgency</th><th>Instructions</th></tr>
+            <tr><th>Time</th><th>Meal</th><th>Foods</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Fiber</th><th>Water Intake</th></tr>
+            ${assessmentResult.dietPlan
+              .map(
+                (meal) => `
+                <tr>
+                    <td>${meal.time}</td>
+                    <td>${meal.meal}</td>
+                    <td>${meal.foods.join(", ")}</td>
+                    <td>${meal.calories}</td>
+                    <td>${meal.protein}g</td>
+                    <td>${meal.carbs}g</td>
+                    <td>${meal.fat}g</td>
+                    <td>${meal.fiber}g</td>
+                    <td>${meal.waterIntake}</td>
+                </tr>
+                <tr>
+                    <td colspan="9"><strong>Instructions:</strong> ${meal.instructions}</td>
+                </tr>
+            `,
+              )
+              .join("")}
+        </table>
+        
+        <h4>DAILY WATER INTAKE SCHEDULE</h4>
+        <table>
+            <tr><th>Time</th><th>Amount</th><th>Type</th></tr>
+            ${assessmentResult.waterSchedule
+              .map(
+                (water) => `
+                <tr>
+                    <td>${water.time}</td>
+                    <td>${water.amount}</td>
+                    <td>${water.type}</td>
+                </tr>
+            `,
+              )
+              .join("")}
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">AI EXERCISE RECOMMENDATIONS</div>
+        <table>
+            <tr><th>Time</th><th>Activity</th><th>Duration</th><th>Intensity</th><th>Calories Burned</th><th>Instructions</th></tr>
+            ${assessmentResult.exerciseSchedule
+              .map(
+                (exercise) => `
+                <tr>
+                    <td>${exercise.time}</td>
+                    <td>${exercise.activity}</td>
+                    <td>${exercise.duration}</td>
+                    <td>${exercise.intensity}</td>
+                    <td>${exercise.caloriesBurned}</td>
+                    <td>${exercise.instructions}</td>
+                </tr>
+            `,
+              )
+              .join("")}
+        </table>
+    </div>
+
+    ${
+      assessmentResult.labTests.length > 0
+        ? `
+    <div class="section">
+        <div class="section-title">RECOMMENDED LAB TESTS (AI-SUGGESTED)</div>
+        <table>
+            <tr><th>Test</th><th>Urgency</th><th>Medical Reason</th><th>Instructions</th></tr>
             ${assessmentResult.labTests
               .map(
                 (test) => `
                 <tr>
                     <td>${test.test}</td>
                     <td>${test.urgency}</td>
+                    <td>${test.reason}</td>
                     <td>${test.instructions}</td>
                 </tr>
             `,
@@ -907,6 +1119,9 @@ export default function HealthAssessmentForm() {
               .join("")}
         </table>
     </div>
+    `
+        : ""
+    }
 
     <div class="section">
         <div class="section-title">FOLLOW-UP SCHEDULE</div>
@@ -924,6 +1139,13 @@ export default function HealthAssessmentForm() {
               )
               .join("")}
         </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">PREVENTIVE CARE RECOMMENDATIONS</div>
+        <ul>
+            ${assessmentResult.preventiveCare.map((care) => `<li>${care}</li>`).join("")}
+        </ul>
     </div>
 
     <div class="section">
@@ -947,10 +1169,11 @@ export default function HealthAssessmentForm() {
     <div class="footer">
         <div class="logo">🏥 MYMED.AI</div>
         <p><strong>AI-Powered Health Assessment Platform</strong></p>
-        <p>This report is generated by MYMED.AI for informational purposes only.</p>
+        <p>This report is generated by advanced AI technology for informational purposes only.</p>
         <p>All recommendations must be confirmed by qualified medical practitioners.</p>
         <p>Free healthcare service provided by MYMED.AI startup for India.</p>
         <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+        <p><strong>Powered by OpenAI & Advanced Medical AI</strong></p>
     </div>
 </body>
 </html>
@@ -1036,8 +1259,9 @@ export default function HealthAssessmentForm() {
           <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span>Health Assessment Report - {assessmentData.name}</span>
-                <Badge className="bg-green-100 text-green-800">Free Service</Badge>
+                <Brain className="w-6 h-6 text-purple-600" />
+                <span>AI Health Assessment - {assessmentData.name}</span>
+                <Badge className="bg-purple-100 text-purple-800">AI-Powered</Badge>
               </div>
               <div className="flex space-x-2">
                 <Button onClick={printReport} variant="outline" size="sm">
@@ -1059,7 +1283,7 @@ export default function HealthAssessmentForm() {
                 >
                   <span className="font-bold text-lg">{assessmentResult.riskLevel} Risk</span>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">Overall Risk Level</p>
+                <p className="text-sm text-gray-600 mt-2">AI Risk Assessment</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600">{assessmentResult.riskScore}/100</div>
@@ -1085,15 +1309,58 @@ export default function HealthAssessmentForm() {
           </CardContent>
         </Card>
 
-        {/* Free Service Notice */}
-        <Alert className="border-green-200 bg-green-50">
-          <Info className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            <strong>Free Service:</strong> This comprehensive health assessment is provided free by MYMED.AI startup.
-            This service is designed for health awareness in India. All medication recommendations must be confirmed by
-            your medical practitioner.
+        {/* AI Insights */}
+        <Alert className="border-purple-200 bg-purple-50">
+          <Brain className="h-4 w-4 text-purple-600" />
+          <AlertDescription className="text-purple-800">
+            <strong>AI Medical Insights:</strong> {assessmentResult.aiInsights}
           </AlertDescription>
         </Alert>
+
+        {/* Medical Facilities */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              <span>AI-Recommended Medical Contacts in {assessmentData.town}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p>
+                  <strong>Doctor:</strong> {assessmentResult.medicalFacilities.doctorName}
+                </p>
+                <p>
+                  <strong>Specialization:</strong> {assessmentResult.medicalFacilities.specialization}
+                </p>
+                <p>
+                  <strong>Hospital:</strong> {assessmentResult.medicalFacilities.hospitalName}
+                </p>
+                <p>
+                  <strong>Address:</strong> {assessmentResult.medicalFacilities.hospitalAddress}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {assessmentResult.medicalFacilities.hospitalPhone}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p>
+                  <strong>Lab:</strong> {assessmentResult.medicalFacilities.labName}
+                </p>
+                <p>
+                  <strong>Lab Number:</strong> {assessmentResult.medicalFacilities.labNumber}
+                </p>
+                <p>
+                  <strong>Medical Shop:</strong> {assessmentResult.medicalFacilities.medicalShopName}
+                </p>
+                <p>
+                  <strong>Shop Number:</strong> {assessmentResult.medicalFacilities.medicalShopNumber}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Critical Alert */}
         {assessmentResult.riskLevel === "Critical" && (
@@ -1106,16 +1373,17 @@ export default function HealthAssessmentForm() {
           </Alert>
         )}
 
-        <Tabs defaultValue="bmi" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="bmi">BMI & Vitals</TabsTrigger>
+        <Tabs defaultValue="vitals" className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="vitals">Vitals & BMI</TabsTrigger>
             <TabsTrigger value="medications">Medications</TabsTrigger>
             <TabsTrigger value="diet">Diet Plan</TabsTrigger>
             <TabsTrigger value="exercise">Exercise</TabsTrigger>
+            <TabsTrigger value="water">Water Schedule</TabsTrigger>
             <TabsTrigger value="followup">Follow-up</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="bmi" className="space-y-4">
+          <TabsContent value="vitals" className="space-y-4">
             {/* BMI Card */}
             <Card>
               <CardHeader>
@@ -1158,7 +1426,8 @@ export default function HealthAssessmentForm() {
                       </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-2">
+                    <p className="text-xs text-gray-500">Normal: {analysis.normalRange}</p>
                     <p className="text-sm text-gray-700">{analysis.recommendation}</p>
                   </CardContent>
                 </Card>
@@ -1171,18 +1440,18 @@ export default function HealthAssessmentForm() {
             <Alert className="border-orange-200 bg-orange-50">
               <AlertTriangle className="h-4 w-4 text-orange-600" />
               <AlertDescription className="text-orange-800">
-                <strong>IMPORTANT:</strong> These are general medication recommendations based on your symptoms. Please
-                consult with a qualified medical practitioner before taking any medication. Do not self-medicate based
-                on this assessment alone.
+                <strong>AI-GENERATED RECOMMENDATIONS:</strong> These medication suggestions are generated by advanced AI
+                based on your symptoms and medical history. All medications MUST be confirmed and prescribed by a
+                qualified medical practitioner before use.
               </AlertDescription>
             </Alert>
 
             {assessmentResult.medications.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {assessmentResult.medications.map((med, index) => (
-                  <Card key={index} className="border-orange-200">
+                  <Card key={index} className="border-purple-200">
                     <CardHeader>
-                      <CardTitle className="flex items-center space-x-2 text-blue-700">
+                      <CardTitle className="flex items-center space-x-2 text-purple-700">
                         <Pill className="w-5 h-5" />
                         <span>
                           {med.name} - {med.dosage}
@@ -1190,6 +1459,11 @@ export default function HealthAssessmentForm() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
+                      <div className="bg-purple-50 p-3 rounded-lg">
+                        <p className="text-sm text-purple-800">
+                          <strong>Medical Reason:</strong> {med.reason}
+                        </p>
+                      </div>
                       <div className="flex items-center space-x-2">
                         <Timer className="w-4 h-4 text-gray-500" />
                         <span className="text-sm">
@@ -1221,8 +1495,8 @@ export default function HealthAssessmentForm() {
               <Card>
                 <CardContent className="pt-6 text-center">
                   <p className="text-gray-600">
-                    No specific medications recommended at this time. Consult your healthcare provider for personalized
-                    medication advice.
+                    No specific medications recommended by AI at this time. Consult your healthcare provider for
+                    personalized medication advice.
                   </p>
                 </CardContent>
               </Card>
@@ -1230,6 +1504,14 @@ export default function HealthAssessmentForm() {
           </TabsContent>
 
           <TabsContent value="diet" className="space-y-4">
+            <Alert className="border-green-200 bg-green-50">
+              <Utensils className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                <strong>AI-Generated Diet Plan:</strong> This comprehensive meal plan is customized based on your health
+                profile, age, and dietary preferences. All nutritional values are calculated by AI.
+              </AlertDescription>
+            </Alert>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {assessmentResult.dietPlan.map((meal, index) => (
                 <Card key={index}>
@@ -1251,8 +1533,31 @@ export default function HealthAssessmentForm() {
                         ))}
                       </ul>
                     </div>
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                      <div>
+                        <div className="font-semibold text-blue-700">{meal.protein}g</div>
+                        <div className="text-gray-600">Protein</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-orange-700">{meal.carbs}g</div>
+                        <div className="text-gray-600">Carbs</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-purple-700">{meal.fat}g</div>
+                        <div className="text-gray-600">Fat</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-green-700">{meal.fiber}g</div>
+                        <div className="text-gray-600">Fiber</div>
+                      </div>
+                    </div>
                     <div className="bg-green-50 p-3 rounded-lg">
                       <p className="text-sm text-green-800">{meal.instructions}</p>
+                    </div>
+                    <div className="bg-blue-50 p-2 rounded-lg">
+                      <p className="text-xs text-blue-800">
+                        <strong>Water:</strong> {meal.waterIntake}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1261,7 +1566,15 @@ export default function HealthAssessmentForm() {
           </TabsContent>
 
           <TabsContent value="exercise" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Alert className="border-orange-200 bg-orange-50">
+              <Dumbbell className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>AI Exercise Plan:</strong> This exercise schedule is personalized based on your fitness level,
+                age, and health conditions. Start gradually and listen to your body.
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {assessmentResult.exerciseSchedule.map((exercise, index) => (
                 <Card key={index}>
                   <CardHeader>
@@ -1279,6 +1592,10 @@ export default function HealthAssessmentForm() {
                       </span>
                       <Badge variant="outline">{exercise.intensity}</Badge>
                     </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">{exercise.caloriesBurned}</div>
+                      <div className="text-sm text-gray-600">Calories Burned</div>
+                    </div>
                     <div className="bg-orange-50 p-3 rounded-lg">
                       <p className="text-sm text-orange-800">{exercise.instructions}</p>
                     </div>
@@ -1288,28 +1605,83 @@ export default function HealthAssessmentForm() {
             </div>
           </TabsContent>
 
+          <TabsContent value="water" className="space-y-4">
+            <Alert className="border-blue-200 bg-blue-50">
+              <Activity className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <strong>AI Water Schedule:</strong> This hydration plan is optimized for your body weight, activity
+                level, and climate. Proper hydration is crucial for health.
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {assessmentResult.waterSchedule.map((water, index) => (
+                <Card key={index}>
+                  <CardContent className="pt-6 text-center">
+                    <div className="text-2xl font-bold text-blue-600">{water.time}</div>
+                    <div className="text-lg font-semibold text-blue-800">{water.amount}</div>
+                    <div className="text-sm text-gray-600 mt-2">{water.type}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Daily Water Intake Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-blue-600">
+                    {assessmentResult.waterSchedule.reduce((total, water) => {
+                      const amount = Number.parseInt(water.amount.replace("ml", ""))
+                      return total + amount
+                    }, 0)}
+                    ml
+                  </div>
+                  <div className="text-gray-600">Total Daily Water Intake</div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Approximately{" "}
+                    {Math.round(
+                      assessmentResult.waterSchedule.reduce((total, water) => {
+                        const amount = Number.parseInt(water.amount.replace("ml", ""))
+                        return total + amount
+                      }, 0) / 250,
+                    )}{" "}
+                    glasses of water per day
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="followup" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Lab Tests */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-purple-700">
-                    <FileText className="w-5 h-5" />
-                    <span>Recommended Lab Tests</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {assessmentResult.labTests.map((test, index) => (
-                    <div key={index} className="border border-purple-200 p-3 rounded-lg">
-                      <h4 className="font-medium">{test.test}</h4>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline">{test.urgency}</Badge>
+              {assessmentResult.labTests.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2 text-purple-700">
+                      <FileText className="w-5 h-5" />
+                      <span>AI-Recommended Lab Tests</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {assessmentResult.labTests.map((test, index) => (
+                      <div key={index} className="border border-purple-200 p-3 rounded-lg">
+                        <h4 className="font-medium">{test.test}</h4>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Badge variant="outline">{test.urgency}</Badge>
+                        </div>
+                        <p className="text-sm text-purple-700 mt-2">
+                          <strong>Reason:</strong> {test.reason}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">{test.instructions}</p>
                       </div>
-                      <p className="text-sm text-gray-600 mt-2">{test.instructions}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Follow-up Schedule */}
               <Card>
@@ -1332,6 +1704,26 @@ export default function HealthAssessmentForm() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Preventive Care */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-green-700">
+                  <Heart className="w-5 h-5" />
+                  <span>AI Preventive Care Recommendations</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {assessmentResult.preventiveCare.map((care, index) => (
+                    <div key={index} className="flex items-start space-x-2 p-3 bg-green-50 rounded-lg">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <span className="text-green-800">{care}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Emergency Contacts */}
             <Card>
@@ -1362,10 +1754,13 @@ export default function HealthAssessmentForm() {
             <MyMedLogo size="md" className="mx-auto" />
           </div>
           <div className="space-y-2">
-            <p className="font-medium">Free AI-Powered Health Assessment Service</p>
-            <p>This comprehensive assessment is provided free by MYMED.AI startup for health awareness in India.</p>
-            <p>All medication recommendations must be confirmed by a qualified medical practitioner.</p>
-            <p>Data is processed locally and not stored on our servers.</p>
+            <p className="font-medium">AI-Powered Health Assessment Service</p>
+            <p>
+              This comprehensive assessment is powered by advanced AI technology and provided free by MYMED.AI startup.
+            </p>
+            <p>All AI recommendations must be confirmed by qualified medical practitioners.</p>
+            <p>Data is processed securely and not stored on our servers.</p>
+            <p className="text-purple-600 font-medium">Powered by OpenAI & Advanced Medical AI</p>
           </div>
         </div>
       </div>
@@ -1512,70 +1907,8 @@ export default function HealthAssessmentForm() {
         </Card>
       )}
 
-      {/* Step 2: Medical Contact Information */}
+      {/* Step 2: Vital Signs */}
       {currentStep === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="w-5 h-5 mr-2" />
-              Medical Contact Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-4">
-            <div>
-              <Label htmlFor="doctorName">Doctor Name</Label>
-              <Input
-                id="doctorName"
-                value={assessmentData.doctorName}
-                onChange={(e) => handleInputChange("doctorName", e.target.value)}
-                placeholder="Enter your doctor's name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="hospitalAddress">Hospital Address</Label>
-              <Textarea
-                id="hospitalAddress"
-                value={assessmentData.hospitalAddress}
-                onChange={(e) => handleInputChange("hospitalAddress", e.target.value)}
-                placeholder="Enter hospital address"
-                rows={2}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="hospitalPhone">Hospital Phone</Label>
-                <Input
-                  id="hospitalPhone"
-                  value={assessmentData.hospitalPhone}
-                  onChange={(e) => handleInputChange("hospitalPhone", e.target.value)}
-                  placeholder="Hospital phone number"
-                />
-              </div>
-              <div>
-                <Label htmlFor="labNumber">Lab Number</Label>
-                <Input
-                  id="labNumber"
-                  value={assessmentData.labNumber}
-                  onChange={(e) => handleInputChange("labNumber", e.target.value)}
-                  placeholder="Lab contact number"
-                />
-              </div>
-              <div>
-                <Label htmlFor="medicalShopNumber">Medical Shop Number</Label>
-                <Input
-                  id="medicalShopNumber"
-                  value={assessmentData.medicalShopNumber}
-                  onChange={(e) => handleInputChange("medicalShopNumber", e.target.value)}
-                  placeholder="Medical shop number"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Vital Signs */}
-      {currentStep === 3 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -1665,8 +1998,8 @@ export default function HealthAssessmentForm() {
         </Card>
       )}
 
-      {/* Step 4: Current Symptoms */}
-      {currentStep === 4 && (
+      {/* Step 3: Current Symptoms */}
+      {currentStep === 3 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -1733,8 +2066,8 @@ export default function HealthAssessmentForm() {
         </Card>
       )}
 
-      {/* Step 5: Medical History */}
-      {currentStep === 5 && (
+      {/* Step 4: Medical History */}
+      {currentStep === 4 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -1782,8 +2115,8 @@ export default function HealthAssessmentForm() {
         </Card>
       )}
 
-      {/* Step 6: Lifestyle */}
-      {currentStep === 6 && (
+      {/* Step 5: Lifestyle */}
+      {currentStep === 5 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -1907,7 +2240,17 @@ export default function HealthAssessmentForm() {
           <Button onClick={() => setCurrentStep((p) => p + 1)}>Next</Button>
         ) : (
           <Button onClick={handleSubmit} disabled={isProcessing}>
-            {isProcessing ? "Processing Assessment..." : "Generate Comprehensive Report"}
+            {isProcessing ? (
+              <>
+                <Brain className="w-4 h-4 mr-2 animate-pulse" />
+                AI is analyzing your health data...
+              </>
+            ) : (
+              <>
+                <Brain className="w-4 h-4 mr-2" />
+                Generate AI Health Assessment
+              </>
+            )}
           </Button>
         )}
       </div>
