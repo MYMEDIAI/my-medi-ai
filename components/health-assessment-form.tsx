@@ -20,7 +20,6 @@ import {
   FileText,
   Thermometer,
   ArrowLeft,
-  Download,
   Clock,
   Utensils,
   Pill,
@@ -28,6 +27,8 @@ import {
   Timer,
   Calculator,
   Info,
+  Printer,
+  FileDown,
 } from "lucide-react"
 
 interface VitalsData {
@@ -42,6 +43,7 @@ interface VitalsData {
 
 interface AssessmentData {
   // Personal Information
+  name: string
   age: string
   weight: string // in kg
   height: string
@@ -49,6 +51,13 @@ interface AssessmentData {
   town: string
   state: string
   country: string
+
+  // Medical Contact Information
+  doctorName: string
+  hospitalAddress: string
+  hospitalPhone: string
+  labNumber: string
+  medicalShopNumber: string
 
   // Vitals
   vitals: VitalsData
@@ -179,6 +188,7 @@ const townsByState: { [key: string]: string[] } = {
 export default function HealthAssessmentForm() {
   const [currentStep, setCurrentStep] = useState(1)
   const [assessmentData, setAssessmentData] = useState<AssessmentData>({
+    name: "",
     age: "",
     weight: "",
     height: "",
@@ -186,6 +196,11 @@ export default function HealthAssessmentForm() {
     town: "",
     state: "",
     country: "India",
+    doctorName: "",
+    hospitalAddress: "",
+    hospitalPhone: "",
+    labNumber: "",
+    medicalShopNumber: "",
     vitals: {
       bloodPressureSystolic: "",
       bloodPressureDiastolic: "",
@@ -214,7 +229,7 @@ export default function HealthAssessmentForm() {
   const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const totalSteps = 5
+  const totalSteps = 6
   const progress = (currentStep / totalSteps) * 100
 
   const commonConditions = [
@@ -602,6 +617,7 @@ export default function HealthAssessmentForm() {
   const resetForm = () => {
     setCurrentStep(1)
     setAssessmentData({
+      name: "",
       age: "",
       weight: "",
       height: "",
@@ -609,6 +625,11 @@ export default function HealthAssessmentForm() {
       town: "",
       state: "",
       country: "India",
+      doctorName: "",
+      hospitalAddress: "",
+      hospitalPhone: "",
+      labNumber: "",
+      medicalShopNumber: "",
       vitals: {
         bloodPressureSystolic: "",
         bloodPressureDiastolic: "",
@@ -638,140 +659,335 @@ export default function HealthAssessmentForm() {
     setIsProcessing(false)
   }
 
-  const exportDetailedReport = () => {
-    if (!assessmentResult) return
+  const generateMedicalReport = () => {
+    if (!assessmentResult) return ""
 
-    const reportContent = `
-MYMED.AI COMPREHENSIVE HEALTH ASSESSMENT REPORT
-Generated: ${new Date().toLocaleString()}
-Patient Location: ${assessmentData.town}, ${assessmentData.state}, ${assessmentData.country}
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MYMED.AI Health Assessment Report</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.4; 
+            margin: 20px; 
+            color: #333;
+        }
+        .header { 
+            text-align: center; 
+            border-bottom: 3px solid #2563eb; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px;
+        }
+        .logo { 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #2563eb; 
+            margin-bottom: 10px;
+        }
+        .patient-info { 
+            background: #f8fafc; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 25px;
+        }
+        .section { 
+            margin-bottom: 25px; 
+            page-break-inside: avoid;
+        }
+        .section-title { 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #1e40af; 
+            border-bottom: 2px solid #e5e7eb; 
+            padding-bottom: 5px; 
+            margin-bottom: 15px;
+        }
+        .risk-alert { 
+            background: #fef2f2; 
+            border: 2px solid #dc2626; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px;
+        }
+        .risk-high { background: #fef2f2; border-color: #dc2626; }
+        .risk-medium { background: #fffbeb; border-color: #d97706; }
+        .risk-low { background: #f0fdf4; border-color: #16a34a; }
+        .vitals-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px; 
+            margin-bottom: 20px;
+        }
+        .vital-item { 
+            background: white; 
+            border: 1px solid #e5e7eb; 
+            padding: 12px; 
+            border-radius: 6px;
+        }
+        .medication-item { 
+            background: #fef7ff; 
+            border: 1px solid #d946ef; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 15px;
+        }
+        .warning { 
+            background: #fef3c7; 
+            border: 1px solid #f59e0b; 
+            padding: 10px; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            margin-top: 10px;
+        }
+        .contact-info { 
+            background: #eff6ff; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px;
+        }
+        .footer { 
+            text-align: center; 
+            font-size: 12px; 
+            color: #6b7280; 
+            border-top: 1px solid #e5e7eb; 
+            padding-top: 20px; 
+            margin-top: 30px;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 15px;
+        }
+        th, td { 
+            border: 1px solid #e5e7eb; 
+            padding: 8px; 
+            text-align: left;
+        }
+        th { 
+            background: #f3f4f6; 
+            font-weight: bold;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🏥 MYMED.AI</div>
+        <h1>COMPREHENSIVE HEALTH ASSESSMENT REPORT</h1>
+        <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        <p><strong>Report ID:</strong> MYM-${Date.now()}</p>
+    </div>
 
-=== PATIENT INFORMATION ===
-Age: ${assessmentData.age} years
-Weight: ${assessmentData.weight} kg
-Height: ${assessmentData.height} cm
-Gender: ${assessmentData.gender}
-BMI: ${assessmentResult.bmi.value} (${assessmentResult.bmi.category})
+    <div class="patient-info">
+        <h2>PATIENT INFORMATION</h2>
+        <table>
+            <tr><td><strong>Name:</strong></td><td>${assessmentData.name}</td></tr>
+            <tr><td><strong>Age:</strong></td><td>${assessmentData.age} years</td></tr>
+            <tr><td><strong>Gender:</strong></td><td>${assessmentData.gender}</td></tr>
+            <tr><td><strong>Weight:</strong></td><td>${assessmentData.weight} kg</td></tr>
+            <tr><td><strong>Height:</strong></td><td>${assessmentData.height} cm</td></tr>
+            <tr><td><strong>BMI:</strong></td><td>${assessmentResult.bmi.value} (${assessmentResult.bmi.category})</td></tr>
+            <tr><td><strong>Location:</strong></td><td>${assessmentData.town}, ${assessmentData.state}, ${assessmentData.country}</td></tr>
+        </table>
+    </div>
 
-=== BMI ANALYSIS ===
-BMI Value: ${assessmentResult.bmi.value}
-Category: ${assessmentResult.bmi.category}
-Recommendation: ${assessmentResult.bmi.recommendation}
+    <div class="contact-info">
+        <h2>MEDICAL CONTACT INFORMATION</h2>
+        <table>
+            <tr><td><strong>Doctor Name:</strong></td><td>${assessmentData.doctorName || "Not provided"}</td></tr>
+            <tr><td><strong>Hospital Address:</strong></td><td>${assessmentData.hospitalAddress || "Not provided"}</td></tr>
+            <tr><td><strong>Hospital Phone:</strong></td><td>${assessmentData.hospitalPhone || "Not provided"}</td></tr>
+            <tr><td><strong>Lab Number:</strong></td><td>${assessmentData.labNumber || "Not provided"}</td></tr>
+            <tr><td><strong>Medical Shop Number:</strong></td><td>${assessmentData.medicalShopNumber || "Not provided"}</td></tr>
+        </table>
+    </div>
 
-=== VITAL SIGNS ANALYSIS ===
-Blood Pressure: ${assessmentData.vitals.bloodPressureSystolic}/${assessmentData.vitals.bloodPressureDiastolic} mmHg
-Status: ${assessmentResult.vitalsAnalysis.bloodPressure.status}
-Recommendation: ${assessmentResult.vitalsAnalysis.bloodPressure.recommendation}
+    <div class="section">
+        <div class="section-title">RISK ASSESSMENT</div>
+        <div class="risk-alert risk-${assessmentResult.riskLevel.toLowerCase()}">
+            <h3>Risk Level: ${assessmentResult.riskLevel}</h3>
+            <p><strong>Risk Score:</strong> ${assessmentResult.riskScore}/100</p>
+            ${assessmentResult.riskLevel === "Critical" ? "<p><strong>⚠️ CRITICAL: Seek immediate medical attention</strong></p>" : ""}
+        </div>
+    </div>
 
-Heart Rate: ${assessmentData.vitals.heartRate} bpm
-Status: ${assessmentResult.vitalsAnalysis.heartRate.status}
-Recommendation: ${assessmentResult.vitalsAnalysis.heartRate.recommendation}
+    <div class="section">
+        <div class="section-title">VITAL SIGNS ANALYSIS</div>
+        <table>
+            <tr><th>Parameter</th><th>Value</th><th>Status</th><th>Recommendation</th></tr>
+            <tr>
+                <td>Blood Pressure</td>
+                <td>${assessmentData.vitals.bloodPressureSystolic}/${assessmentData.vitals.bloodPressureDiastolic} mmHg</td>
+                <td>${assessmentResult.vitalsAnalysis.bloodPressure.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.bloodPressure.recommendation}</td>
+            </tr>
+            <tr>
+                <td>Heart Rate</td>
+                <td>${assessmentData.vitals.heartRate} bpm</td>
+                <td>${assessmentResult.vitalsAnalysis.heartRate.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.heartRate.recommendation}</td>
+            </tr>
+            <tr>
+                <td>Temperature</td>
+                <td>${assessmentData.vitals.temperature}°C</td>
+                <td>${assessmentResult.vitalsAnalysis.temperature.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.temperature.recommendation}</td>
+            </tr>
+            <tr>
+                <td>Oxygen Saturation</td>
+                <td>${assessmentData.vitals.oxygenSaturation}%</td>
+                <td>${assessmentResult.vitalsAnalysis.oxygenSaturation.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.oxygenSaturation.recommendation}</td>
+            </tr>
+            <tr>
+                <td>Blood Sugar</td>
+                <td>${assessmentData.vitals.bloodSugar} mg/dL</td>
+                <td>${assessmentResult.vitalsAnalysis.bloodSugar.status}</td>
+                <td>${assessmentResult.vitalsAnalysis.bloodSugar.recommendation}</td>
+            </tr>
+        </table>
+    </div>
 
-Temperature: ${assessmentData.vitals.temperature}°C
-Status: ${assessmentResult.vitalsAnalysis.temperature.status}
-Recommendation: ${assessmentResult.vitalsAnalysis.temperature.recommendation}
+    <div class="section">
+        <div class="section-title">CURRENT SYMPTOMS</div>
+        <p><strong>Primary Symptom:</strong> ${assessmentData.primarySymptom}</p>
+        <p><strong>Duration:</strong> ${assessmentData.symptomDuration}</p>
+        <p><strong>Severity:</strong> ${assessmentData.symptomSeverity}/10</p>
+        ${assessmentData.additionalSymptoms ? `<p><strong>Additional Symptoms:</strong> ${assessmentData.additionalSymptoms}</p>` : ""}
+    </div>
 
-Oxygen Saturation: ${assessmentData.vitals.oxygenSaturation}%
-Status: ${assessmentResult.vitalsAnalysis.oxygenSaturation.status}
-Recommendation: ${assessmentResult.vitalsAnalysis.oxygenSaturation.recommendation}
+    <div class="section">
+        <div class="section-title">MEDICAL HISTORY</div>
+        <p><strong>Chronic Conditions:</strong> ${assessmentData.chronicConditions.length > 0 ? assessmentData.chronicConditions.join(", ") : "None reported"}</p>
+        <p><strong>Current Medications:</strong> ${assessmentData.currentMedications.length > 0 ? assessmentData.currentMedications.join(", ") : "None reported"}</p>
+        <p><strong>Allergies:</strong> ${assessmentData.allergies.length > 0 ? assessmentData.allergies.join(", ") : "None reported"}</p>
+    </div>
 
-Blood Sugar: ${assessmentData.vitals.bloodSugar} mg/dL
-Status: ${assessmentResult.vitalsAnalysis.bloodSugar.status}
-Recommendation: ${assessmentResult.vitalsAnalysis.bloodSugar.recommendation}
+    <div class="section">
+        <div class="section-title">MEDICATION RECOMMENDATIONS</div>
+        <div class="warning">
+            <strong>⚠️ IMPORTANT DISCLAIMER:</strong> These are AI-generated recommendations based on symptoms and conditions. 
+            All medications MUST be confirmed and prescribed by a qualified medical practitioner before use.
+        </div>
+        ${assessmentResult.medications
+          .map(
+            (med) => `
+            <div class="medication-item">
+                <h4>${med.name} - ${med.dosage}</h4>
+                <p><strong>Frequency:</strong> ${med.frequency}</p>
+                <p><strong>Timing:</strong> ${med.timing.join(", ")}</p>
+                <p><strong>Instructions:</strong> ${med.instructions}</p>
+                <p><strong>Duration:</strong> ${med.duration}</p>
+            </div>
+        `,
+          )
+          .join("")}
+    </div>
 
-=== RISK ASSESSMENT ===
-Risk Level: ${assessmentResult.riskLevel}
-Risk Score: ${assessmentResult.riskScore}/100
+    <div class="section">
+        <div class="section-title">RECOMMENDED LAB TESTS</div>
+        <table>
+            <tr><th>Test</th><th>Urgency</th><th>Instructions</th></tr>
+            ${assessmentResult.labTests
+              .map(
+                (test) => `
+                <tr>
+                    <td>${test.test}</td>
+                    <td>${test.urgency}</td>
+                    <td>${test.instructions}</td>
+                </tr>
+            `,
+              )
+              .join("")}
+        </table>
+    </div>
 
-=== MEDICATION RECOMMENDATIONS ===
-⚠️ IMPORTANT DISCLAIMER: These are general recommendations based on your symptoms and conditions. 
-Please consult with a qualified medical practitioner before taking any medication.
+    <div class="section">
+        <div class="section-title">FOLLOW-UP SCHEDULE</div>
+        <table>
+            <tr><th>Type</th><th>When</th><th>Instructions</th></tr>
+            ${assessmentResult.followUpSchedule
+              .map(
+                (followUp) => `
+                <tr>
+                    <td>${followUp.type}</td>
+                    <td>${followUp.when}</td>
+                    <td>${followUp.instructions}</td>
+                </tr>
+            `,
+              )
+              .join("")}
+        </table>
+    </div>
 
-${assessmentResult.medications
-  .map(
-    (med) => `
-${med.name} - ${med.dosage}
-Frequency: ${med.frequency}
-Timing: ${med.timing.join(", ")}
-Instructions: ${med.instructions}
-Duration: ${med.duration}
-${med.warning}
-`,
-  )
-  .join("\n")}
+    <div class="section">
+        <div class="section-title">EMERGENCY CONTACTS (INDIA)</div>
+        <table>
+            <tr><th>Service</th><th>Number</th><th>When to Call</th></tr>
+            ${assessmentResult.emergencyContacts
+              .map(
+                (contact) => `
+                <tr>
+                    <td>${contact.service}</td>
+                    <td><strong>${contact.number}</strong></td>
+                    <td>${contact.when}</td>
+                </tr>
+            `,
+              )
+              .join("")}
+        </table>
+    </div>
 
-=== DETAILED DIET PLAN ===
-${assessmentResult.dietPlan
-  .map(
-    (meal) => `
-${meal.time} - ${meal.meal} (${meal.calories} calories)
-Foods: ${meal.foods.join(", ")}
-Instructions: ${meal.instructions}
-`,
-  )
-  .join("\n")}
-
-=== EXERCISE SCHEDULE ===
-${assessmentResult.exerciseSchedule
-  .map(
-    (exercise) => `
-${exercise.time} - ${exercise.activity}
-Duration: ${exercise.duration}
-Intensity: ${exercise.intensity}
-Instructions: ${exercise.instructions}
-`,
-  )
-  .join("\n")}
-
-=== RECOMMENDED LAB TESTS ===
-${assessmentResult.labTests
-  .map(
-    (test) => `
-${test.test}
-Urgency: ${test.urgency}
-Instructions: ${test.instructions}
-`,
-  )
-  .join("\n")}
-
-=== FOLLOW-UP SCHEDULE ===
-${assessmentResult.followUpSchedule
-  .map(
-    (followUp) => `
-${followUp.type}: ${followUp.when}
-Instructions: ${followUp.instructions}
-`,
-  )
-  .join("\n")}
-
-=== EMERGENCY CONTACTS (INDIA) ===
-${assessmentResult.emergencyContacts
-  .map(
-    (contact) => `
-${contact.service}: ${contact.number}
-When to call: ${contact.when}
-`,
-  )
-  .join("\n")}
-
-=== IMPORTANT DISCLAIMERS ===
-1. This assessment is for informational purposes only and does not replace professional medical advice.
-2. All medication recommendations must be confirmed by a qualified medical practitioner.
-3. This is a free service provided by MYMED.AI startup for health awareness.
-4. Nearby healthcare services directory will be available soon.
-5. Always consult with qualified healthcare professionals for medical concerns.
-
-Report generated by MYMED.AI - Your AI Healthcare Assistant
-A healthcare startup providing free AI-powered health assessments for India
+    <div class="footer">
+        <div class="logo">🏥 MYMED.AI</div>
+        <p><strong>AI-Powered Health Assessment Platform</strong></p>
+        <p>This report is generated by MYMED.AI for informational purposes only.</p>
+        <p>All recommendations must be confirmed by qualified medical practitioners.</p>
+        <p>Free healthcare service provided by MYMED.AI startup for India.</p>
+        <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+    </div>
+</body>
+</html>
     `
+  }
 
-    const blob = new Blob([reportContent], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `mymed-health-assessment-${new Date().toISOString().split("T")[0]}.txt`
-    a.click()
-    URL.revokeObjectURL(url)
+  const exportToPDF = () => {
+    const reportHTML = generateMedicalReport()
+    const printWindow = window.open("", "_blank")
+    if (printWindow) {
+      printWindow.document.write(reportHTML)
+      printWindow.document.close()
+
+      // Wait for content to load then trigger save as PDF
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print()
+        }, 500)
+      }
+    }
+  }
+
+  const printReport = () => {
+    const reportHTML = generateMedicalReport()
+    const printWindow = window.open("", "_blank")
+    if (printWindow) {
+      printWindow.document.write(reportHTML)
+      printWindow.document.close()
+
+      // Wait for content to load then print
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print()
+          printWindow.close()
+        }, 500)
+      }
+    }
   }
 
   const getRiskColor = (level: string) => {
@@ -820,13 +1036,19 @@ A healthcare startup providing free AI-powered health assessments for India
           <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span>Comprehensive Health Assessment Results</span>
+                <span>Health Assessment Report - {assessmentData.name}</span>
                 <Badge className="bg-green-100 text-green-800">Free Service</Badge>
               </div>
-              <Button onClick={exportDetailedReport} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export Report
-              </Button>
+              <div className="flex space-x-2">
+                <Button onClick={printReport} variant="outline" size="sm">
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </Button>
+                <Button onClick={exportToPDF} variant="outline" size="sm">
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Export PDF
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
@@ -868,8 +1090,8 @@ A healthcare startup providing free AI-powered health assessments for India
           <Info className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
             <strong>Free Service:</strong> This comprehensive health assessment is provided free by MYMED.AI startup.
-            Nearby healthcare services directory will be available soon. This service is designed for health awareness
-            in India.
+            This service is designed for health awareness in India. All medication recommendations must be confirmed by
+            your medical practitioner.
           </AlertDescription>
         </Alert>
 
@@ -885,12 +1107,11 @@ A healthcare startup providing free AI-powered health assessments for India
         )}
 
         <Tabs defaultValue="bmi" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="bmi">BMI & Vitals</TabsTrigger>
             <TabsTrigger value="medications">Medications</TabsTrigger>
             <TabsTrigger value="diet">Diet Plan</TabsTrigger>
             <TabsTrigger value="exercise">Exercise</TabsTrigger>
-            <TabsTrigger value="tests">Lab Tests</TabsTrigger>
             <TabsTrigger value="followup">Follow-up</TabsTrigger>
           </TabsList>
 
@@ -1067,50 +1288,49 @@ A healthcare startup providing free AI-powered health assessments for India
             </div>
           </TabsContent>
 
-          <TabsContent value="tests" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {assessmentResult.labTests.map((test, index) => (
-                <Card key={index}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2 text-purple-700">
-                      <FileText className="w-5 h-5" />
-                      <span>{test.test}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline">{test.urgency}</Badge>
-                    </div>
-                    <div className="bg-purple-50 p-3 rounded-lg">
-                      <p className="text-sm text-purple-800">{test.instructions}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
           <TabsContent value="followup" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Lab Tests */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-purple-700">
+                    <FileText className="w-5 h-5" />
+                    <span>Recommended Lab Tests</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {assessmentResult.labTests.map((test, index) => (
+                    <div key={index} className="border border-purple-200 p-3 rounded-lg">
+                      <h4 className="font-medium">{test.test}</h4>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Badge variant="outline">{test.urgency}</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">{test.instructions}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
               {/* Follow-up Schedule */}
-              {assessmentResult.followUpSchedule.map((followUp, index) => (
-                <Card key={index}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2 text-indigo-700">
-                      <Clock className="w-5 h-5" />
-                      <span>{followUp.type}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline">{followUp.when}</Badge>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-indigo-700">
+                    <Clock className="w-5 h-5" />
+                    <span>Follow-up Schedule</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {assessmentResult.followUpSchedule.map((followUp, index) => (
+                    <div key={index} className="border border-indigo-200 p-3 rounded-lg">
+                      <h4 className="font-medium">{followUp.type}</h4>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Badge variant="outline">{followUp.when}</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">{followUp.instructions}</p>
                     </div>
-                    <div className="bg-indigo-50 p-3 rounded-lg">
-                      <p className="text-sm text-indigo-800">{followUp.instructions}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  ))}
+                </CardContent>
+              </Card>
             </div>
 
             {/* Emergency Contacts */}
@@ -1145,7 +1365,6 @@ A healthcare startup providing free AI-powered health assessments for India
             <p className="font-medium">Free AI-Powered Health Assessment Service</p>
             <p>This comprehensive assessment is provided free by MYMED.AI startup for health awareness in India.</p>
             <p>All medication recommendations must be confirmed by a qualified medical practitioner.</p>
-            <p>Nearby healthcare services directory will be available soon.</p>
             <p>Data is processed locally and not stored on our servers.</p>
           </div>
         </div>
@@ -1183,6 +1402,15 @@ A healthcare startup providing free AI-powered health assessments for India
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
+            <div>
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                value={assessmentData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                placeholder="Enter your full name"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="age">Age *</Label>
@@ -1284,8 +1512,70 @@ A healthcare startup providing free AI-powered health assessments for India
         </Card>
       )}
 
-      {/* Step 2: Vital Signs */}
+      {/* Step 2: Medical Contact Information */}
       {currentStep === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <FileText className="w-5 h-5 mr-2" />
+              Medical Contact Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-4">
+            <div>
+              <Label htmlFor="doctorName">Doctor Name</Label>
+              <Input
+                id="doctorName"
+                value={assessmentData.doctorName}
+                onChange={(e) => handleInputChange("doctorName", e.target.value)}
+                placeholder="Enter your doctor's name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="hospitalAddress">Hospital Address</Label>
+              <Textarea
+                id="hospitalAddress"
+                value={assessmentData.hospitalAddress}
+                onChange={(e) => handleInputChange("hospitalAddress", e.target.value)}
+                placeholder="Enter hospital address"
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="hospitalPhone">Hospital Phone</Label>
+                <Input
+                  id="hospitalPhone"
+                  value={assessmentData.hospitalPhone}
+                  onChange={(e) => handleInputChange("hospitalPhone", e.target.value)}
+                  placeholder="Hospital phone number"
+                />
+              </div>
+              <div>
+                <Label htmlFor="labNumber">Lab Number</Label>
+                <Input
+                  id="labNumber"
+                  value={assessmentData.labNumber}
+                  onChange={(e) => handleInputChange("labNumber", e.target.value)}
+                  placeholder="Lab contact number"
+                />
+              </div>
+              <div>
+                <Label htmlFor="medicalShopNumber">Medical Shop Number</Label>
+                <Input
+                  id="medicalShopNumber"
+                  value={assessmentData.medicalShopNumber}
+                  onChange={(e) => handleInputChange("medicalShopNumber", e.target.value)}
+                  placeholder="Medical shop number"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3: Vital Signs */}
+      {currentStep === 3 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -1375,8 +1665,8 @@ A healthcare startup providing free AI-powered health assessments for India
         </Card>
       )}
 
-      {/* Step 3: Current Symptoms */}
-      {currentStep === 3 && (
+      {/* Step 4: Current Symptoms */}
+      {currentStep === 4 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -1443,8 +1733,8 @@ A healthcare startup providing free AI-powered health assessments for India
         </Card>
       )}
 
-      {/* Step 4: Medical History */}
-      {currentStep === 4 && (
+      {/* Step 5: Medical History */}
+      {currentStep === 5 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -1492,8 +1782,8 @@ A healthcare startup providing free AI-powered health assessments for India
         </Card>
       )}
 
-      {/* Step 5: Lifestyle */}
-      {currentStep === 5 && (
+      {/* Step 6: Lifestyle */}
+      {currentStep === 6 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
