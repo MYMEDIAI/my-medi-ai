@@ -1,33 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-/* -------------------------------------------------------------------------- */
-/*  Configuration                                                             */
-/* -------------------------------------------------------------------------- */
-
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 
-/**
- * Detect if the key is missing or clearly still a placeholder.
- */
-function isKeyMissing(key: string | undefined) {
-  return (
-    !key ||
-    key === "GEMINI_API_KEY" || // placeholder value
-    key.startsWith("your_") || // from .env.example
-    key.length < 20 // real keys are longer
-  )
+function isKeyMissing(key: string | undefined): boolean {
+  return !key || key === "GEMINI_API_KEY" || key.startsWith("your_") || key.length < 20
 }
 
 const KEY_MISSING = isKeyMissing(GEMINI_API_KEY)
 
-/* -------------------------------------------------------------------------- */
-/*  Helpers                                                                   */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Normalise payloads sent by /chat and /health-assessment.
- */
 function extractPrompt(body: Record<string, unknown>): { prompt: string; mode: "chat" | "assessment" } {
   if (typeof body.prompt === "string" && body.prompt.trim()) {
     return { prompt: body.prompt.trim(), mode: "chat" }
@@ -37,13 +18,8 @@ function extractPrompt(body: Record<string, unknown>): { prompt: string; mode: "
     return { prompt: body.message.trim(), mode: "assessment" }
   }
 
-  // Fallback – stringify unknown payload
   return { prompt: JSON.stringify(body), mode: "chat" }
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Route Handler                                                             */
-/* -------------------------------------------------------------------------- */
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,50 +30,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Prompt is required." }, { status: 400 })
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Local / preview fallback if key is not set                         */
-    /* ------------------------------------------------------------------ */
     if (KEY_MISSING) {
       console.warn("⚠️  GEMINI_API_KEY is not set – returning stub data so the UI keeps working.")
 
       const stub =
         mode === "assessment"
           ? {
-              medications: "Paracetamol 500 mg when needed.",
-              doctors: "Consult a local GP.",
-              labs: "CBC and thyroid profile.",
-              pharmacy: "Any licensed pharmacy nearby.",
-              dietPlan: "Balanced diet rich in fruit and vegetables.",
-              exercise: "30 min brisk walk daily.",
-              generalAdvice: "Stay hydrated, rest, and seek medical advice if symptoms persist.",
+              medications:
+                "Based on your symptoms, consider over-the-counter pain relievers like acetaminophen or ibuprofen as directed. Always read labels and follow dosing instructions.",
+              doctors:
+                "Recommend consulting with a general practitioner for initial evaluation. If symptoms persist, consider seeing a specialist relevant to your primary concern.",
+              labs: "Suggested tests may include: Complete Blood Count (CBC), Basic Metabolic Panel, Thyroid Function Tests, and Vitamin D levels based on your symptoms.",
+              pharmacy:
+                "Visit your local pharmacy chains like CVS, Walgreens, or independent pharmacies. Many offer health consultations and medication reviews.",
+              dietPlan:
+                "Focus on anti-inflammatory foods: leafy greens, fatty fish, berries, nuts, and whole grains. Limit processed foods, sugar, and excessive caffeine.",
+              exercise:
+                "Start with 20-30 minutes of moderate activity daily: walking, swimming, or yoga. Gradually increase intensity based on your fitness level and symptoms.",
+              generalAdvice:
+                "Monitor your symptoms, stay hydrated, maintain regular sleep schedule, and don't hesitate to seek medical attention if symptoms worsen or persist.",
             }
-          : "Stubbed AI response. Add a real GEMINI_API_KEY for live answers."
+          : "I'm a medical AI assistant. I can help answer health-related questions, but please remember that my responses are for informational purposes only and should not replace professional medical advice."
 
       return NextResponse.json({ response: stub })
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Real Gemini request                                               */
-    /* ------------------------------------------------------------------ */
     const systemPreamble =
       mode === "assessment"
-        ? [
-            "You are a helpful medical AI.",
-            "Return concise HTML paragraphs for:",
-            "1) medications, 2) doctors, 3) labs, 4) pharmacy,",
-            "5) dietPlan, 6) exercise, 7) generalAdvice",
-            "based ONLY on the following patient assessment JSON.",
-          ].join(" ")
-        : "You are a helpful medical AI. Answer the user's question."
+        ? "You are a helpful medical AI assistant. Based on the patient assessment provided, give detailed recommendations for: 1) medications (over-the-counter suggestions), 2) doctors/specialists to consult, 3) laboratory tests that might be helpful, 4) pharmacy options, 5) personalized diet plan, 6) exercise recommendations, and 7) general health advice. Always include appropriate medical disclaimers."
+        : "You are a helpful medical AI assistant. Answer the user's health question with accurate, helpful information while emphasizing the importance of consulting healthcare professionals."
 
     const geminiRes = await fetch(`${GEMINI_API_ENDPOINT}?key=${encodeURIComponent(GEMINI_API_KEY!)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [
-          { role: "system", parts: [{ text: systemPreamble }] },
-          { role: "user", parts: [{ text: prompt }] },
-        ],
+        contents: [{ role: "user", parts: [{ text: `${systemPreamble}\n\n${prompt}` }] }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
       }),
     })
 
@@ -107,8 +80,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Gemini API request failed.", detail: errText }, { status: geminiRes.status })
     }
 
-    const data = (await geminiRes.json()) as any
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "No response."
+    const data = await geminiRes.json()
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "No response generated."
 
     return NextResponse.json({ response: text })
   } catch (err) {

@@ -27,31 +27,22 @@ import {
 } from "lucide-react"
 
 interface HealthAssessment {
-  // Personal Information
   age: string
   gender: string
   weight: string
   height: string
   location: string
-
-  // Current Symptoms
   symptoms: string
   symptomDuration: string
   symptomSeverity: string
-
-  // Medical History
   medicalHistory: string[]
   currentMedications: string
   allergies: string
-
-  // Lifestyle
   activityLevel: string
   dietType: string
   smokingStatus: string
   alcoholConsumption: string
   sleepHours: string
-
-  // Specific Concerns
   primaryConcern: string
   additionalNotes: string
 }
@@ -91,6 +82,7 @@ export default function HealthAssessmentForm() {
   const [recommendations, setRecommendations] = useState<AIRecommendations | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+  const [error, setError] = useState<string | null>(null)
 
   const medicalConditions = [
     "Diabetes",
@@ -121,6 +113,8 @@ export default function HealthAssessmentForm() {
 
   const handleSubmit = async () => {
     setIsLoading(true)
+    setError(null)
+
     try {
       const response = await fetch("/api/health-assessment", {
         method: "POST",
@@ -131,9 +125,18 @@ export default function HealthAssessmentForm() {
       })
 
       const data = await response.json()
-      setRecommendations(data.recommendations)
+
+      if (data.success && data.recommendations) {
+        setRecommendations(data.recommendations)
+      } else {
+        setError("Failed to get AI recommendations. Please try again.")
+        if (data.recommendations) {
+          setRecommendations(data.recommendations)
+        }
+      }
     } catch (error) {
       console.error("Assessment error:", error)
+      setError("An error occurred while processing your assessment. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -447,6 +450,11 @@ export default function HealthAssessmentForm() {
         <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
         <h3 className="text-2xl font-bold text-blue-900 mb-2">Your Personalized Health Recommendations</h3>
         <p className="text-gray-600">Based on your assessment, here are AI-powered suggestions</p>
+        {error && (
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">{error}</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -568,6 +576,7 @@ export default function HealthAssessmentForm() {
           onClick={() => {
             setRecommendations(null)
             setCurrentStep(1)
+            setError(null)
             setAssessment({
               age: "",
               gender: "",

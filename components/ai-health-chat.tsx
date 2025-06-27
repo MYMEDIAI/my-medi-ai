@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Send, Mic, Camera, Shield, Loader2, Bot, User, AlertTriangle } from "lucide-react"
+import { Send, Mic, Camera, Shield, Loader2, Bot, User, AlertTriangle, Zap } from "lucide-react"
 
 interface Message {
   id: string
@@ -19,6 +19,7 @@ export default function AIHealthChat() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [aiProvider, setAiProvider] = useState<string | null>(null)
 
   const handleSendMessage = async () => {
     if (!input.trim()) return
@@ -35,7 +36,6 @@ export default function AIHealthChat() {
     setIsLoading(true)
 
     try {
-      // Integrate with Gemini CLI here
       const response = await fetch("/api/gemini-health", {
         method: "POST",
         headers: {
@@ -43,11 +43,15 @@ export default function AIHealthChat() {
         },
         body: JSON.stringify({
           message: input,
-          // No user ID or session data - completely anonymous
         }),
       })
 
       const data = await response.json()
+
+      // Set AI provider info
+      if (data.provider) {
+        setAiProvider(data.provider)
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -107,6 +111,29 @@ export default function AIHealthChat() {
 
   const clearChat = () => {
     setMessages([])
+    setAiProvider(null)
+  }
+
+  const getProviderBadge = () => {
+    if (!aiProvider) return null
+
+    const providerConfig = {
+      openai: { label: "OpenAI GPT-4", color: "bg-green-100 text-green-800", icon: Zap },
+      gemini: { label: "Google Gemini", color: "bg-blue-100 text-blue-800", icon: Bot },
+      stub: { label: "Demo Mode", color: "bg-yellow-100 text-yellow-800", icon: AlertTriangle },
+    }
+
+    const config = providerConfig[aiProvider as keyof typeof providerConfig]
+    if (!config) return null
+
+    const IconComponent = config.icon
+
+    return (
+      <Badge className={config.color}>
+        <IconComponent className="w-3 h-3 mr-1" />
+        {config.label}
+      </Badge>
+    )
   }
 
   return (
@@ -123,7 +150,7 @@ export default function AIHealthChat() {
                 <Shield className="w-3 h-3 mr-1" />
                 Anonymous
               </Badge>
-              <Badge className="bg-purple-100 text-purple-800">Powered by Gemini</Badge>
+              {getProviderBadge()}
             </div>
           </div>
           <p className="text-sm text-gray-600">
@@ -139,6 +166,13 @@ export default function AIHealthChat() {
                 <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 mb-2">Welcome to My Medi.AI</p>
                 <p className="text-sm text-gray-400">Describe your symptoms or health concerns to get started</p>
+                {aiProvider === "stub" && (
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-xs text-yellow-800">
+                      Demo mode active. Add OPENAI_API_KEY or GEMINI_API_KEY for live AI responses.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -213,7 +247,6 @@ export default function AIHealthChat() {
                 </Button>
                 <Button
                   onClick={() => {
-                    // Image upload functionality can be added here
                     alert("Image upload feature coming soon!")
                   }}
                   variant="outline"
