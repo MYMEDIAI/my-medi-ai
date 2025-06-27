@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 })
     }
 
-    const geminiResponse = await fetch(`${GEMINI_API_ENDPOINT}?key=${encodeURIComponent(GEMINI_API_KEY)}`, {
+    const geminiResponse = await fetch(`${GEMINI_API_ENDPOINT}?key=${encodeURIComponent(AIzaSyA4yOhIKIy5QYrcmx-Tju47ZxUV_f3A_BY)}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
