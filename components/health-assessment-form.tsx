@@ -22,7 +22,6 @@ import {
   Thermometer,
   Clock,
   MapPin,
-  ArrowRight,
   ArrowLeft,
   Download,
 } from "lucide-react"
@@ -593,87 +592,87 @@ Your AI Healthcare Assistant
       {currentStep === 1 &&
         (
           <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <User className="w-5 h-5 text-purple-600" />
-              <span>Personal Information</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="age">Age *</Label>
-                <Input
-                  id="age"
-                  type="number"
-                  value={assessmentData.age}
-                  onChange={(e) => handleInputChange("age", e.target.value)}
-                  placeholder="Enter your age"
-                  className="focus:ring-purple-500"
-                />
-              </div>
-              <div>
-                <Label htmlFor="gender">Gender *</Label>
-                <select
-                  id="gender"
-                  value={assessmentData.gender}
-                  onChange={(e) => handleInputChange("gender", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                  <option value="prefer-not-to-say">Prefer not to say</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="weight">Weight (lbs)</Label>
-                <div className="relative">
-                  <Weight className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <User className="w-5 h-5 text-purple-600" />
+                <span>Personal Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="age">Age *</Label>
                   <Input
-                    id="weight"
+                    id="age"
                     type="number"
-                    value={assessmentData.weight}
-                    onChange={(e) => handleInputChange("weight", e.target.value)}
-                    placeholder="Enter weight"
+                    value={assessmentData.age}
+                    onChange={(e) => handleInputChange("age", e.target.value)}
+                    placeholder="Enter your age"
+                    className="focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gender">Gender *</Label>
+                  <select
+                    id="gender"
+                    value={assessmentData.gender}
+                    onChange={(e) => handleInputChange("gender", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="weight">Weight (lbs)</Label>
+                  <div className="relative">
+                    <Weight className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Input
+                      id="weight"
+                      type="number"
+                      value={assessmentData.weight}
+                      onChange={(e) => handleInputChange("weight", e.target.value)}
+                      placeholder="Enter weight"
+                      className="pl-10 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="height">Height</Label>
+                  <div className="relative">
+                    <Ruler className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Input
+                      id="height"
+                      value={assessmentData.height}
+                      onChange={(e) => handleInputChange("height", e.target.value)}
+                      placeholder="e.g., 5'8\" or 172 cm"
+                      className=\"pl-10 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="location">Location (City, State)</Label>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="location"
+                    value={assessmentData.location}
+                    onChange={(e) => handleInputChange("location", e.target.value)}
+                    placeholder="e.g., Los Angeles, CA"
                     className="pl-10 focus:ring-purple-500"
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="height">Height</Label>
-                <div className="relative">
-                  <Ruler className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="height"
-                    value={assessmentData.height}
-                    onChange={(e) => handleInputChange("height", e.target.value)}
-                    placeholder="e.g., 5'8\" or 172 cm"
-                    className=\"pl-10 focus:ring-purple-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="location">Location (City, State)</Label>
-              <div className="relative">
-                <MapPin className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  id="location"
-                  value={assessmentData.location}
-                  onChange={(e) => handleInputChange("location", e.target.value)}
-                  placeholder="e.g., Los Angeles, CA"
-                  className="pl-10 focus:ring-purple-500"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
         )}
 
       {/* Step 2: Current Symptoms */}
@@ -711,41 +710,39 @@ Your AI Healthcare Assistant
                   <option value="less-than-1-day">Less than 1 day</option>
                   <option value="1-3-days">1-3 days</option>
                   <option value="4-7-days">4-7 days</option>
-                  <option value="1-2-weeks">1-2 weeks</option>
-                  <option value="2-4-weeks">2-4 weeks</option>
-                  <option value="1-3-months">1-3 months</option>
-                  <option value="more-than-3-months">More than 3 months</option>
+                  <option value="1-week">1 week</option>
+                  <option value="2-weeks">2 weeks</option>
+                  <option value="1-month">1 month</option>
+                  <option value="more-than-1-month">More than 1 month</option>
                 </select>
               </div>
               <div>
-                <Label>Symptom Severity (1-10 scale)</Label>
-                <div className="space-y-2">
+                <Label htmlFor="symptomSeverity">Severity of Symptom (1-10)</Label>
+                <select
+                  id="symptomSeverity"
+                  value={assessmentData.symptomSeverity}
+                  onChange={(e) => handleInputChange("symptomSeverity", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Select severity</option>
                   {severityLevels.map((level) => (
-                    <label key={level.value} className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="severity"
-                        value={level.value}
-                        checked={assessmentData.symptomSeverity === level.value}
-                        onChange={(e) => handleInputChange("symptomSeverity", e.target.value)}
-                        className="text-purple-600"
-                      />
-                      <span className={`text-sm ${level.color}`}>{level.label}</span>
-                    </label>
+                    <option key={level.value} value={level.value}>
+                      {level.label}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="additionalSymptoms">Additional Symptoms</Label>
+              <Label htmlFor="additionalSymptoms">Additional Symptoms (if any)</Label>
               <Textarea
                 id="additionalSymptoms"
                 value={assessmentData.additionalSymptoms}
                 onChange={(e) => handleInputChange("additionalSymptoms", e.target.value)}
-                placeholder="List any other symptoms you're experiencing"
+                placeholder="List any other symptoms you are experiencing"
                 className="focus:ring-purple-500"
-                rows={2}
+                rows={3}
               />
             </div>
           </CardContent>
@@ -757,24 +754,22 @@ Your AI Healthcare Assistant
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-green-600" />
+              <FileText className="w-5 h-5 text-blue-600" />
               <span>Medical History</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             <div>
-              <Label>Chronic Conditions (Select all that apply)</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+              <Label htmlFor="chronicConditions">Chronic Conditions</Label>
+              <div className="flex flex-wrap gap-2">
                 {commonConditions.map((condition) => (
-                  <label key={condition} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={assessmentData.chronicConditions.includes(condition)}
-                      onChange={() => handleConditionToggle(condition, "chronicConditions")}
-                      className="text-purple-600"
-                    />
-                    <span className="text-sm">{condition}</span>
-                  </label>
+                  <Badge
+                    key={condition}
+                    onClick={() => handleConditionToggle(condition, "chronicConditions")}
+                    className={`cursor-pointer ${assessmentData.chronicConditions.includes(condition) ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"}`}
+                  >
+                    {condition}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -784,15 +779,10 @@ Your AI Healthcare Assistant
               <Textarea
                 id="currentMedications"
                 value={assessmentData.currentMedications.join(", ")}
-                onChange={(e) =>
-                  handleInputChange(
-                    "currentMedications",
-                    e.target.value.split(", ").filter((m) => m.trim()),
-                  )
-                }
-                placeholder="List all medications, supplements, and vitamins you're currently taking"
+                onChange={(e) => handleInputChange("currentMedications", e.target.value.split(", ").filter(Boolean))}
+                placeholder="List all medications you are currently taking"
                 className="focus:ring-purple-500"
-                rows={2}
+                rows={3}
               />
             </div>
 
@@ -801,209 +791,128 @@ Your AI Healthcare Assistant
               <Textarea
                 id="allergies"
                 value={assessmentData.allergies.join(", ")}
-                onChange={(e) =>
-                  handleInputChange(
-                    "allergies",
-                    e.target.value.split(", ").filter((a) => a.trim()),
-                  )
-                }
-                placeholder="List any drug, food, or environmental allergies"
+                onChange={(e) => handleInputChange("allergies", e.target.value.split(", ").filter(Boolean))}
+                placeholder="List any known allergies"
                 className="focus:ring-purple-500"
-                rows={2}
+                rows={3}
               />
             </div>
 
             <div>
-              <Label htmlFor="familyHistory">Family Medical History</Label>
+              <Label htmlFor="familyHistory">Family History</Label>
               <Textarea
                 id="familyHistory"
                 value={assessmentData.familyHistory.join(", ")}
-                onChange={(e) =>
-                  handleInputChange(
-                    "familyHistory",
-                    e.target.value.split(", ").filter((f) => f.trim()),
-                  )
-                }
-                placeholder="List significant family medical history (heart disease, diabetes, cancer, etc.)"
+                onChange={(e) => handleInputChange("familyHistory", e.target.value.split(", ").filter(Boolean))}
+                placeholder="List any significant health issues in your family"
                 className="focus:ring-purple-500"
-                rows={2}
+                rows={3}
               />
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 4: Lifestyle Factors */}
+      {/* Step 4: Lifestyle */}
       {currentStep === 4 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Activity className="w-5 h-5 text-blue-600" />
-              <span>Lifestyle & Habits</span>
+              <Activity className="w-5 h-5 text-green-600" />
+              <span>Lifestyle</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="exerciseFrequency">Exercise Frequency</Label>
-                <select
-                  id="exerciseFrequency"
-                  value={assessmentData.exerciseFrequency}
-                  onChange={(e) => handleInputChange("exerciseFrequency", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Select frequency</option>
-                  <option value="daily">Daily</option>
-                  <option value="4-6-times-week">4-6 times per week</option>
-                  <option value="2-3-times-week">2-3 times per week</option>
-                  <option value="once-week">Once per week</option>
-                  <option value="rarely">Rarely</option>
-                  <option value="never">Never</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="smokingStatus">Smoking Status</Label>
-                <select
-                  id="smokingStatus"
-                  value={assessmentData.smokingStatus}
-                  onChange={(e) => handleInputChange("smokingStatus", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Select status</option>
-                  <option value="never">Never smoked</option>
-                  <option value="former">Former smoker</option>
-                  <option value="current">Current smoker</option>
-                  <option value="occasional">Occasional smoker</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="alcoholConsumption">Alcohol Consumption</Label>
-                <select
-                  id="alcoholConsumption"
-                  value={assessmentData.alcoholConsumption}
-                  onChange={(e) => handleInputChange("alcoholConsumption", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Select consumption</option>
-                  <option value="none">None</option>
-                  <option value="occasional">Occasional (1-2 drinks/week)</option>
-                  <option value="moderate">Moderate (3-7 drinks/week)</option>
-                  <option value="heavy">Heavy (8+ drinks/week)</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="sleepHours">Average Sleep Hours per Night</Label>
-                <select
-                  id="sleepHours"
-                  value={assessmentData.sleepHours}
-                  onChange={(e) => handleInputChange("sleepHours", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Select hours</option>
-                  <option value="less-than-5">Less than 5 hours</option>
-                  <option value="5-6">5-6 hours</option>
-                  <option value="7-8">7-8 hours</option>
-                  <option value="9-10">9-10 hours</option>
-                  <option value="more-than-10">More than 10 hours</option>
-                </select>
-              </div>
+            <div>
+              <Label htmlFor="exerciseFrequency">Exercise Frequency</Label>
+              <select
+                id="exerciseFrequency"
+                value={assessmentData.exerciseFrequency}
+                onChange={(e) => handleInputChange("exerciseFrequency", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Select frequency</option>
+                <option value="never">Never</option>
+                <option value="occasionally">Occasionally</option>
+                <option value="regularly">Regularly</option>
+              </select>
             </div>
 
             <div>
-              <Label htmlFor="stressLevel">Current Stress Level (1-10 scale)</Label>
-              <div className="flex items-center space-x-4 mt-2">
-                <span className="text-sm text-green-600">Low (1)</span>
-                <input
-                  type="range"
-                  id="stressLevel"
-                  min="1"
-                  max="10"
-                  value={assessmentData.stressLevel || "5"}
-                  onChange={(e) => handleInputChange("stressLevel", e.target.value)}
-                  className="flex-1"
-                />
-                <span className="text-sm text-red-600">High (10)</span>
-                <Badge variant="outline" className="min-w-12">
-                  {assessmentData.stressLevel || "5"}/10
-                </Badge>
-              </div>
+              <Label htmlFor="smokingStatus">Smoking Status</Label>
+              <select
+                id="smokingStatus"
+                value={assessmentData.smokingStatus}
+                onChange={(e) => handleInputChange("smokingStatus", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Select status</option>
+                <option value="never">Never</option>
+                <option value="former">Former</option>
+                <option value="current">Current</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="alcoholConsumption">Alcohol Consumption</Label>
+              <select
+                id="alcoholConsumption"
+                value={assessmentData.alcoholConsumption}
+                onChange={(e) => handleInputChange("alcoholConsumption", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Select consumption</option>
+                <option value="never">Never</option>
+                <option value="occasionally">Occasionally</option>
+                <option value="regularly">Regularly</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="sleepHours">Average Sleep Hours per Night</Label>
+              <Input
+                id="sleepHours"
+                type="number"
+                value={assessmentData.sleepHours}
+                onChange={(e) => handleInputChange("sleepHours", e.target.value)}
+                placeholder="e.g., 7"
+                className="focus:ring-purple-500"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="stressLevel">Stress Level (1-10)</Label>
+              <select
+                id="stressLevel"
+                value={assessmentData.stressLevel}
+                onChange={(e) => handleInputChange("stressLevel", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Select stress level</option>
+                {severityLevels.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {level.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between mt-8">
+      <div className="flex justify-between">
         <Button
-          onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
-          disabled={currentStep === 1}
+          onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
           variant="outline"
+          disabled={currentStep === 1}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Previous
         </Button>
-
-        {currentStep < totalSteps ? (
-          <Button
-            onClick={() => setCurrentStep((prev) => Math.min(totalSteps, prev + 1))}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            Next
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            onClick={handleSubmit}
-            disabled={isProcessing || !assessmentData.age || !assessmentData.primarySymptom}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            {isProcessing ? (
-              <>
-                <Activity className="w-4 h-4 mr-2 animate-spin" />
-                Processing Assessment...
-              </>
-            ) : (
-              <>
-                Generate Assessment Report
-                <FileText className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
-        )}
-      </div>
-
-      {isProcessing && (
-        <Card className="mt-6 bg-purple-50 border-purple-200">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <MyMedLogo size="md" className="mx-auto animate-pulse" />
-              <h3 className="text-lg font-semibold text-purple-900">AI Assessment in Progress</h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-center space-x-2 text-sm text-purple-700">
-                  <Activity className="w-4 h-4 animate-spin" />
-                  <span>Analyzing your health data...</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2 text-sm text-purple-700">
-                  <Activity className="w-4 h-4 animate-spin" />
-                  <span>Calculating risk factors...</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2 text-sm text-purple-700">
-                  <Activity className="w-4 h-4 animate-spin" />
-                  <span>Generating personalized recommendations...</span>
-                </div>
-              </div>
-              <p className="text-xs text-purple-600">This may take a few moments to ensure accuracy</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="text-center text-sm text-gray-500 bg-gray-50 p-4 rounded-lg mt-6">
-        <MyMedLogo size="sm" className="mx-auto mb-2" />
-        <p>Powered by MYMED.AI • Your privacy is protected - no personal data is stored</p>
+        <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700">
+          {currentStep === totalSteps ? "Submit" : "Next"}
+        </Button>
       </div>
     </div>
   )
