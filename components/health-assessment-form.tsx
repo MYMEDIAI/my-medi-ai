@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import MyMedLogo from "./mymed-logo"
+import NavigationButtons from "./navigation-buttons"
 import {
   User,
   Heart,
@@ -21,15 +22,12 @@ import {
   ArrowLeft,
   Download,
   Clock,
-  MapPin,
   Utensils,
   Pill,
   Dumbbell,
-  Hospital,
-  TestTube,
-  ShoppingCart,
-  Calendar,
   Timer,
+  Calculator,
+  Info,
 } from "lucide-react"
 
 interface VitalsData {
@@ -48,7 +46,9 @@ interface AssessmentData {
   weight: string // in kg
   height: string
   gender: string
-  location: string
+  town: string
+  state: string
+  country: string
 
   // Vitals
   vitals: VitalsData
@@ -82,6 +82,7 @@ interface MedicationSchedule {
   timing: string[]
   instructions: string
   duration: string
+  warning: string
 }
 
 interface MealPlan {
@@ -100,15 +101,14 @@ interface ExerciseSchedule {
   instructions: string
 }
 
-interface NearbyServices {
-  hospitals: Array<{ name: string; address: string; distance: string; phone: string }>
-  labs: Array<{ name: string; address: string; distance: string; phone: string }>
-  pharmacies: Array<{ name: string; address: string; distance: string; phone: string }>
-}
-
 interface AssessmentResult {
   riskLevel: "Low" | "Medium" | "High" | "Critical"
   riskScore: number
+  bmi: {
+    value: number
+    category: string
+    recommendation: string
+  }
   vitalsAnalysis: {
     bloodPressure: { status: string; recommendation: string }
     heartRate: { status: string; recommendation: string }
@@ -119,10 +119,61 @@ interface AssessmentResult {
   medications: MedicationSchedule[]
   dietPlan: MealPlan[]
   exerciseSchedule: ExerciseSchedule[]
-  nearbyServices: NearbyServices
   labTests: Array<{ test: string; urgency: string; instructions: string }>
   followUpSchedule: Array<{ type: string; when: string; instructions: string }>
   emergencyContacts: Array<{ service: string; number: string; when: string }>
+}
+
+// Indian states and major towns
+const indianStates = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Puducherry",
+]
+
+const townsByState: { [key: string]: string[] } = {
+  Maharashtra: ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad", "Solapur", "Kolhapur", "Sangli"],
+  Karnataka: ["Bangalore", "Mysore", "Hubli", "Mangalore", "Belgaum", "Gulbarga", "Davangere", "Shimoga"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Erode", "Vellore"],
+  Gujarat: ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Varanasi", "Meerut", "Allahabad", "Bareilly"],
+  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri", "Malda", "Bardhaman", "Kharagpur"],
+  Rajasthan: ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Udaipur", "Ajmer", "Bhilwara", "Alwar"],
+  Telangana: ["Hyderabad", "Warangal", "Nizamabad", "Khammam", "Karimnagar", "Ramagundam", "Mahbubnagar"],
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati"],
+  Kerala: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam", "Palakkad", "Alappuzha"],
+  Punjab: ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Firozpur", "Hoshiarpur"],
+  Haryana: ["Gurgaon", "Faridabad", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal"],
+  Delhi: ["New Delhi", "Central Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi"],
 }
 
 export default function HealthAssessmentForm() {
@@ -132,7 +183,9 @@ export default function HealthAssessmentForm() {
     weight: "",
     height: "",
     gender: "",
-    location: "",
+    town: "",
+    state: "",
+    country: "India",
     vitals: {
       bloodPressureSystolic: "",
       bloodPressureDiastolic: "",
@@ -207,6 +260,39 @@ export default function HealthAssessmentForm() {
     handleInputChange("chronicConditions", updatedConditions)
   }
 
+  const calculateBMI = (weight: string, height: string) => {
+    const weightKg = Number.parseFloat(weight)
+    const heightCm = Number.parseFloat(height)
+
+    if (!weightKg || !heightCm) return null
+
+    const heightM = heightCm / 100
+    const bmi = weightKg / (heightM * heightM)
+
+    let category = ""
+    let recommendation = ""
+
+    if (bmi < 18.5) {
+      category = "Underweight"
+      recommendation = "Consider increasing caloric intake with nutritious foods and consult a nutritionist"
+    } else if (bmi < 25) {
+      category = "Normal weight"
+      recommendation = "Maintain current weight through balanced diet and regular exercise"
+    } else if (bmi < 30) {
+      category = "Overweight"
+      recommendation = "Consider reducing caloric intake and increasing physical activity"
+    } else {
+      category = "Obese"
+      recommendation = "Consult healthcare provider for weight management plan and lifestyle changes"
+    }
+
+    return {
+      value: Number.parseFloat(bmi.toFixed(1)),
+      category,
+      recommendation,
+    }
+  }
+
   const analyzeVitals = (vitals: VitalsData) => {
     const systolic = Number.parseInt(vitals.bloodPressureSystolic) || 0
     const diastolic = Number.parseInt(vitals.bloodPressureDiastolic) || 0
@@ -269,6 +355,7 @@ export default function HealthAssessmentForm() {
     let riskScore = 20
     const age = Number.parseInt(assessmentData.age) || 0
     const vitalsAnalysis = analyzeVitals(assessmentData.vitals)
+    const bmi = calculateBMI(assessmentData.weight, assessmentData.height)
 
     // Calculate risk based on multiple factors
     if (age > 65) riskScore += 25
@@ -278,6 +365,12 @@ export default function HealthAssessmentForm() {
     riskScore += severity * 8
 
     riskScore += assessmentData.chronicConditions.length * 12
+
+    // BMI impact on risk
+    if (bmi) {
+      if (bmi.value < 18.5 || bmi.value > 30) riskScore += 15
+      else if (bmi.value > 25) riskScore += 8
+    }
 
     // Vitals impact on risk
     const systolic = Number.parseInt(assessmentData.vitals.bloodPressureSystolic) || 0
@@ -304,30 +397,52 @@ export default function HealthAssessmentForm() {
         dosage: "500mg",
         frequency: "Twice daily",
         timing: ["08:00", "20:00"],
-        instructions: "Take with meals to reduce stomach upset",
+        instructions: "Take with meals to reduce stomach upset. Monitor blood sugar levels.",
         duration: "Ongoing - as prescribed by doctor",
+        warning:
+          "⚠️ IMPORTANT: This is a general recommendation. Please consult your doctor before taking any medication.",
       })
     }
 
     if (assessmentData.chronicConditions.includes("Hypertension") || systolic > 140) {
       medications.push({
-        name: "Lisinopril",
-        dosage: "10mg",
+        name: "Amlodipine",
+        dosage: "5mg",
         frequency: "Once daily",
         timing: ["08:00"],
-        instructions: "Take at same time daily, monitor blood pressure",
+        instructions: "Take at same time daily, preferably in the morning. Monitor blood pressure regularly.",
         duration: "Ongoing - as prescribed by doctor",
+        warning:
+          "⚠️ IMPORTANT: This is a general recommendation. Please consult your doctor before taking any medication.",
       })
     }
 
     if (assessmentData.primarySymptom.toLowerCase().includes("pain")) {
       medications.push({
-        name: "Ibuprofen",
-        dosage: "400mg",
+        name: "Paracetamol",
+        dosage: "500mg",
         frequency: "Every 6-8 hours as needed",
         timing: ["08:00", "14:00", "20:00"],
-        instructions: "Take with food, do not exceed 1200mg daily",
-        duration: "3-5 days maximum",
+        instructions: "Take with food if stomach upset occurs. Do not exceed 4g (8 tablets) in 24 hours.",
+        duration: "3-5 days maximum for acute pain",
+        warning:
+          "⚠️ IMPORTANT: This is a general recommendation. Please consult your doctor before taking any medication.",
+      })
+    }
+
+    if (
+      assessmentData.primarySymptom.toLowerCase().includes("fever") ||
+      Number.parseFloat(assessmentData.vitals.temperature) > 37.5
+    ) {
+      medications.push({
+        name: "Paracetamol",
+        dosage: "650mg",
+        frequency: "Every 6 hours as needed",
+        timing: ["06:00", "12:00", "18:00", "00:00"],
+        instructions: "Take for fever reduction. Ensure adequate fluid intake. Monitor temperature.",
+        duration: "Until fever subsides, maximum 3 days",
+        warning:
+          "⚠️ IMPORTANT: This is a general recommendation. Please consult your doctor before taking any medication.",
       })
     }
 
@@ -337,47 +452,47 @@ export default function HealthAssessmentForm() {
         time: "07:00",
         meal: "Breakfast",
         foods: assessmentData.chronicConditions.includes("Diabetes Type 2")
-          ? ["2 boiled eggs", "1 slice whole grain toast", "1/2 avocado", "Green tea"]
-          : ["Oatmeal with berries", "Greek yogurt", "Almonds", "Coffee"],
+          ? ["2 boiled eggs", "1 slice whole grain bread", "1/2 avocado", "Green tea without sugar"]
+          : ["Oats upma with vegetables", "1 glass milk", "10 almonds", "1 banana"],
         calories: 350,
-        instructions: "Eat within 1 hour of waking. Include protein and fiber.",
+        instructions: "Eat within 1 hour of waking. Include protein and fiber for sustained energy.",
       },
       {
         time: "10:00",
         meal: "Mid-Morning Snack",
-        foods: ["Apple slices", "10 almonds", "Water"],
+        foods: ["1 apple", "10 almonds", "1 glass water"],
         calories: 120,
-        instructions: "Light snack to maintain energy levels",
+        instructions: "Light snack to maintain energy levels and prevent overeating at lunch.",
       },
       {
         time: "13:00",
         meal: "Lunch",
         foods: assessmentData.chronicConditions.includes("Diabetes Type 2")
-          ? ["Grilled chicken breast (100g)", "Quinoa (1/2 cup)", "Steamed broccoli", "Olive oil (1 tsp)"]
-          : ["Salmon fillet", "Brown rice", "Mixed vegetables", "Lemon dressing"],
+          ? ["100g grilled chicken/fish", "1/2 cup brown rice", "Mixed vegetable curry", "1 tsp ghee"]
+          : ["2 chapati", "Dal (lentils)", "Vegetable curry", "Curd", "Salad"],
         calories: 450,
-        instructions: "Balanced meal with lean protein, complex carbs, and vegetables",
+        instructions: "Balanced meal with lean protein, complex carbs, and vegetables. Eat slowly.",
       },
       {
         time: "16:00",
         meal: "Afternoon Snack",
-        foods: ["Carrot sticks", "Hummus (2 tbsp)", "Herbal tea"],
+        foods: ["Carrot and cucumber sticks", "2 tbsp hummus", "Herbal tea"],
         calories: 100,
-        instructions: "Healthy snack to prevent evening overeating",
+        instructions: "Healthy snack to prevent evening hunger and maintain blood sugar levels.",
       },
       {
         time: "19:00",
         meal: "Dinner",
-        foods: ["Grilled fish", "Sweet potato", "Green salad", "Olive oil dressing"],
+        foods: ["Grilled fish/paneer", "Quinoa/brown rice", "Steamed vegetables", "Green salad"],
         calories: 400,
-        instructions: "Light dinner, finish eating 3 hours before bedtime",
+        instructions: "Light dinner, finish eating 3 hours before bedtime for better digestion.",
       },
       {
         time: "21:00",
         meal: "Evening Snack (if needed)",
-        foods: ["Greek yogurt", "Berries"],
+        foods: ["1 glass warm milk", "2-3 dates"],
         calories: 80,
-        instructions: "Only if hungry, keep it light and protein-rich",
+        instructions: "Only if hungry. Light and easily digestible. Helps with sleep.",
       },
     ]
 
@@ -385,96 +500,61 @@ export default function HealthAssessmentForm() {
     const exerciseSchedule: ExerciseSchedule[] = [
       {
         time: "06:30",
-        activity: "Morning Walk",
+        activity: "Morning Walk/Yoga",
         duration: "30 minutes",
         intensity: "Moderate",
-        instructions: "Brisk walk in fresh air, maintain steady pace",
+        instructions: "Brisk walk in fresh air or gentle yoga. Start slowly and gradually increase pace.",
       },
       {
         time: "17:00",
-        activity: "Strength Training",
+        activity: "Strength Training/Bodyweight Exercises",
         duration: "20 minutes",
         intensity: "Light to Moderate",
-        instructions: "Focus on major muscle groups, 2-3 times per week",
+        instructions: "Push-ups, squats, lunges. Focus on major muscle groups, 2-3 times per week.",
       },
       {
         time: "21:30",
-        activity: "Stretching/Yoga",
+        activity: "Stretching/Meditation",
         duration: "15 minutes",
         intensity: "Light",
-        instructions: "Relaxing stretches to improve flexibility and sleep",
+        instructions: "Relaxing stretches and deep breathing to improve flexibility and prepare for sleep.",
       },
     ]
-
-    // Generate nearby services (mock data based on location)
-    const nearbyServices: NearbyServices = {
-      hospitals: [
-        {
-          name: "City General Hospital",
-          address: "123 Main St, " + (assessmentData.location || "Your City"),
-          distance: "2.3 km",
-          phone: "+1-555-0123",
-        },
-        {
-          name: "Regional Medical Center",
-          address: "456 Health Ave, " + (assessmentData.location || "Your City"),
-          distance: "4.1 km",
-          phone: "+1-555-0456",
-        },
-      ],
-      labs: [
-        {
-          name: "QuickLab Diagnostics",
-          address: "789 Test St, " + (assessmentData.location || "Your City"),
-          distance: "1.8 km",
-          phone: "+1-555-0789",
-        },
-        {
-          name: "MedTest Laboratory",
-          address: "321 Lab Rd, " + (assessmentData.location || "Your City"),
-          distance: "3.2 km",
-          phone: "+1-555-0321",
-        },
-      ],
-      pharmacies: [
-        {
-          name: "HealthPlus Pharmacy",
-          address: "654 Pill St, " + (assessmentData.location || "Your City"),
-          distance: "0.9 km",
-          phone: "+1-555-0654",
-        },
-        {
-          name: "MediCare Drugstore",
-          address: "987 Medicine Ave, " + (assessmentData.location || "Your City"),
-          distance: "1.5 km",
-          phone: "+1-555-0987",
-        },
-      ],
-    }
 
     const result: AssessmentResult = {
       riskLevel,
       riskScore: Math.min(riskScore, 100),
+      bmi: bmi || {
+        value: 0,
+        category: "Unable to calculate",
+        recommendation: "Please provide valid weight and height",
+      },
       vitalsAnalysis,
       medications,
       dietPlan,
       exerciseSchedule,
-      nearbyServices,
       labTests: [
         {
           test: "Complete Blood Count (CBC)",
           urgency: riskLevel === "Critical" ? "Within 24 hours" : "Within 1 week",
-          instructions: "Fasting not required, bring ID and insurance card",
+          instructions: "Fasting not required. Bring ID and any insurance documents.",
         },
         {
           test: "Comprehensive Metabolic Panel",
           urgency: riskLevel === "Critical" ? "Within 24 hours" : "Within 1 week",
-          instructions: "Fast for 8-12 hours before test",
+          instructions: "Fast for 8-12 hours before test. Only water allowed during fasting.",
         },
         {
           test: "Lipid Panel",
           urgency: "Within 2 weeks",
-          instructions: "Fast for 9-12 hours, avoid alcohol 24 hours prior",
+          instructions: "Fast for 9-12 hours. Avoid alcohol 24 hours prior to test.",
+        },
+        {
+          test: "HbA1c (if diabetic)",
+          urgency: assessmentData.chronicConditions.some((c) => c.includes("Diabetes"))
+            ? "Within 1 week"
+            : "Within 1 month",
+          instructions: "No fasting required. Shows average blood sugar over 3 months.",
         },
       ],
       followUpSchedule: [
@@ -482,29 +562,30 @@ export default function HealthAssessmentForm() {
           type: "Primary Care Physician",
           when:
             riskLevel === "Critical" ? "Within 24 hours" : riskLevel === "High" ? "Within 3 days" : "Within 2 weeks",
-          instructions: "Bring medication list, symptom diary, and test results",
+          instructions: "Bring this report, medication list, and symptom diary. Discuss all recommendations.",
         },
         {
           type: "Specialist Consultation",
           when: riskLevel === "Critical" ? "Within 48 hours" : "Within 1 month",
-          instructions: "Based on primary care referral and specific conditions",
+          instructions:
+            "Based on primary care referral. May include cardiologist, endocrinologist, or other specialists.",
         },
       ],
       emergencyContacts: [
         {
           service: "Emergency Services",
-          number: "911",
-          when: "Severe chest pain, difficulty breathing, loss of consciousness",
+          number: "102 / 108",
+          when: "Severe chest pain, difficulty breathing, loss of consciousness, severe bleeding",
         },
         {
-          service: "Poison Control",
-          number: "1-800-222-1222",
-          when: "Accidental overdose or poisoning",
+          service: "Ambulance Service",
+          number: "108",
+          when: "Medical emergencies requiring immediate transport to hospital",
         },
         {
-          service: "Mental Health Crisis",
-          number: "988",
-          when: "Suicidal thoughts or severe mental health crisis",
+          service: "Mental Health Helpline",
+          number: "9152987821",
+          when: "Mental health crisis, suicidal thoughts, severe anxiety or depression",
         },
       ],
     }
@@ -518,19 +599,64 @@ export default function HealthAssessmentForm() {
     setAssessmentResult(result)
   }
 
+  const resetForm = () => {
+    setCurrentStep(1)
+    setAssessmentData({
+      age: "",
+      weight: "",
+      height: "",
+      gender: "",
+      town: "",
+      state: "",
+      country: "India",
+      vitals: {
+        bloodPressureSystolic: "",
+        bloodPressureDiastolic: "",
+        heartRate: "",
+        temperature: "",
+        oxygenSaturation: "",
+        bloodSugar: "",
+        respiratoryRate: "",
+      },
+      primarySymptom: "",
+      symptomDuration: "",
+      symptomSeverity: "",
+      additionalSymptoms: "",
+      chronicConditions: [],
+      currentMedications: [],
+      allergies: [],
+      familyHistory: [],
+      exerciseFrequency: "",
+      smokingStatus: "",
+      alcoholConsumption: "",
+      sleepHours: "",
+      stressLevel: "",
+      dietType: "",
+      waterIntake: "",
+    })
+    setAssessmentResult(null)
+    setIsProcessing(false)
+  }
+
   const exportDetailedReport = () => {
     if (!assessmentResult) return
 
     const reportContent = `
 MYMED.AI COMPREHENSIVE HEALTH ASSESSMENT REPORT
 Generated: ${new Date().toLocaleString()}
-Patient Location: ${assessmentData.location}
+Patient Location: ${assessmentData.town}, ${assessmentData.state}, ${assessmentData.country}
 
 === PATIENT INFORMATION ===
 Age: ${assessmentData.age} years
 Weight: ${assessmentData.weight} kg
-Height: ${assessmentData.height}
+Height: ${assessmentData.height} cm
 Gender: ${assessmentData.gender}
+BMI: ${assessmentResult.bmi.value} (${assessmentResult.bmi.category})
+
+=== BMI ANALYSIS ===
+BMI Value: ${assessmentResult.bmi.value}
+Category: ${assessmentResult.bmi.category}
+Recommendation: ${assessmentResult.bmi.recommendation}
 
 === VITAL SIGNS ANALYSIS ===
 Blood Pressure: ${assessmentData.vitals.bloodPressureSystolic}/${assessmentData.vitals.bloodPressureDiastolic} mmHg
@@ -557,7 +683,10 @@ Recommendation: ${assessmentResult.vitalsAnalysis.bloodSugar.recommendation}
 Risk Level: ${assessmentResult.riskLevel}
 Risk Score: ${assessmentResult.riskScore}/100
 
-=== MEDICATION SCHEDULE ===
+=== MEDICATION RECOMMENDATIONS ===
+⚠️ IMPORTANT DISCLAIMER: These are general recommendations based on your symptoms and conditions. 
+Please consult with a qualified medical practitioner before taking any medication.
+
 ${assessmentResult.medications
   .map(
     (med) => `
@@ -566,6 +695,7 @@ Frequency: ${med.frequency}
 Timing: ${med.timing.join(", ")}
 Instructions: ${med.instructions}
 Duration: ${med.duration}
+${med.warning}
 `,
   )
   .join("\n")}
@@ -593,44 +723,6 @@ Instructions: ${exercise.instructions}
   )
   .join("\n")}
 
-=== NEARBY HEALTHCARE SERVICES ===
-
-HOSPITALS:
-${assessmentResult.nearbyServices.hospitals
-  .map(
-    (hospital) => `
-${hospital.name}
-Address: ${hospital.address}
-Distance: ${hospital.distance}
-Phone: ${hospital.phone}
-`,
-  )
-  .join("\n")}
-
-LABORATORIES:
-${assessmentResult.nearbyServices.labs
-  .map(
-    (lab) => `
-${lab.name}
-Address: ${lab.address}
-Distance: ${lab.distance}
-Phone: ${lab.phone}
-`,
-  )
-  .join("\n")}
-
-PHARMACIES:
-${assessmentResult.nearbyServices.pharmacies
-  .map(
-    (pharmacy) => `
-${pharmacy.name}
-Address: ${pharmacy.address}
-Distance: ${pharmacy.distance}
-Phone: ${pharmacy.phone}
-`,
-  )
-  .join("\n")}
-
 === RECOMMENDED LAB TESTS ===
 ${assessmentResult.labTests
   .map(
@@ -652,7 +744,7 @@ Instructions: ${followUp.instructions}
   )
   .join("\n")}
 
-=== EMERGENCY CONTACTS ===
+=== EMERGENCY CONTACTS (INDIA) ===
 ${assessmentResult.emergencyContacts
   .map(
     (contact) => `
@@ -662,17 +754,22 @@ When to call: ${contact.when}
   )
   .join("\n")}
 
-IMPORTANT DISCLAIMER:
-This assessment is for informational purposes only and does not replace professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare professionals for medical concerns.
+=== IMPORTANT DISCLAIMERS ===
+1. This assessment is for informational purposes only and does not replace professional medical advice.
+2. All medication recommendations must be confirmed by a qualified medical practitioner.
+3. This is a free service provided by MYMED.AI startup for health awareness.
+4. Nearby healthcare services directory will be available soon.
+5. Always consult with qualified healthcare professionals for medical concerns.
 
 Report generated by MYMED.AI - Your AI Healthcare Assistant
+A healthcare startup providing free AI-powered health assessments for India
     `
 
     const blob = new Blob([reportContent], { type: "text/plain" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `mymed-detailed-health-assessment-${new Date().toISOString().split("T")[0]}.txt`
+    a.download = `mymed-health-assessment-${new Date().toISOString().split("T")[0]}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -692,25 +789,48 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
     }
   }
 
+  const getBMIColor = (category: string) => {
+    switch (category) {
+      case "Underweight":
+        return "text-blue-600"
+      case "Normal weight":
+        return "text-green-600"
+      case "Overweight":
+        return "text-yellow-600"
+      case "Obese":
+        return "text-red-600"
+      default:
+        return "text-gray-600"
+    }
+  }
+
   if (assessmentResult) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 p-4">
+        {/* Header with Navigation */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="cursor-pointer" onClick={() => (window.location.href = "/")}>
+            <MyMedLogo size="lg" />
+          </div>
+          <NavigationButtons onReset={resetForm} showReset={true} variant="compact" />
+        </div>
+
         {/* Results Header */}
         <Card>
           <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <MyMedLogo size="sm" showText={false} />
                 <span>Comprehensive Health Assessment Results</span>
+                <Badge className="bg-green-100 text-green-800">Free Service</Badge>
               </div>
               <Button onClick={exportDetailedReport} variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-2" />
-                Export Detailed Report
+                Export Report
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               <div className="text-center">
                 <div
                   className={`inline-flex items-center px-4 py-2 rounded-full border-2 ${getRiskColor(assessmentResult.riskLevel)}`}
@@ -724,39 +844,87 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
                 <p className="text-sm text-gray-600">Risk Score</p>
               </div>
               <div className="text-center">
+                <div className={`text-3xl font-bold ${getBMIColor(assessmentResult.bmi.category)}`}>
+                  {assessmentResult.bmi.value}
+                </div>
+                <p className="text-sm text-gray-600">BMI ({assessmentResult.bmi.category})</p>
+              </div>
+              <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600">{new Date().toLocaleDateString()}</div>
                 <p className="text-sm text-gray-600">Assessment Date</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">{assessmentData.location}</div>
+                <div className="text-lg font-bold text-green-600">
+                  {assessmentData.town}, {assessmentData.state}
+                </div>
                 <p className="text-sm text-gray-600">Location</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Free Service Notice */}
+        <Alert className="border-green-200 bg-green-50">
+          <Info className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            <strong>Free Service:</strong> This comprehensive health assessment is provided free by MYMED.AI startup.
+            Nearby healthcare services directory will be available soon. This service is designed for health awareness
+            in India.
+          </AlertDescription>
+        </Alert>
+
         {/* Critical Alert */}
         {assessmentResult.riskLevel === "Critical" && (
           <Alert className="border-red-600 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
-              <strong>CRITICAL RISK DETECTED:</strong> Seek immediate medical attention. Contact emergency services if
-              experiencing severe symptoms.
+              <strong>CRITICAL RISK DETECTED:</strong> Seek immediate medical attention. Contact emergency services:
+              102/108
             </AlertDescription>
           </Alert>
         )}
 
-        <Tabs defaultValue="vitals" className="w-full">
+        <Tabs defaultValue="bmi" className="w-full">
           <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="vitals">Vitals Analysis</TabsTrigger>
+            <TabsTrigger value="bmi">BMI & Vitals</TabsTrigger>
             <TabsTrigger value="medications">Medications</TabsTrigger>
             <TabsTrigger value="diet">Diet Plan</TabsTrigger>
             <TabsTrigger value="exercise">Exercise</TabsTrigger>
-            <TabsTrigger value="services">Nearby Services</TabsTrigger>
+            <TabsTrigger value="tests">Lab Tests</TabsTrigger>
             <TabsTrigger value="followup">Follow-up</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="vitals" className="space-y-4">
+          <TabsContent value="bmi" className="space-y-4">
+            {/* BMI Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Calculator className="w-5 h-5 text-blue-600" />
+                  <span>BMI Analysis</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className={`text-4xl font-bold ${getBMIColor(assessmentResult.bmi.category)}`}>
+                      {assessmentResult.bmi.value}
+                    </div>
+                    <p className="text-sm text-gray-600">BMI Value</p>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-xl font-semibold ${getBMIColor(assessmentResult.bmi.category)}`}>
+                      {assessmentResult.bmi.category}
+                    </div>
+                    <p className="text-sm text-gray-600">Category</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-gray-700">{assessmentResult.bmi.recommendation}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Vitals Analysis */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(assessmentResult.vitalsAnalysis).map(([vital, analysis]) => (
                 <Card key={vital}>
@@ -778,10 +946,20 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
           </TabsContent>
 
           <TabsContent value="medications" className="space-y-4">
+            {/* Medication Disclaimer */}
+            <Alert className="border-orange-200 bg-orange-50">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>IMPORTANT:</strong> These are general medication recommendations based on your symptoms. Please
+                consult with a qualified medical practitioner before taking any medication. Do not self-medicate based
+                on this assessment alone.
+              </AlertDescription>
+            </Alert>
+
             {assessmentResult.medications.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {assessmentResult.medications.map((med, index) => (
-                  <Card key={index}>
+                  <Card key={index} className="border-orange-200">
                     <CardHeader>
                       <CardTitle className="flex items-center space-x-2 text-blue-700">
                         <Pill className="w-5 h-5" />
@@ -810,6 +988,9 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
                       </div>
                       <div className="text-xs text-gray-600">
                         <strong>Duration:</strong> {med.duration}
+                      </div>
+                      <div className="bg-orange-50 border border-orange-200 p-3 rounded-lg">
+                        <p className="text-xs text-orange-800 font-medium">{med.warning}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -886,128 +1067,50 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
             </div>
           </TabsContent>
 
-          <TabsContent value="services" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Hospitals */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-red-700">
-                    <Hospital className="w-5 h-5" />
-                    <span>Nearby Hospitals</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {assessmentResult.nearbyServices.hospitals.map((hospital, index) => (
-                    <div key={index} className="border-l-4 border-red-200 pl-4">
-                      <h4 className="font-medium">{hospital.name}</h4>
-                      <div className="flex items-center space-x-1 text-sm text-gray-600">
-                        <MapPin className="w-3 h-3" />
-                        <span>{hospital.address}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-blue-600">{hospital.distance}</span>
-                        <span className="text-green-600">{hospital.phone}</span>
-                      </div>
+          <TabsContent value="tests" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {assessmentResult.labTests.map((test, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2 text-purple-700">
+                      <FileText className="w-5 h-5" />
+                      <span>{test.test}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline">{test.urgency}</Badge>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Labs */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-blue-700">
-                    <TestTube className="w-5 h-5" />
-                    <span>Nearby Labs</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {assessmentResult.nearbyServices.labs.map((lab, index) => (
-                    <div key={index} className="border-l-4 border-blue-200 pl-4">
-                      <h4 className="font-medium">{lab.name}</h4>
-                      <div className="flex items-center space-x-1 text-sm text-gray-600">
-                        <MapPin className="w-3 h-3" />
-                        <span>{lab.address}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-blue-600">{lab.distance}</span>
-                        <span className="text-green-600">{lab.phone}</span>
-                      </div>
+                    <div className="bg-purple-50 p-3 rounded-lg">
+                      <p className="text-sm text-purple-800">{test.instructions}</p>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Pharmacies */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-green-700">
-                    <ShoppingCart className="w-5 h-5" />
-                    <span>Nearby Pharmacies</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {assessmentResult.nearbyServices.pharmacies.map((pharmacy, index) => (
-                    <div key={index} className="border-l-4 border-green-200 pl-4">
-                      <h4 className="font-medium">{pharmacy.name}</h4>
-                      <div className="flex items-center space-x-1 text-sm text-gray-600">
-                        <MapPin className="w-3 h-3" />
-                        <span>{pharmacy.address}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-blue-600">{pharmacy.distance}</span>
-                        <span className="text-green-600">{pharmacy.phone}</span>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
 
           <TabsContent value="followup" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Lab Tests */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-purple-700">
-                    <TestTube className="w-5 h-5" />
-                    <span>Recommended Lab Tests</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {assessmentResult.labTests.map((test, index) => (
-                    <div key={index} className="border border-purple-200 p-3 rounded-lg">
-                      <h4 className="font-medium">{test.test}</h4>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline">{test.urgency}</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">{test.instructions}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
               {/* Follow-up Schedule */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-indigo-700">
-                    <Calendar className="w-5 h-5" />
-                    <span>Follow-up Schedule</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {assessmentResult.followUpSchedule.map((followUp, index) => (
-                    <div key={index} className="border border-indigo-200 p-3 rounded-lg">
-                      <h4 className="font-medium">{followUp.type}</h4>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline">{followUp.when}</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">{followUp.instructions}</p>
+              {assessmentResult.followUpSchedule.map((followUp, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2 text-indigo-700">
+                      <Clock className="w-5 h-5" />
+                      <span>{followUp.type}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline">{followUp.when}</Badge>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
+                    <div className="bg-indigo-50 p-3 rounded-lg">
+                      <p className="text-sm text-indigo-800">{followUp.instructions}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
 
             {/* Emergency Contacts */}
@@ -1015,7 +1118,7 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 text-red-700">
                   <AlertTriangle className="w-5 h-5" />
-                  <span>Emergency Contacts</span>
+                  <span>Emergency Contacts (India)</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1033,13 +1136,18 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
           </TabsContent>
         </Tabs>
 
-        <div className="text-center text-sm text-gray-500 bg-gray-50 p-4 rounded-lg">
-          <MyMedLogo size="sm" className="mx-auto mb-2" />
-          <p>
-            This comprehensive assessment is for informational purposes only and does not replace professional medical
-            advice.
-          </p>
-          <p className="mt-1">Data is processed locally and not stored on our servers.</p>
+        {/* Footer Disclaimer */}
+        <div className="text-center text-sm text-gray-500 bg-gray-50 p-6 rounded-lg">
+          <div className="cursor-pointer mb-3" onClick={() => (window.location.href = "/")}>
+            <MyMedLogo size="md" className="mx-auto" />
+          </div>
+          <div className="space-y-2">
+            <p className="font-medium">Free AI-Powered Health Assessment Service</p>
+            <p>This comprehensive assessment is provided free by MYMED.AI startup for health awareness in India.</p>
+            <p>All medication recommendations must be confirmed by a qualified medical practitioner.</p>
+            <p>Nearby healthcare services directory will be available soon.</p>
+            <p>Data is processed locally and not stored on our servers.</p>
+          </div>
         </div>
       </div>
     )
@@ -1047,6 +1155,14 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
 
   return (
     <div className="max-w-4xl mx-auto p-4">
+      {/* Header with Navigation */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="cursor-pointer" onClick={() => (window.location.href = "/")}>
+          <MyMedLogo size="lg" />
+        </div>
+        <NavigationButtons onReset={resetForm} showReset={true} variant="compact" />
+      </div>
+
       <div className="mb-6">
         <div className="flex justify-between mb-1">
           <span className="text-sm">
@@ -1105,23 +1221,64 @@ Report generated by MYMED.AI - Your AI Healthcare Assistant
                 />
               </div>
               <div>
-                <Label htmlFor="height">Height *</Label>
+                <Label htmlFor="height">Height (cm) *</Label>
                 <Input
                   id="height"
                   value={assessmentData.height}
                   onChange={(e) => handleInputChange("height", e.target.value)}
-                  placeholder="e.g. 175 cm or 5'9&quot;"
+                  placeholder="Enter height in cm (e.g. 175)"
+                  type="number"
                 />
               </div>
             </div>
-            <div>
-              <Label htmlFor="location">Location (City, State/Country) *</Label>
-              <Input
-                id="location"
-                value={assessmentData.location}
-                onChange={(e) => handleInputChange("location", e.target.value)}
-                placeholder="e.g. New York, NY or London, UK"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="state">State *</Label>
+                <select
+                  id="state"
+                  value={assessmentData.state}
+                  onChange={(e) => {
+                    handleInputChange("state", e.target.value)
+                    handleInputChange("town", "") // Reset town when state changes
+                  }}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Select State</option>
+                  {indianStates.map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="town">Town/City *</Label>
+                <select
+                  id="town"
+                  value={assessmentData.town}
+                  onChange={(e) => handleInputChange("town", e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                  disabled={!assessmentData.state}
+                >
+                  <option value="">Select Town/City</option>
+                  {assessmentData.state &&
+                    townsByState[assessmentData.state]?.map((town) => (
+                      <option key={town} value={town}>
+                        {town}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  value={assessmentData.country}
+                  onChange={(e) => handleInputChange("country", e.target.value)}
+                  placeholder="India"
+                  disabled
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
