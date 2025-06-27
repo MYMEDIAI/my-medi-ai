@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Record Vital - Medi.ai{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Record Vital Sign</h1>
+
+    <form method="POST" class="bg-white shadow-sm rounded-lg p-6">
+        <div class="space-y-6">
+            <div>
+                <label for="vital_type" class="block text-sm font-medium text-gray-700">Vital Type</label>
+                <select id="vital_type" name="vital_type" required
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <option value="">Select vital type</option>
+                    <option value="blood_pressure">Blood Pressure</option>
+                    <option value="heart_rate">Heart Rate</option>
+                    <option value="weight">Weight</option>
+                    <option value="height">Height</option>
+                    <option value="temperature">Temperature</option>
+                    <option value="blood_sugar">Blood Sugar</option>
+                    <option value="oxygen_saturation">Oxygen Saturation</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="value" class="block text-sm font-medium text-gray-700">Value</label>
+                <input type="text" id="value" name="value" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                       placeholder="e.g., 120/80, 72, 150">
+            </div>
+
+            <div>
+                <label for="unit" class="block text-sm font-medium text-gray-700">Unit</label>
+                <input type="text" id="unit" name="unit"
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                       placeholder="e.g., mmHg, bpm, lbs, °F">
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <a href="{{ url_for('vitals') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    Record Vital
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

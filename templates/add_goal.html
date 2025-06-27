@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Set Health Goal - Medi.ai{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Set Health Goal</h1>
+
+    <form method="POST" class="bg-white shadow-sm rounded-lg p-6">
+        <div class="space-y-6">
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700">Goal Title</label>
+                <input type="text" id="title" name="title" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                       placeholder="e.g., Lose 10 pounds, Exercise 3 times per week">
+            </div>
+
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea id="description" name="description" rows="3"
+                          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="Describe your goal and why it's important to you..."></textarea>
+            </div>
+
+            <div>
+                <label for="target_value" class="block text-sm font-medium text-gray-700">Target Value</label>
+                <input type="text" id="target_value" name="target_value"
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                       placeholder="e.g., 150 lbs, 30 minutes, 3 times per week">
+            </div>
+
+            <div>
+                <label for="target_date" class="block text-sm font-medium text-gray-700">Target Date</label>
+                <input type="date" id="target_date" name="target_date"
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <a href="{{ url_for('goals') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                    Set Goal
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

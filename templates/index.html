@@ -25,16 +25,57 @@
 
         <div class="mt-16 grid md:grid-cols-3 gap-8">
             <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="text-blue-600 text-3xl mb-4">
+                    <i class="fas fa-file-medical"></i>
+                </div>
                 <h3 class="text-xl font-semibold mb-4">Health Records</h3>
                 <p class="text-gray-600">Securely store and organize all your medical records in one place.</p>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="text-blue-600 text-3xl mb-4">
+                    <i class="fas fa-robot"></i>
+                </div>
                 <h3 class="text-xl font-semibold mb-4">AI Assistant</h3>
                 <p class="text-gray-600">Get personalized health insights and recommendations from our AI.</p>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="text-blue-600 text-3xl mb-4">
+                    <i class="fas fa-users"></i>
+                </div>
                 <h3 class="text-xl font-semibold mb-4">Family Care</h3>
                 <p class="text-gray-600">Manage health information for your entire family in one account.</p>
+            </div>
+        </div>
+
+        <div class="mt-16 grid md:grid-cols-2 gap-8 items-center">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">Track Your Health Journey</h2>
+                <ul class="space-y-4">
+                    <li class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        <span>Monitor vital signs and health metrics</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        <span>Set and track health goals</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        <span>Get AI-powered health insights</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        <span>Secure and private data storage</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <h3 class="text-2xl font-semibold mb-4">Ready to get started?</h3>
+                <p class="text-gray-600 mb-6">Join thousands of users who trust Medi.ai with their health data.</p>
+                <a href="{{ url_for('register') }}" 
+                   class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition block text-center">
+                    Create Your Account
+                </a>
             </div>
         </div>
     </div>
