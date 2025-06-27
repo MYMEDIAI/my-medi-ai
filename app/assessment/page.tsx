@@ -1,24 +1,31 @@
 import HealthAssessmentForm from "@/components/health-assessment-form"
-import NavigationButtons from "@/components/navigation-buttons"
+import MyMedLogo from "@/components/mymed-logo"
+import PoweredByFooter from "@/components/powered-by-footer"
 
 export default function AssessmentPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 py-8">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="text-center flex-1">
-            <h1 className="text-3xl font-bold text-blue-900 mb-4">Comprehensive Health Assessment</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+      {/* Header */}
+      <header className="bg-white border-b border-blue-100 sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <MyMedLogo size="lg" />
+        </div>
+      </header>
+
+      <div className="py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-blue-900 mb-4">MYMED.AI Health Assessment</h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Get personalized AI recommendations for medications, doctors, labs, diet, and exercise based on your
-              health profile.
+              Get comprehensive AI-powered health analysis with risk assessment, personalized recommendations, and
+              detailed action plans
             </p>
           </div>
-          <div className="hidden md:block">
-            <NavigationButtons showReset={false} />
-          </div>
+          <HealthAssessmentForm />
         </div>
-        <HealthAssessmentForm />
       </div>
+
+      <PoweredByFooter />
     </div>
   )
 }
