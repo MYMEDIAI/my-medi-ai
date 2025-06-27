@@ -23,7 +23,9 @@ import {
   Clock,
   MapPin,
   ArrowLeft,
+  ArrowRight,
   Download,
+  Loader2,
 } from "lucide-react"
 
 interface AssessmentData {
@@ -129,6 +131,33 @@ export default function HealthAssessmentForm() {
       ? currentConditions.filter((c) => c !== condition)
       : [...currentConditions, condition]
     handleInputChange(field, updatedConditions)
+  }
+
+  const validateCurrentStep = (): boolean => {
+    switch (currentStep) {
+      case 1:
+        return !!(assessmentData.age && assessmentData.gender)
+      case 2:
+        return !!(assessmentData.primarySymptom && assessmentData.symptomDuration && assessmentData.symptomSeverity)
+      case 3:
+        return true // Medical history is optional
+      case 4:
+        return true // Lifestyle is optional
+      default:
+        return false
+    }
+  }
+
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      if (validateCurrentStep()) {
+        setCurrentStep((prev) => prev + 1)
+      } else {
+        alert("Please fill in all required fields before proceeding.")
+      }
+    } else {
+      handleSubmit()
+    }
   }
 
   const generateAssessment = async (): Promise<AssessmentResult> => {
@@ -256,6 +285,11 @@ export default function HealthAssessmentForm() {
   }
 
   const handleSubmit = async () => {
+    if (!validateCurrentStep()) {
+      alert("Please fill in all required fields before submitting.")
+      return
+    }
+
     const result = await generateAssessment()
     setAssessmentResult(result)
   }
@@ -353,6 +387,54 @@ Your AI Healthcare Assistant
     }
   }
 
+  const resetForm = () => {
+    setCurrentStep(1)
+    setAssessmentData({
+      age: "",
+      weight: "",
+      height: "",
+      gender: "",
+      location: "",
+      primarySymptom: "",
+      symptomDuration: "",
+      symptomSeverity: "",
+      additionalSymptoms: "",
+      chronicConditions: [],
+      currentMedications: [],
+      allergies: [],
+      familyHistory: [],
+      exerciseFrequency: "",
+      smokingStatus: "",
+      alcoholConsumption: "",
+      sleepHours: "",
+      stressLevel: "",
+    })
+    setAssessmentResult(null)
+    setIsProcessing(false)
+  }
+
+  if (isProcessing) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center justify-center space-y-4 py-12">
+              <Loader2 className="w-12 h-12 animate-spin text-purple-600" />
+              <h3 className="text-xl font-semibold text-gray-900">Processing Your Assessment</h3>
+              <p className="text-gray-600 text-center max-w-md">
+                Our AI is analyzing your health information and generating personalized recommendations. This may take a
+                few moments.
+              </p>
+              <div className="w-full max-w-xs">
+                <Progress value={66} className="w-full" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   if (assessmentResult) {
     return (
       <div className="max-w-6xl mx-auto space-y-6">
@@ -364,10 +446,15 @@ Your AI Healthcare Assistant
                 <MyMedLogo size="sm" showText={false} />
                 <span>Your Health Assessment Results</span>
               </div>
-              <Button onClick={exportReport} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export Report
-              </Button>
+              <div className="flex space-x-2">
+                <Button onClick={resetForm} variant="outline" size="sm">
+                  New Assessment
+                </Button>
+                <Button onClick={exportReport} variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Report
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
@@ -589,8 +676,9 @@ Your AI Healthcare Assistant
       </div>
 
       {/* Step 1: Personal Information */}
-      {currentStep === 1 && (
-        <Card>
+      {currentStep === 1 &&
+        (
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <User className="w-5 h-5 text-purple-600" />
@@ -651,7 +739,7 @@ Your AI Healthcare Assistant
                     value={assessmentData.height}
                     onChange={(e) => handleInputChange("height", e.target.value)}
                     placeholder="e.g., 5'8\" or 172 cm"
-                    className="pl-10 focus:ring-purple-500"
+                    className=\"pl-10 focus:ring-purple-500"
                   />
                 </div>
               </div>
@@ -672,7 +760,7 @@ Your AI Healthcare Assistant
             </div>
           </CardContent>
         </Card>
-      )}
+        )}
 
       {/* Step 2: Current Symptoms */}
       {currentStep === 2 && (
@@ -698,7 +786,7 @@ Your AI Healthcare Assistant
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="symptomDuration">How long have you had this symptom?</Label>
+                <Label htmlFor="symptomDuration">How long have you had this symptom? *</Label>
                 <select
                   id="symptomDuration"
                   value={assessmentData.symptomDuration}
@@ -716,7 +804,7 @@ Your AI Healthcare Assistant
                 </select>
               </div>
               <div>
-                <Label htmlFor="symptomSeverity">Severity of Symptom (1-10)</Label>
+                <Label htmlFor="symptomSeverity">Severity of Symptom (1-10) *</Label>
                 <select
                   id="symptomSeverity"
                   value={assessmentData.symptomSeverity}
@@ -760,12 +848,17 @@ Your AI Healthcare Assistant
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="chronicConditions">Chronic Conditions</Label>
+              <p className="text-sm text-gray-600 mb-2">Click to select any conditions that apply to you:</p>
               <div className="flex flex-wrap gap-2">
                 {commonConditions.map((condition) => (
                   <Badge
                     key={condition}
                     onClick={() => handleConditionToggle(condition, "chronicConditions")}
-                    className={`cursor-pointer ${assessmentData.chronicConditions.includes(condition) ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"}`}
+                    className={`cursor-pointer transition-colors ${
+                      assessmentData.chronicConditions.includes(condition)
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
                   >
                     {condition}
                   </Badge>
@@ -779,7 +872,7 @@ Your AI Healthcare Assistant
                 id="currentMedications"
                 value={assessmentData.currentMedications.join(", ")}
                 onChange={(e) => handleInputChange("currentMedications", e.target.value.split(", ").filter(Boolean))}
-                placeholder="List all medications you are currently taking"
+                placeholder="List all medications you are currently taking (separate with commas)"
                 className="focus:ring-purple-500"
                 rows={3}
               />
@@ -791,7 +884,7 @@ Your AI Healthcare Assistant
                 id="allergies"
                 value={assessmentData.allergies.join(", ")}
                 onChange={(e) => handleInputChange("allergies", e.target.value.split(", ").filter(Boolean))}
-                placeholder="List any known allergies"
+                placeholder="List any known allergies (separate with commas)"
                 className="focus:ring-purple-500"
                 rows={3}
               />
@@ -803,7 +896,7 @@ Your AI Healthcare Assistant
                 id="familyHistory"
                 value={assessmentData.familyHistory.join(", ")}
                 onChange={(e) => handleInputChange("familyHistory", e.target.value.split(", ").filter(Boolean))}
-                placeholder="List any significant health issues in your family"
+                placeholder="List any significant health issues in your family (separate with commas)"
                 className="focus:ring-purple-500"
                 rows={3}
               />
@@ -832,8 +925,8 @@ Your AI Healthcare Assistant
               >
                 <option value="">Select frequency</option>
                 <option value="never">Never</option>
-                <option value="occasionally">Occasionally</option>
-                <option value="regularly">Regularly</option>
+                <option value="occasionally">Occasionally (1-2 times per week)</option>
+                <option value="regularly">Regularly (3+ times per week)</option>
               </select>
             </div>
 
@@ -846,9 +939,9 @@ Your AI Healthcare Assistant
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">Select status</option>
-                <option value="never">Never</option>
-                <option value="former">Former</option>
-                <option value="current">Current</option>
+                <option value="never">Never smoked</option>
+                <option value="former">Former smoker</option>
+                <option value="current">Current smoker</option>
               </select>
             </div>
 
@@ -862,8 +955,8 @@ Your AI Healthcare Assistant
               >
                 <option value="">Select consumption</option>
                 <option value="never">Never</option>
-                <option value="occasionally">Occasionally</option>
-                <option value="regularly">Regularly</option>
+                <option value="occasionally">Occasionally (1-2 drinks per week)</option>
+                <option value="regularly">Regularly (3+ drinks per week)</option>
               </select>
             </div>
 
@@ -876,6 +969,8 @@ Your AI Healthcare Assistant
                 onChange={(e) => handleInputChange("sleepHours", e.target.value)}
                 placeholder="e.g., 7"
                 className="focus:ring-purple-500"
+                min="1"
+                max="12"
               />
             </div>
 
@@ -900,7 +995,7 @@ Your AI Healthcare Assistant
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between">
+      <div className="flex justify-between mt-8">
         <Button
           onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
           variant="outline"
@@ -909,9 +1004,27 @@ Your AI Healthcare Assistant
           <ArrowLeft className="w-4 h-4 mr-2" />
           Previous
         </Button>
-        <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700">
-          {currentStep === totalSteps ? "Submit" : "Next"}
+        <Button onClick={handleNext} className="bg-purple-600 hover:bg-purple-700" disabled={!validateCurrentStep()}>
+          {currentStep === totalSteps ? (
+            <>
+              Submit Assessment
+              <CheckCircle className="w-4 h-4 ml-2" />
+            </>
+          ) : (
+            <>
+              Next
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </>
+          )}
         </Button>
+      </div>
+
+      {/* Step Summary */}
+      <div className="mt-4 text-center text-sm text-gray-500">
+        {currentStep === 1 && "Fill in your basic information to get started"}
+        {currentStep === 2 && "Describe your current symptoms and concerns"}
+        {currentStep === 3 && "Share your medical history (optional but helpful)"}
+        {currentStep === 4 && "Tell us about your lifestyle habits"}
       </div>
     </div>
   )
