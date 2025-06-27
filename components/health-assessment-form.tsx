@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import NavigationButtons from "@/components/navigation-buttons"
 import {
   User,
   Activity,
@@ -25,6 +26,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Zap,
+  Printer,
 } from "lucide-react"
 
 interface HealthAssessment {
@@ -111,6 +113,33 @@ export default function HealthAssessmentForm() {
         medicalHistory: prev.medicalHistory.filter((c) => c !== condition),
       }))
     }
+  }
+
+  const resetAssessment = () => {
+    setRecommendations(null)
+    setCurrentStep(1)
+    setError(null)
+    setAiProvider(null)
+    setAssessment({
+      age: "",
+      gender: "",
+      weight: "",
+      height: "",
+      location: "",
+      symptoms: "",
+      symptomDuration: "",
+      symptomSeverity: "",
+      medicalHistory: [],
+      currentMedications: "",
+      allergies: "",
+      activityLevel: "",
+      dietType: "",
+      smokingStatus: "",
+      alcoholConsumption: "",
+      sleepHours: "",
+      primaryConcern: "",
+      additionalNotes: "",
+    })
   }
 
   const handleSubmit = async () => {
@@ -605,40 +634,12 @@ export default function HealthAssessmentForm() {
         </div>
       </div>
 
-      <div className="text-center">
-        <Button
-          onClick={() => {
-            setRecommendations(null)
-            setCurrentStep(1)
-            setError(null)
-            setAiProvider(null)
-            setAssessment({
-              age: "",
-              gender: "",
-              weight: "",
-              height: "",
-              location: "",
-              symptoms: "",
-              symptomDuration: "",
-              symptomSeverity: "",
-              medicalHistory: [],
-              currentMedications: "",
-              allergies: "",
-              activityLevel: "",
-              dietType: "",
-              smokingStatus: "",
-              alcoholConsumption: "",
-              sleepHours: "",
-              primaryConcern: "",
-              additionalNotes: "",
-            })
-          }}
-          variant="outline"
-          className="mr-4"
-        >
-          Start New Assessment
+      <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+        <NavigationButtons onReset={resetAssessment} showReset={true} />
+        <Button onClick={() => window.print()} variant="outline">
+          <Printer className="w-4 h-4 mr-2" />
+          Print Results
         </Button>
-        <Button onClick={() => window.print()}>Print Recommendations</Button>
       </div>
     </div>
   )
@@ -658,10 +659,17 @@ export default function HealthAssessmentForm() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl text-blue-900">Health Assessment</CardTitle>
-            <Badge className="bg-green-100 text-green-800">Step {currentStep} of 4</Badge>
+            <div>
+              <CardTitle className="text-2xl text-blue-900">Health Assessment</CardTitle>
+              <p className="text-gray-600 mt-1">
+                Get personalized AI recommendations in organized, easy-to-read format.
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Badge className="bg-green-100 text-green-800">Step {currentStep} of 4</Badge>
+              <NavigationButtons onReset={resetAssessment} showReset={true} variant="compact" />
+            </div>
           </div>
-          <p className="text-gray-600">Get personalized AI recommendations in organized, easy-to-read format.</p>
         </CardHeader>
 
         <CardContent className="space-y-6">

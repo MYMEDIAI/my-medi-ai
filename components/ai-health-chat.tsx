@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import NavigationButtons from "@/components/navigation-buttons"
 import { Send, Mic, Camera, Shield, Loader2, Bot, User, AlertTriangle, Zap } from "lucide-react"
 
 interface Message {
@@ -112,6 +113,7 @@ export default function AIHealthChat() {
   const clearChat = () => {
     setMessages([])
     setAiProvider(null)
+    setInput("")
   }
 
   const getProviderBadge = () => {
@@ -151,6 +153,7 @@ export default function AIHealthChat() {
                 Anonymous
               </Badge>
               {getProviderBadge()}
+              <NavigationButtons onReset={clearChat} showReset={true} variant="compact" />
             </div>
           </div>
           <p className="text-sm text-gray-600">
