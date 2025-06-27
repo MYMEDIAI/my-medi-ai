@@ -35,17 +35,22 @@ export default function AIHealthChat() {
     setIsLoading(true)
 
     try {
-      // Integrate with Gemini CLI here
-      const response = await fetch("/api/gemini-health", {
+      // Call the Gemini integration API directly
+      const response = await fetch("/api/gemini-integration", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: input,
-          // No user ID or session data - completely anonymous
+          prompt: `You are a helpful AI health assistant. Please provide health advice for the following concern: ${input}. 
+        
+        Important: Always remind users that this is AI-generated advice and they should consult healthcare professionals for serious concerns.`,
         }),
       })
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`)
+      }
 
       const data = await response.json()
 
@@ -58,6 +63,7 @@ export default function AIHealthChat() {
 
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
+      console.error("Chat error:", error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "I'm experiencing technical difficulties. Please try again in a moment.",
