@@ -1,3 +1,5 @@
+import path from "path"
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -8,6 +10,12 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+  },
+
+  // NEW: make `@/` alias work for Webpack/Vercel build
+  webpack(config) {
+    config.resolve.alias["@"] = path.resolve(__dirname)
+    return config
   },
 }
 
