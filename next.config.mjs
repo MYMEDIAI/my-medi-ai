@@ -11,10 +11,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-
-  // NEW: make `@/` alias work for Webpack/Vercel build
   webpack(config) {
-    config.resolve.alias["@"] = path.resolve(__dirname)
+    config.resolve.alias["@"] = path.resolve(process.cwd())
     return config
   },
 }
