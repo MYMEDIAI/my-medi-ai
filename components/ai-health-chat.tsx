@@ -21,6 +21,7 @@ import {
   Clock,
   Shield,
   Activity,
+  Heart,
 } from "lucide-react"
 
 interface Message {
@@ -55,6 +56,26 @@ What health question can I help you with today?`,
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [testMode, setTestMode] = useState(false)
+  const [apiStatus, setApiStatus] = useState<"checking" | "available" | "unavailable">("checking")
+
+  // Add this useEffect to check API availability
+  useEffect(() => {
+    const checkAPIStatus = async () => {
+      try {
+        const response = await fetch("/api/ai-integration", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: "test" }),
+        })
+        const data = await response.json()
+        setApiStatus(data.provider === "stub" ? "unavailable" : "available")
+      } catch {
+        setApiStatus("unavailable")
+      }
+    }
+    checkAPIStatus()
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -68,11 +89,229 @@ What health question can I help you with today?`,
     // Simulate AI processing delay
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    // Sample responses based on common health queries
     const message = userMessage.toLowerCase()
 
+    // Blood pressure questions - Enhanced response
+    if (message.includes("blood pressure") || message.includes("bp") || message.includes("hypertension")) {
+      return `**🩸 Blood Pressure Information:**
+
+📊 **Normal Blood Pressure Ranges:**
+• **Optimal**: Less than 120/80 mmHg
+• **Normal**: 120-129 (systolic) and less than 80 (diastolic)
+• **Elevated**: 130-139 (systolic) and 80-89 (diastolic)
+• **High BP Stage 1**: 140-159/90-99 mmHg
+• **High BP Stage 2**: 160/100 mmHg or higher
+• **Hypertensive Crisis**: Higher than 180/120 mmHg ⚠️ **SEEK IMMEDIATE CARE**
+
+**Understanding the Numbers:**
+• **Systolic** (top number): Pressure when heart beats
+• **Diastolic** (bottom number): Pressure when heart rests between beats
+• Measured in millimeters of mercury (mmHg)
+
+**Factors Affecting Blood Pressure:**
+• Age and genetics
+• Weight and physical activity level
+• Stress and sleep quality
+• Salt intake and diet
+• Alcohol consumption and smoking
+• Certain medications and medical conditions
+• Time of day (typically higher in morning)
+
+**Natural Ways to Lower BP:**
+🏃‍♂️ **Exercise**: 30 minutes of moderate activity daily
+🧂 **Reduce Sodium**: Less than 2,300mg daily (ideal: 1,500mg)
+🍌 **Increase Potassium**: Bananas, spinach, beans, avocados
+⚖️ **Maintain Healthy Weight**: Even 5-10 lbs can make a difference
+🚭 **Quit Smoking**: Immediate and long-term benefits
+🍷 **Limit Alcohol**: Max 1 drink/day (women), 2 drinks/day (men)
+🧘‍♀️ **Manage Stress**: Meditation, yoga, deep breathing
+😴 **Quality Sleep**: 7-9 hours nightly
+
+**When to See a Doctor:**
+🚨 **Immediately if you have:**
+• BP reading above 180/120
+• Severe headache with high BP
+• Chest pain or shortness of breath
+• Vision problems or confusion
+• Severe nausea or vomiting
+
+📅 **Schedule appointment if:**
+• Consistently high readings (above 130/80)
+• Family history of hypertension
+• Other risk factors present
+• Need medication adjustment
+
+**Home Monitoring Tips:**
+• Use validated BP monitor
+• Take readings same time daily
+• Sit quietly for 5 minutes before measuring
+• Keep a log of readings
+• Bring log to doctor appointments
+
+**Indian Context:**
+• High salt intake in traditional foods
+• Consider DASH diet with Indian modifications
+• Include yoga and pranayama in routine
+• Regular health checkups are essential
+
+*Confidence: 96% | Sources: American Heart Association, Indian Society of Hypertension, Mayo Clinic*
+
+⚠️ **Remember**: This information is for educational purposes. Always consult your healthcare provider for personalized medical advice and treatment plans.`
+    }
+
+    // Heart rate questions
+    if (message.includes("heart rate") || message.includes("pulse") || message.includes("heartbeat")) {
+      return `**❤️ Heart Rate Information:**
+
+📈 **Normal Resting Heart Rate:**
+• **Adults**: 60-100 beats per minute (bpm)
+• **Athletes**: 40-60 bpm (due to conditioning)
+• **Children (6-15 years)**: 70-100 bpm
+• **Infants**: 100-160 bpm
+
+**Target Heart Rate During Exercise:**
+• **Moderate intensity**: 50-70% of max heart rate
+• **Vigorous intensity**: 70-85% of max heart rate
+• **Maximum heart rate**: 220 minus your age
+
+**Age-Based Target Zones:**
+• **20 years**: 100-170 bpm (exercise)
+• **30 years**: 95-162 bpm (exercise)
+• **40 years**: 90-153 bpm (exercise)
+• **50 years**: 85-145 bpm (exercise)
+• **60 years**: 80-136 bpm (exercise)
+
+**Factors Affecting Heart Rate:**
+• Physical fitness level
+• Emotions and stress
+• Air temperature and humidity
+• Body position (standing vs. sitting)
+• Medications
+• Caffeine and nicotine
+• Time of day
+
+**When to Be Concerned:**
+🚨 **Seek immediate care if:**
+• Resting heart rate consistently above 100 bpm
+• Resting heart rate below 60 bpm (if not athletic)
+• Irregular heartbeat or palpitations
+• Chest pain with rapid heart rate
+• Dizziness or fainting with heart rate changes
+
+*Confidence: 94% | Sources: American Heart Association, Mayo Clinic*`
+    }
+
+    // Cholesterol questions
+    if (message.includes("cholesterol") || message.includes("lipid")) {
+      return `**🧪 Cholesterol Level Information:**
+
+📊 **Healthy Cholesterol Levels (mg/dL):**
+• **Total Cholesterol**: Less than 200 mg/dL
+• **LDL (Bad) Cholesterol**: Less than 100 mg/dL
+• **HDL (Good) Cholesterol**: 
+  - Men: 40 mg/dL or higher
+  - Women: 50 mg/dL or higher
+• **Triglycerides**: Less than 150 mg/dL
+
+**Risk Categories:**
+**Total Cholesterol:**
+• Desirable: Less than 200 mg/dL
+• Borderline high: 200-239 mg/dL
+• High: 240 mg/dL and above
+
+**LDL Cholesterol:**
+• Optimal: Less than 100 mg/dL
+• Near optimal: 100-129 mg/dL
+• Borderline high: 130-159 mg/dL
+• High: 160-189 mg/dL
+• Very high: 190 mg/dL and above
+
+**Natural Ways to Improve Cholesterol:**
+🥗 **Diet Changes:**
+• Increase fiber (oats, beans, fruits)
+• Choose healthy fats (olive oil, nuts, avocados)
+• Eat fatty fish (salmon, mackerel) twice weekly
+• Limit saturated and trans fats
+
+🏃‍♂️ **Lifestyle:**
+• Regular exercise (150 minutes/week)
+• Maintain healthy weight
+• Don't smoke
+• Limit alcohol
+
+**When to Get Tested:**
+• Adults 20+: Every 4-6 years
+• High risk: More frequently
+• Family history: Earlier and more often
+
+*Confidence: 93% | Sources: American Heart Association, National Cholesterol Education Program*`
+    }
+
+    // Blood sugar/diabetes questions
+    if (message.includes("blood sugar") || message.includes("glucose") || message.includes("diabetes")) {
+      return `**🍯 Blood Sugar Level Information:**
+
+📊 **Normal Blood Sugar Levels:**
+**Fasting (8+ hours without food):**
+• Normal: 70-99 mg/dL
+• Pre-diabetes: 100-125 mg/dL
+• Diabetes: 126 mg/dL or higher
+
+**2 Hours After Eating:**
+• Normal: Less than 140 mg/dL
+• Pre-diabetes: 140-199 mg/dL
+• Diabetes: 200 mg/dL or higher
+
+**A1C (Average over 2-3 months):**
+• Normal: Less than 5.7%
+• Pre-diabetes: 5.7-6.4%
+• Diabetes: 6.5% or higher
+
+**Random Blood Sugar:**
+• Diabetes: 200 mg/dL or higher (with symptoms)
+
+**Common Symptoms of High Blood Sugar:**
+• Increased thirst and urination
+• Unexplained weight loss
+• Fatigue and weakness
+• Blurred vision
+• Slow-healing wounds
+• Frequent infections
+
+**Prevention Strategies:**
+🥗 **Diet:**
+• Choose whole grains over refined
+• Eat plenty of vegetables and fruits
+• Limit sugary drinks and processed foods
+• Control portion sizes
+
+🏃‍♂️ **Exercise:**
+• 150 minutes moderate activity weekly
+• Include strength training
+• Take walks after meals
+
+⚖️ **Weight Management:**
+• Even 5-10% weight loss helps
+• Focus on sustainable changes
+
+**Risk Factors:**
+• Age 45 or older
+• Overweight or obese
+• Family history of diabetes
+• High blood pressure
+• Previous gestational diabetes
+
+**When to Get Tested:**
+• Age 45+: Every 3 years
+• Overweight with risk factors: Earlier
+• Symptoms present: Immediately
+
+*Confidence: 95% | Sources: American Diabetes Association, CDC*`
+    }
+
+    // Medication interactions
     if (message.includes("ibuprofen") && message.includes("antibiotic")) {
-      return `**Ibuprofen and Antibiotics Interaction:**
+      return `**💊 Ibuprofen and Antibiotics Interaction:**
 
 ✅ **Generally Safe**: Most antibiotics can be taken with ibuprofen without significant interactions.
 
@@ -91,134 +330,76 @@ What health question can I help you with today?`,
 *Confidence: 92% | Sources: FDA Drug Interaction Database, Mayo Clinic*`
     }
 
-    if (message.includes("vitamin d") && message.includes("symptom")) {
-      return `**Low Vitamin D Symptoms:**
+    // Water intake questions
+    if (message.includes("water") && (message.includes("drink") || message.includes("daily"))) {
+      return `**💧 Daily Water Intake Recommendations:**
 
-🔍 **Common Signs & Symptoms:**
-• Fatigue and tiredness
-• Bone and back pain
-• Depression or mood changes
-• Impaired wound healing
-• Hair loss
-• Muscle pain and weakness
-• Frequent infections or illnesses
+💧 **General Guidelines:**
+• Men: About 15.5 cups (3.7 liters) of fluids daily
+• Women: About 11.5 cups (2.7 liters) of fluids daily
+• This includes water from food and other beverages
 
-**Risk Factors:**
-• Limited sun exposure
-• Dark skin pigmentation
-• Age over 65
-• Obesity
-• Certain medical conditions
+**Factors Increasing Water Needs:**
+• Exercise and physical activity
+• Hot or humid weather
+• High altitude environments
+• Illness with fever, vomiting, or diarrhea
+• Pregnancy and breastfeeding
 
-**Recommendations:**
-• Get blood test (25-hydroxyvitamin D) to check levels
-• Increase sun exposure (10-30 minutes daily)
-• Include vitamin D rich foods: fatty fish, egg yolks, fortified foods
-• Consider vitamin D3 supplements (consult doctor for dosage)
+**Signs of Proper Hydration:**
+• Light yellow or colorless urine
+• Urinating every 3-4 hours
+• Moist lips and mouth
+• Good energy levels
 
-**Normal Levels:**
-• Sufficient: 30+ ng/mL (75+ nmol/L)
-• Insufficient: 12-30 ng/mL (30-75 nmol/L)
-• Deficient: <12 ng/mL (<30 nmol/L)
+**Signs of Dehydration:**
+• Dark yellow urine
+• Dry mouth and lips
+• Fatigue or dizziness
+• Headache
+• Constipation
 
-⚠️ **See your doctor** if you experience persistent fatigue, bone pain, or multiple symptoms.
+**Hydration Tips:**
+• Start your day with a glass of water
+• Keep a water bottle with you
+• Eat water-rich foods (fruits, vegetables)
+• Set reminders to drink water
+• Monitor urine color as a guide
 
-*Confidence: 94% | Sources: National Institutes of Health, Endocrine Society Guidelines*`
+*Confidence: 91% | Sources: National Academies of Sciences, Mayo Clinic*`
     }
 
-    if (message.includes("headache") || message.includes("head pain")) {
-      return `**Headache Assessment & Guidance:**
+    // Default comprehensive response
+    return `Thank you for your health question! I'm here to provide evidence-based health information.
 
-🧠 **Types of Headaches:**
-• **Tension headaches**: Band-like pressure, stress-related
-• **Migraines**: Throbbing, often with nausea, light sensitivity
-• **Cluster headaches**: Severe, one-sided, around eye area
-• **Sinus headaches**: Pressure in forehead, cheeks, around eyes
+**I can help with questions about:**
+• 💊 Medication interactions and side effects
+• 🩺 Common symptoms and when to see a doctor
+• 🏃‍♂️ Exercise and fitness guidance
+• 🥗 Nutrition and diet recommendations
+• 🩸 Vital signs and health metrics (blood pressure, heart rate, cholesterol, blood sugar)
+• 🧠 Mental health and wellness
+• 🚨 When to seek emergency care
 
-**Immediate Relief Options:**
-• Rest in a quiet, dark room
-• Apply cold or warm compress
-• Stay hydrated (drink water)
-• Over-the-counter pain relievers (follow package directions)
-• Gentle neck and shoulder stretches
-
-**When to Seek Medical Care:**
-🚨 **Seek immediate care if headache:**
-• Sudden, severe ("worst headache of life")
-• With fever, stiff neck, confusion
-• After head injury
-• With vision changes, weakness, difficulty speaking
-• Different from usual pattern
-
-**Prevention Tips:**
-• Maintain regular sleep schedule
-• Stay hydrated
-• Manage stress
-• Identify and avoid triggers
-• Regular exercise
-
-*Confidence: 91% | Sources: American Migraine Foundation, Mayo Clinic*`
-    }
-
-    if (message.includes("chest pain") || message.includes("heart")) {
-      return `**Chest Pain - Important Information:**
-
-🚨 **EMERGENCY SIGNS - Call 911 if you have:**
-• Crushing, squeezing chest pain
-• Pain radiating to arm, jaw, or back
-• Shortness of breath
-• Nausea, sweating, dizziness
-• Pain lasting more than a few minutes
-
-**Non-Emergency Chest Discomfort:**
-• Sharp, stabbing pain that's brief
-• Pain that worsens with movement or breathing
-• Muscle strain from exercise
-• Anxiety-related chest tightness
-
-**Common Causes:**
-• Heart-related: Angina, heart attack, heart disease
-• Lung-related: Pneumonia, pleurisy, pulmonary embolism
-• Digestive: Acid reflux, heartburn
-• Musculoskeletal: Muscle strain, rib injury
-• Anxiety: Panic attacks, stress
-
-**When to Contact Healthcare Provider:**
-• Recurring chest discomfort
-• Pain with physical activity
-• Persistent heartburn
-• Unexplained shortness of breath
-
-⚠️ **Don't delay care** - chest pain can be serious. When in doubt, seek medical evaluation immediately.
-
-*This is an emergency-sensitive topic. Please consult healthcare professionals for proper evaluation.*`
-    }
-
-    // Default response for general queries
-    return `Thank you for your health question. I'd be happy to help provide general information.
-
-**For the most accurate assistance, please provide more specific details about:**
-• Your specific symptoms or concerns
-• How long you've experienced them
-• Any relevant medical history
-• Current medications
-
-**I can help with:**
-• General health information
-• Symptom guidance (non-emergency)
-• Medication questions
-• Wellness tips
-• When to seek care
-
-**Common Questions I Answer:**
-• "Can I take [medication] with [medication]?"
+**For the most helpful response, try asking:**
+• "What's normal blood pressure range?"
+• "Can I take [medication] with [condition]?"
+• "What are normal blood sugar levels?"
+• "What's a healthy heart rate?"
+• "How much water should I drink daily?"
 • "What are symptoms of [condition]?"
-• "When should I see a doctor for [symptom]?"
-• "How can I improve my [health aspect]?"
 
-Please feel free to ask a more specific health question, and I'll provide detailed, helpful information.
+**Sample questions you can ask:**
+• "What's normal blood pressure for my age?"
+• "What are healthy cholesterol levels?"
+• "Can I take ibuprofen with antibiotics?"
+• "How much water should I drink daily?"
+• "What are signs of diabetes?"
+• "What's a normal resting heart rate?"
 
-*Confidence: 88% | Always consult healthcare professionals for medical advice*`
+Please feel free to ask a specific health question, and I'll provide detailed, evidence-based information!
+
+*Confidence: 88% | Always consult healthcare professionals for personalized medical advice*`
   }
 
   const handleSendMessage = async () => {
@@ -232,22 +413,46 @@ Please feel free to ask a more specific health question, and I'll provide detail
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const currentInput = inputMessage.trim()
     setInputMessage("")
     setIsLoading(true)
 
     try {
-      const aiResponse = await simulateAIResponse(inputMessage.trim())
+      let aiResponse: string
+
+      if (apiStatus === "available" && !testMode) {
+        // Use real API
+        const response = await fetch("/api/ai-integration", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: currentInput,
+            type: "chat",
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error("API request failed")
+        }
+
+        const data = await response.json()
+        aiResponse = data.response
+      } else {
+        // Use simulated responses
+        aiResponse = await simulateAIResponse(currentInput)
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
         content: aiResponse,
         timestamp: new Date(),
-        confidence: Math.floor(Math.random() * 15) + 85, // 85-99% confidence
+        confidence: Math.floor(Math.random() * 15) + 85,
       }
 
       setMessages((prev) => [...prev, aiMessage])
     } catch (error) {
+      console.error("Chat error:", error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
@@ -274,12 +479,38 @@ Please feel free to ask a more specific health question, and I'll provide detail
   }
 
   const quickQuestions = [
-    "Can I take ibuprofen with antibiotics?",
-    "What are the symptoms of low vitamin D?",
-    "When should I see a doctor for a headache?",
-    "How much water should I drink daily?",
     "What's normal blood pressure range?",
+    "Can I take ibuprofen with antibiotics?",
+    "What are healthy cholesterol levels?",
+    "How much water should I drink daily?",
+    "What's a normal heart rate?",
   ]
+
+  // Demo function to show blood pressure response
+  const demoBloodPressureQuestion = () => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: "user",
+      content: "What's normal blood pressure range?",
+      timestamp: new Date(),
+    }
+
+    setMessages((prev) => [...prev, userMessage])
+    setIsLoading(true)
+
+    setTimeout(async () => {
+      const aiResponse = await simulateAIResponse("What's normal blood pressure range?")
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "ai",
+        content: aiResponse,
+        timestamp: new Date(),
+        confidence: 96,
+      }
+      setMessages((prev) => [...prev, aiMessage])
+      setIsLoading(false)
+    }, 1500)
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -293,19 +524,53 @@ Please feel free to ask a more specific health question, and I'll provide detail
         </AlertDescription>
       </Alert>
 
+      {/* Demo Button for Testing */}
+      <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-blue-900">🧪 Test Vital Signs Questions</h3>
+            <p className="text-sm text-blue-700">Click to see how the AI responds to blood pressure questions</p>
+          </div>
+          <Button
+            onClick={demoBloodPressureQuestion}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            disabled={isLoading}
+          >
+            <Heart className="w-4 h-4 mr-2" />
+            Test BP Question
+          </Button>
+        </div>
+      </div>
+
       <Card className="h-[600px] flex flex-col">
         <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50">
           <CardTitle className="flex items-center space-x-2">
             <MyMedLogo size="sm" showText={false} />
             <span>MYMED.AI Quick Chat</span>
-            <Badge variant="outline" className="ml-auto bg-green-100 text-green-800">
+            <Badge
+              variant="outline"
+              className={`ml-auto ${
+                apiStatus === "available"
+                  ? "bg-green-100 text-green-800"
+                  : apiStatus === "unavailable"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-gray-100 text-gray-800"
+              }`}
+            >
               <Activity className="w-3 h-3 mr-1" />
-              Online
+              {apiStatus === "available" ? "Live AI" : apiStatus === "unavailable" ? "Demo Mode" : "Checking..."}
             </Badge>
           </CardTitle>
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <Shield className="w-4 h-4" />
-            <span>Secure • Private • AI-Powered</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <Shield className="w-4 h-4" />
+              <span>Secure • Private • AI-Powered</span>
+            </div>
+            {apiStatus === "available" && (
+              <Button variant="outline" size="sm" onClick={() => setTestMode(!testMode)} className="text-xs">
+                {testMode ? "Live Mode" : "Test Mode"}
+              </Button>
+            )}
           </div>
         </CardHeader>
 
@@ -374,7 +639,7 @@ Please feel free to ask a more specific health question, and I'll provide detail
                       style={{ animationDelay: "0.2s" }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-600">AI is thinking...</span>
+                  <span className="text-sm text-gray-600">AI is analyzing vital signs data...</span>
                 </div>
               </div>
             </div>
@@ -387,7 +652,7 @@ Please feel free to ask a more specific health question, and I'll provide detail
           {/* Quick Questions */}
           {messages.length === 1 && (
             <div className="space-y-2">
-              <p className="text-sm text-gray-600 font-medium">Quick questions to get started:</p>
+              <p className="text-sm text-gray-600 font-medium">Quick vital signs questions to get started:</p>
               <div className="flex flex-wrap gap-2">
                 {quickQuestions.map((question, idx) => (
                   <Button
@@ -411,7 +676,7 @@ Please feel free to ask a more specific health question, and I'll provide detail
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me a health question... (e.g., 'Can I take medicine X with Y?')"
+                placeholder="Ask about vital signs... (e.g., 'What's normal blood pressure range?')"
                 className="pr-20 focus:ring-purple-500"
                 disabled={isLoading}
               />

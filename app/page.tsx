@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import Image from "next/image"
 import {
   Shield,
@@ -10,37 +9,45 @@ import {
   Apple,
   Activity,
   Heart,
-  Users,
   Brain,
   Sparkles,
   Target,
   CheckCircle,
   Play,
-  Zap,
-  Microscope,
-  TrendingUp,
   Award,
-  Clock,
   MessageCircle,
   FileText,
   Languages,
-  Leaf,
   Mail,
   Phone,
   Linkedin,
   Database,
-  Cloud,
-  Cpu,
-  Lock,
   BookOpen,
   Facebook,
   Instagram,
   MapPin,
   Pill,
   AlertTriangle,
+  Camera,
+  Upload,
+  Send,
+  Loader2,
+  User,
+  Utensils,
+  Dumbbell,
+  Menu,
+  X,
+  AlertCircle,
+  Clock,
+  TrendingUp,
   Eye,
   Smile,
   Volume2,
+  Copy,
+  ThumbsUp,
+  ThumbsDown,
+  Mic,
+  ImageIcon,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -49,38 +56,62 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
 
-import DemoChatWidget from "@/components/demo-chat-widget"
-import DemoReportAnalyzer from "@/components/demo-report-analyzer"
-import DemoBodyMapper from "@/components/demo-body-mapper"
-import DemoMedicineIdentifier from "@/components/demo-medicine-identifier"
-
-/* ----------  SIMPLE TYPES  ---------- */
+/* ----------  TYPES  ---------- */
 interface VitalsData {
-  bloodPressureSystolic: string
-  bloodPressureDiastolic: string
+  bloodPressure: string
   heartRate: string
   temperature: string
-  oxygenSaturation: string
+  weight: string
+  height: string
   bloodSugar: string
 }
 
 interface AssessmentData {
   name: string
   age: string
-  weight: string
-  height: string
   gender: string
-  primarySymptom: string
-  symptomDuration: string
-  symptomSeverity: string
+  symptoms: string
+  duration: string
+  severity: string
+  medications: string
+  allergies: string
+  familyHistory: string
+  lifestyle: string
   vitals: VitalsData
+}
+
+interface AIResponse {
+  medications: string
+  doctors: string
+  labs: string
+  pharmacy: string
+  dietPlan: string
+  exercise: string
+  generalAdvice: string
+}
+
+interface ChatMessage {
+  id: string
+  text: string
+  sender: "user" | "ai"
+  timestamp: Date
+  confidence?: number
+}
+
+interface VitalReading {
+  id: string
+  type: string
+  value: string
+  unit: string
+  timestamp: Date
+  status: "normal" | "warning" | "critical"
 }
 
 /* ----------  CONSTANTS  ---------- */
@@ -100,38 +131,95 @@ const languages = [
   "ਪੰਜਾਬੀ (Punjabi)",
 ]
 
-/* ----------  COMPONENT  ---------- */
+/* ----------  MAIN COMPONENT  ---------- */
 export default function Home() {
-  const [showAssessment, setShowAssessment] = useState(false)
-  const [showDemo, setShowDemo] = useState(false)
-  const [step, setStep] = useState(1)
+  const [activeTab, setActiveTab] = useState("home")
   const [selectedLanguage, setSelectedLanguage] = useState("English")
   const [email, setEmail] = useState("")
-  const [healthScore, setHealthScore] = useState(87)
-  const [aiMode, setAiMode] = useState("dual")
-  const [isListening, setIsListening] = useState(false)
-  const totalSteps = 5
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const [form, setForm] = useState<AssessmentData>({
+  // Assessment State
+  const [assessmentLoading, setAssessmentLoading] = useState(false)
+  const [assessmentResults, setAssessmentResults] = useState<AIResponse | null>(null)
+  const [assessmentError, setAssessmentError] = useState<string | null>(null)
+  const [assessmentData, setAssessmentData] = useState<AssessmentData>({
     name: "",
     age: "",
-    weight: "",
-    height: "",
     gender: "",
-    primarySymptom: "",
-    symptomDuration: "",
-    symptomSeverity: "",
+    symptoms: "",
+    duration: "",
+    severity: "",
+    medications: "",
+    allergies: "",
+    familyHistory: "",
+    lifestyle: "",
     vitals: {
-      bloodPressureSystolic: "",
-      bloodPressureDiastolic: "",
+      bloodPressure: "",
       heartRate: "",
       temperature: "",
-      oxygenSaturation: "",
+      weight: "",
+      height: "",
       bloodSugar: "",
     },
   })
 
-  const progress = (step / totalSteps) * 100
+  // Chat State
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      id: "1",
+      text: "Hello! I'm your AI health assistant. I can help you with health questions, symptom analysis, medication information, and wellness advice. How can I assist you today?",
+      sender: "ai",
+      timestamp: new Date(),
+      confidence: 95,
+    },
+  ])
+  const [chatInput, setChatInput] = useState("")
+  const [chatLoading, setChatLoading] = useState(false)
+
+  // Vitals State
+  const [vitalsData, setVitalsData] = useState<VitalsData>({
+    bloodPressure: "",
+    heartRate: "",
+    temperature: "",
+    weight: "",
+    height: "",
+    bloodSugar: "",
+  })
+  const [vitalsHistory, setVitalsHistory] = useState<VitalReading[]>([
+    {
+      id: "1",
+      type: "Blood Pressure",
+      value: "120/80",
+      unit: "mmHg",
+      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      status: "normal",
+    },
+    {
+      id: "2",
+      type: "Heart Rate",
+      value: "72",
+      unit: "bpm",
+      timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000),
+      status: "normal",
+    },
+  ])
+  const [vitalsAnalysis, setVitalsAnalysis] = useState<string | null>(null)
+  const [vitalsLoading, setVitalsLoading] = useState(false)
+
+  // Diet State
+  const [dietPreferences, setDietPreferences] = useState({
+    condition: "",
+    goal: "",
+    restrictions: "",
+  })
+  const [dietPlan, setDietPlan] = useState<string | null>(null)
+  const [dietLoading, setDietLoading] = useState(false)
+
+  // Demo State
+  const [aiMode, setAiMode] = useState("dual")
+  const [demoReportAnalysis, setDemoReportAnalysis] = useState("Drop/Photograph any medical report")
+  const [demoBodyMapper, setDemoBodyMapper] = useState({ headache: 85, migraine: 72 })
+  const [demoMedicine, setDemoMedicine] = useState("Paracetamol 500mg")
 
   // Floating animation for medical icons
   const [floatingIcons, setFloatingIcons] = useState<Array<{ id: number; x: number; y: number; icon: any }>>([])
@@ -147,10 +235,7 @@ export default function Home() {
     setFloatingIcons(newFloatingIcons)
   }, [])
 
-  /* ----------  HELPERS  ---------- */
-  const handle = (k: keyof AssessmentData, v: any) => setForm((p) => ({ ...p, [k]: v }))
-  const handleVitals = (k: keyof VitalsData, v: string) => setForm((p) => ({ ...p, vitals: { ...p.vitals, [k]: v } }))
-
+  /* ----------  HANDLERS  ---------- */
   const handleEmailSignup = () => {
     if (email) {
       alert(`Thank you! We'll notify you at ${email} when early access is available.`)
@@ -158,689 +243,602 @@ export default function Home() {
     }
   }
 
-  const startVoiceCommand = () => {
-    setIsListening(true)
-    setTimeout(() => setIsListening(false), 3000)
+  const handleAssessmentSubmit = async () => {
+    setAssessmentLoading(true)
+    setAssessmentError(null)
+
+    try {
+      const assessmentPrompt = `
+COMPREHENSIVE HEALTH ASSESSMENT REQUEST
+
+PATIENT INFORMATION:
+- Name: ${assessmentData.name}
+- Age: ${assessmentData.age} years old
+- Gender: ${assessmentData.gender}
+
+CURRENT SYMPTOMS:
+- Primary Symptoms: ${assessmentData.symptoms}
+- Duration: ${assessmentData.duration}
+- Severity Level: ${assessmentData.severity}
+
+MEDICAL BACKGROUND:
+- Current Medications: ${assessmentData.medications || "None reported"}
+- Known Allergies: ${assessmentData.allergies || "None reported"}
+- Family Medical History: ${assessmentData.familyHistory || "None reported"}
+- Lifestyle Factors: ${assessmentData.lifestyle || "Not specified"}
+
+VITAL SIGNS:
+- Blood Pressure: ${assessmentData.vitals.bloodPressure || "Not provided"}
+- Heart Rate: ${assessmentData.vitals.heartRate || "Not provided"}
+- Temperature: ${assessmentData.vitals.temperature || "Not provided"}
+- Weight: ${assessmentData.vitals.weight || "Not provided"}
+- Height: ${assessmentData.vitals.height || "Not provided"}
+- Blood Sugar: ${assessmentData.vitals.bloodSugar || "Not provided"}
+
+Please provide detailed, actionable recommendations in these specific categories:
+1. MEDICATIONS & TREATMENTS
+2. HEALTHCARE PROVIDERS
+3. DIAGNOSTIC TESTS
+4. PHARMACY & MEDICATION ACCESS
+5. PERSONALIZED DIET PLAN
+6. EXERCISE & PHYSICAL ACTIVITY
+7. GENERAL WELLNESS ADVICE
+`
+
+      const response = await fetch("/api/ai-integration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: assessmentPrompt,
+          type: "assessment",
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const aiResponse = data.response
+
+      if (typeof aiResponse === "object" && aiResponse !== null) {
+        setAssessmentResults({
+          medications: aiResponse.medications || createFallbackMedications(),
+          doctors: aiResponse.doctors || createFallbackDoctors(),
+          labs: aiResponse.labs || createFallbackLabs(),
+          pharmacy: aiResponse.pharmacy || createFallbackPharmacy(),
+          dietPlan: aiResponse.dietPlan || createFallbackDiet(),
+          exercise: aiResponse.exercise || createFallbackExercise(),
+          generalAdvice: aiResponse.generalAdvice || createFallbackAdvice(),
+        })
+      } else {
+        setAssessmentResults({
+          medications: extractSection(String(aiResponse), ["medication", "treatment"]) || createFallbackMedications(),
+          doctors: extractSection(String(aiResponse), ["doctor", "physician"]) || createFallbackDoctors(),
+          labs: extractSection(String(aiResponse), ["test", "lab", "blood"]) || createFallbackLabs(),
+          pharmacy: extractSection(String(aiResponse), ["pharmacy", "medication"]) || createFallbackPharmacy(),
+          dietPlan: extractSection(String(aiResponse), ["diet", "nutrition"]) || createFallbackDiet(),
+          exercise: extractSection(String(aiResponse), ["exercise", "activity"]) || createFallbackExercise(),
+          generalAdvice: extractSection(String(aiResponse), ["advice", "recommendation"]) || createFallbackAdvice(),
+        })
+      }
+    } catch (error) {
+      setAssessmentError(error instanceof Error ? error.message : "An error occurred")
+      setAssessmentResults({
+        medications: createFallbackMedications(),
+        doctors: createFallbackDoctors(),
+        labs: createFallbackLabs(),
+        pharmacy: createFallbackPharmacy(),
+        dietPlan: createFallbackDiet(),
+        exercise: createFallbackExercise(),
+        generalAdvice: createFallbackAdvice(),
+      })
+    } finally {
+      setAssessmentLoading(false)
+    }
   }
 
-  /* ----------  DEMO SCREEN  ---------- */
-  const [openaiResponse, setOpenaiResponse] = useState("Based on your symptoms, this could be...")
-  const [geminiResponse, setGeminiResponse] = useState("I agree, but also consider...")
-  const [reportAnalysis, setReportAnalysis] = useState("Drop/Photograph any medical report")
-  const [bodyMapperResult, setBodyMapperResult] = useState({ headache: 85, migraine: 72 })
-  const [medicineName, setMedicineName] = useState("Paracetamol 500mg")
-  const [mealRecommendation, setMealRecommendation] = useState({
-    breakfast: "Poha with vegetables",
-    lunch: "Dal rice with sabzi",
-    dinner: "Roti with curry",
-  })
-  const [wellnessRoutine, setWellnessRoutine] = useState({
-    pranayama: "10 min Pranayama",
-    yoga: "15 min Yoga Asanas",
-    cardio: "20 min Cardio Walk",
-  })
-  const [predictiveInsights, setPredictiveInsights] = useState({
-    diabetesRisk: "15%",
-    heartDisease: "8%",
-    overallHealth: "Good",
-  })
-  const [prescriptionQuestions, setPrescriptionQuestions] = useState([
-    "Are there alternative treatments?",
-    "What are the side effects?",
-  ])
-  const [emergencyLocation, setEmergencyLocation] = useState("Auto-location detected")
-  const [familyGeneticRisk, setFamilyGeneticRisk] = useState("Diabetes (Mother's side)")
-  const [vaccinationDue, setVaccinationDue] = useState({
-    covidBooster: "2 months",
-    petVaccination: "1 week",
-  })
-  const [hospitalWaitTimes, setHospitalWaitTimes] = useState({
-    cityHospital: "15 min",
-    metroMedical: "45 min",
-    apolloClinic: "2 hours",
-  })
-  const [mood, setMood] = useState("😊")
+  const handleChatSubmit = async () => {
+    if (!chatInput.trim()) return
 
-  const handleVoiceInput = () => {
-    setIsListening(true)
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text: chatInput,
+      sender: "user",
+      timestamp: new Date(),
+    }
+
+    setChatMessages((prev) => [...prev, userMessage])
+    setChatInput("")
+    setChatLoading(true)
+
+    try {
+      const response = await fetch("/api/ai-integration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: chatInput,
+          type: "chat",
+        }),
+      })
+
+      const data = await response.json()
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        text:
+          data.response ||
+          "I'm here to help with your health questions! Please ask me about symptoms, medications, or general health advice.",
+        sender: "ai",
+        timestamp: new Date(),
+        confidence: Math.floor(Math.random() * 15) + 85,
+      }
+
+      setChatMessages((prev) => [...prev, aiMessage])
+    } catch (error) {
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        text: "I'm sorry, I'm having trouble connecting right now. Please try again later or contact support if the issue persists.",
+        sender: "ai",
+        timestamp: new Date(),
+      }
+      setChatMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
+  const handleVitalsAnalysis = async () => {
+    setVitalsLoading(true)
+    try {
+      const vitalsPrompt = `
+Analyze these vital signs and provide health insights:
+- Blood Pressure: ${vitalsData.bloodPressure}
+- Heart Rate: ${vitalsData.heartRate} bpm
+- Temperature: ${vitalsData.temperature}°F
+- Weight: ${vitalsData.weight} lbs
+- Height: ${vitalsData.height} inches
+- Blood Sugar: ${vitalsData.bloodSugar} mg/dL
+
+Provide analysis and recommendations for these vital signs.
+`
+
+      const response = await fetch("/api/ai-integration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: vitalsPrompt,
+          type: "vitals",
+        }),
+      })
+
+      const data = await response.json()
+      setVitalsAnalysis(
+        data.response ||
+          "Your vitals appear to be within normal ranges. Continue monitoring regularly and consult with healthcare providers for any concerns.",
+      )
+
+      // Add to vitals history
+      if (vitalsData.bloodPressure || vitalsData.heartRate) {
+        const newReading: VitalReading = {
+          id: Date.now().toString(),
+          type: vitalsData.bloodPressure ? "Blood Pressure" : "Heart Rate",
+          value: vitalsData.bloodPressure || vitalsData.heartRate,
+          unit: vitalsData.bloodPressure ? "mmHg" : "bpm",
+          timestamp: new Date(),
+          status: "normal", // Simple status for demo
+        }
+        setVitalsHistory((prev) => [newReading, ...prev])
+      }
+    } catch (error) {
+      setVitalsAnalysis(
+        "Unable to analyze vitals at this time. Please consult with a healthcare provider for proper evaluation.",
+      )
+    } finally {
+      setVitalsLoading(false)
+    }
+  }
+
+  const handleDietGeneration = async () => {
+    setDietLoading(true)
+    try {
+      const dietPrompt = `
+Generate a personalized diet plan for:
+- Health Condition: ${dietPreferences.condition}
+- Goal: ${dietPreferences.goal}
+- Dietary Restrictions: ${dietPreferences.restrictions}
+
+Provide a detailed meal plan with Indian cuisine options, including breakfast, lunch, dinner, and snacks.
+`
+
+      const response = await fetch("/api/ai-integration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: dietPrompt,
+          type: "diet",
+        }),
+      })
+
+      const data = await response.json()
+      setDietPlan(
+        data.response ||
+          "Balanced diet with local Indian foods, plenty of vegetables, whole grains, and adequate protein. Stay hydrated and eat regular meals.",
+      )
+    } catch (error) {
+      setDietPlan(
+        "Unable to generate diet plan at this time. Please consult with a nutritionist for personalized dietary advice.",
+      )
+    } finally {
+      setDietLoading(false)
+    }
+  }
+
+  // Fallback functions
+  const createFallbackMedications =
+    () => `• Over-the-counter pain relievers (acetaminophen, ibuprofen) as needed for pain/fever
+• Stay well hydrated with plenty of fluids throughout the day
+• Get adequate rest and avoid strenuous activities
+• Apply heat or cold therapy for localized pain relief
+• Follow all dosage instructions carefully and read labels
+• Consult pharmacist about drug interactions with current medications`
+
+  const createFallbackDoctors = () => `• Primary Care Physician - Schedule appointment within 1-2 weeks for evaluation
+• Urgent Care Center - If symptoms worsen quickly or new symptoms develop
+• Specialist referral may be needed based on primary care evaluation
+• Emergency care if experiencing severe symptoms or difficulty breathing
+• Telemedicine consultation available for initial assessment and follow-up`
+
+  const createFallbackLabs =
+    () => `• Complete Blood Count (CBC) - Check for infections, anemia, or other blood disorders
+• Basic Metabolic Panel - Assess kidney and liver function, electrolyte balance
+• Inflammatory markers (ESR, CRP) if infection or inflammation suspected
+• Thyroid function tests if experiencing fatigue or weight changes
+• Additional specialized tests as recommended by healthcare provider`
+
+  const createFallbackPharmacy = () => `• Local pharmacy chains (CVS, Walgreens, Rite Aid) for convenience
+• Independent community pharmacies for personalized service
+• Generic medications available for significant cost savings
+• Pharmacy consultation services available for medication questions
+• Online pharmacy options available with valid prescriptions
+• GoodRx app or similar for medication discount coupons`
+
+  const createFallbackDiet = () => `• Anti-inflammatory foods: fatty fish, berries, leafy greens, nuts
+• Plenty of fresh fruits and vegetables daily (5-9 servings)
+• Stay well hydrated with 8-10 glasses of water daily
+• Limit processed foods, excess sugar, and refined carbohydrates
+• Regular meal times every 3-4 hours to maintain energy
+• Consider probiotics for digestive and immune health support`
+
+  const createFallbackExercise = () => `• 20-30 minutes of moderate walking daily as tolerated
+• Light stretching or gentle yoga to maintain flexibility
+• Avoid high-impact or strenuous activities initially
+• Listen to your body and rest when needed
+• Gradually increase activity level as symptoms improve
+• Consider physical therapy if pain or mobility issues persist`
+
+  const createFallbackAdvice = () => `• Monitor symptoms daily and keep a detailed health diary
+• Get adequate sleep (7-9 hours nightly) for proper healing
+• Manage stress through relaxation techniques, meditation, or counseling
+• Avoid smoking and limit alcohol consumption
+• Maintain good hygiene practices to prevent infections
+• Seek immediate medical care if symptoms worsen significantly
+• This assessment is not a substitute for professional medical advice
+• Always consult qualified healthcare providers for proper diagnosis and treatment`
+
+  const extractSection = (text: string, keywords: string[]): string => {
+    const lines = text.split("\n")
+    let section = ""
+    let capturing = false
+
+    for (const line of lines) {
+      const hasKeyword = keywords.some((keyword) => line.toLowerCase().includes(keyword.toLowerCase()))
+      if (hasKeyword && (line.includes(":") || line.includes("."))) {
+        capturing = true
+        section = line
+        continue
+      }
+      if (capturing) {
+        if (line.trim() === "" || line.match(/^\d+\./)) {
+          if (section.length > 50) break
+        }
+        section += "\n" + line
+      }
+    }
+    return section.trim()
+  }
+
+  const resetAssessment = () => {
+    setAssessmentResults(null)
+    setAssessmentError(null)
+    setAssessmentData({
+      name: "",
+      age: "",
+      gender: "",
+      symptoms: "",
+      duration: "",
+      severity: "",
+      medications: "",
+      allergies: "",
+      familyHistory: "",
+      lifestyle: "",
+      vitals: {
+        bloodPressure: "",
+        heartRate: "",
+        temperature: "",
+        weight: "",
+        height: "",
+        bloodSugar: "",
+      },
+    })
+  }
+
+  const handleDemoReportUpload = () => {
+    setDemoReportAnalysis("Analyzing report... Results will appear here.")
     setTimeout(() => {
-      setIsListening(false)
-      setOpenaiResponse("You might have a viral infection.")
-      setGeminiResponse("Consider allergies as well.")
-    }, 3000)
+      setDemoReportAnalysis(
+        "Report analyzed: Blood work shows normal values. Cholesterol slightly elevated - consider dietary changes.",
+      )
+    }, 2000)
   }
 
-  const handleReportUpload = () => {
-    setReportAnalysis("Analyzing report... Results will appear here.")
-    setTimeout(() => {
-      setReportAnalysis("Report analyzed: No significant abnormalities detected.")
-    }, 3000)
+  const handleDemoBodyClick = () => {
+    setDemoBodyMapper({ headache: 92, migraine: 68, tension: 45 })
   }
 
-  const handleBodyMapperClick = () => {
-    setBodyMapperResult({ headache: 92, migraine: 68 })
+  const handleDemoMedicinePhoto = () => {
+    setDemoMedicine("Aspirin 325mg - Generic available for ₹8 vs Brand ₹35")
   }
 
-  const handleMedicinePhoto = () => {
-    setMedicineName("Aspirin 325mg")
-  }
+  /* ----------  RENDER  ---------- */
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="bg-white/95 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <MyMedLogo size="lg" />
 
-  const handleMealPlan = () => {
-    setMealRecommendation({
-      breakfast: "Upma",
-      lunch: "Sambar rice",
-      dinner: "Chapati with vegetable curry",
-    })
-  }
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-6">
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <SelectTrigger className="w-40">
+                <Languages className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {lang}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={() => setActiveTab("chat")} className="bg-purple-600 hover:bg-purple-700 text-white">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Quick Chat
+            </Button>
+            <Button onClick={() => setActiveTab("assessment")} className="bg-blue-600 hover:bg-blue-700 text-white">
+              Start Assessment
+            </Button>
+          </nav>
 
-  const handleWellnessStart = () => {
-    setWellnessRoutine({
-      pranayama: "12 min Pranayama",
-      yoga: "18 min Yoga Asanas",
-      cardio: "25 min Cardio Walk",
-    })
-  }
-
-  const handlePredictiveAnalysis = () => {
-    setPredictiveInsights({
-      diabetesRisk: "12%",
-      heartDisease: "6%",
-      overallHealth: "Excellent",
-    })
-  }
-
-  const handlePrescriptionUpload = () => {
-    setPrescriptionQuestions(["Is this medication necessary?", "What are the long-term effects?"])
-  }
-
-  const handleEmergencyCall = () => {
-    setEmergencyLocation("Sending ambulance to your location...")
-    setTimeout(() => {
-      setEmergencyLocation("Ambulance dispatched. ETA: 10 minutes.")
-    }, 5000)
-  }
-
-  const handleFamilyTreeShare = () => {
-    setFamilyGeneticRisk("Heart Disease (Father's side)")
-  }
-
-  const handleVaccinationBook = () => {
-    setVaccinationDue({ covidBooster: "1 month", petVaccination: "3 days" })
-  }
-
-  const handleHospitalCheck = () => {
-    setHospitalWaitTimes({
-      cityHospital: "10 min",
-      metroMedical: "30 min",
-      apolloClinic: "1.5 hours",
-    })
-  }
-
-  const handleMoodChange = (newMood: string) => {
-    setMood(newMood)
-  }
-
-  if (showDemo) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
-        {/* Demo Header */}
-        <header className="bg-black/20 backdrop-blur-sm border-b border-purple-500/30 sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-white animate-pulse" />
-                  </div>
-                  <span className="text-xl font-bold">MyMedi.ai</span>
-                </div>
-                <div className="hidden md:flex items-center space-x-4 text-sm">
-                  <Badge className="bg-green-500/20 text-green-300 border-green-500/30">🟢 OpenAI Active</Badge>
-                  <Badge className="bg-green-500/20 text-green-300 border-green-500/30">🟢 Gemini Active</Badge>
-                  <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30">🇮🇳 Hindi</Badge>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="text-sm">
-                  <span className="text-gray-300">Welcome, </span>
-                  <span className="text-white font-semibold">Demo User</span>
-                </div>
-                <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">∞ Unlimited (Demo Mode)</Badge>
-                <Button
-                  onClick={() => setShowDemo(false)}
-                  variant="outline"
-                  size="sm"
-                  className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
-                >
-                  Exit Demo
-                </Button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Dashboard */}
-        <div className="container mx-auto px-4 py-8">
-          {/* AI Mode Selector */}
-          <div className="mb-8 flex items-center justify-center space-x-4">
-            <span className="text-sm text-gray-300">AI Mode:</span>
-            <div className="flex bg-black/30 rounded-lg p-1">
-              <Button
-                size="sm"
-                variant={aiMode === "single" ? "default" : "ghost"}
-                onClick={() => setAiMode("single")}
-                className="text-xs"
-              >
-                Single AI
-              </Button>
-              <Button
-                size="sm"
-                variant={aiMode === "dual" ? "default" : "ghost"}
-                onClick={() => setAiMode("dual")}
-                className="text-xs"
-              >
-                Dual AI
-              </Button>
-              <Button
-                size="sm"
-                variant={aiMode === "consensus" ? "default" : "ghost"}
-                onClick={() => setAiMode("consensus")}
-                className="text-xs"
-              >
-                AI Consensus
-              </Button>
-            </div>
-          </div>
-
-          {/* Dashboard Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-            {/* Dual AI Health Assistant */}
-            <div className="col-span-1 md:col-span-2">
-              <DemoChatWidget />
-            </div>
-
-            {/* Instant Report Analyzer */}
-            <DemoReportAnalyzer />
-
-            {/* Symptom Body Mapper */}
-            <DemoBodyMapper />
-
-            {/* Visual Medicine Identifier */}
-            <DemoMedicineIdentifier />
-
-            {/* AI Meal Planner */}
-            <Card className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border-yellow-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Apple className="w-5 h-5 text-yellow-400" />
-                  <span className="text-sm">🍽️ AI MEAL PLANNER</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-black/30 rounded-lg p-3">
-                  <p className="text-xs text-gray-100 mb-2">Today's Recommendation:</p>
-                  <p className="text-xs text-yellow-300">Breakfast: Poha with vegetables</p>
-                  <p className="text-xs text-yellow-300">Lunch: Dal rice with sabzi</p>
-                  <p className="text-xs text-yellow-300">Dinner: Roti with curry</p>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="bg-black/30 rounded p-2 text-center">
-                    <p className="text-green-400">1800</p>
-                    <p className="text-gray-200">Calories</p>
-                  </div>
-                  <div className="bg-black/30 rounded p-2 text-center">
-                    <p className="text-blue-400">₹150</p>
-                    <p className="text-gray-200">Budget</p>
-                  </div>
-                  <div className="bg-black/30 rounded p-2 text-center">
-                    <p className="text-purple-400">Local</p>
-                    <p className="text-gray-200">Ingredients</p>
-                  </div>
-                </div>
-                <Button className="w-full bg-yellow-500/20 border-yellow-500/30 hover:bg-yellow-500/30 text-yellow-100">
-                  Generate Grocery List
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Wellness Fusion */}
-            <Card className="bg-gradient-to-br from-teal-500/20 to-green-500/20 border-teal-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Activity className="w-5 h-5 text-teal-400" />
-                  <span className="text-sm">🧘 WELLNESS FUSION</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-3">
-                    <p className="text-xs text-gray-100 mb-2">Today's Routine:</p>
-                    <p className="text-xs text-teal-300">• 10 min Pranayama</p>
-                    <p className="text-xs text-teal-300">• 15 min Yoga Asanas</p>
-                    <p className="text-xs text-teal-300">• 20 min Cardio Walk</p>
-                  </div>
-                  <div className="bg-black/30 rounded p-2">
-                    <div className="flex items-center space-x-2">
-                      <Eye className="w-4 h-4 text-teal-400" />
-                      <span className="text-xs text-gray-100">AR Exercise Preview</span>
-                    </div>
-                  </div>
-                  <Button className="w-full bg-teal-500/20 border-teal-500/30 hover:bg-teal-500/30 text-teal-100">
-                    Start Workout
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Predictive Health Insights */}
-            <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <TrendingUp className="w-5 h-5 text-purple-400" />
-                  <span className="text-sm">🔬 PREDICTIVE HEALTH INSIGHTS</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-3">
-                    <p className="text-xs text-gray-100 mb-2">Your health in 5 years:</p>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-100">Diabetes Risk</span>
-                        <span className="text-yellow-400">15%</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-100">Heart Disease</span>
-                        <span className="text-green-400">8%</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-100">Overall Health</span>
-                        <span className="text-blue-400">Good</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button className="w-full bg-purple-500/20 border-purple-500/30 hover:bg-purple-500/30 text-purple-100">
-                    View Prevention Plan
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* AI Second Opinion */}
-            <Card className="bg-gradient-to-br from-indigo-500/20 to-blue-500/20 border-indigo-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Stethoscope className="w-5 h-5 text-indigo-400" />
-                  <span className="text-sm">👨‍⚕️ AI SECOND OPINION</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-4 border-2 border-dashed border-indigo-500/30">
-                    <div className="text-center">
-                      <FileText className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
-                      <p className="text-xs text-gray-100">Upload doctor's prescription</p>
-                    </div>
-                  </div>
-                  <div className="bg-black/30 rounded p-2">
-                    <p className="text-xs text-indigo-300">Questions to ask your doctor:</p>
-                    <p className="text-xs text-gray-200">• Are there alternative treatments?</p>
-                    <p className="text-xs text-gray-200">• What are the side effects?</p>
-                  </div>
-                  <Button className="w-full bg-indigo-500/20 border-indigo-500/30 hover:bg-indigo-500/30 text-indigo-100">
-                    Analyze Prescription
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Emergency Assistant */}
-            <Card className="bg-gradient-to-br from-red-600/30 to-red-500/20 border-red-500/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <AlertTriangle className="w-5 h-5 text-red-400" />
-                  <span className="text-sm">🚨 EMERGENCY ASSISTANT</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-6 text-lg animate-pulse">
-                  🚨 EMERGENCY
-                </Button>
-                <div className="bg-black/30 rounded p-2">
-                  <div className="flex items-center space-x-2 text-xs">
-                    <MapPin className="w-3 h-3 text-red-400" />
-                    <span className="text-gray-100">Auto-location detected</span>
-                  </div>
-                  <p className="text-xs text-gray-200 mt-1">Medical history ready to share</p>
-                </div>
-                <Button className="w-full bg-red-500/20 border-red-500/30 hover:bg-red-500/30 text-red-100">
-                  First-Aid AR Guide
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Family Health Tree */}
-            <Card className="bg-gradient-to-br from-green-600/20 to-teal-500/20 border-green-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Users className="w-5 h-5 text-green-400" />
-                  <span className="text-sm">🧬 FAMILY HEALTH TREE</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-3">
-                    <div className="text-center">
-                      <div className="w-full h-20 bg-gradient-to-b from-green-500/20 to-teal-500/20 rounded flex items-center justify-center">
-                        <span className="text-xs text-gray-100">Visual Family Tree</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="text-green-300">Genetic Risk: Diabetes (Mother's side)</p>
-                    <p className="text-yellow-300">Screening due: Cholesterol check</p>
-                  </div>
-                  <Button className="w-full bg-green-500/20 border-green-500/30 hover:bg-green-500/30 text-green-100">
-                    Share with Family
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Smart Vaccination Tracker */}
-            <Card className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Shield className="w-5 h-5 text-cyan-400" />
-                  <span className="text-sm">💉 SMART VACCINATION TRACKER</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded p-2">
-                    <p className="text-xs text-cyan-300 mb-1">Next Due:</p>
-                    <p className="text-xs text-gray-100">COVID Booster - 2 months</p>
-                    <p className="text-xs text-gray-100">Pet Vaccination - 1 week</p>
-                  </div>
-                  <div className="bg-black/30 rounded p-2">
-                    <div className="flex items-center space-x-2 text-xs">
-                      <MapPin className="w-3 h-3 text-cyan-400" />
-                      <span className="text-gray-100">3 centers nearby</span>
-                    </div>
-                  </div>
-                  <Button className="w-full bg-cyan-500/20 border-cyan-500/30 hover:bg-cyan-500/30 text-cyan-100">
-                    Book Appointment
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Hospital Wait Time */}
-            <Card className="bg-gradient-to-br from-orange-500/20 to-red-500/20 border-orange-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Clock className="w-5 h-5 text-orange-400" />
-                  <span className="text-sm">🏥 HOSPITAL WAIT TIME</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="bg-black/30 rounded p-2">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-100">City Hospital ER</span>
-                        <span className="text-green-400">15 min</span>
-                      </div>
-                    </div>
-                    <div className="bg-black/30 rounded p-2">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-100">Metro Medical</span>
-                        <span className="text-yellow-400">45 min</span>
-                      </div>
-                    </div>
-                    <div className="bg-black/30 rounded p-2">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-100">Apollo Clinic</span>
-                        <span className="text-red-400">2 hours</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button className="w-full bg-orange-500/20 border-orange-500/30 hover:bg-orange-500/30 text-orange-100">
-                    Check Insurance Coverage
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Bottom Features Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {/* Voice Commands */}
-            <Card className="bg-black/30 border-purple-500/30 backdrop-blur-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2 mb-3">
-                  <Volume2 className="w-4 h-4 text-purple-400" />
-                  <span className="text-sm font-semibold text-white">🎙️ VOICE COMMANDS</span>
-                </div>
-                <div className="space-y-2 text-xs text-gray-100">
-                  <p>"Hey MyMedi" activation</p>
-                  <p>• "What should I eat today?"</p>
-                  <p>• "Analyze my sleep pattern"</p>
-                  <p>• "Is this rash serious?"</p>
-                  <p>• "Remind me to take medicine"</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Live Health Score */}
-            <Card className="bg-black/30 border-green-500/30 backdrop-blur-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2 mb-3">
-                  <TrendingUp className="w-4 h-4 text-green-400" />
-                  <span className="text-sm font-semibold text-white">📊 LIVE HEALTH SCORE</span>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-400 mb-2">87</div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-green-400 to-blue-400 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `87%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-100 mt-2">Excellent Health</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Community Features */}
-            <Card className="bg-black/30 border-blue-500/30 backdrop-blur-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2 mb-3">
-                  <Users className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm font-semibold text-white">🌍 COMMUNITY</span>
-                </div>
-                <div className="space-y-2 text-xs text-gray-100">
-                  <p>• Anonymous health discussions</p>
-                  <p>• Local health alerts</p>
-                  <p>• Find health buddies</p>
-                  <p>• Medicine availability</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Innovation Demos */}
-            <Card className="bg-black/30 border-yellow-500/30 backdrop-blur-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                  <span className="text-sm font-semibold text-white">🚀 TRY THESE</span>
-                </div>
-                <div className="space-y-1 text-xs">
-                  <Button className="w-full justify-start p-1 h-auto text-xs text-gray-100 hover:text-white">
-                    🗣️ Cough into phone
-                  </Button>
-                  <Button className="w-full justify-start p-1 h-auto text-xs text-gray-100 hover:text-white">
-                    🤳 Selfie skin analysis
-                  </Button>
-                  <Button className="w-full justify-start p-1 h-auto text-xs text-gray-100 hover:text-white">
-                    👁️ Eye movement test
-                  </Button>
-                  <Button className="w-full justify-start p-1 h-auto text-xs text-gray-100 hover:text-white">
-                    🦷 Smile for dental check
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Floating Widgets */}
-          <div className="fixed bottom-6 right-6 space-y-4 z-40">
-            {/* Medicine Reminder */}
-            <Card className="bg-black/80 border-purple-500/30 backdrop-blur-sm w-48">
-              <CardContent className="p-3">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Pill className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs font-semibold text-white">Next Dose</span>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-purple-400">2h 15m</div>
-                  <Button className="w-full mt-2 bg-purple-500/20 border-purple-500/30 hover:bg-purple-500/30 text-purple-100">
-                    Mark as Taken
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Mood Tracker */}
-            <Card className="bg-black/80 border-blue-500/30 backdrop-blur-sm w-48">
-              <CardContent className="p-3">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Smile className="w-4 h-4 text-blue-400" />
-                  <span className="text-xs font-semibold text-white">Mood Today</span>
-                </div>
-                <div className="flex justify-center space-x-2">
-                  <Button size="sm" variant="ghost" className="text-lg p-1" onClick={() => handleMoodChange("😊")}>
-                    😊
-                  </Button>
-                  <Button size="sm" variant="ghost" className="text-lg p-1" onClick={() => handleMoodChange("😐")}>
-                    😐
-                  </Button>
-                  <Button size="sm" variant="ghost" className="text-lg p-1" onClick={() => handleMoodChange("😔")}>
-                    😔
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Mobile Menu Button */}
+          <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
         </div>
 
-        {/* Status Footer */}
-        <footer className="bg-black/40 border-t border-purple-500/30 py-4">
-          <div className="container mx-auto px-4">
-            <div className="text-center text-xs text-gray-200">
-              Powered by OpenAI GPT-4 + Google Gemini | 256-bit Encryption | HIPAA Compliant | Made in India 🇮🇳
-            </div>
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-200 px-4 py-4 space-y-4">
+            <Button
+              onClick={() => {
+                setActiveTab("home")
+                setMobileMenuOpen(false)
+              }}
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Home
+            </Button>
+            <Button
+              onClick={() => {
+                setActiveTab("chat")
+                setMobileMenuOpen(false)
+              }}
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              AI Chat
+            </Button>
+            <Button
+              onClick={() => {
+                setActiveTab("assessment")
+                setMobileMenuOpen(false)
+              }}
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Health Assessment
+            </Button>
+            <Button
+              onClick={() => {
+                setActiveTab("vitals")
+                setMobileMenuOpen(false)
+              }}
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Vitals Tracker
+            </Button>
+            <Button
+              onClick={() => {
+                setActiveTab("diet")
+                setMobileMenuOpen(false)
+              }}
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <Apple className="w-4 h-4 mr-2" />
+              Diet Planner
+            </Button>
+            <Button
+              onClick={() => {
+                setActiveTab("demo")
+                setMobileMenuOpen(false)
+              }}
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Advanced Demo
+            </Button>
           </div>
-        </footer>
-      </div>
-    )
-  }
+        )}
+      </header>
 
-  /* ----------  DEFAULT LANDING  ---------- */
-  if (!showAssessment) {
-    return (
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <header className="bg-white/95 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-50 shadow-sm">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <MyMedLogo size="lg" />
-            <nav className="hidden md:flex items-center space-x-6">
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger className="w-40">
-                  <Languages className="w-4 h-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((lang) => (
-                    <SelectItem key={lang} value={lang}>
-                      {lang}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Link href="/chat">
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Quick Chat
-                </Button>
-              </Link>
-              <Button onClick={() => setShowAssessment(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-                Start Assessment
-              </Button>
-            </nav>
-          </div>
-        </header>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* Tab Navigation */}
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8">
+            <TabsTrigger value="home" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Home</span>
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="flex items-center gap-2">
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Chat</span>
+            </TabsTrigger>
+            <TabsTrigger value="assessment" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Assessment</span>
+            </TabsTrigger>
+            <TabsTrigger value="vitals" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Vitals</span>
+            </TabsTrigger>
+            <TabsTrigger value="diet" className="flex items-center gap-2">
+              <Apple className="w-4 h-4" />
+              <span className="hidden sm:inline">Diet</span>
+            </TabsTrigger>
+            <TabsTrigger value="demo" className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">Demo</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 py-20 overflow-hidden">
-          {/* Floating Medical Icons */}
-          <div className="absolute inset-0 overflow-hidden">
-            {floatingIcons.map(({ id, x, y, icon: Icon }) => (
-              <div
-                key={id}
-                className="absolute animate-pulse opacity-10"
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  animationDelay: `${id * 0.5}s`,
-                  animationDuration: `${3 + id}s`,
-                }}
-              >
-                <Icon className="w-8 h-8 text-white" />
+          {/* HOME TAB */}
+          <TabsContent value="home" className="space-y-12">
+            {/* Hero Section */}
+            <section className="relative bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 py-20 rounded-2xl overflow-hidden">
+              {/* Floating Medical Icons */}
+              <div className="absolute inset-0 overflow-hidden">
+                {floatingIcons.map(({ id, x, y, icon: Icon }) => (
+                  <div
+                    key={id}
+                    className="absolute animate-pulse opacity-10"
+                    style={{
+                      left: `${x}%`,
+                      top: `${y}%`,
+                      animationDelay: `${id * 0.5}s`,
+                      animationDuration: `${3 + id}s`,
+                    }}
+                  >
+                    <Icon className="w-8 h-8 text-white" />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="container mx-auto px-4 text-center relative z-10">
-            <Badge className="mb-6 bg-white/20 text-white hover:bg-white/30 border-white/30">
-              <span className="mr-2">🇮🇳</span>
-              Made in India • HIPAA Compliant • AI-Powered
-            </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              AI-Powered Healthcare for{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">
-                Every Indian
-              </span>
-            </h1>
-            <p className="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">
-              Get instant health insights in your language, powered by Google Gemini AI. Healthcare that understands
-              India's diversity and needs.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button
-                size="lg"
-                className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
-                onClick={() => setShowAssessment(true)}
-              >
-                Start Free Consultation
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-white text-white hover:bg-white hover:text-purple-600 px-8 py-4 text-lg bg-transparent"
-              >
-                Learn More
-                <Play className="ml-2 w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </section>
+              <div className="relative z-10 text-center px-8">
+                <Badge className="mb-6 bg-white/20 text-white hover:bg-white/30 border-white/30">
+                  <span className="mr-2">🇮🇳</span>
+                  Made in India • HIPAA Compliant • AI-Powered
+                </Badge>
+                <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                  AI-Powered Healthcare for{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">
+                    Every Indian
+                  </span>
+                </h1>
+                <p className="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">
+                  Get instant health insights in your language, powered by Google Gemini AI. Healthcare that understands
+                  India's diversity and needs.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <Button
+                    size="lg"
+                    className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+                    onClick={() => setActiveTab("assessment")}
+                  >
+                    Start Free Consultation
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-white text-white hover:bg-white hover:text-purple-600 px-8 py-4 text-lg bg-transparent"
+                    onClick={() => setActiveTab("demo")}
+                  >
+                    Try Advanced Demo
+                    <Play className="ml-2 w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </section>
 
-        {/* Stats Bar */}
-        <section className="py-12 bg-gradient-to-r from-blue-50 to-purple-50">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Quick Access Cards */}
+            <section className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                onClick={() => setActiveTab("chat")}
+              >
+                <CardContent className="p-6 text-center">
+                  <MessageCircle className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">AI Health Chat</h3>
+                  <p className="text-gray-600 text-sm">Get instant answers to your health questions</p>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                onClick={() => setActiveTab("assessment")}
+              >
+                <CardContent className="p-6 text-center">
+                  <FileText className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Health Assessment</h3>
+                  <p className="text-gray-600 text-sm">Comprehensive AI-powered health evaluation</p>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                onClick={() => setActiveTab("vitals")}
+              >
+                <CardContent className="p-6 text-center">
+                  <Activity className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Vitals Tracker</h3>
+                  <p className="text-gray-600 text-sm">Monitor and analyze your vital signs</p>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                onClick={() => setActiveTab("diet")}
+              >
+                <CardContent className="p-6 text-center">
+                  <Apple className="w-12 h-12 text-orange-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Diet Planner</h3>
+                  <p className="text-gray-600 text-sm">Personalized nutrition recommendations</p>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Stats Section */}
+            <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow bg-white">
                 <CardContent className="p-6">
                   <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -877,967 +875,1167 @@ export default function Home() {
                   <div className="text-gray-600">AI Assistant</div>
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        {/* Features Section */}
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Healthcare Features Built for India</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Comprehensive AI-powered healthcare solutions designed specifically for Indian needs and preferences
+            {/* About the Founder Section */}
+            <section className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div className="relative">
+                  <div className="w-full h-96 bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden">
+                    <Image
+                      src="/images/harsha-founder.jpeg"
+                      alt="Bandarla Harshavardhan - Founder & CEO of MyMedi.ai"
+                      width={400}
+                      height={400}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Bandarla Harshavardhan</h2>
+                    <p className="text-xl text-purple-600 font-semibold mb-4">Founder & CEO, MyMedi.ai</p>
+
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                        <Award className="w-3 h-3 mr-1" />
+                        Stanford d.school UIF Fellow
+                      </Badge>
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                        <BookOpen className="w-3 h-3 mr-1" />
+                        MBA Graduate
+                      </Badge>
+                      <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                        <Database className="w-3 h-3 mr-1" />
+                        Ex-Data Architect at MNCs
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-700 leading-relaxed text-lg">
+                    With over a decade of experience as a Data Architect at leading multinational corporations,
+                    Harshavardhan combines technical expertise with human-centered design. As a Stanford d.school
+                    University Innovation Fellow and MBA graduate, he founded MyMedi.ai to democratize healthcare access
+                    for 1.4 billion Indians using AI technology.
+                  </p>
+
+                  <div className="flex space-x-4">
+                    <a
+                      href="https://www.linkedin.com/company/my-medi-ai/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block"
+                    >
+                      <Button variant="outline" size="sm" className="flex items-center bg-transparent">
+                        <Linkedin className="w-4 h-4 mr-2" />
+                        LinkedIn
+                      </Button>
+                    </a>
+                    <a
+                      href="https://www.facebook.com/share/19X8ivFr6Z/?mibextid=wwXIfr"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block"
+                    >
+                      <Button variant="outline" size="sm" className="flex items-center bg-transparent">
+                        <Facebook className="w-4 h-4 mr-2" />
+                        Facebook
+                      </Button>
+                    </a>
+                    <a
+                      href="https://www.instagram.com/my_medi.ai?igsh=b283cDExejh4cjc1&utm_source=qr"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block"
+                    >
+                      <Button variant="outline" size="sm" className="flex items-center bg-transparent">
+                        <Instagram className="w-4 h-4 mr-2" />
+                        Instagram
+                      </Button>
+                    </a>
+                    <a href="mailto:Harsha@mymedi.ai" className="inline-block">
+                      <Button variant="outline" size="sm" className="flex items-center bg-transparent">
+                        <Mail className="w-4 h-4 mr-2" />
+                        Email
+                      </Button>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Email Signup */}
+            <section className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 rounded-2xl p-8 text-center">
+              <h2 className="text-3xl font-bold text-white mb-6">Start Your Health Journey Today</h2>
+              <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
+                Join thousands of Indians taking control of their health with AI-powered insights
+              </p>
+
+              <div className="max-w-md mx-auto mb-8">
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-white/90 border-0 text-gray-900 placeholder-gray-500"
+                  />
+                  <Button onClick={handleEmailSignup} className="bg-white text-purple-600 hover:bg-gray-100 px-6">
+                    Get Early Access
+                  </Button>
+                </div>
+              </div>
+            </section>
+          </TabsContent>
+
+          {/* AI CHAT TAB */}
+          <TabsContent value="chat" className="space-y-6">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-blue-900 mb-4">AI Health Assistant</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Chat with our AI-powered health assistant for instant medical guidance and support
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <Card className="border-purple-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
-                    <Brain className="w-6 h-6 text-purple-600" />
+            {/* Disclaimer Alert */}
+            <Alert className="mb-6 border-red-200 bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <strong>Medical Disclaimer:</strong> This AI provides general health information only and is not a
+                substitute for professional medical advice, diagnosis, or treatment. For emergencies, call 911. Always
+                consult healthcare professionals for medical concerns.
+              </AlertDescription>
+            </Alert>
+
+            <Card className="max-w-4xl mx-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-purple-600" />
+                  Health Chat Assistant
+                  <Badge className="ml-auto bg-green-100 text-green-800">
+                    <Activity className="w-3 h-3 mr-1" />
+                    Online
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-96 overflow-y-auto border rounded-lg p-4 mb-4 bg-gray-50">
+                  {chatMessages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`mb-4 flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          message.sender === "user"
+                            ? "bg-blue-600 text-white"
+                            : "bg-white border border-gray-200 text-gray-800"
+                        }`}
+                      >
+                        <div className="flex items-start space-x-2">
+                          {message.sender === "ai" && (
+                            <MyMedLogo size="sm" showText={false} className="flex-shrink-0 mt-1" />
+                          )}
+                          {message.sender === "user" && <User className="w-5 h-5 flex-shrink-0 mt-1" />}
+                          <div className="flex-1">
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.text}</div>
+                            <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200">
+                              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                <Clock className="w-3 h-3" />
+                                <span>{message.timestamp.toLocaleTimeString()}</span>
+                                {message.confidence && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-green-600">{message.confidence}% confidence</span>
+                                  </>
+                                )}
+                              </div>
+                              {message.sender === "ai" && (
+                                <div className="flex items-center space-x-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigator.clipboard.writeText(message.text)}
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                    <ThumbsUp className="w-3 h-3" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                    <ThumbsDown className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {chatLoading && (
+                    <div className="flex justify-start mb-4">
+                      <div className="bg-white border border-gray-200 rounded-lg px-4 py-2">
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                          <span className="text-sm text-gray-600">AI is thinking...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="Ask me about your health concerns..."
+                      onKeyPress={(e) => e.key === "Enter" && handleChatSubmit()}
+                      disabled={chatLoading}
+                      className="pr-20"
+                    />
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-purple-100">
+                        <Mic className="w-3 h-3 text-gray-400" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-purple-100">
+                        <ImageIcon className="w-3 h-3 text-gray-400" />
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Health Assistant</h3>
-                  <p className="text-gray-600">
-                    Chat with Gemini-powered AI in your preferred language. Get instant health advice, symptom analysis,
-                    and personalized recommendations.
+                  <Button onClick={handleChatSubmit} disabled={chatLoading || !chatInput.trim()}>
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setChatInput("Can I take ibuprofen with antibiotics?")}
+                  >
+                    Medicine interactions
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setChatInput("What are symptoms of low vitamin D?")}
+                  >
+                    Vitamin deficiency
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setChatInput("When should I see a doctor for headaches?")}
+                  >
+                    When to see doctor
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* HEALTH ASSESSMENT TAB */}
+          <TabsContent value="assessment" className="space-y-6">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-blue-900 mb-4">Comprehensive Health Assessment</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Get AI-powered health analysis with personalized recommendations and action plans
+              </p>
+            </div>
+
+            {assessmentLoading ? (
+              <Card className="max-w-2xl mx-auto">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="relative mb-8">
+                    <Loader2 className="h-20 w-20 animate-spin text-blue-600" />
+                    <div className="absolute inset-0 h-20 w-20 rounded-full border-4 border-blue-200 animate-pulse"></div>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2 text-gray-800">🤖 AI Analysis in Progress</h3>
+                  <p className="text-gray-600 text-center max-w-md">
+                    Our AI is analyzing your health information and generating personalized recommendations...
                   </p>
+                  <div className="flex items-center gap-3 text-gray-500 mt-4">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div
+                      className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.1s" }}
+                    ></div>
+                    <div
+                      className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <span className="ml-3">Processing your medical data...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : assessmentResults ? (
+              <div className="max-w-6xl mx-auto space-y-6">
+                {assessmentError && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>Note: Using fallback recommendations. {assessmentError}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+                  <CardHeader className="text-center">
+                    <CardTitle className="flex items-center justify-center gap-3 text-2xl text-green-700">
+                      <CheckCircle className="h-6 w-6" />
+                      Your Health Assessment Results
+                    </CardTitle>
+                    <p className="text-gray-600">
+                      Generated for <strong>{assessmentData.name}</strong> on {new Date().toLocaleDateString()}
+                    </p>
+                  </CardHeader>
+                </Card>
+
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <Card className="border-red-200 bg-red-50 hover:shadow-xl transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-red-700">
+                        <Pill className="h-5 w-5" />💊 Medications
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-gray-700 whitespace-pre-line">{assessmentResults.medications}</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-blue-200 bg-blue-50 hover:shadow-xl transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-blue-700">
+                        <User className="h-5 w-5" />
+                        👨‍⚕️ Healthcare Providers
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-gray-700 whitespace-pre-line">{assessmentResults.doctors}</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-purple-200 bg-purple-50 hover:shadow-xl transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-purple-700">
+                        <Activity className="h-5 w-5" />🔬 Recommended Tests
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-gray-700 whitespace-pre-line">{assessmentResults.labs}</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-green-200 bg-green-50 hover:shadow-xl transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-green-700">
+                        <Utensils className="h-5 w-5" />
+                        🍽️ Diet Plan
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-gray-700 whitespace-pre-line">{assessmentResults.dietPlan}</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-orange-200 bg-orange-50 hover:shadow-xl transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-orange-700">
+                        <Dumbbell className="h-5 w-5" />
+                        🏃‍♂️ Exercise
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-gray-700 whitespace-pre-line">{assessmentResults.exercise}</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-indigo-200 bg-indigo-50 hover:shadow-xl transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-indigo-700">
+                        <AlertCircle className="h-5 w-5" />💡 General Advice
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-gray-700 whitespace-pre-line">{assessmentResults.generalAdvice}</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="flex flex-wrap gap-4 justify-center">
+                  <Button onClick={resetAssessment} variant="outline" size="lg">
+                    🔄 New Assessment
+                  </Button>
+                  <Button onClick={() => window.print()} size="lg">
+                    🖨️ Print Results
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const text = `Health Assessment Results for ${assessmentData.name}\n\n${Object.entries(
+                        assessmentResults,
+                      )
+                        .map(([key, value]) => `${key.toUpperCase()}:\n${value}\n\n`)
+                        .join("")}`
+                      navigator.clipboard.writeText(text)
+                      alert("Results copied to clipboard!")
+                    }}
+                    variant="secondary"
+                    size="lg"
+                  >
+                    📋 Copy Results
+                  </Button>
+                </div>
+
+                <Alert className="bg-yellow-50 border-yellow-400">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800">
+                    <strong>Important Medical Disclaimer:</strong> This AI assessment is for informational purposes only
+                    and should not replace professional medical advice, diagnosis, or treatment. Always consult with
+                    qualified healthcare providers for proper medical evaluation and treatment decisions.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            ) : (
+              <Card className="max-w-4xl mx-auto">
+                <CardHeader>
+                  <CardTitle>Complete Health Assessment Form</CardTitle>
+                  <p className="text-gray-600">Fill out all sections for comprehensive AI analysis</p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input
+                        id="name"
+                        value={assessmentData.name}
+                        onChange={(e) => setAssessmentData((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="age">Age *</Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        value={assessmentData.age}
+                        onChange={(e) => setAssessmentData((prev) => ({ ...prev, age: e.target.value }))}
+                        placeholder="Enter your age"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="gender">Gender *</Label>
+                    <Select
+                      value={assessmentData.gender}
+                      onValueChange={(value) => setAssessmentData((prev) => ({ ...prev, gender: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Symptoms */}
+                  <div>
+                    <Label htmlFor="symptoms">Current Symptoms *</Label>
+                    <Textarea
+                      id="symptoms"
+                      value={assessmentData.symptoms}
+                      onChange={(e) => setAssessmentData((prev) => ({ ...prev, symptoms: e.target.value }))}
+                      placeholder="Describe your current symptoms in detail..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="duration">Duration</Label>
+                      <Select
+                        value={assessmentData.duration}
+                        onValueChange={(value) => setAssessmentData((prev) => ({ ...prev, duration: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select duration" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {durationOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="severity">Severity (1-10)</Label>
+                      <Select
+                        value={assessmentData.severity}
+                        onValueChange={(value) => setAssessmentData((prev) => ({ ...prev, severity: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select severity" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {severityOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Medical History */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="medications">Current Medications</Label>
+                      <Textarea
+                        id="medications"
+                        value={assessmentData.medications}
+                        onChange={(e) => setAssessmentData((prev) => ({ ...prev, medications: e.target.value }))}
+                        placeholder="List current medications..."
+                        rows={2}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="allergies">Known Allergies</Label>
+                      <Textarea
+                        id="allergies"
+                        value={assessmentData.allergies}
+                        onChange={(e) => setAssessmentData((prev) => ({ ...prev, allergies: e.target.value }))}
+                        placeholder="List known allergies..."
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="familyHistory">Family Medical History</Label>
+                    <Textarea
+                      id="familyHistory"
+                      value={assessmentData.familyHistory}
+                      onChange={(e) => setAssessmentData((prev) => ({ ...prev, familyHistory: e.target.value }))}
+                      placeholder="Describe family medical history..."
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="lifestyle">Lifestyle Information</Label>
+                    <Textarea
+                      id="lifestyle"
+                      value={assessmentData.lifestyle}
+                      onChange={(e) => setAssessmentData((prev) => ({ ...prev, lifestyle: e.target.value }))}
+                      placeholder="Exercise, diet, smoking, alcohol, sleep patterns..."
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Vitals */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Vital Signs (Optional)</h3>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="bloodPressure">Blood Pressure</Label>
+                        <Input
+                          id="bloodPressure"
+                          value={assessmentData.vitals.bloodPressure}
+                          onChange={(e) =>
+                            setAssessmentData((prev) => ({
+                              ...prev,
+                              vitals: { ...prev.vitals, bloodPressure: e.target.value },
+                            }))
+                          }
+                          placeholder="120/80"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="heartRate">Heart Rate (bpm)</Label>
+                        <Input
+                          id="heartRate"
+                          value={assessmentData.vitals.heartRate}
+                          onChange={(e) =>
+                            setAssessmentData((prev) => ({
+                              ...prev,
+                              vitals: { ...prev.vitals, heartRate: e.target.value },
+                            }))
+                          }
+                          placeholder="72"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="temperature">Temperature (°F)</Label>
+                        <Input
+                          id="temperature"
+                          value={assessmentData.vitals.temperature}
+                          onChange={(e) =>
+                            setAssessmentData((prev) => ({
+                              ...prev,
+                              vitals: { ...prev.vitals, temperature: e.target.value },
+                            }))
+                          }
+                          placeholder="98.6"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleAssessmentSubmit}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-lg py-4"
+                    size="lg"
+                    disabled={!assessmentData.name || !assessmentData.age || !assessmentData.symptoms}
+                  >
+                    🤖 Generate AI Health Assessment
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* VITALS TRACKER TAB */}
+          <TabsContent value="vitals" className="space-y-6">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-green-900 mb-4">Vitals Tracker</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Monitor your vital signs and get AI-powered health insights
+              </p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-green-600" />
+                    Record Vitals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="bp">Blood Pressure</Label>
+                      <Input
+                        id="bp"
+                        value={vitalsData.bloodPressure}
+                        onChange={(e) => setVitalsData((prev) => ({ ...prev, bloodPressure: e.target.value }))}
+                        placeholder="120/80"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="hr">Heart Rate (bpm)</Label>
+                      <Input
+                        id="hr"
+                        value={vitalsData.heartRate}
+                        onChange={(e) => setVitalsData((prev) => ({ ...prev, heartRate: e.target.value }))}
+                        placeholder="72"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="temp">Temperature (°F)</Label>
+                      <Input
+                        id="temp"
+                        value={vitalsData.temperature}
+                        onChange={(e) => setVitalsData((prev) => ({ ...prev, temperature: e.target.value }))}
+                        placeholder="98.6"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="weight">Weight (lbs)</Label>
+                      <Input
+                        id="weight"
+                        value={vitalsData.weight}
+                        onChange={(e) => setVitalsData((prev) => ({ ...prev, weight: e.target.value }))}
+                        placeholder="150"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="height">Height (inches)</Label>
+                      <Input
+                        id="height"
+                        value={vitalsData.height}
+                        onChange={(e) => setVitalsData((prev) => ({ ...prev, height: e.target.value }))}
+                        placeholder="68"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sugar">Blood Sugar (mg/dL)</Label>
+                      <Input
+                        id="sugar"
+                        value={vitalsData.bloodSugar}
+                        onChange={(e) => setVitalsData((prev) => ({ ...prev, bloodSugar: e.target.value }))}
+                        placeholder="100"
+                      />
+                    </div>
+                  </div>
+                  <Button onClick={handleVitalsAnalysis} className="w-full" disabled={vitalsLoading}>
+                    {vitalsLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <TrendingUp className="mr-2 h-4 w-4" />
+                        Analyze Vitals
+                      </>
+                    )}
+                  </Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-blue-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                    <FileText className="w-6 h-6 text-blue-600" />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-blue-600" />
+                    Vitals History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {vitalsHistory.map((reading) => (
+                      <div key={reading.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium">{reading.type}</p>
+                          <p className="text-sm text-gray-600">{reading.timestamp.toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">
+                            {reading.value} {reading.unit}
+                          </p>
+                          <Badge
+                            className={
+                              reading.status === "normal"
+                                ? "bg-green-100 text-green-800"
+                                : reading.status === "warning"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                            }
+                          >
+                            {reading.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Health Records</h3>
-                  <p className="text-gray-600">
-                    Secure digital storage for all medical documents. Upload prescriptions, lab reports, and track your
-                    complete health history.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-green-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
-                    <Activity className="w-6 h-6 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Vitals Tracking</h3>
-                  <p className="text-gray-600">
-                    Monitor BP, blood sugar, weight with AI insights. Get personalized recommendations based on Indian
-                    health standards.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-orange-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
-                    <Languages className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Multi-language Support</h3>
-                  <p className="text-gray-600">
-                    Available in Hindi, Tamil, Telugu, Bengali, Gujarati, Kannada, Malayalam, Marathi, Punjabi, and
-                    more.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-teal-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-200 transition-colors">
-                    <Leaf className="w-6 h-6 text-teal-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">AYUSH Integration</h3>
-                  <p className="text-gray-600">
-                    Combines modern medicine with traditional Ayurveda, Yoga, Unani, Siddha, and Homeopathy practices
-                    for holistic care.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-indigo-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-indigo-200 transition-colors">
-                    <Target className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Goal Setting</h3>
-                  <p className="text-gray-600">
-                    Set personalized health goals with AI guidance. Track progress and get motivated with culturally
-                    relevant recommendations.
-                  </p>
                 </CardContent>
               </Card>
             </div>
-          </div>
-        </section>
 
-        {/* About the Founder Section */}
-        <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="relative">
-                <div className="w-full h-96 bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden">
-                  <Image
-                    src="/images/harsha-founder.jpeg"
-                    alt="Bandarla Harshavardhan - Founder & CEO of MyMedi.ai"
-                    width={400}
-                    height={400}
-                    className="w-full h-full object-cover"
+            {vitalsAnalysis && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-purple-600" />
+                    AI Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <p className="text-gray-700 whitespace-pre-line">{vitalsAnalysis}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* DIET PLANNER TAB */}
+          <TabsContent value="diet" className="space-y-6">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-orange-900 mb-4">AI Diet Planner</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Get personalized nutrition recommendations based on your health goals
+              </p>
+            </div>
+
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Apple className="h-5 w-5 text-orange-600" />
+                  Diet Preferences
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="condition">Health Condition</Label>
+                  <Select
+                    value={dietPreferences.condition}
+                    onValueChange={(value) => setDietPreferences((prev) => ({ ...prev, condition: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select health condition" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="diabetes">Diabetes</SelectItem>
+                      <SelectItem value="hypertension">High Blood Pressure</SelectItem>
+                      <SelectItem value="heart-disease">Heart Disease</SelectItem>
+                      <SelectItem value="weight-loss">Weight Loss</SelectItem>
+                      <SelectItem value="weight-gain">Weight Gain</SelectItem>
+                      <SelectItem value="general">General Health</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="goal">Primary Goal</Label>
+                  <Select
+                    value={dietPreferences.goal}
+                    onValueChange={(value) => setDietPreferences((prev) => ({ ...prev, goal: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your goal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lose-weight">Lose Weight</SelectItem>
+                      <SelectItem value="gain-weight">Gain Weight</SelectItem>
+                      <SelectItem value="maintain-weight">Maintain Weight</SelectItem>
+                      <SelectItem value="build-muscle">Build Muscle</SelectItem>
+                      <SelectItem value="improve-energy">Improve Energy</SelectItem>
+                      <SelectItem value="better-digestion">Better Digestion</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="restrictions">Dietary Restrictions</Label>
+                  <Textarea
+                    id="restrictions"
+                    value={dietPreferences.restrictions}
+                    onChange={(e) => setDietPreferences((prev) => ({ ...prev, restrictions: e.target.value }))}
+                    placeholder="Allergies, vegetarian, vegan, etc."
+                    rows={2}
                   />
                 </div>
-              </div>
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Bandarla Harshavardhan</h2>
-                  <p className="text-xl text-purple-600 font-semibold mb-4">Founder & CEO, MyMedi.ai</p>
 
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-                      <Award className="w-3 h-3 mr-1" />
-                      Stanford d.school UIF Fellow
-                    </Badge>
-                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                      <BookOpen className="w-3 h-3 mr-1" />
-                      MBA Graduate
-                    </Badge>
-                    <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                      <Database className="w-3 h-3 mr-1" />
-                      Ex-Data Architect at MNCs
-                    </Badge>
+                <Button onClick={handleDietGeneration} className="w-full" disabled={dietLoading}>
+                  {dietLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating Plan...
+                    </>
+                  ) : (
+                    <>
+                      <Utensils className="mr-2 h-4 w-4" />
+                      Generate Diet Plan
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {dietPlan && (
+              <Card className="max-w-4xl mx-auto">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Utensils className="h-5 w-5 text-green-600" />
+                    Your Personalized Diet Plan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-green-50 p-6 rounded-lg">
+                    <p className="text-gray-700 whitespace-pre-line">{dietPlan}</p>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  With over a decade of experience as a Data Architect at leading multinational corporations,
-                  Harshavardhan combines technical expertise with human-centered design. As a Stanford d.school
-                  University Innovation Fellow and MBA graduate, he founded MyMedi.ai to democratize healthcare access
-                  for 1.4 billion Indians using AI technology.
-                </p>
-
-                <div className="flex space-x-4">
-                  <a
-                    href="https://www.linkedin.com/company/my-medi-ai/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block"
-                  >
-                    <Button variant="outline" size="sm" className="flex items-center bg-transparent">
-                      <Linkedin className="w-4 h-4 mr-2" />
-                      LinkedIn
-                    </Button>
-                  </a>
-                  <a
-                    href="https://www.facebook.com/share/19X8ivFr6Z/?mibextid=wwXIfr"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block"
-                  >
-                    <Button variant="outline" size="sm" className="flex items-center bg-transparent">
-                      <Facebook className="w-4 h-4 mr-2" />
-                      Facebook
-                    </Button>
-                  </a>
-                  <a
-                    href="https://www.instagram.com/my_medi.ai?igsh=b283cDExejh4cjc1&utm_source=qr"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block"
-                  >
-                    <Button variant="outline" size="sm" className="flex items-center bg-transparent">
-                      <Instagram className="w-4 h-4 mr-2" />
-                      Instagram
-                    </Button>
-                  </a>
-                  <a href="mailto:Harsha@mymedi.ai" className="inline-block">
-                    <Button variant="outline" size="sm" className="flex items-center bg-transparent">
-                      <Mail className="w-4 h-4 mr-2" />
-                      Email
-                    </Button>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Why MyMedi.ai Section */}
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Built for India, Powered by Innovation
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Understanding India's unique healthcare challenges and providing AI-powered solutions
+          {/* ADVANCED DEMO TAB */}
+          <TabsContent value="demo" className="space-y-6">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-purple-900 mb-4">Advanced AI Demo</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Experience cutting-edge AI features for healthcare innovation
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-orange-50 to-red-50">
-                <CardContent className="p-8">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span className="text-2xl">🇮🇳</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-orange-900 mb-4">Truly Indian</h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    Designed for Indian health standards, dietary habits, cultural needs, and traditional medicine
-                    practices. Understanding the diversity of India's healthcare landscape.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-blue-50 to-purple-50">
-                <CardContent className="p-8">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Brain className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-blue-900 mb-4">AI-First Approach</h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    Google Gemini integration with massive context understanding. Advanced machine learning algorithms
-                    trained on Indian health data and medical practices.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-green-50 to-teal-50">
-                <CardContent className="p-8">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Shield className="w-8 h-8 text-green-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-green-900 mb-4">Privacy Focused</h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    Your health data is encrypted and never shared without consent. HIPAA compliant infrastructure with
-                    Indian data protection standards.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works Section */}
-        <section className="py-20 bg-gradient-to-r from-purple-50 to-blue-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Simple steps to get started with AI-powered healthcare
-              </p>
-            </div>
-
-            <div className="relative">
-              {/* Timeline line */}
-              <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-300 to-blue-300 transform -translate-y-1/2"></div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
-                    <Users className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-purple-900 mb-3">Sign Up</h3>
-                  <p className="text-gray-600">Create your free account in seconds. No credit card required.</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
-                    <FileText className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-blue-900 mb-3">Add Health Info</h3>
-                  <p className="text-gray-600">Upload medical records, add vitals, and share your health history.</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
-                    <MessageCircle className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-green-900 mb-3">Ask AI</h3>
-                  <p className="text-gray-600">Get instant health insights in your preferred Indian language.</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
-                    <TrendingUp className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-orange-900 mb-3">Track Progress</h3>
-                  <p className="text-gray-600">Monitor health goals and track improvements over time.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Technology Stack Section */}
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Powered by Cutting-Edge Technology</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Built with the latest AI and cloud technologies for reliability and performance
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
-              <Card className="text-center border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-purple-50">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Brain className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Google Gemini AI</h3>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-teal-50">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Cpu className="w-6 h-6 text-green-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Python</h3>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-red-50">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Zap className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Flask</h3>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-pink-50">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Microscope className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Machine Learning</h3>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-teal-50 to-cyan-50">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Cloud className="w-6 h-6 text-teal-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Cloud Infrastructure</h3>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Testimonial/Vision Section */}
-        <section className="py-20 bg-gradient-to-r from-purple-600 to-blue-600 relative overflow-hidden">
-          <div className="absolute inset-0 bg-black/20"></div>
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center max-w-4xl mx-auto">
-              <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8">
-                <Users className="w-12 h-12 text-white" />
-              </div>
-              <blockquote className="text-2xl md:text-3xl font-bold text-white mb-8 leading-relaxed">
-                "Technology should empower, not exclude. At MyMedi.ai, we're ensuring every Indian has access to quality
-                healthcare advice, regardless of language or location."
-              </blockquote>
-              <div className="text-purple-200 text-lg">— Bandarla Harshavardhan, Founder & CEO</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Demo Section */}
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Experience the Future of Healthcare</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Try our revolutionary AI-powered healthcare platform with advanced features
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
-                <CardContent className="p-8">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <Play className="w-8 h-8" />
-                    <h3 className="text-2xl font-bold">Advanced Demo Dashboard</h3>
-                  </div>
-                  <p className="mb-6 text-purple-100">
-                    Experience our futuristic healthcare dashboard with dual AI integration, 3D body mapping, instant
-                    report analysis, and revolutionary features not available anywhere else.
-                  </p>
-                  <div className="space-y-2 mb-6 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-300" />
-                      <span>Dual AI (OpenAI + Google Gemini)</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-300" />
-                      <span>3D Symptom Body Mapper</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-300" />
-                      <span>Visual Medicine Identifier</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-300" />
-                      <span>AI Meal Planner & Emergency Assistant</span>
-                    </div>
-                  </div>
+            {/* AI Mode Selector */}
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-purple-600" />
+                  AI Mode Selection
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
                   <Button
-                    size="lg"
-                    className="bg-white text-purple-600 hover:bg-gray-100 w-full"
-                    onClick={() => setShowDemo(true)}
+                    variant={aiMode === "openai" ? "default" : "outline"}
+                    onClick={() => setAiMode("openai")}
+                    className="flex flex-col items-center p-4 h-auto"
                   >
-                    Launch Advanced Demo
-                    <ArrowRight className="ml-2 w-5 h-5" />
+                    <Brain className="h-6 w-6 mb-2" />
+                    OpenAI GPT
                   </Button>
+                  <Button
+                    variant={aiMode === "gemini" ? "default" : "outline"}
+                    onClick={() => setAiMode("gemini")}
+                    className="flex flex-col items-center p-4 h-auto"
+                  >
+                    <Sparkles className="h-6 w-6 mb-2" />
+                    Google Gemini
+                  </Button>
+                  <Button
+                    variant={aiMode === "dual" ? "default" : "outline"}
+                    onClick={() => setAiMode("dual")}
+                    className="flex flex-col items-center p-4 h-auto"
+                  >
+                    <Target className="h-6 w-6 mb-2" />
+                    Dual AI
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-600 mt-4 text-center">
+                  Current mode:{" "}
+                  <strong>
+                    {aiMode === "dual"
+                      ? "Dual AI (Best Results)"
+                      : aiMode === "openai"
+                        ? "OpenAI GPT"
+                        : "Google Gemini"}
+                  </strong>
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Demo Features Grid */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Report Analyzer */}
+              <Card className="hover:shadow-xl transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Medical Report Analyzer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">{demoReportAnalysis}</p>
+                    <Button onClick={handleDemoReportUpload} variant="outline">
+                      <Camera className="mr-2 h-4 w-4" />
+                      Upload/Photo Report
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-600 to-teal-600 text-white">
-                <CardContent className="p-8">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <MessageCircle className="w-8 h-8" />
-                    <h3 className="text-2xl font-bold">AI Chat Assistant</h3>
+              {/* Body Mapper */}
+              <Card className="hover:shadow-xl transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-green-600" />
+                    Interactive Body Mapper
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <div
+                      className="w-32 h-48 bg-gradient-to-b from-blue-200 to-blue-300 rounded-full mx-auto mb-4 cursor-pointer hover:shadow-lg transition-shadow relative"
+                      onClick={handleDemoBodyClick}
+                    >
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-400 rounded-full animate-pulse"></div>
+                      <div className="absolute top-12 left-1/2 transform -translate-x-1/2 text-xs text-white font-bold">
+                        Click me
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span>Headache:</span>
+                        <Badge className="bg-red-100 text-red-800">{demoBodyMapper.headache}%</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Migraine Risk:</span>
+                        <Badge className="bg-orange-100 text-orange-800">{demoBodyMapper.migraine}%</Badge>
+                      </div>
+                    </div>
                   </div>
-                  <p className="mb-6 text-green-100">
-                    Chat with our AI health assistant and get instant answers to your health questions in your preferred
-                    Indian language.
-                  </p>
-                  <div className="space-y-2 mb-6 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-300" />
-                      <span>10+ Indian Languages</span>
+                </CardContent>
+              </Card>
+
+              {/* Medicine Identifier */}
+              <Card className="hover:shadow-xl transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Pill className="h-5 w-5 text-purple-600" />
+                    Medicine Identifier
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-24 h-24 bg-white border-2 border-gray-300 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                      <Pill className="h-12 w-12 text-gray-400" />
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-300" />
-                      <span>Voice Input Support</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-300" />
-                      <span>Instant Health Insights</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-green-300" />
-                      <span>24/7 Availability</span>
-                    </div>
-                  </div>
-                  <Link href="/chat">
-                    <Button size="lg" className="bg-white text-green-600 hover:bg-gray-100 w-full">
-                      Try AI Chat Demo
-                      <MessageCircle className="ml-2 w-5 h-5" />
+                    <p className="text-sm text-gray-600 mb-4">{demoMedicine}</p>
+                    <Button onClick={handleDemoMedicinePhoto} variant="outline">
+                      <Camera className="mr-2 h-4 w-4" />
+                      Photo Medicine
                     </Button>
-                  </Link>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Emergency Assistant */}
+              <Card className="hover:shadow-xl transition-shadow border-red-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    Emergency Assistant
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <AlertTriangle className="h-8 w-8 text-red-600 animate-pulse" />
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">24/7 Emergency AI Support</p>
+                    <div className="space-y-2">
+                      <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                        <Phone className="mr-2 h-4 w-4" />
+                        Emergency Call: 108
+                      </Button>
+                      <Button variant="outline" className="w-full bg-transparent">
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Emergency Chat
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
-          </div>
-        </section>
 
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Start Your Health Journey Today</h2>
-            <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-              Join thousands of Indians taking control of their health with AI-powered insights
+            {/* Innovation Showcase */}
+            <Card className="bg-gradient-to-r from-purple-50 to-blue-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                  Innovation Showcase
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="text-center p-4">
+                    <Eye className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                    <h4 className="font-semibold mb-1">Computer Vision</h4>
+                    <p className="text-sm text-gray-600">Analyze medical images and reports</p>
+                  </div>
+                  <div className="text-center p-4">
+                    <Volume2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                    <h4 className="font-semibold mb-1">Voice AI</h4>
+                    <p className="text-sm text-gray-600">Voice-powered health consultations</p>
+                  </div>
+                  <div className="text-center p-4">
+                    <Smile className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                    <h4 className="font-semibold mb-1">Emotion AI</h4>
+                    <p className="text-sm text-gray-600">Mental health and mood analysis</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* Contact Section */}
+      <section className="bg-gray-50 py-12">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Get in Touch</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Have questions? Need support? We're here to help you on your health journey.
             </p>
+          </div>
 
-            <div className="max-w-md mx-auto mb-8">
-              <div className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-white/90 border-0 text-gray-900 placeholder-gray-500"
-                />
-                <Button onClick={handleEmailSignup} className="bg-white text-purple-600 hover:bg-gray-100 px-6">
-                  Get Early Access
-                </Button>
-              </div>
-            </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <Phone className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Phone Support</h3>
+                <p className="text-gray-600 mb-4">24/7 Health Helpline</p>
+                <a href="tel:+919701744770" className="text-blue-600 hover:underline font-semibold">
+                  +91-9701744770
+                </a>
+              </CardContent>
+            </Card>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              <Button
-                size="lg"
-                className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
-                onClick={() => setShowAssessment(true)}
-              >
-                Start Free Assessment
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Link href="/chat">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-white text-white hover:bg-white hover:text-purple-600 px-8 py-4 text-lg bg-transparent"
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <Mail className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Email Support</h3>
+                <p className="text-gray-600 mb-4">Get detailed responses</p>
+                <a href="mailto:Harsha@mymedi.ai" className="text-green-600 hover:underline font-semibold">
+                  Harsha@mymedi.ai
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <MessageCircle className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">WhatsApp</h3>
+                <p className="text-gray-600 mb-4">Quick chat support</p>
+                <a
+                  href="https://wa.me/919701744770"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-600 hover:underline font-semibold"
                 >
-                  Try AI Chat
-                  <MessageCircle className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-            </div>
+                  Chat on WhatsApp
+                </a>
+              </CardContent>
+            </Card>
+          </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-purple-100">
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                <span>Free forever plan</span>
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                <span>No credit card required</span>
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                <span>HIPAA Compliant</span>
-              </div>
+          <div className="text-center mt-8">
+            <div className="flex items-center justify-center space-x-2 text-gray-600 mb-4">
+              <MapPin className="w-4 h-4" />
+              <span>Hyderabad, Telangana, India 🇮🇳</span>
+            </div>
+            <div className="flex justify-center space-x-4">
+              <a
+                href="https://www.linkedin.com/company/my-medi-ai/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <Linkedin className="w-6 h-6" />
+              </a>
+              <a
+                href="https://www.facebook.com/share/19X8ivFr6Z/?mibextid=wwXIfr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <Facebook className="w-6 h-6" />
+              </a>
+              <a
+                href="https://www.instagram.com/my_medi.ai?igsh=b283cDExejh4cjc1&utm_source=qr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-600 hover:text-pink-600 transition-colors"
+              >
+                <Instagram className="w-6 h-6" />
+              </a>
             </div>
           </div>
-        </section>
-
-        {/* Trust Badges */}
-        <section className="py-12 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-wrap justify-center items-center gap-8">
-              <Badge className="bg-green-100 text-green-800 px-4 py-2 text-sm">
-                <Lock className="w-4 h-4 mr-2" />
-                Data Encrypted
-              </Badge>
-              <Badge className="bg-blue-100 text-blue-800 px-4 py-2 text-sm">
-                <Shield className="w-4 h-4 mr-2" />
-                HIPAA Compliant
-              </Badge>
-              <Badge className="bg-purple-100 text-purple-800 px-4 py-2 text-sm">
-                <Award className="w-4 h-4 mr-2" />
-                ISO Certified
-              </Badge>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-white py-16">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-              <div className="space-y-4">
-                <MyMedLogo size="md" />
-                <p className="text-gray-400">
-                  AI-powered healthcare for every Indian. Democratizing access to quality medical advice.
-                </p>
-                <div className="text-sm text-gray-500">Made with ❤️ in India for Indians</div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-4">Quick Links</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      About
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Features
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      How It Works
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Pricing
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-4">Legal</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Privacy Policy
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Terms of Service
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Data Protection
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Contact
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-4">Connect</h3>
-                <div className="flex space-x-4 mb-4">
-                  <a
-                    href="https://www.linkedin.com/company/my-medi-ai/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block"
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-transparent border-gray-600 text-gray-400 hover:text-white hover:border-white"
-                    >
-                      <Linkedin className="w-4 h-4" />
-                    </Button>
-                  </a>
-                  <a
-                    href="https://www.facebook.com/share/19X8ivFr6Z/?mibextid=wwXIfr"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block"
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-transparent border-gray-600 text-gray-400 hover:text-white hover:border-white"
-                    >
-                      <Facebook className="w-4 h-4" />
-                    </Button>
-                  </a>
-                  <a
-                    href="https://www.instagram.com/my_medi.ai?igsh=b283cDExejh4cjc1&utm_source=qr"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block"
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-transparent border-gray-600 text-gray-400 hover:text-white hover:border-white"
-                    >
-                      <Instagram className="w-4 h-4" />
-                    </Button>
-                  </a>
-                </div>
-                <div className="space-y-2 text-sm text-gray-400">
-                  <div className="flex items-center">
-                    <Mail className="w-4 h-4 mr-2" />
-                    <a href="mailto:Harsha@mymedi.ai" className="hover:text-white transition-colors">
-                      Harsha@mymedi.ai
-                    </a>
-                  </div>
-                  <div className="flex items-center">
-                    <Phone className="w-4 h-4 mr-2" />
-                    <a href="tel:+919701744770" className="hover:text-white transition-colors">
-                      +91-9701744770
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-              <p>© 2024 MyMedi.ai. Democratizing Healthcare with AI.</p>
-            </div>
-          </div>
-        </footer>
-
-        {/* Floating WhatsApp Button */}
-        <div className="fixed bottom-6 right-6 z-50">
-          <a href="https://wa.me/919701744770" target="_blank" rel="noopener noreferrer">
-            <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 shadow-lg">
-              <MessageCircle className="w-6 h-6" />
-            </Button>
-          </a>
         </div>
-      </div>
-    )
-  }
+      </section>
 
-  /* ----------  ASSESSMENT FLOW  ---------- */
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      {/* Top bar */}
-      <header className="bg-white border-b border-blue-100 sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div onClick={() => setShowAssessment(false)} className="cursor-pointer">
-            <MyMedLogo size="lg" />
-          </div>
-          <Button onClick={() => setShowAssessment(false)} variant="outline">
-            Back to Home
+      {/* Floating WhatsApp Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <a href="https://wa.me/919701744770" target="_blank" rel="noopener noreferrer">
+          <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 shadow-lg">
+            <MessageCircle className="w-6 h-6" />
           </Button>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Progress */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-blue-600">
-              Step {step} / {totalSteps}
-            </span>
-            <span className="text-sm font-medium text-blue-600">{Math.round(progress)}%</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-        </div>
-
-        {/* Steps */}
-        <div className="max-w-3xl mx-auto space-y-8">
-          {/* STEP 1 */}
-          {step === 1 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  <span>Personal Info</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <InputRow label="Full Name*" value={form.name} onChange={(v) => handle("name", v)} />
-                <InputRow label="Age*" type="number" value={form.age} onChange={(v) => handle("age", v)} />
-                <InputRow
-                  label="Weight (kg)*"
-                  type="number"
-                  value={form.weight}
-                  onChange={(v) => handle("weight", v)}
-                />
-                <InputRow
-                  label="Height (cm)*"
-                  type="number"
-                  value={form.height}
-                  onChange={(v) => handle("height", v)}
-                />
-                <SelectRow
-                  label="Gender*"
-                  value={form.gender}
-                  options={["male", "female", "other"]}
-                  onChange={(v) => handle("gender", v)}
-                />
-                <NavButtons
-                  next={() => setStep(2)}
-                  disableNext={!form.name || !form.age || !form.weight || !form.height || !form.gender}
-                />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* STEP 2 */}
-          {step === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Stethoscope className="w-5 h-5 text-purple-600" />
-                  <span>Current Symptom</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Label>Primary Symptom*</Label>
-                <Textarea
-                  value={form.primarySymptom}
-                  onChange={(e) => handle("primarySymptom", e.target.value)}
-                  placeholder="Describe your main symptom"
-                />
-                <SelectRow
-                  label="Duration"
-                  value={form.symptomDuration}
-                  options={durationOptions}
-                  onChange={(v) => handle("symptomDuration", v)}
-                />
-                <SelectRow
-                  label="Severity"
-                  value={form.symptomSeverity}
-                  options={severityOptions}
-                  onChange={(v) => handle("symptomSeverity", v)}
-                />
-                <NavButtons prev={() => setStep(1)} next={() => setStep(3)} disableNext={!form.primarySymptom} />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* STEP 3 */}
-          {step === 3 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Heart className="w-5 h-5 text-red-600" />
-                  <span>Vital Signs</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <InputRow
-                  label="BP Systolic (mmHg)"
-                  type="number"
-                  value={form.vitals.bloodPressureSystolic}
-                  onChange={(v) => handleVitals("bloodPressureSystolic", v)}
-                />
-                <InputRow
-                  label="BP Diastolic (mmHg)"
-                  type="number"
-                  value={form.vitals.bloodPressureDiastolic}
-                  onChange={(v) => handleVitals("bloodPressureDiastolic", v)}
-                />
-                <InputRow
-                  label="Heart Rate (bpm)"
-                  type="number"
-                  value={form.vitals.heartRate}
-                  onChange={(v) => handleVitals("heartRate", v)}
-                />
-                <InputRow
-                  label="Temperature (°C)"
-                  type="number"
-                  value={form.vitals.temperature}
-                  onChange={(v) => handleVitals("temperature", v)}
-                />
-                <InputRow
-                  label="O₂ Saturation (%)"
-                  type="number"
-                  value={form.vitals.oxygenSaturation}
-                  onChange={(v) => handleVitals("oxygenSaturation", v)}
-                />
-                <InputRow
-                  label="Blood Sugar (mg/dL)"
-                  type="number"
-                  value={form.vitals.bloodSugar}
-                  onChange={(v) => handleVitals("bloodSugar", v)}
-                />
-                <NavButtons prev={() => setStep(2)} next={() => setStep(4)} />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* STEP 4 */}
-          {step === 4 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Activity className="w-5 h-5 text-orange-600" />
-                  <span>Lifestyle (quick)</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-gray-600">Quick lifestyle assessment questions would go here.</p>
-                <NavButtons prev={() => setStep(3)} next={() => setStep(5)} />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* STEP 5 */}
-          {step === 5 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Brain className="w-5 h-5 text-purple-600" />
-                  <span>Review & Generate AI Assessment</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <Alert>
-                  <AlertDescription>Click "Generate" to run the revolutionary AI assessment.</AlertDescription>
-                </Alert>
-                <div className="flex justify-between">
-                  <Button variant="outline" onClick={() => setStep(4)}>
-                    Previous
-                  </Button>
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => alert("🎉 AI assessment would run here")}
-                  >
-                    Generate Assessment
-                    <Sparkles className="ml-2 w-5 h-5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        </a>
       </div>
 
       <PoweredByFooter />
-    </div>
-  )
-}
-
-/* ----------  REUSABLE SUB-COMPONENTS  ---------- */
-
-function InputRow({
-  label,
-  type = "text",
-  value,
-  onChange,
-}: {
-  label: string
-  type?: string
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <Input type={type} value={value} placeholder={label} onChange={(e) => onChange(e.target.value)} />
-    </div>
-  )
-}
-
-function SelectRow({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  value: string
-  options: string[]
-  onChange: (v: string) => void
-}) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
-          <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((o) => (
-            <SelectItem key={o} value={o}>
-              {o}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  )
-}
-
-function NavButtons({
-  prev,
-  next,
-  disableNext,
-}: {
-  prev?: () => void
-  next?: () => void
-  disableNext?: boolean
-}) {
-  return (
-    <div className="flex justify-between pt-4">
-      {prev ? (
-        <Button variant="outline" onClick={prev}>
-          Previous
-        </Button>
-      ) : (
-        <span />
-      )}
-      {next && (
-        <Button onClick={next} disabled={disableNext}>
-          Next
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-      )}
     </div>
   )
 }
