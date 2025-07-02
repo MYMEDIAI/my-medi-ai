@@ -35,6 +35,15 @@ import {
   BookOpen,
   Facebook,
   Instagram,
+  Camera,
+  Mic,
+  Upload,
+  MapPin,
+  Pill,
+  AlertTriangle,
+  Eye,
+  Smile,
+  Volume2,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -92,9 +101,13 @@ const languages = [
 /* ----------  COMPONENT  ---------- */
 export default function Home() {
   const [showAssessment, setShowAssessment] = useState(false)
+  const [showDemo, setShowDemo] = useState(false)
   const [step, setStep] = useState(1)
   const [selectedLanguage, setSelectedLanguage] = useState("English")
   const [email, setEmail] = useState("")
+  const [healthScore, setHealthScore] = useState(87)
+  const [aiMode, setAiMode] = useState("dual")
+  const [isListening, setIsListening] = useState(false)
   const totalSteps = 5
 
   const [form, setForm] = useState<AssessmentData>({
@@ -141,6 +154,621 @@ export default function Home() {
       alert(`Thank you! We'll notify you at ${email} when early access is available.`)
       setEmail("")
     }
+  }
+
+  const startVoiceCommand = () => {
+    setIsListening(true)
+    setTimeout(() => setIsListening(false), 3000)
+  }
+
+  /* ----------  DEMO SCREEN  ---------- */
+  if (showDemo) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
+        {/* Demo Header */}
+        <header className="bg-black/20 backdrop-blur-sm border-b border-purple-500/30 sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-white animate-pulse" />
+                  </div>
+                  <span className="text-xl font-bold">MyMedi.ai</span>
+                </div>
+                <div className="hidden md:flex items-center space-x-4 text-sm">
+                  <Badge className="bg-green-500/20 text-green-300 border-green-500/30">🟢 OpenAI Active</Badge>
+                  <Badge className="bg-green-500/20 text-green-300 border-green-500/30">🟢 Gemini Active</Badge>
+                  <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30">🇮🇳 Hindi</Badge>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-sm">
+                  <span className="text-gray-300">Welcome, </span>
+                  <span className="text-white font-semibold">Demo User</span>
+                </div>
+                <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">∞ Unlimited (Demo Mode)</Badge>
+                <Button
+                  onClick={() => setShowDemo(false)}
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                >
+                  Exit Demo
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Dashboard */}
+        <div className="container mx-auto px-4 py-8">
+          {/* AI Mode Selector */}
+          <div className="mb-8 flex items-center justify-center space-x-4">
+            <span className="text-sm text-gray-300">AI Mode:</span>
+            <div className="flex bg-black/30 rounded-lg p-1">
+              <Button
+                size="sm"
+                variant={aiMode === "single" ? "default" : "ghost"}
+                onClick={() => setAiMode("single")}
+                className="text-xs"
+              >
+                Single AI
+              </Button>
+              <Button
+                size="sm"
+                variant={aiMode === "dual" ? "default" : "ghost"}
+                onClick={() => setAiMode("dual")}
+                className="text-xs"
+              >
+                Dual AI
+              </Button>
+              <Button
+                size="sm"
+                variant={aiMode === "consensus" ? "default" : "ghost"}
+                onClick={() => setAiMode("consensus")}
+                className="text-xs"
+              >
+                AI Consensus
+              </Button>
+            </div>
+          </div>
+
+          {/* Dashboard Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            {/* Dual AI Health Assistant */}
+            <Card className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-purple-500/30 backdrop-blur-sm col-span-1 md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Brain className="w-5 h-5 text-purple-400" />
+                  <span>🧠 DUAL AI HEALTH ASSISTANT</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-300">Ask in any Indian language or dialect</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-black/30 rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-xs text-green-300">OpenAI GPT-4</span>
+                      </div>
+                      <p className="text-sm text-gray-300">Based on your symptoms, this could be...</p>
+                    </div>
+                    <div className="bg-black/30 rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                        <span className="text-xs text-blue-300">Google Gemini</span>
+                      </div>
+                      <p className="text-sm text-gray-300">I agree, but also consider...</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      onClick={startVoiceCommand}
+                      className={`bg-red-500/20 border-red-500/30 ${isListening ? "animate-pulse" : ""}`}
+                    >
+                      <Mic className="w-4 h-4 mr-2" />
+                      {isListening ? "Listening..." : "Voice Input"}
+                    </Button>
+                    <Button size="sm" variant="outline" className="border-purple-500/30 text-purple-300 bg-transparent">
+                      AI Debate Mode
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Instant Report Analyzer */}
+            <Card className="bg-gradient-to-br from-green-500/20 to-teal-500/20 border-green-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Camera className="w-5 h-5 text-green-400" />
+                  <span className="text-sm">📸 INSTANT REPORT ANALYZER</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-4 border-2 border-dashed border-green-500/30">
+                    <div className="text-center">
+                      <Upload className="w-8 h-8 mx-auto mb-2 text-green-400" />
+                      <p className="text-xs text-gray-300">Drop/Photograph any medical report</p>
+                    </div>
+                  </div>
+                  <div className="bg-black/30 rounded-lg p-2">
+                    <div className="w-full h-20 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded flex items-center justify-center">
+                      <span className="text-xs text-gray-300">Live camera feed preview</span>
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full bg-green-500/20 border-green-500/30">
+                    Start OCR Analysis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Symptom Body Mapper */}
+            <Card className="bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Users className="w-5 h-5 text-red-400" />
+                  <span className="text-sm">🎯 SYMPTOM BODY MAPPER</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-4">
+                    <div className="w-full h-32 bg-gradient-to-b from-red-500/20 to-orange-500/20 rounded flex items-center justify-center">
+                      <div className="text-center">
+                        <Users className="w-12 h-12 mx-auto mb-2 text-red-400" />
+                        <p className="text-xs text-gray-300">3D Human Body Model</p>
+                        <p className="text-xs text-gray-400">(Rotatable)</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-300">Headache</span>
+                      <span className="text-red-400">85%</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-300">Migraine</span>
+                      <span className="text-orange-400">72%</span>
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full bg-red-500/20 border-red-500/30">
+                    Book Nearest Doctor
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Visual Medicine Identifier */}
+            <Card className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border-blue-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Pill className="w-5 h-5 text-blue-400" />
+                  <span className="text-sm">💊 VISUAL MEDICINE IDENTIFIER</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-4 border-2 border-dashed border-blue-500/30">
+                    <div className="text-center">
+                      <Camera className="w-8 h-8 mx-auto mb-2 text-blue-400" />
+                      <p className="text-xs text-gray-300">Snap a photo of any pill/medicine</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="bg-black/30 rounded p-2">
+                      <p className="text-xs text-blue-300">Paracetamol 500mg</p>
+                      <p className="text-xs text-gray-400">Generic: ₹5 vs Brand: ₹25</p>
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full bg-blue-500/20 border-blue-500/30">
+                    Check Interactions
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Meal Planner */}
+            <Card className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border-yellow-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Apple className="w-5 h-5 text-yellow-400" />
+                  <span className="text-sm">🍽️ AI MEAL PLANNER</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-3">
+                    <p className="text-xs text-gray-300 mb-2">Today's Recommendation:</p>
+                    <p className="text-xs text-yellow-300">Breakfast: Poha with vegetables</p>
+                    <p className="text-xs text-yellow-300">Lunch: Dal rice with sabzi</p>
+                    <p className="text-xs text-yellow-300">Dinner: Roti with curry</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-black/30 rounded p-2 text-center">
+                      <p className="text-green-400">1800</p>
+                      <p className="text-gray-400">Calories</p>
+                    </div>
+                    <div className="bg-black/30 rounded p-2 text-center">
+                      <p className="text-blue-400">₹150</p>
+                      <p className="text-gray-400">Budget</p>
+                    </div>
+                    <div className="bg-black/30 rounded p-2 text-center">
+                      <p className="text-purple-400">Local</p>
+                      <p className="text-gray-400">Ingredients</p>
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full bg-yellow-500/20 border-yellow-500/30">
+                    Generate Grocery List
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Wellness Fusion */}
+            <Card className="bg-gradient-to-br from-teal-500/20 to-green-500/20 border-teal-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Activity className="w-5 h-5 text-teal-400" />
+                  <span className="text-sm">🧘 WELLNESS FUSION</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-3">
+                    <p className="text-xs text-gray-300 mb-2">Today's Routine:</p>
+                    <p className="text-xs text-teal-300">• 10 min Pranayama</p>
+                    <p className="text-xs text-teal-300">• 15 min Yoga Asanas</p>
+                    <p className="text-xs text-teal-300">• 20 min Cardio Walk</p>
+                  </div>
+                  <div className="bg-black/30 rounded p-2">
+                    <div className="flex items-center space-x-2">
+                      <Eye className="w-4 h-4 text-teal-400" />
+                      <span className="text-xs text-gray-300">AR Exercise Preview</span>
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full bg-teal-500/20 border-teal-500/30">
+                    Start Workout
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Predictive Health Insights */}
+            <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <TrendingUp className="w-5 h-5 text-purple-400" />
+                  <span className="text-sm">🔬 PREDICTIVE HEALTH INSIGHTS</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-3">
+                    <p className="text-xs text-gray-300 mb-2">Your health in 5 years:</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300">Diabetes Risk</span>
+                        <span className="text-yellow-400">15%</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300">Heart Disease</span>
+                        <span className="text-green-400">8%</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300">Overall Health</span>
+                        <span className="text-blue-400">Good</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full bg-purple-500/20 border-purple-500/30">
+                    View Prevention Plan
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Second Opinion */}
+            <Card className="bg-gradient-to-br from-indigo-500/20 to-blue-500/20 border-indigo-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Stethoscope className="w-5 h-5 text-indigo-400" />
+                  <span className="text-sm">👨‍⚕️ AI SECOND OPINION</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-4 border-2 border-dashed border-indigo-500/30">
+                    <div className="text-center">
+                      <FileText className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
+                      <p className="text-xs text-gray-300">Upload doctor's prescription</p>
+                    </div>
+                  </div>
+                  <div className="bg-black/30 rounded p-2">
+                    <p className="text-xs text-indigo-300">Questions to ask your doctor:</p>
+                    <p className="text-xs text-gray-400">• Are there alternative treatments?</p>
+                    <p className="text-xs text-gray-400">• What are the side effects?</p>
+                  </div>
+                  <Button size="sm" className="w-full bg-indigo-500/20 border-indigo-500/30">
+                    Analyze Prescription
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Emergency Assistant */}
+            <Card className="bg-gradient-to-br from-red-600/30 to-red-500/20 border-red-500/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                  <span className="text-sm">🚨 EMERGENCY ASSISTANT</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-6 text-lg animate-pulse">
+                    🚨 EMERGENCY
+                  </Button>
+                  <div className="bg-black/30 rounded p-2">
+                    <div className="flex items-center space-x-2 text-xs">
+                      <MapPin className="w-3 h-3 text-red-400" />
+                      <span className="text-gray-300">Auto-location detected</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Medical history ready to share</p>
+                  </div>
+                  <Button size="sm" className="w-full bg-red-500/20 border-red-500/30">
+                    First-Aid AR Guide
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Family Health Tree */}
+            <Card className="bg-gradient-to-br from-green-600/20 to-teal-500/20 border-green-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Users className="w-5 h-5 text-green-400" />
+                  <span className="text-sm">🧬 FAMILY HEALTH TREE</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-3">
+                    <div className="text-center">
+                      <div className="w-full h-20 bg-gradient-to-b from-green-500/20 to-teal-500/20 rounded flex items-center justify-center">
+                        <span className="text-xs text-gray-300">Visual Family Tree</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <p className="text-green-300">Genetic Risk: Diabetes (Mother's side)</p>
+                    <p className="text-yellow-300">Screening due: Cholesterol check</p>
+                  </div>
+                  <Button size="sm" className="w-full bg-green-500/20 border-green-500/30">
+                    Share with Family
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Smart Vaccination Tracker */}
+            <Card className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Shield className="w-5 h-5 text-cyan-400" />
+                  <span className="text-sm">💉 SMART VACCINATION TRACKER</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-black/30 rounded p-2">
+                    <p className="text-xs text-cyan-300 mb-1">Next Due:</p>
+                    <p className="text-xs text-gray-300">COVID Booster - 2 months</p>
+                    <p className="text-xs text-gray-300">Pet Vaccination - 1 week</p>
+                  </div>
+                  <div className="bg-black/30 rounded p-2">
+                    <div className="flex items-center space-x-2 text-xs">
+                      <MapPin className="w-3 h-3 text-cyan-400" />
+                      <span className="text-gray-300">3 centers nearby</span>
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full bg-cyan-500/20 border-cyan-500/30">
+                    Book Appointment
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Hospital Wait Time */}
+            <Card className="bg-gradient-to-br from-orange-500/20 to-red-500/20 border-orange-500/30 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <Clock className="w-5 h-5 text-orange-400" />
+                  <span className="text-sm">🏥 HOSPITAL WAIT TIME</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="bg-black/30 rounded p-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300">City Hospital ER</span>
+                        <span className="text-green-400">15 min</span>
+                      </div>
+                    </div>
+                    <div className="bg-black/30 rounded p-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300">Metro Medical</span>
+                        <span className="text-yellow-400">45 min</span>
+                      </div>
+                    </div>
+                    <div className="bg-black/30 rounded p-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300">Apollo Clinic</span>
+                        <span className="text-red-400">2 hours</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full bg-orange-500/20 border-orange-500/30">
+                    Check Insurance Coverage
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Bottom Features Bar */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {/* Voice Commands */}
+            <Card className="bg-black/30 border-purple-500/30 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Volume2 className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm font-semibold text-white">🎙️ VOICE COMMANDS</span>
+                </div>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <p>"Hey MyMedi" activation</p>
+                  <p>• "What should I eat today?"</p>
+                  <p>• "Analyze my sleep pattern"</p>
+                  <p>• "Is this rash serious?"</p>
+                  <p>• "Remind me to take medicine"</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Live Health Score */}
+            <Card className="bg-black/30 border-green-500/30 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2 mb-3">
+                  <TrendingUp className="w-4 h-4 text-green-400" />
+                  <span className="text-sm font-semibold text-white">📊 LIVE HEALTH SCORE</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-400 mb-2">{healthScore}</div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-green-400 to-blue-400 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${healthScore}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-300 mt-2">Excellent Health</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Community Features */}
+            <Card className="bg-black/30 border-blue-500/30 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Users className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm font-semibold text-white">🌍 COMMUNITY</span>
+                </div>
+                <div className="space-y-2 text-xs text-gray-300">
+                  <p>• Anonymous health discussions</p>
+                  <p>• Local health alerts</p>
+                  <p>• Find health buddies</p>
+                  <p>• Medicine availability</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Innovation Demos */}
+            <Card className="bg-black/30 border-yellow-500/30 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm font-semibold text-white">🚀 TRY THESE</span>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full justify-start p-1 h-auto text-xs text-gray-300 hover:text-white"
+                  >
+                    🗣️ Cough into phone
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full justify-start p-1 h-auto text-xs text-gray-300 hover:text-white"
+                  >
+                    🤳 Selfie skin analysis
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full justify-start p-1 h-auto text-xs text-gray-300 hover:text-white"
+                  >
+                    👁️ Eye movement test
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full justify-start p-1 h-auto text-xs text-gray-300 hover:text-white"
+                  >
+                    🦷 Smile for dental check
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Floating Widgets */}
+          <div className="fixed bottom-6 right-6 space-y-4 z-40">
+            {/* Medicine Reminder */}
+            <Card className="bg-black/80 border-purple-500/30 backdrop-blur-sm w-48">
+              <CardContent className="p-3">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Pill className="w-4 h-4 text-purple-400" />
+                  <span className="text-xs font-semibold text-white">Next Dose</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-400">2h 15m</div>
+                  <Button size="sm" className="w-full mt-2 bg-purple-500/20 border-purple-500/30">
+                    Mark as Taken
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Mood Tracker */}
+            <Card className="bg-black/80 border-blue-500/30 backdrop-blur-sm w-48">
+              <CardContent className="p-3">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Smile className="w-4 h-4 text-blue-400" />
+                  <span className="text-xs font-semibold text-white">Mood Today</span>
+                </div>
+                <div className="flex justify-center space-x-2">
+                  <Button size="sm" variant="ghost" className="text-lg p-1">
+                    😊
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-lg p-1">
+                    😐
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-lg p-1">
+                    😔
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Status Footer */}
+        <footer className="bg-black/40 border-t border-purple-500/30 py-4">
+          <div className="container mx-auto px-4">
+            <div className="text-center text-xs text-gray-400">
+              Powered by OpenAI GPT-4 + Google Gemini | 256-bit Encryption | HIPAA Compliant | Made in India 🇮🇳
+            </div>
+          </div>
+        </footer>
+      </div>
+    )
   }
 
   /* ----------  DEFAULT LANDING  ---------- */
@@ -641,6 +1269,96 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Demo Section */}
+        <section className="py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Experience the Future of Healthcare</h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Try our revolutionary AI-powered healthcare platform with advanced features
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
+                <CardContent className="p-8">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <Play className="w-8 h-8" />
+                    <h3 className="text-2xl font-bold">Advanced Demo Dashboard</h3>
+                  </div>
+                  <p className="mb-6 text-purple-100">
+                    Experience our futuristic healthcare dashboard with dual AI integration, 3D body mapping, instant
+                    report analysis, and revolutionary features not available anywhere else.
+                  </p>
+                  <div className="space-y-2 mb-6 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span>Dual AI (OpenAI + Google Gemini)</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span>3D Symptom Body Mapper</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span>Visual Medicine Identifier</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span>AI Meal Planner & Emergency Assistant</span>
+                    </div>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="bg-white text-purple-600 hover:bg-gray-100 w-full"
+                    onClick={() => setShowDemo(true)}
+                  >
+                    Launch Advanced Demo
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-600 to-teal-600 text-white">
+                <CardContent className="p-8">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <MessageCircle className="w-8 h-8" />
+                    <h3 className="text-2xl font-bold">AI Chat Assistant</h3>
+                  </div>
+                  <p className="mb-6 text-green-100">
+                    Chat with our AI health assistant and get instant answers to your health questions in your preferred
+                    Indian language.
+                  </p>
+                  <div className="space-y-2 mb-6 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span>10+ Indian Languages</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span>Voice Input Support</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span>Instant Health Insights</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
+                      <span>24/7 Availability</span>
+                    </div>
+                  </div>
+                  <Link href="/chat">
+                    <Button size="lg" className="bg-white text-green-600 hover:bg-gray-100 w-full">
+                      Try AI Chat Demo
+                      <MessageCircle className="ml-2 w-5 h-5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="py-20 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700">
           <div className="container mx-auto px-4 text-center">
@@ -841,7 +1559,9 @@ export default function Home() {
                   </div>
                   <div className="flex items-center">
                     <Phone className="w-4 h-4 mr-2" />
-                    +91-XXXX-XXXXXX
+                    <a href="tel:+919701744770" className="hover:text-white transition-colors">
+                      +91-9701744770
+                    </a>
                   </div>
                 </div>
               </div>
@@ -855,9 +1575,11 @@ export default function Home() {
 
         {/* Floating WhatsApp Button */}
         <div className="fixed bottom-6 right-6 z-50">
-          <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 shadow-lg">
-            <MessageCircle className="w-6 h-6" />
-          </Button>
+          <a href="https://wa.me/919701744770" target="_blank" rel="noopener noreferrer">
+            <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 shadow-lg">
+              <MessageCircle className="w-6 h-6" />
+            </Button>
+          </a>
         </div>
       </div>
     )
