@@ -3,706 +3,838 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import MyMedLogo from "./mymed-logo"
 import {
   Apple,
-  Clock,
   Utensils,
-  Calculator,
-  Droplets,
-  Activity,
   Target,
-  FileText,
+  Heart,
+  Zap,
+  Droplets,
+  Loader2,
+  Download,
+  Printer,
+  Star,
+  CheckCircle,
+  TrendingUp,
+  Calendar,
   Coffee,
-  Sunset,
+  Sun,
   Moon,
+  Sunset,
 } from "lucide-react"
 
-interface UserProfile {
-  age: number
-  condition: string
-  goal: string
-}
-
-interface Meal {
-  name: string
-  foods: string[]
-  calories: number
-  protein: number
-  fat: number
-  carbs: number
-  fiber: number
-  sodium: number
-  preparation: string
-  tips: string[]
+interface DietFormData {
+  age: string
+  gender: string
+  height: string
+  weight: string
+  activityLevel: string
+  healthConditions: string[]
+  allergies: string
+  dietaryPreferences: string
+  goals: string
+  targetWeight: string
+  cookingTime: string
+  budget: string
+  mealsPerDay: string
+  additionalNotes: string
 }
 
 interface DietPlan {
-  totalCalories: number
-  totalProtein: number
-  totalFat: number
-  totalCarbs: number
-  totalFiber: number
-  totalSodium: number
+  calories: number
+  protein: number
+  carbs: number
+  fats: number
   meals: {
-    breakfast: Meal
-    morningSnack: Meal
-    lunch: Meal
-    afternoonSnack: Meal
-    dinner: Meal
-    eveningSnack?: Meal
+    breakfast: string[]
+    lunch: string[]
+    dinner: string[]
+    snacks: string[]
   }
-  hydration: string[]
   supplements: string[]
-  notes: string[]
+  tips: string[]
+  waterIntake: number
 }
 
-export default function DietPlanGenerator({ userProfile }: { userProfile: UserProfile }) {
-  const [selectedPlan, setSelectedPlan] = useState<DietPlan | null>(null)
+export default function DietPlanGenerator() {
+  const [formData, setFormData] = useState<DietFormData>({
+    age: "",
+    gender: "",
+    height: "",
+    weight: "",
+    activityLevel: "",
+    healthConditions: [],
+    allergies: "",
+    dietaryPreferences: "",
+    goals: "",
+    targetWeight: "",
+    cookingTime: "",
+    budget: "",
+    mealsPerDay: "3",
+    additionalNotes: "",
+  })
+
+  const [dietPlan, setDietPlan] = useState<DietPlan | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
 
-  // Sample diet plan for 30yo diabetic with weight loss goals
-  const generateDietPlan = async (): Promise<DietPlan> => {
+  const generateDietPlan = async () => {
     setIsGenerating(true)
 
-    // Simulate AI processing
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 3000))
 
-    const plan: DietPlan = {
-      totalCalories: 1270,
-      totalProtein: 97,
-      totalFat: 62,
-      totalCarbs: 68,
-      totalFiber: 25,
-      totalSodium: 1800,
-      meals: {
-        breakfast: {
-          name: "Diabetic-Friendly Power Breakfast",
-          foods: ["2 boiled eggs", "1 slice whole-grain toast", "½ avocado", "1 tsp olive oil"],
-          calories: 320,
-          protein: 18,
-          fat: 22,
-          carbs: 12,
-          fiber: 8,
-          sodium: 380,
-          preparation:
-            "Boil eggs for 8 minutes. Toast whole grain bread. Mash avocado with olive oil and spread on toast. Serve eggs on the side.",
-          tips: [
-            "Eggs provide complete protein",
-            "Avocado offers healthy fats",
-            "Whole grains help stable blood sugar",
-          ],
-        },
-        morningSnack: {
-          name: "Greek Yogurt Delight",
-          foods: ["½ cup plain Greek yogurt", "10 raw almonds", "Cinnamon sprinkle"],
-          calories: 150,
-          protein: 12,
-          fat: 8,
-          carbs: 6,
-          fiber: 2,
-          sodium: 60,
-          preparation: "Mix plain Greek yogurt with cinnamon. Serve with almonds on the side.",
-          tips: ["High protein keeps you full", "Almonds provide healthy fats", "Cinnamon may help blood sugar"],
-        },
-        lunch: {
-          name: "Grilled Chicken Power Bowl",
-          foods: ["100g grilled chicken breast", "½ cup cooked quinoa", "1 cup steamed broccoli", "1 tsp olive oil"],
-          calories: 380,
-          protein: 35,
-          fat: 8,
-          carbs: 28,
-          fiber: 6,
-          sodium: 320,
-          preparation:
-            "Season chicken with herbs and grill. Cook quinoa according to package directions. Steam broccoli until tender. Drizzle olive oil over vegetables.",
-          tips: [
-            "Lean protein for muscle maintenance",
-            "Quinoa is a complete protein",
-            "Broccoli is rich in fiber and nutrients",
-          ],
-        },
-        afternoonSnack: {
-          name: "Apple & Almond Butter",
-          foods: ["1 medium apple slices", "1 tbsp natural almond butter"],
-          calories: 140,
-          protein: 4,
-          fat: 8,
-          carbs: 16,
-          fiber: 4,
-          sodium: 2,
-          preparation: "Slice apple and serve with almond butter for dipping.",
-          tips: ["Apple provides fiber and natural sweetness", "Almond butter adds protein and healthy fats"],
-        },
-        dinner: {
-          name: "Omega-3 Salmon Plate",
-          foods: ["120g baked salmon", "1 cup roasted asparagus", "1 tsp olive oil", "Lemon juice", "Herbs"],
-          calories: 280,
-          protein: 28,
-          fat: 16,
-          carbs: 6,
-          fiber: 3,
-          sodium: 180,
-          preparation:
-            "Season salmon with herbs and bake at 400°F for 12-15 minutes. Roast asparagus with olive oil and lemon.",
-          tips: [
-            "Salmon is rich in omega-3 fatty acids",
-            "Asparagus is low-carb and nutrient-dense",
-            "Light dinner aids sleep",
-          ],
-        },
-      },
-      hydration: [
-        "8-10 glasses of water throughout the day",
-        "Herbal tea (chamomile, green tea) - no added sugar",
-        "Infused water with cucumber and mint",
-        "Avoid sugary drinks and fruit juices",
-      ],
-      supplements: [
-        "Vitamin D3 (consult your doctor for dosage)",
-        "Omega-3 fish oil (if not eating fish regularly)",
-        "Chromium picolinate (may help with blood sugar - doctor approval needed)",
-      ],
-      notes: [
-        "Monitor blood glucose before and after meals to understand food impact",
-        "Eat meals at consistent times to help regulate blood sugar",
-        "Include protein with each meal to slow carbohydrate absorption",
-        "Choose complex carbohydrates over simple sugars",
-        "Stay hydrated - dehydration can affect blood sugar levels",
-        "Consider portion control - use smaller plates to manage serving sizes",
-      ],
+    // Calculate BMR and daily calories
+    const age = Number.parseInt(formData.age)
+    const weight = Number.parseFloat(formData.weight)
+    const height = Number.parseFloat(formData.height)
+
+    let bmr = 0
+    if (formData.gender === "male") {
+      bmr = 88.362 + 13.397 * weight + 4.799 * height - 5.677 * age
+    } else {
+      bmr = 447.593 + 9.247 * weight + 3.098 * height - 4.33 * age
     }
 
+    const activityMultipliers = {
+      sedentary: 1.2,
+      light: 1.375,
+      moderate: 1.55,
+      active: 1.725,
+      very_active: 1.9,
+    }
+
+    const multiplier = activityMultipliers[formData.activityLevel as keyof typeof activityMultipliers] || 1.2
+    let dailyCalories = Math.round(bmr * multiplier)
+
+    // Adjust for goals
+    if (formData.goals === "weight_loss") {
+      dailyCalories -= 500
+    } else if (formData.goals === "weight_gain") {
+      dailyCalories += 500
+    }
+
+    const protein = Math.round(weight * 2.2) // 2.2g per kg
+    const fats = Math.round((dailyCalories * 0.25) / 9) // 25% of calories
+    const carbs = Math.round((dailyCalories - protein * 4 - fats * 9) / 4)
+
+    const samplePlan: DietPlan = {
+      calories: dailyCalories,
+      protein,
+      carbs,
+      fats,
+      meals: {
+        breakfast: [
+          "Oats with mixed berries and almonds (350 cal)",
+          "Greek yogurt with honey and walnuts (280 cal)",
+          "Vegetable upma with coconut chutney (320 cal)",
+          "Whole wheat toast with avocado (290 cal)",
+        ],
+        lunch: [
+          "Brown rice with dal and mixed vegetables (450 cal)",
+          "Quinoa salad with grilled chicken (420 cal)",
+          "Roti with paneer curry and salad (480 cal)",
+          "Lentil soup with whole grain bread (380 cal)",
+        ],
+        dinner: [
+          "Grilled fish with roasted vegetables (380 cal)",
+          "Chicken curry with cauliflower rice (350 cal)",
+          "Vegetable stir-fry with tofu (320 cal)",
+          "Dal with roti and green vegetables (400 cal)",
+        ],
+        snacks: [
+          "Mixed nuts and dried fruits (150 cal)",
+          "Apple with peanut butter (180 cal)",
+          "Homemade protein smoothie (200 cal)",
+          "Roasted chickpeas (120 cal)",
+        ],
+      },
+      supplements: [
+        "Vitamin D3 (2000 IU daily)",
+        "Omega-3 fish oil (1000mg daily)",
+        "Multivitamin (as per age and gender)",
+        "Probiotics (if digestive issues)",
+      ],
+      tips: [
+        "Eat every 3-4 hours to maintain metabolism",
+        "Include protein in every meal",
+        "Choose complex carbohydrates over simple sugars",
+        "Stay hydrated throughout the day",
+        "Practice portion control",
+        "Include colorful vegetables in every meal",
+      ],
+      waterIntake: Math.round(weight * 35), // 35ml per kg body weight
+    }
+
+    setDietPlan(samplePlan)
     setIsGenerating(false)
-    return plan
   }
 
-  const handleGeneratePlan = async () => {
-    const plan = await generateDietPlan()
-    setSelectedPlan(plan)
+  const handlePrint = () => {
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MyMedi.ai - Personalized Diet Plan</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+          .section { margin: 20px 0; padding: 15px; border-radius: 8px; }
+          .nutrition { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+          .meals { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
+          .tips { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
+          .meal-item { margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.2); border-radius: 5px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🍎 MyMedi.ai - Personalized Diet Plan</h1>
+          <p>Generated for: ${formData.age} year old ${formData.gender}</p>
+        </div>
+        
+        <div class="section nutrition">
+          <h2>📊 Daily Nutrition Targets</h2>
+          <p><strong>Calories:</strong> ${dietPlan?.calories} kcal</p>
+          <p><strong>Protein:</strong> ${dietPlan?.protein}g</p>
+          <p><strong>Carbohydrates:</strong> ${dietPlan?.carbs}g</p>
+          <p><strong>Fats:</strong> ${dietPlan?.fats}g</p>
+          <p><strong>Water:</strong> ${dietPlan?.waterIntake}ml</p>
+        </div>
+        
+        <div class="section meals">
+          <h2>🍽️ Meal Plan</h2>
+          <h3>Breakfast Options:</h3>
+          ${dietPlan?.meals.breakfast.map((meal) => `<div class="meal-item">${meal}</div>`).join("")}
+          
+          <h3>Lunch Options:</h3>
+          ${dietPlan?.meals.lunch.map((meal) => `<div class="meal-item">${meal}</div>`).join("")}
+          
+          <h3>Dinner Options:</h3>
+          ${dietPlan?.meals.dinner.map((meal) => `<div class="meal-item">${meal}</div>`).join("")}
+          
+          <h3>Snack Options:</h3>
+          ${dietPlan?.meals.snacks.map((meal) => `<div class="meal-item">${meal}</div>`).join("")}
+        </div>
+        
+        <div class="section tips">
+          <h2>💡 Health Tips</h2>
+          ${dietPlan?.tips.map((tip) => `<div class="meal-item">• ${tip}</div>`).join("")}
+        </div>
+      </body>
+      </html>
+    `
+
+    const printWindow = window.open("", "_blank")
+    if (printWindow) {
+      printWindow.document.write(printContent)
+      printWindow.document.close()
+      printWindow.print()
+    }
   }
 
-  const exportPlan = () => {
-    if (!selectedPlan) return
+  const handleDownloadPDF = () => {
+    const content = `
+MyMedi.ai - Personalized Diet Plan
+Generated on: ${new Date().toLocaleDateString()}
 
-    const reportContent = `
-MYMED.AI PERSONALIZED DIET PLAN
-Generated: ${new Date().toLocaleDateString()}
-Profile: ${userProfile.age}yo, ${userProfile.condition}, Goal: ${userProfile.goal}
+PERSONAL INFORMATION:
+- Age: ${formData.age} years
+- Gender: ${formData.gender}
+- Height: ${formData.height} cm
+- Weight: ${formData.weight} kg
+- Activity Level: ${formData.activityLevel}
+- Goal: ${formData.goals}
 
 DAILY NUTRITION TARGETS:
-• Total Calories: ${selectedPlan.totalCalories} kcal
-• Protein: ${selectedPlan.totalProtein}g (${Math.round(((selectedPlan.totalProtein * 4) / selectedPlan.totalCalories) * 100)}%)
-• Fat: ${selectedPlan.totalFat}g (${Math.round(((selectedPlan.totalFat * 9) / selectedPlan.totalCalories) * 100)}%)
-• Carbohydrates: ${selectedPlan.totalCarbs}g (${Math.round(((selectedPlan.totalCarbs * 4) / selectedPlan.totalCalories) * 100)}%)
-• Fiber: ${selectedPlan.totalFiber}g
-• Sodium: ${selectedPlan.totalSodium}mg
+- Calories: ${dietPlan?.calories} kcal
+- Protein: ${dietPlan?.protein}g
+- Carbohydrates: ${dietPlan?.carbs}g
+- Fats: ${dietPlan?.fats}g
+- Water Intake: ${dietPlan?.waterIntake}ml
 
 MEAL PLAN:
 
-BREAKFAST - ${selectedPlan.meals.breakfast.name}
-${selectedPlan.meals.breakfast.foods.join(", ")}
-Calories: ${selectedPlan.meals.breakfast.calories} | Protein: ${selectedPlan.meals.breakfast.protein}g | Fat: ${selectedPlan.meals.breakfast.fat}g | Carbs: ${selectedPlan.meals.breakfast.carbs}g
-Preparation: ${selectedPlan.meals.breakfast.preparation}
+BREAKFAST OPTIONS:
+${dietPlan?.meals.breakfast.map((meal) => `• ${meal}`).join("\n")}
 
-MORNING SNACK - ${selectedPlan.meals.morningSnack.name}
-${selectedPlan.meals.morningSnack.foods.join(", ")}
-Calories: ${selectedPlan.meals.morningSnack.calories} | Protein: ${selectedPlan.meals.morningSnack.protein}g | Fat: ${selectedPlan.meals.morningSnack.fat}g | Carbs: ${selectedPlan.meals.morningSnack.carbs}g
+LUNCH OPTIONS:
+${dietPlan?.meals.lunch.map((meal) => `• ${meal}`).join("\n")}
 
-LUNCH - ${selectedPlan.meals.lunch.name}
-${selectedPlan.meals.lunch.foods.join(", ")}
-Calories: ${selectedPlan.meals.lunch.calories} | Protein: ${selectedPlan.meals.lunch.protein}g | Fat: ${selectedPlan.meals.lunch.fat}g | Carbs: ${selectedPlan.meals.lunch.carbs}g
-Preparation: ${selectedPlan.meals.lunch.preparation}
+DINNER OPTIONS:
+${dietPlan?.meals.dinner.map((meal) => `• ${meal}`).join("\n")}
 
-AFTERNOON SNACK - ${selectedPlan.meals.afternoonSnack.name}
-${selectedPlan.meals.afternoonSnack.foods.join(", ")}
-Calories: ${selectedPlan.meals.afternoonSnack.calories} | Protein: ${selectedPlan.meals.afternoonSnack.protein}g | Fat: ${selectedPlan.meals.afternoonSnack.fat}g | Carbs: ${selectedPlan.meals.afternoonSnack.carbs}g
+SNACK OPTIONS:
+${dietPlan?.meals.snacks.map((meal) => `• ${meal}`).join("\n")}
 
-DINNER - ${selectedPlan.meals.dinner.name}
-${selectedPlan.meals.dinner.foods.join(", ")}
-Calories: ${selectedPlan.meals.dinner.calories} | Protein: ${selectedPlan.meals.dinner.protein}g | Fat: ${selectedPlan.meals.dinner.fat}g | Carbs: ${selectedPlan.meals.dinner.carbs}g
-Preparation: ${selectedPlan.meals.dinner.preparation}
+RECOMMENDED SUPPLEMENTS:
+${dietPlan?.supplements.map((sup) => `• ${sup}`).join("\n")}
 
-HYDRATION:
-${selectedPlan.hydration.map((h) => `• ${h}`).join("\n")}
+HEALTH TIPS:
+${dietPlan?.tips.map((tip) => `• ${tip}`).join("\n")}
 
-SUPPLEMENTS:
-${selectedPlan.supplements.map((s) => `• ${s}`).join("\n")}
-
-IMPORTANT NOTES:
-${selectedPlan.notes.map((n) => `• ${n}`).join("\n")}
-
-Powered by MYMED.AI
-This plan is for informational purposes only. Consult with your healthcare provider before making significant dietary changes.
+---
+Generated by MyMedi.ai - AI-Powered Healthcare Platform
+Visit: https://mymedi.ai
     `
 
-    const blob = new Blob([reportContent], { type: "text/plain" })
+    const blob = new Blob([content], { type: "text/plain" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `mymed-diet-plan-${new Date().toISOString().split("T")[0]}.txt`
+    a.download = `MyMedi-Diet-Plan-${new Date().toISOString().split("T")[0]}.txt`
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
 
-  if (!selectedPlan) {
+  if (isGenerating) {
     return (
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center space-x-2">
-            <MyMedLogo size="sm" showText={false} />
-            <span>AI Diet Plan Generator</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-6">
-          <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
-            <h3 className="font-semibold text-purple-900 mb-2">Your Profile</h3>
-            <div className="flex justify-center space-x-6 text-sm">
-              <span>
-                <strong>Age:</strong> {userProfile.age} years
-              </span>
-              <span>
-                <strong>Condition:</strong> {userProfile.condition}
-              </span>
-              <span>
-                <strong>Goal:</strong> {userProfile.goal}
-              </span>
-            </div>
+      <Card className="border-teal-200 hover:shadow-2xl transition-all duration-500">
+        <CardContent className="flex flex-col items-center justify-center py-16 bg-gradient-to-br from-teal-50 to-blue-50">
+          <div className="relative">
+            <Loader2 className="h-12 w-12 animate-spin text-teal-600 mb-4" />
+            <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-teal-200 animate-pulse"></div>
           </div>
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Your Personalized Diet Plan Will Include:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                <Apple className="w-5 h-5 text-green-600" />
-                <span className="text-green-800">Detailed meal plans with macros</span>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                <Calculator className="w-5 h-5 text-blue-600" />
-                <span className="text-blue-800">Precise calorie and nutrient breakdown</span>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-orange-50 rounded-lg">
-                <Utensils className="w-5 h-5 text-orange-600" />
-                <span className="text-orange-800">Easy-to-follow preparation instructions</span>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
-                <Target className="w-5 h-5 text-purple-600" />
-                <span className="text-purple-800">Condition-specific recommendations</span>
-              </div>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleGeneratePlan}
-            disabled={isGenerating}
-            size="lg"
-            className="bg-purple-600 hover:bg-purple-700 px-8 py-3"
-          >
-            {isGenerating ? (
-              <>
-                <Activity className="w-4 h-4 mr-2 animate-spin" />
-                Generating Your Custom Plan...
-              </>
-            ) : (
-              <>
-                <Apple className="w-4 h-4 mr-2" />
-                Generate My Diet Plan
-              </>
-            )}
-          </Button>
-
-          <p className="text-sm text-gray-600">
-            Our AI will create a personalized plan based on your health condition and goals
+          <h3 className="text-xl font-bold text-teal-800 mb-2">🧠 AI Nutritionist at Work</h3>
+          <p className="text-teal-600 text-center max-w-md">
+            Analyzing your profile, calculating nutritional needs, and creating your personalized meal plan...
           </p>
+          <div className="mt-4 flex space-x-2">
+            <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+            <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+          </div>
         </CardContent>
       </Card>
     )
   }
 
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center space-x-2">
-            <MyMedLogo size="sm" showText={false} />
-            <span>Your Personalized Diet Plan</span>
-          </CardTitle>
-          <Button onClick={exportPlan} variant="outline" size="sm">
-            <FileText className="w-4 h-4 mr-2" />
-            Export Plan
+  if (dietPlan) {
+    return (
+      <div className="space-y-6">
+        {/* Header Card */}
+        <Card className="border-0 shadow-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white overflow-hidden">
+          <CardContent className="p-8 relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <Apple className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Your Personalized Diet Plan</h2>
+                    <p className="text-purple-100">Crafted by AI Nutritionist</p>
+                  </div>
+                </div>
+                <Badge className="bg-white bg-opacity-20 text-white border-white border-opacity-30 hover:bg-white hover:bg-opacity-30">
+                  <Star className="w-3 h-3 mr-1" />
+                  Premium Plan
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{dietPlan.calories}</div>
+                  <div className="text-sm text-purple-100">Daily Calories</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{dietPlan.protein}g</div>
+                  <div className="text-sm text-purple-100">Protein</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{dietPlan.carbs}g</div>
+                  <div className="text-sm text-purple-100">Carbs</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{dietPlan.fats}g</div>
+                  <div className="text-sm text-purple-100">Healthy Fats</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3 justify-center">
+          <Button
+            onClick={handlePrint}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Print Plan
           </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-blue-50 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-700">{selectedPlan.totalCalories}</div>
-              <div className="text-sm text-blue-600">Calories</div>
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-green-700">{selectedPlan.totalProtein}g</div>
-              <div className="text-sm text-green-600">Protein</div>
-            </div>
-            <div className="bg-orange-50 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-orange-700">{selectedPlan.totalFat}g</div>
-              <div className="text-sm text-orange-600">Fat</div>
-            </div>
-            <div className="bg-purple-50 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-purple-700">{selectedPlan.totalCarbs}g</div>
-              <div className="text-sm text-purple-600">Carbs</div>
-            </div>
-            <div className="bg-pink-50 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-pink-700">{selectedPlan.totalFiber}g</div>
-              <div className="text-sm text-pink-600">Fiber</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <Button
+            onClick={handleDownloadPDF}
+            className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white shadow-lg"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download PDF
+          </Button>
+          <Button
+            onClick={() => setDietPlan(null)}
+            variant="outline"
+            className="border-purple-300 text-purple-700 hover:bg-purple-50"
+          >
+            Create New Plan
+          </Button>
+        </div>
 
-      <Tabs defaultValue="meals" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="meals">Daily Meals</TabsTrigger>
-          <TabsTrigger value="hydration">Hydration & Supplements</TabsTrigger>
-          <TabsTrigger value="tips">Expert Tips</TabsTrigger>
-        </TabsList>
+        {/* Tabbed Content */}
+        <Tabs defaultValue="meals" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-purple-100 to-pink-100">
+            <TabsTrigger value="meals" className="data-[state=active]:bg-white data-[state=active]:text-purple-700">
+              <Utensils className="w-4 h-4 mr-2" />
+              Meals
+            </TabsTrigger>
+            <TabsTrigger value="nutrition" className="data-[state=active]:bg-white data-[state=active]:text-purple-700">
+              <Target className="w-4 h-4 mr-2" />
+              Nutrition
+            </TabsTrigger>
+            <TabsTrigger
+              value="supplements"
+              className="data-[state=active]:bg-white data-[state=active]:text-purple-700"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Supplements
+            </TabsTrigger>
+            <TabsTrigger value="tips" className="data-[state=active]:bg-white data-[state=active]:text-purple-700">
+              <Zap className="w-4 h-4 mr-2" />
+              Tips
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="meals" className="space-y-4">
-          {/* Breakfast */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-orange-700">
-                <Coffee className="w-5 h-5" />
-                <span>Breakfast - {selectedPlan.meals.breakfast.name}</span>
-                <Badge variant="outline" className="ml-auto">
-                  {selectedPlan.meals.breakfast.calories} kcal
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Ingredients:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-700">
-                    {selectedPlan.meals.breakfast.foods.map((food, idx) => (
-                      <li key={idx}>{food}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div>
-                    <div className="font-semibold text-blue-700">{selectedPlan.meals.breakfast.protein}g</div>
-                    <div className="text-xs text-gray-600">Protein</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-orange-700">{selectedPlan.meals.breakfast.fat}g</div>
-                    <div className="text-xs text-gray-600">Fat</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-purple-700">{selectedPlan.meals.breakfast.carbs}g</div>
-                    <div className="text-xs text-gray-600">Carbs</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-green-700">{selectedPlan.meals.breakfast.fiber}g</div>
-                    <div className="text-xs text-gray-600">Fiber</div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold mb-2">Preparation:</h4>
-                <p className="text-gray-700 text-sm">{selectedPlan.meals.breakfast.preparation}</p>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selectedPlan.meals.breakfast.tips.map((tip, idx) => (
-                  <Badge key={idx} variant="secondary" className="text-xs">
-                    {tip}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Morning Snack */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-green-700">
-                <Apple className="w-5 h-5" />
-                <span>Morning Snack - {selectedPlan.meals.morningSnack.name}</span>
-                <Badge variant="outline" className="ml-auto">
-                  {selectedPlan.meals.morningSnack.calories} kcal
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Ingredients:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-700">
-                    {selectedPlan.meals.morningSnack.foods.map((food, idx) => (
-                      <li key={idx}>{food}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div>
-                    <div className="font-semibold text-blue-700">{selectedPlan.meals.morningSnack.protein}g</div>
-                    <div className="text-xs text-gray-600">Protein</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-orange-700">{selectedPlan.meals.morningSnack.fat}g</div>
-                    <div className="text-xs text-gray-600">Fat</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-purple-700">{selectedPlan.meals.morningSnack.carbs}g</div>
-                    <div className="text-xs text-gray-600">Carbs</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-green-700">{selectedPlan.meals.morningSnack.fiber}g</div>
-                    <div className="text-xs text-gray-600">Fiber</div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold mb-2">Preparation:</h4>
-                <p className="text-gray-700 text-sm">{selectedPlan.meals.morningSnack.preparation}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Lunch */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-blue-700">
-                <Utensils className="w-5 h-5" />
-                <span>Lunch - {selectedPlan.meals.lunch.name}</span>
-                <Badge variant="outline" className="ml-auto">
-                  {selectedPlan.meals.lunch.calories} kcal
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Ingredients:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-700">
-                    {selectedPlan.meals.lunch.foods.map((food, idx) => (
-                      <li key={idx}>{food}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div>
-                    <div className="font-semibold text-blue-700">{selectedPlan.meals.lunch.protein}g</div>
-                    <div className="text-xs text-gray-600">Protein</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-orange-700">{selectedPlan.meals.lunch.fat}g</div>
-                    <div className="text-xs text-gray-600">Fat</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-purple-700">{selectedPlan.meals.lunch.carbs}g</div>
-                    <div className="text-xs text-gray-600">Carbs</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-green-700">{selectedPlan.meals.lunch.fiber}g</div>
-                    <div className="text-xs text-gray-600">Fiber</div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold mb-2">Preparation:</h4>
-                <p className="text-gray-700 text-sm">{selectedPlan.meals.lunch.preparation}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Afternoon Snack */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-purple-700">
-                <Sunset className="w-5 h-5" />
-                <span>Afternoon Snack - {selectedPlan.meals.afternoonSnack.name}</span>
-                <Badge variant="outline" className="ml-auto">
-                  {selectedPlan.meals.afternoonSnack.calories} kcal
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Ingredients:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-700">
-                    {selectedPlan.meals.afternoonSnack.foods.map((food, idx) => (
-                      <li key={idx}>{food}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div>
-                    <div className="font-semibold text-blue-700">{selectedPlan.meals.afternoonSnack.protein}g</div>
-                    <div className="text-xs text-gray-600">Protein</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-orange-700">{selectedPlan.meals.afternoonSnack.fat}g</div>
-                    <div className="text-xs text-gray-600">Fat</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-purple-700">{selectedPlan.meals.afternoonSnack.carbs}g</div>
-                    <div className="text-xs text-gray-600">Carbs</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-green-700">{selectedPlan.meals.afternoonSnack.fiber}g</div>
-                    <div className="text-xs text-gray-600">Fiber</div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold mb-2">Preparation:</h4>
-                <p className="text-gray-700 text-sm">{selectedPlan.meals.afternoonSnack.preparation}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Dinner */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-indigo-700">
-                <Moon className="w-5 h-5" />
-                <span>Dinner - {selectedPlan.meals.dinner.name}</span>
-                <Badge variant="outline" className="ml-auto">
-                  {selectedPlan.meals.dinner.calories} kcal
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Ingredients:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-700">
-                    {selectedPlan.meals.dinner.foods.map((food, idx) => (
-                      <li key={idx}>{food}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div>
-                    <div className="font-semibold text-blue-700">{selectedPlan.meals.dinner.protein}g</div>
-                    <div className="text-xs text-gray-600">Protein</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-orange-700">{selectedPlan.meals.dinner.fat}g</div>
-                    <div className="text-xs text-gray-600">Fat</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-purple-700">{selectedPlan.meals.dinner.carbs}g</div>
-                    <div className="text-xs text-gray-600">Carbs</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-green-700">{selectedPlan.meals.dinner.fiber}g</div>
-                    <div className="text-xs text-gray-600">Fiber</div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold mb-2">Preparation:</h4>
-                <p className="text-gray-700 text-sm">{selectedPlan.meals.dinner.preparation}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="hydration" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-blue-700">
-                  <Droplets className="w-5 h-5" />
-                  <span>Hydration Plan</span>
+          <TabsContent value="meals" className="space-y-6">
+            {/* Breakfast */}
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-yellow-50 border-l-4 border-l-orange-500">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center">
+                  <Coffee className="w-5 h-5 mr-2" />
+                  Breakfast Options
+                  <Badge className="ml-auto bg-white bg-opacity-20 text-white">300-350 cal</Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {selectedPlan.hydration.map((item, idx) => (
-                    <li key={idx} className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span className="text-gray-700">{item}</span>
-                    </li>
+              <CardContent className="p-6">
+                <div className="grid gap-3">
+                  {dietPlan.meals.breakfast.map((meal, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-3 bg-white rounded-lg shadow-sm border border-orange-100"
+                    >
+                      <CheckCircle className="w-4 h-4 text-orange-500 mr-3" />
+                      <span className="text-gray-700">{meal}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-green-700">
-                  <Activity className="w-5 h-5" />
-                  <span>Recommended Supplements</span>
+            {/* Lunch */}
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50 border-l-4 border-l-blue-500">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center">
+                  <Sun className="w-5 h-5 mr-2" />
+                  Lunch Options
+                  <Badge className="ml-auto bg-white bg-opacity-20 text-white">400-480 cal</Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {selectedPlan.supplements.map((item, idx) => (
-                    <li key={idx} className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span className="text-gray-700">{item}</span>
-                    </li>
+              <CardContent className="p-6">
+                <div className="grid gap-3">
+                  {dietPlan.meals.lunch.map((meal, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-3 bg-white rounded-lg shadow-sm border border-blue-100"
+                    >
+                      <CheckCircle className="w-4 h-4 text-blue-500 mr-3" />
+                      <span className="text-gray-700">{meal}</span>
+                    </div>
                   ))}
-                </ul>
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-xs text-yellow-800">
-                    <strong>Important:</strong> Always consult your healthcare provider before starting any supplements.
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Dinner */}
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-indigo-50 border-l-4 border-l-purple-500">
+              <CardHeader className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center">
+                  <Moon className="w-5 h-5 mr-2" />
+                  Dinner Options
+                  <Badge className="ml-auto bg-white bg-opacity-20 text-white">320-400 cal</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid gap-3">
+                  {dietPlan.meals.dinner.map((meal, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-3 bg-white rounded-lg shadow-sm border border-purple-100"
+                    >
+                      <CheckCircle className="w-4 h-4 text-purple-500 mr-3" />
+                      <span className="text-gray-700">{meal}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Snacks */}
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-teal-50 border-l-4 border-l-green-500">
+              <CardHeader className="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center">
+                  <Sunset className="w-5 h-5 mr-2" />
+                  Healthy Snacks
+                  <Badge className="ml-auto bg-white bg-opacity-20 text-white">120-200 cal</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid gap-3">
+                  {dietPlan.meals.snacks.map((meal, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-3 bg-white rounded-lg shadow-sm border border-green-100"
+                    >
+                      <CheckCircle className="w-4 h-4 text-green-500 mr-3" />
+                      <span className="text-gray-700">{meal}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="nutrition" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Macronutrients */}
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-pink-50 to-rose-50">
+                <CardHeader className="bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    Daily Targets
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                    <span className="font-medium text-gray-700">Calories</span>
+                    <Badge className="bg-pink-100 text-pink-800">{dietPlan.calories} kcal</Badge>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                    <span className="font-medium text-gray-700">Protein</span>
+                    <Badge className="bg-blue-100 text-blue-800">{dietPlan.protein}g</Badge>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                    <span className="font-medium text-gray-700">Carbohydrates</span>
+                    <Badge className="bg-green-100 text-green-800">{dietPlan.carbs}g</Badge>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                    <span className="font-medium text-gray-700">Healthy Fats</span>
+                    <Badge className="bg-yellow-100 text-yellow-800">{dietPlan.fats}g</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Hydration */}
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-cyan-50 to-blue-50">
+                <CardHeader className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center">
+                    <Droplets className="w-5 h-5 mr-2" />
+                    Hydration Goal
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-cyan-600 mb-2">{dietPlan.waterIntake}ml</div>
+                    <p className="text-gray-600 mb-4">Daily Water Intake</p>
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                      <p className="text-sm text-gray-700">
+                        💧 Aim for {Math.round(dietPlan.waterIntake / 250)} glasses of water throughout the day
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="supplements" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-teal-50">
+              <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center">
+                  <Heart className="w-5 h-5 mr-2" />
+                  Recommended Supplements
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid gap-4">
+                  {dietPlan.supplements.map((supplement, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-emerald-100"
+                    >
+                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-4">
+                        <Heart className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <span className="text-gray-700 font-medium">{supplement}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Note:</strong> Consult with your healthcare provider before starting any new supplements.
                   </p>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="tips" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <MyMedLogo size="sm" showText={false} />
-                <span>AI Health & Nutrition Tips</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {selectedPlan.notes.map((note, idx) => (
-                  <div key={idx} className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                    <p className="text-purple-800 flex items-start space-x-2">
-                      <Target className="w-4 h-4 mt-0.5 text-purple-600 flex-shrink-0" />
-                      <span>{note}</span>
-                    </p>
-                  </div>
-                ))}
-              </div>
+          <TabsContent value="tips" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-violet-50 to-purple-50">
+              <CardHeader className="bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center">
+                  <Zap className="w-5 h-5 mr-2" />
+                  Expert Health Tips
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid gap-4">
+                  {dietPlan.tips.map((tip, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start p-4 bg-white rounded-lg shadow-sm border border-violet-100"
+                    >
+                      <div className="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center mr-4 mt-0.5">
+                        <TrendingUp className="w-4 h-4 text-violet-600" />
+                      </div>
+                      <span className="text-gray-700">{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
-                  <Clock className="w-4 h-4 mr-2" />
-                  Meal Timing Tips
-                </h4>
-                <ul className="text-blue-800 space-y-1 text-sm">
-                  <li>• Breakfast: Within 1 hour of waking</li>
-                  <li>• Morning Snack: 2-3 hours after breakfast</li>
-                  <li>• Lunch: 12:00-1:00 PM</li>
-                  <li>• Afternoon Snack: 3:00-4:00 PM</li>
-                  <li>• Dinner: 6:00-7:00 PM (at least 3 hours before bedtime)</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="text-center text-sm text-gray-500 bg-gray-50 p-4 rounded-lg">
-            <MyMedLogo size="sm" className="mx-auto mb-2" />
-            <p>
-              Powered by MYMED.AI • This diet plan is for educational purposes only and does not replace professional
-              nutritional advice.
+        {/* Footer */}
+        <Card className="border-0 shadow-lg bg-gradient-to-r from-gray-50 to-blue-50">
+          <CardContent className="p-6 text-center">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <Calendar className="w-4 h-4 text-gray-600" />
+              <span className="text-sm text-gray-600">Plan generated on {new Date().toLocaleDateString()}</span>
+            </div>
+            <p className="text-xs text-gray-500">
+              This plan is AI-generated and should be used as a guide. Consult with a registered dietitian for
+              personalized advice.
             </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <Card className="border-teal-200 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 bg-gradient-to-br from-teal-50 to-blue-50">
+      <CardHeader className="bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-t-lg">
+        <CardTitle className="flex items-center text-white">
+          <Apple className="w-5 h-5 mr-2" />
+          AI-Powered Diet Plan Generator
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="age" className="text-sm font-medium text-gray-700">
+              Age *
+            </Label>
+            <Input
+              id="age"
+              type="number"
+              value={formData.age}
+              onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+              placeholder="Enter your age"
+              className="mt-1"
+            />
           </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+          <div>
+            <Label htmlFor="gender" className="text-sm font-medium text-gray-700">
+              Gender *
+            </Label>
+            <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="height" className="text-sm font-medium text-gray-700">
+              Height (cm) *
+            </Label>
+            <Input
+              id="height"
+              type="number"
+              value={formData.height}
+              onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+              placeholder="Enter height in cm"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="weight" className="text-sm font-medium text-gray-700">
+              Weight (kg) *
+            </Label>
+            <Input
+              id="weight"
+              type="number"
+              value={formData.weight}
+              onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+              placeholder="Enter weight in kg"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="activityLevel" className="text-sm font-medium text-gray-700">
+              Activity Level *
+            </Label>
+            <Select
+              value={formData.activityLevel}
+              onValueChange={(value) => setFormData({ ...formData, activityLevel: value })}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select activity level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sedentary">Sedentary (little/no exercise)</SelectItem>
+                <SelectItem value="light">Light (light exercise 1-3 days/week)</SelectItem>
+                <SelectItem value="moderate">Moderate (moderate exercise 3-5 days/week)</SelectItem>
+                <SelectItem value="active">Active (hard exercise 6-7 days/week)</SelectItem>
+                <SelectItem value="very_active">Very Active (very hard exercise, physical job)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="goals" className="text-sm font-medium text-gray-700">
+              Primary Goal *
+            </Label>
+            <Select value={formData.goals} onValueChange={(value) => setFormData({ ...formData, goals: value })}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select your goal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weight_loss">Weight Loss</SelectItem>
+                <SelectItem value="weight_gain">Weight Gain</SelectItem>
+                <SelectItem value="maintain">Maintain Weight</SelectItem>
+                <SelectItem value="muscle_gain">Build Muscle</SelectItem>
+                <SelectItem value="general_health">General Health</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="dietaryPreferences" className="text-sm font-medium text-gray-700">
+              Dietary Preferences
+            </Label>
+            <Select
+              value={formData.dietaryPreferences}
+              onValueChange={(value) => setFormData({ ...formData, dietaryPreferences: value })}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select dietary preference" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="omnivore">Omnivore</SelectItem>
+                <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                <SelectItem value="vegan">Vegan</SelectItem>
+                <SelectItem value="keto">Ketogenic</SelectItem>
+                <SelectItem value="paleo">Paleo</SelectItem>
+                <SelectItem value="mediterranean">Mediterranean</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="cookingTime" className="text-sm font-medium text-gray-700">
+              Cooking Time Available
+            </Label>
+            <Select
+              value={formData.cookingTime}
+              onValueChange={(value) => setFormData({ ...formData, cookingTime: value })}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select cooking time" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="minimal">Minimal (15 min or less)</SelectItem>
+                <SelectItem value="moderate">Moderate (15-30 min)</SelectItem>
+                <SelectItem value="extended">Extended (30+ min)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="allergies" className="text-sm font-medium text-gray-700">
+            Food Allergies & Restrictions
+          </Label>
+          <Textarea
+            id="allergies"
+            value={formData.allergies}
+            onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
+            placeholder="List any food allergies, intolerances, or foods to avoid..."
+            className="mt-1"
+            rows={2}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="additionalNotes" className="text-sm font-medium text-gray-700">
+            Additional Notes
+          </Label>
+          <Textarea
+            id="additionalNotes"
+            value={formData.additionalNotes}
+            onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
+            placeholder="Any specific preferences, health conditions, or requirements..."
+            className="mt-1"
+            rows={3}
+          />
+        </div>
+
+        <Button
+          onClick={generateDietPlan}
+          disabled={
+            !formData.age ||
+            !formData.gender ||
+            !formData.height ||
+            !formData.weight ||
+            !formData.activityLevel ||
+            !formData.goals
+          }
+          className="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:shadow-lg"
+        >
+          <Zap className="w-4 h-4 mr-2" />
+          Generate My Personalized Diet Plan
+        </Button>
+
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200">
+          <div className="flex items-start space-x-2">
+            <Zap className="w-4 h-4 text-yellow-600 mt-0.5" />
+            <div className="text-sm text-yellow-800">
+              <strong>AI-Powered:</strong> Our advanced AI considers your age, gender, activity level, and goals to
+              create a scientifically-backed nutrition plan tailored just for you.
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
