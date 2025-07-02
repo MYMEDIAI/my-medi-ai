@@ -1,37 +1,54 @@
-import { cn } from "@/lib/utils"
+"use client"
+
+import Image from "next/image"
 
 interface MyMedLogoProps {
   size?: "sm" | "md" | "lg"
   showText?: boolean
   className?: string
+  variant?: "icon" | "full"
 }
 
-export default function MyMedLogo({ size = "md", showText = true, className }: MyMedLogoProps) {
+export default function MyMedLogo({ size = "md", showText = true, className = "", variant = "icon" }: MyMedLogoProps) {
   const sizeClasses = {
-    sm: "h-8 w-8",
-    md: "h-12 w-12",
-    lg: "h-16 w-16",
+    sm: "w-8 h-8",
+    md: "w-12 h-12",
+    lg: "w-16 h-16",
   }
 
-  const textSizeClasses = {
-    sm: "text-lg",
-    md: "text-xl",
+  const textSizes = {
+    sm: "text-sm",
+    md: "text-lg",
     lg: "text-2xl",
   }
 
-  return (
-    <div className={cn("flex items-center space-x-3", className)}>
-      <div className={cn("relative", sizeClasses[size])}>
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg"></div>
-        <div className="relative h-full w-full flex items-center justify-center">
-          <span className="text-white font-bold text-sm">M</span>
-        </div>
+  if (variant === "full") {
+    return (
+      <div className={`flex items-center ${className}`}>
+        <Image
+          src="/images/mymed-logo-with-text.png"
+          alt="My Medi.AI"
+          width={size === "sm" ? 120 : size === "md" ? 160 : 200}
+          height={size === "sm" ? 40 : size === "md" ? 50 : 60}
+          className="object-contain"
+        />
       </div>
+    )
+  }
+
+  return (
+    <div className={`flex items-center space-x-3 ${className}`}>
+      <Image
+        src="/images/mymed-logo.png"
+        alt="My Medi.AI Logo"
+        width={size === "sm" ? 32 : size === "md" ? 48 : 64}
+        height={size === "sm" ? 32 : size === "md" ? 48 : 64}
+        className={`object-contain ${sizeClasses[size]}`}
+      />
       {showText && (
-        <div className="flex flex-col">
-          <span className={cn("font-bold text-gray-900", textSizeClasses[size])}>MYMED.AI</span>
-          <span className="text-xs text-gray-500 -mt-1">Healthcare AI</span>
-        </div>
+        <span className={`font-bold text-purple-700 ${textSizes[size]}`}>
+          My Medi<span className="text-pink-500">.AI</span>
+        </span>
       )}
     </div>
   )

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, User, Activity, Pill, Utensils, Dumbbell, AlertCircle, CheckCircle } from "lucide-react"
+import { Loader2, User, Heart, Activity, Pill, Utensils, Dumbbell, AlertCircle } from "lucide-react"
+import MyMedLogo from "./mymed-logo"
 
 interface AssessmentData {
   name: string
@@ -33,11 +34,10 @@ interface AIResponse {
 }
 
 export default function HealthAssessmentForm() {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
-  const [assessmentResults, setAssessmentResults] = useState<AIResponse | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [patientData, setPatientData] = useState<AssessmentData>({
+  const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState<AIResponse | null>(null)
+  const [formData, setFormData] = useState<AssessmentData>({
     name: "",
     age: "",
     gender: "",
@@ -50,240 +50,121 @@ export default function HealthAssessmentForm() {
     lifestyle: "",
   })
 
-  const updateFormField = (field: keyof AssessmentData, value: string) => {
-    setPatientData((prev) => ({ ...prev, [field]: value }))
+  const handleInputChange = (field: keyof AssessmentData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const generateAssessment = async () => {
-    console.log("Starting AI assessment generation...")
-    setIsLoading(true)
-    setErrorMessage(null)
-
+  const handleSubmit = async () => {
+    setLoading(true)
     try {
-      const healthAssessmentPrompt = `
-COMPREHENSIVE HEALTH ASSESSMENT REQUEST
+      const assessmentPrompt = `
+Patient Assessment:
+Name: ${formData.name}
+Age: ${formData.age}
+Gender: ${formData.gender}
+Current Symptoms: ${formData.symptoms}
+Duration: ${formData.duration}
+Severity: ${formData.severity}
+Current Medications: ${formData.medications}
+Allergies: ${formData.allergies}
+Family History: ${formData.familyHistory}
+Lifestyle: ${formData.lifestyle}
 
-PATIENT INFORMATION:
-- Name: ${patientData.name}
-- Age: ${patientData.age} years old
-- Gender: ${patientData.gender}
+Please provide comprehensive recommendations for:
+1. Medications (over-the-counter suggestions)
+2. Doctors/specialists to consult
+3. Laboratory tests that might be helpful
+4. Pharmacy options
+5. Personalized diet plan
+6. Exercise recommendations
+7. General health advice
 
-CURRENT SYMPTOMS:
-- Primary Symptoms: ${patientData.symptoms}
-- Duration: ${patientData.duration}
-- Severity Level: ${patientData.severity}
-
-MEDICAL BACKGROUND:
-- Current Medications: ${patientData.medications || "None reported"}
-- Known Allergies: ${patientData.allergies || "None reported"}
-- Family Medical History: ${patientData.familyHistory || "None reported"}
-- Lifestyle Factors: ${patientData.lifestyle || "Not specified"}
-
-Please provide detailed, actionable recommendations in these specific categories:
-
-1. MEDICATIONS & TREATMENTS:
-Suggest appropriate over-the-counter medications, home remedies, or treatment approaches for the symptoms described.
-
-2. HEALTHCARE PROVIDERS:
-Recommend which type of doctor, specialist, or healthcare facility the patient should consult based on their symptoms.
-
-3. DIAGNOSTIC TESTS:
-Suggest relevant laboratory tests, imaging, or other diagnostic procedures that might be helpful for proper diagnosis.
-
-4. PHARMACY & MEDICATION ACCESS:
-Provide guidance on where to obtain medications, generic alternatives, and cost-saving options.
-
-5. PERSONALIZED DIET PLAN:
-Create specific dietary recommendations that could help with the symptoms or overall health improvement.
-
-6. EXERCISE & PHYSICAL ACTIVITY:
-Suggest appropriate physical activities, exercises, or movement therapies suitable for the patient's condition.
-
-7. GENERAL WELLNESS ADVICE:
-Provide comprehensive lifestyle recommendations, preventive measures, and general health guidance.
-
-Please format your response with clear, specific, and actionable recommendations for each category.
+Format the response as structured recommendations with clear sections.
 `
 
-      console.log("Sending request to AI API...")
-
-      const apiResponse = await fetch("/api/ai-integration", {
+      const response = await fetch("/api/ai-integration", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: healthAssessmentPrompt,
+          message: assessmentPrompt,
           type: "assessment",
         }),
       })
 
-      console.log("API Response status:", apiResponse.status)
+      const data = await response.json()
 
-      if (!apiResponse.ok) {
-        const errorText = await apiResponse.text()
-        console.error("API Error:", errorText)
-        throw new Error(`API request failed: ${apiResponse.status}`)
-      }
+      if (data.response) {
+        // Parse the AI response into structured format
+        const aiText = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
 
-      const responseData = await apiResponse.json()
-      console.log("AI Response data:", responseData)
-
-      if (responseData.error) {
-        throw new Error(responseData.error)
-      }
-
-      // Process the AI response
-      const aiResponseText = responseData.response
-      let finalResults: AIResponse
-
-      if (typeof aiResponseText === "object" && aiResponseText !== null) {
-        finalResults = {
-          medications: aiResponseText.medications || createFallbackMedications(),
-          doctors: aiResponseText.doctors || createFallbackDoctors(),
-          labs: aiResponseText.labs || createFallbackLabs(),
-          pharmacy: aiResponseText.pharmacy || createFallbackPharmacy(),
-          dietPlan: aiResponseText.dietPlan || createFallbackDiet(),
-          exercise: aiResponseText.exercise || createFallbackExercise(),
-          generalAdvice: aiResponseText.generalAdvice || createFallbackAdvice(),
-        }
-      } else {
-        const responseText = String(aiResponseText)
-        finalResults = {
+        setResults({
           medications:
-            extractResponseSection(responseText, ["medication", "treatment", "drug", "remedy"]) ||
-            createFallbackMedications(),
+            extractSection(aiText, "medication") ||
+            "Consult with a healthcare provider for appropriate medications based on your symptoms.",
           doctors:
-            extractResponseSection(responseText, ["doctor", "physician", "specialist", "healthcare"]) ||
-            createFallbackDoctors(),
-          labs:
-            extractResponseSection(responseText, ["test", "lab", "blood", "screening", "diagnostic"]) ||
-            createFallbackLabs(),
+            extractSection(aiText, "doctor") ||
+            "Schedule an appointment with your primary care physician for initial evaluation.",
+          labs: extractSection(aiText, "lab") || "Basic blood work and relevant tests as recommended by your doctor.",
           pharmacy:
-            extractResponseSection(responseText, ["pharmacy", "medication", "prescription"]) ||
-            createFallbackPharmacy(),
+            extractSection(aiText, "pharmacy") ||
+            "Visit your local pharmacy for over-the-counter medications and health consultations.",
           dietPlan:
-            extractResponseSection(responseText, ["diet", "nutrition", "food", "eat", "meal"]) || createFallbackDiet(),
+            extractSection(aiText, "diet") ||
+            "Maintain a balanced diet with plenty of fruits, vegetables, and adequate hydration.",
           exercise:
-            extractResponseSection(responseText, ["exercise", "activity", "physical", "fitness"]) ||
-            createFallbackExercise(),
+            extractSection(aiText, "exercise") ||
+            "Engage in regular moderate exercise as appropriate for your condition.",
           generalAdvice:
-            extractResponseSection(responseText, ["advice", "recommendation", "general", "wellness"]) ||
-            createFallbackAdvice(),
-        }
+            extractSection(aiText, "advice") ||
+            "Monitor your symptoms and seek medical attention if they worsen or persist.",
+        })
+        setStep(3)
       }
-
-      console.log("Final processed results:", finalResults)
-      setAssessmentResults(finalResults)
-      setCurrentStep(3) // Move to results page
     } catch (error) {
-      console.error("Assessment generation error:", error)
-      setErrorMessage(error instanceof Error ? error.message : "An unexpected error occurred")
-
-      // Provide comprehensive fallback results
-      setAssessmentResults({
-        medications: createFallbackMedications(),
-        doctors: createFallbackDoctors(),
-        labs: createFallbackLabs(),
-        pharmacy: createFallbackPharmacy(),
-        dietPlan: createFallbackDiet(),
-        exercise: createFallbackExercise(),
-        generalAdvice: createFallbackAdvice(),
+      console.error("Assessment error:", error)
+      // Provide fallback results
+      setResults({
+        medications:
+          "Unable to connect to AI service. Please consult with a healthcare provider for medication recommendations.",
+        doctors: "Schedule an appointment with your primary care physician for proper evaluation.",
+        labs: "Basic health screening tests may be recommended by your doctor.",
+        pharmacy: "Visit your local pharmacy for over-the-counter medications and health consultations.",
+        dietPlan: "Maintain a balanced diet with plenty of fruits, vegetables, and stay hydrated.",
+        exercise: "Engage in regular moderate exercise appropriate for your fitness level.",
+        generalAdvice: "Monitor your symptoms and seek immediate medical attention if they worsen.",
       })
-      setCurrentStep(3) // Still move to results page with fallback data
+      setStep(3)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const createFallbackMedications =
-    () => `• Over-the-counter pain relievers (acetaminophen, ibuprofen) as needed for pain/fever
-• Stay well hydrated with plenty of fluids throughout the day
-• Get adequate rest and avoid strenuous activities
-• Apply heat or cold therapy for localized pain relief
-• Follow all dosage instructions carefully and read labels
-• Consult pharmacist about drug interactions with current medications`
+  const extractSection = (text: string, keyword: string): string => {
+    const lines = text.split("\n")
+    let section = ""
+    let capturing = false
 
-  const createFallbackDoctors = () => `• Primary Care Physician - Schedule appointment within 1-2 weeks for evaluation
-• Urgent Care Center - If symptoms worsen quickly or new symptoms develop
-• Specialist referral may be needed based on primary care evaluation
-• Emergency care if experiencing severe symptoms or difficulty breathing
-• Telemedicine consultation available for initial assessment and follow-up`
-
-  const createFallbackLabs =
-    () => `• Complete Blood Count (CBC) - Check for infections, anemia, or other blood disorders
-• Basic Metabolic Panel - Assess kidney and liver function, electrolyte balance
-• Inflammatory markers (ESR, CRP) if infection or inflammation suspected
-• Thyroid function tests if experiencing fatigue or weight changes
-• Additional specialized tests as recommended by healthcare provider`
-
-  const createFallbackPharmacy = () => `• Local pharmacy chains (CVS, Walgreens, Rite Aid) for convenience
-• Independent community pharmacies for personalized service
-• Generic medications available for significant cost savings
-• Pharmacy consultation services available for medication questions
-• Online pharmacy options available with valid prescriptions
-• GoodRx app or similar for medication discount coupons`
-
-  const createFallbackDiet = () => `• Anti-inflammatory foods: fatty fish, berries, leafy greens, nuts
-• Plenty of fresh fruits and vegetables daily (5-9 servings)
-• Stay well hydrated with 8-10 glasses of water daily
-• Limit processed foods, excess sugar, and refined carbohydrates
-• Regular meal times every 3-4 hours to maintain energy
-• Consider probiotics for digestive and immune health support`
-
-  const createFallbackExercise = () => `• 20-30 minutes of moderate walking daily as tolerated
-• Light stretching or gentle yoga to maintain flexibility
-• Avoid high-impact or strenuous activities initially
-• Listen to your body and rest when needed
-• Gradual increase in activity level as symptoms improve
-• Consider physical therapy if pain or mobility issues persist`
-
-  const createFallbackAdvice = () => `• Monitor symptoms daily and keep a detailed health diary
-• Get adequate sleep (7-9 hours nightly) for proper healing
-• Manage stress through relaxation techniques, meditation, or counseling
-• Avoid smoking and limit alcohol consumption
-• Maintain good hygiene practices to prevent infections
-• Seek immediate medical care if symptoms worsen significantly
-• This assessment is not a substitute for professional medical advice
-• Always consult qualified healthcare providers for proper diagnosis and treatment`
-
-  const extractResponseSection = (text: string, keywords: string[]): string => {
-    const textLines = text.split("\n")
-    let extractedSection = ""
-    let isCapturing = false
-    let lineCount = 0
-
-    for (let i = 0; i < textLines.length; i++) {
-      const currentLine = textLines[i].toLowerCase()
-
-      const containsKeyword = keywords.some((keyword) => currentLine.includes(keyword.toLowerCase()))
-
-      if (containsKeyword && (currentLine.includes(":") || currentLine.includes("."))) {
-        isCapturing = true
-        extractedSection = textLines[i]
-        lineCount = 0
+    for (const line of lines) {
+      if (line.toLowerCase().includes(keyword) && (line.includes(":") || line.includes("."))) {
+        capturing = true
+        section = line
         continue
       }
-
-      if (isCapturing) {
-        lineCount++
-        if (lineCount > 8 || (currentLine.trim() !== "" && currentLine.match(/^\d+\.|^[A-Z][A-Z\s]+:/))) {
-          break
+      if (capturing) {
+        if (line.trim() === "" || line.match(/^\d+\./)) {
+          if (section.length > 50) break
         }
-        if (textLines[i].trim() !== "") {
-          extractedSection += "\n" + textLines[i]
-        }
+        section += "\n" + line
       }
     }
 
-    return extractedSection.trim()
+    return section.trim() || ""
   }
 
-  const resetAssessmentForm = () => {
-    setCurrentStep(1)
-    setAssessmentResults(null)
-    setErrorMessage(null)
-    setPatientData({
+  const resetAssessment = () => {
+    setStep(1)
+    setResults(null)
+    setFormData({
       name: "",
       age: "",
       gender: "",
@@ -297,202 +178,112 @@ Please format your response with clear, specific, and actionable recommendations
     })
   }
 
-  // Loading Screen
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
-          <CardContent className="flex flex-col items-center justify-center py-20">
-            <div className="relative mb-8">
-              <Loader2 className="h-20 w-20 animate-spin text-blue-600" />
-              <div className="absolute inset-0 h-20 w-20 rounded-full border-4 border-blue-200 animate-pulse"></div>
-            </div>
-            <h2 className="text-3xl font-bold mb-4 text-gray-800">🤖 AI Assessment in Progress</h2>
-            <p className="text-gray-600 text-center max-w-lg mb-6 text-lg">
-              Our revolutionary AI is analyzing your comprehensive health information and generating personalized
-              recommendations using advanced medical algorithms...
+      <div className="max-w-2xl mx-auto p-6">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">AI Analysis in Progress</h3>
+            <p className="text-gray-600 text-center">
+              Our advanced AI is analyzing your health information and generating personalized recommendations...
             </p>
-            <div className="flex items-center gap-3 text-gray-500">
-              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
-              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-              <span className="ml-3 text-lg">Processing your medical data...</span>
-            </div>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  // Results Page
-  if (assessmentResults) {
+  if (results) {
     return (
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {errorMessage && (
-          <Card className="border-yellow-300 bg-yellow-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3 text-yellow-800">
-                <AlertCircle className="h-6 w-6" />
-                <span className="font-medium text-lg">
-                  Note: Using comprehensive fallback recommendations. {errorMessage}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="border-green-300 bg-gradient-to-r from-green-50 to-blue-50">
-          <CardHeader className="text-center py-8">
-            <CardTitle className="flex items-center justify-center gap-4 text-4xl text-green-700">
-              <CheckCircle className="h-10 w-10" />✅ Your Personalized Health Assessment Results
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-red-500" />
+              Your Personalized Health Assessment Results
             </CardTitle>
-            <p className="text-gray-600 mt-4 text-xl">
-              AI-powered recommendations for <strong>{patientData.name}</strong> • Generated on{" "}
-              {new Date().toLocaleDateString()}
-            </p>
           </CardHeader>
-        </Card>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Pill className="h-4 w-4" />
+                    Medication Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">{results.medications}</p>
+                </CardContent>
+              </Card>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <Card className="border-red-300 bg-red-50 hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl text-red-700">
-                <Pill className="h-7 w-7" />💊 Medication Recommendations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-gray-800 whitespace-pre-line leading-relaxed text-base">
-                {assessmentResults.medications}
-              </div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <User className="h-4 w-4" />
+                    Healthcare Providers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">{results.doctors}</p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-blue-300 bg-blue-50 hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl text-blue-700">
-                <User className="h-7 w-7" />
-                👨‍⚕️ Healthcare Providers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-gray-800 whitespace-pre-line leading-relaxed text-base">
-                {assessmentResults.doctors}
-              </div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Activity className="h-4 w-4" />
+                    Recommended Tests
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">{results.labs}</p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-purple-300 bg-purple-50 hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl text-purple-700">
-                <Activity className="h-7 w-7" />🔬 Recommended Tests
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-gray-800 whitespace-pre-line leading-relaxed text-base">
-                {assessmentResults.labs}
-              </div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Utensils className="h-4 w-4" />
+                    Diet Plan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">{results.dietPlan}</p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-green-300 bg-green-50 hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl text-green-700">
-                <Utensils className="h-7 w-7" />
-                🍽️ Personalized Diet Plan
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-gray-800 whitespace-pre-line leading-relaxed text-base">
-                {assessmentResults.dietPlan}
-              </div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Dumbbell className="h-4 w-4" />
+                    Exercise Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">{results.exercise}</p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-orange-300 bg-orange-50 hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl text-orange-700">
-                <Dumbbell className="h-7 w-7" />
-                🏃‍♂️ Exercise Recommendations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-gray-800 whitespace-pre-line leading-relaxed text-base">
-                {assessmentResults.exercise}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-indigo-300 bg-indigo-50 hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl text-indigo-700">
-                <AlertCircle className="h-7 w-7" />💡 General Health Advice
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-gray-800 whitespace-pre-line leading-relaxed text-base">
-                {assessmentResults.generalAdvice}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-300">
-          <CardContent className="pt-8">
-            <div className="flex flex-wrap gap-6 justify-center">
-              <Button
-                onClick={resetAssessmentForm}
-                variant="outline"
-                size="lg"
-                className="min-w-[220px] bg-white hover:bg-gray-50 text-lg py-3"
-              >
-                🔄 Start New Assessment
-              </Button>
-              <Button
-                onClick={() => window.print()}
-                size="lg"
-                className="min-w-[220px] bg-blue-600 hover:bg-blue-700 text-lg py-3"
-              >
-                🖨️ Print Results
-              </Button>
-              <Button
-                onClick={() => {
-                  const assessmentText = `Health Assessment Results for ${patientData.name}\n\nGenerated: ${new Date().toLocaleDateString()}\n\n${Object.entries(
-                    assessmentResults,
-                  )
-                    .map(
-                      ([key, value]) =>
-                        `${key
-                          .toUpperCase()
-                          .replace(/([A-Z])/g, " $1")
-                          .trim()}:\n${value}\n\n`,
-                    )
-                    .join("")}`
-                  navigator.clipboard.writeText(assessmentText)
-                  alert("Assessment results copied to clipboard!")
-                }}
-                variant="secondary"
-                size="lg"
-                className="min-w-[220px] text-lg py-3"
-              >
-                📋 Copy to Clipboard
-              </Button>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    General Advice
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">{results.generalAdvice}</p>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card className="bg-yellow-50 border-yellow-400">
-          <CardContent className="pt-8">
-            <div className="flex items-start gap-4">
-              <AlertCircle className="h-8 w-8 text-yellow-600 mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="font-bold text-yellow-800 mb-3 text-xl">Important Medical Disclaimer</h3>
-                <p className="text-yellow-700 leading-relaxed text-base">
-                  This AI assessment is for informational purposes only and should not replace professional medical
-                  advice, diagnosis, or treatment. Always consult with qualified healthcare providers for proper medical
-                  evaluation and treatment decisions. In case of emergency, contact your local emergency services
-                  immediately (dial 911 in the US or your local emergency number).
-                </p>
-              </div>
+            <div className="mt-6 flex gap-4">
+              <Button onClick={resetAssessment} variant="outline">
+                Start New Assessment
+              </Button>
+              <Button onClick={() => window.print()}>Print Results</Button>
             </div>
           </CardContent>
         </Card>
@@ -500,98 +291,75 @@ Please format your response with clear, specific, and actionable recommendations
     )
   }
 
-  // Form Steps (Only 2 steps now)
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-8">
-      <Card className="border-blue-300">
-        <CardHeader className="text-center py-8">
-          <CardTitle className="text-3xl text-blue-800">🚀 Revolutionary AI Health Assessment</CardTitle>
-          <p className="text-gray-600 mt-3 text-lg">
-            Step {currentStep} of 2 • Get personalized health recommendations powered by advanced AI
-          </p>
-          <div className="w-full bg-gray-200 rounded-full h-3 mt-6">
-            <div
-              className="bg-blue-600 h-3 rounded-full transition-all duration-500"
-              style={{ width: `${(currentStep / 2) * 100}%` }}
-            ></div>
-          </div>
+    <div className="max-w-2xl mx-auto p-6 space-y-6">
+      <div className="flex justify-center">
+        <MyMedLogo size="lg" />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Health Assessment - Step {step} of 2</CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-8 px-8 pb-8">
-          {currentStep === 1 && (
+        <CardContent className="space-y-6">
+          {step === 1 && (
             <>
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name" className="text-base font-semibold text-gray-700">
-                    Full Name *
-                  </Label>
+                  <Label htmlFor="name">Full Name</Label>
                   <Input
                     id="name"
-                    value={patientData.name}
-                    onChange={(e) => updateFormField("name", e.target.value)}
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
                     placeholder="Enter your full name"
-                    className="mt-2 border-gray-300 focus:border-blue-500 text-base py-3"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="age" className="text-base font-semibold text-gray-700">
-                    Age *
-                  </Label>
+                  <Label htmlFor="age">Age</Label>
                   <Input
                     id="age"
                     type="number"
-                    min="1"
-                    max="120"
-                    value={patientData.age}
-                    onChange={(e) => updateFormField("age", e.target.value)}
+                    value={formData.age}
+                    onChange={(e) => handleInputChange("age", e.target.value)}
                     placeholder="Enter your age"
-                    className="mt-2 border-gray-300 focus:border-blue-500 text-base py-3"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="gender" className="text-base font-semibold text-gray-700">
-                  Gender *
-                </Label>
-                <Select value={patientData.gender} onValueChange={(value) => updateFormField("gender", value)}>
-                  <SelectTrigger className="mt-2 border-gray-300 focus:border-blue-500 text-base py-3">
-                    <SelectValue placeholder="Select your gender" />
+                <Label htmlFor="gender">Gender</Label>
+                <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
-                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="symptoms" className="text-base font-semibold text-gray-700">
-                  Current Symptoms *
-                </Label>
+                <Label htmlFor="symptoms">Current Symptoms</Label>
                 <Textarea
                   id="symptoms"
-                  value={patientData.symptoms}
-                  onChange={(e) => updateFormField("symptoms", e.target.value)}
-                  placeholder="Describe your current symptoms in detail (e.g., headache, fever, fatigue, pain location, when it started, what makes it better or worse, etc.)"
-                  rows={5}
-                  className="mt-2 border-gray-300 focus:border-blue-500 text-base"
+                  value={formData.symptoms}
+                  onChange={(e) => handleInputChange("symptoms", e.target.value)}
+                  placeholder="Describe your current symptoms in detail..."
+                  rows={3}
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="duration" className="text-base font-semibold text-gray-700">
-                    Duration of Symptoms *
-                  </Label>
-                  <Select value={patientData.duration} onValueChange={(value) => updateFormField("duration", value)}>
-                    <SelectTrigger className="mt-2 border-gray-300 focus:border-blue-500 text-base py-3">
-                      <SelectValue placeholder="How long have you had these symptoms?" />
+                  <Label htmlFor="duration">Duration of Symptoms</Label>
+                  <Select value={formData.duration} onValueChange={(value) => handleInputChange("duration", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="less than 24 hours">Less than 24 hours</SelectItem>
                       <SelectItem value="1-2 days">1-2 days</SelectItem>
                       <SelectItem value="3-7 days">3-7 days</SelectItem>
                       <SelectItem value="1-2 weeks">1-2 weeks</SelectItem>
@@ -602,122 +370,83 @@ Please format your response with clear, specific, and actionable recommendations
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="severity" className="text-base font-semibold text-gray-700">
-                    Severity Level *
-                  </Label>
-                  <Select value={patientData.severity} onValueChange={(value) => updateFormField("severity", value)}>
-                    <SelectTrigger className="mt-2 border-gray-300 focus:border-blue-500 text-base py-3">
-                      <SelectValue placeholder="Rate the severity (1-10 scale)" />
+                  <Label htmlFor="severity">Severity Level</Label>
+                  <Select value={formData.severity} onValueChange={(value) => handleInputChange("severity", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select severity" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="mild">Mild (1-3/10)</SelectItem>
-                      <SelectItem value="moderate">Moderate (4-6/10)</SelectItem>
-                      <SelectItem value="severe">Severe (7-8/10)</SelectItem>
-                      <SelectItem value="very severe">Very Severe (9-10/10)</SelectItem>
+                      <SelectItem value="mild">Mild</SelectItem>
+                      <SelectItem value="moderate">Moderate</SelectItem>
+                      <SelectItem value="severe">Severe</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <Button
-                onClick={() => setCurrentStep(2)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-4"
-                size="lg"
-                disabled={
-                  !patientData.name ||
-                  !patientData.age ||
-                  !patientData.gender ||
-                  !patientData.symptoms ||
-                  !patientData.duration ||
-                  !patientData.severity
-                }
+                onClick={() => setStep(2)}
+                className="w-full"
+                disabled={!formData.name || !formData.age || !formData.symptoms}
               >
-                Continue to Medical History →
+                Continue to Medical History
               </Button>
             </>
           )}
 
-          {currentStep === 2 && (
+          {step === 2 && (
             <>
               <div>
-                <Label htmlFor="medications" className="text-base font-semibold text-gray-700">
-                  Current Medications
-                </Label>
+                <Label htmlFor="medications">Current Medications</Label>
                 <Textarea
                   id="medications"
-                  value={patientData.medications}
-                  onChange={(e) => updateFormField("medications", e.target.value)}
-                  placeholder="List any medications you're currently taking (include dosage if known). Write 'None' if not taking any medications."
-                  rows={4}
-                  className="mt-2 border-gray-300 focus:border-blue-500 text-base"
+                  value={formData.medications}
+                  onChange={(e) => handleInputChange("medications", e.target.value)}
+                  placeholder="List any medications you're currently taking..."
+                  rows={2}
                 />
               </div>
 
               <div>
-                <Label htmlFor="allergies" className="text-base font-semibold text-gray-700">
-                  Known Allergies
-                </Label>
+                <Label htmlFor="allergies">Known Allergies</Label>
                 <Textarea
                   id="allergies"
-                  value={patientData.allergies}
-                  onChange={(e) => updateFormField("allergies", e.target.value)}
-                  placeholder="List any known allergies (medications, food, environmental). Write 'None' if no known allergies."
-                  rows={3}
-                  className="mt-2 border-gray-300 focus:border-blue-500 text-base"
+                  value={formData.allergies}
+                  onChange={(e) => handleInputChange("allergies", e.target.value)}
+                  placeholder="List any known allergies (medications, food, environmental)..."
+                  rows={2}
                 />
               </div>
 
               <div>
-                <Label htmlFor="familyHistory" className="text-base font-semibold text-gray-700">
-                  Family Medical History
-                </Label>
+                <Label htmlFor="familyHistory">Family Medical History</Label>
                 <Textarea
                   id="familyHistory"
-                  value={patientData.familyHistory}
-                  onChange={(e) => updateFormField("familyHistory", e.target.value)}
-                  placeholder="Any significant family medical history (diabetes, heart disease, cancer, high blood pressure, etc.). Write 'None' if no significant history."
-                  rows={3}
-                  className="mt-2 border-gray-300 focus:border-blue-500 text-base"
+                  value={formData.familyHistory}
+                  onChange={(e) => handleInputChange("familyHistory", e.target.value)}
+                  placeholder="Any significant family medical history (diabetes, heart disease, etc.)..."
+                  rows={2}
                 />
               </div>
 
               <div>
-                <Label htmlFor="lifestyle" className="text-base font-semibold text-gray-700">
-                  Lifestyle Information
-                </Label>
+                <Label htmlFor="lifestyle">Lifestyle Information</Label>
                 <Textarea
                   id="lifestyle"
-                  value={patientData.lifestyle}
-                  onChange={(e) => updateFormField("lifestyle", e.target.value)}
-                  placeholder="Exercise habits, diet, smoking, alcohol consumption, sleep patterns, stress levels, occupation, etc."
-                  rows={4}
-                  className="mt-2 border-gray-300 focus:border-blue-500 text-base"
+                  value={formData.lifestyle}
+                  onChange={(e) => handleInputChange("lifestyle", e.target.value)}
+                  placeholder="Exercise habits, diet, smoking, alcohol consumption, sleep patterns..."
+                  rows={2}
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-blue-800 mb-3">🚀 Generate AI Assessment</h3>
-                <p className="text-blue-700 mb-4">
-                  Click "Generate Assessment" to run the revolutionary AI assessment and get your personalized health
-                  recommendations.
-                </p>
-                <div className="flex gap-4">
-                  <Button
-                    onClick={() => setCurrentStep(1)}
-                    variant="outline"
-                    className="flex-1 border-gray-300 text-lg py-4"
-                    size="lg"
-                  >
-                    ← Previous
-                  </Button>
-                  <Button
-                    onClick={generateAssessment}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-lg py-4"
-                    size="lg"
-                  >
-                    🚀 Generate Assessment
-                  </Button>
-                </div>
+              <div className="flex gap-4">
+                <Button onClick={() => setStep(1)} variant="outline" className="flex-1">
+                  Back
+                </Button>
+                <Button onClick={handleSubmit} className="flex-1">
+                  Generate AI Assessment
+                </Button>
               </div>
             </>
           )}
