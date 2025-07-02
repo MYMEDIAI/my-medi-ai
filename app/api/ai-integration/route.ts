@@ -131,9 +131,43 @@ IMPORTANT: Always provide actionable, accurate medical insights while emphasizin
 /*  Route Handler                                                             */
 /* -------------------------------------------------------------------------- */
 
+/* ------------------------------------------------------------------ */
+/*  Unified body parser                                               */
+/* ------------------------------------------------------------------ */
+
+async function parseBody(req: NextRequest): Promise<Record<string, any>> {
+  const contentType = req.headers.get("content-type") || ""
+
+  // 1. If JSON → parse directly
+  if (contentType.includes("application/json")) {
+    try {
+      return await req.json()
+    } catch {
+      return {}
+    }
+  }
+
+  // 2. Otherwise try multipart / urlencoded as FormData
+  try {
+    const form = await req.formData()
+    const obj: Record<string, any> = {}
+    form.forEach((value, key) => {
+      if (typeof value === "string") obj[key] = value
+      // Files are ignored for now – add handling later if needed
+    })
+    return obj
+  } catch {
+    return {}
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    // ------------------------------------------------------------------
+    //  Parse request body (works for JSON *or* multipart)
+    // ------------------------------------------------------------------
+    const body = await parseBody(req)
+
     const { prompt, mode } = extractPrompt(body)
 
     if (!prompt) {
