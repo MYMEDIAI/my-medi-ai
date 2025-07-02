@@ -35,9 +35,6 @@ import {
   BookOpen,
   Facebook,
   Instagram,
-  Camera,
-  Mic,
-  Upload,
   MapPin,
   Pill,
   AlertTriangle,
@@ -58,6 +55,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
+
+import DemoChatWidget from "@/components/demo-chat-widget"
+import DemoReportAnalyzer from "@/components/demo-report-analyzer"
+import DemoBodyMapper from "@/components/demo-body-mapper"
+import DemoMedicineIdentifier from "@/components/demo-medicine-identifier"
 
 /* ----------  SIMPLE TYPES  ---------- */
 interface VitalsData {
@@ -162,6 +164,122 @@ export default function Home() {
   }
 
   /* ----------  DEMO SCREEN  ---------- */
+  const [openaiResponse, setOpenaiResponse] = useState("Based on your symptoms, this could be...")
+  const [geminiResponse, setGeminiResponse] = useState("I agree, but also consider...")
+  const [reportAnalysis, setReportAnalysis] = useState("Drop/Photograph any medical report")
+  const [bodyMapperResult, setBodyMapperResult] = useState({ headache: 85, migraine: 72 })
+  const [medicineName, setMedicineName] = useState("Paracetamol 500mg")
+  const [mealRecommendation, setMealRecommendation] = useState({
+    breakfast: "Poha with vegetables",
+    lunch: "Dal rice with sabzi",
+    dinner: "Roti with curry",
+  })
+  const [wellnessRoutine, setWellnessRoutine] = useState({
+    pranayama: "10 min Pranayama",
+    yoga: "15 min Yoga Asanas",
+    cardio: "20 min Cardio Walk",
+  })
+  const [predictiveInsights, setPredictiveInsights] = useState({
+    diabetesRisk: "15%",
+    heartDisease: "8%",
+    overallHealth: "Good",
+  })
+  const [prescriptionQuestions, setPrescriptionQuestions] = useState([
+    "Are there alternative treatments?",
+    "What are the side effects?",
+  ])
+  const [emergencyLocation, setEmergencyLocation] = useState("Auto-location detected")
+  const [familyGeneticRisk, setFamilyGeneticRisk] = useState("Diabetes (Mother's side)")
+  const [vaccinationDue, setVaccinationDue] = useState({
+    covidBooster: "2 months",
+    petVaccination: "1 week",
+  })
+  const [hospitalWaitTimes, setHospitalWaitTimes] = useState({
+    cityHospital: "15 min",
+    metroMedical: "45 min",
+    apolloClinic: "2 hours",
+  })
+  const [mood, setMood] = useState("😊")
+
+  const handleVoiceInput = () => {
+    setIsListening(true)
+    setTimeout(() => {
+      setIsListening(false)
+      setOpenaiResponse("You might have a viral infection.")
+      setGeminiResponse("Consider allergies as well.")
+    }, 3000)
+  }
+
+  const handleReportUpload = () => {
+    setReportAnalysis("Analyzing report... Results will appear here.")
+    setTimeout(() => {
+      setReportAnalysis("Report analyzed: No significant abnormalities detected.")
+    }, 3000)
+  }
+
+  const handleBodyMapperClick = () => {
+    setBodyMapperResult({ headache: 92, migraine: 68 })
+  }
+
+  const handleMedicinePhoto = () => {
+    setMedicineName("Aspirin 325mg")
+  }
+
+  const handleMealPlan = () => {
+    setMealRecommendation({
+      breakfast: "Upma",
+      lunch: "Sambar rice",
+      dinner: "Chapati with vegetable curry",
+    })
+  }
+
+  const handleWellnessStart = () => {
+    setWellnessRoutine({
+      pranayama: "12 min Pranayama",
+      yoga: "18 min Yoga Asanas",
+      cardio: "25 min Cardio Walk",
+    })
+  }
+
+  const handlePredictiveAnalysis = () => {
+    setPredictiveInsights({
+      diabetesRisk: "12%",
+      heartDisease: "6%",
+      overallHealth: "Excellent",
+    })
+  }
+
+  const handlePrescriptionUpload = () => {
+    setPrescriptionQuestions(["Is this medication necessary?", "What are the long-term effects?"])
+  }
+
+  const handleEmergencyCall = () => {
+    setEmergencyLocation("Sending ambulance to your location...")
+    setTimeout(() => {
+      setEmergencyLocation("Ambulance dispatched. ETA: 10 minutes.")
+    }, 5000)
+  }
+
+  const handleFamilyTreeShare = () => {
+    setFamilyGeneticRisk("Heart Disease (Father's side)")
+  }
+
+  const handleVaccinationBook = () => {
+    setVaccinationDue({ covidBooster: "1 month", petVaccination: "3 days" })
+  }
+
+  const handleHospitalCheck = () => {
+    setHospitalWaitTimes({
+      cityHospital: "10 min",
+      metroMedical: "30 min",
+      apolloClinic: "1.5 hours",
+    })
+  }
+
+  const handleMoodChange = (newMood: string) => {
+    setMood(newMood)
+  }
+
   if (showDemo) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
@@ -237,141 +355,18 @@ export default function Home() {
           {/* Dashboard Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
             {/* Dual AI Health Assistant */}
-            <Card className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-purple-500/30 backdrop-blur-sm col-span-1 md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Brain className="w-5 h-5 text-purple-400" />
-                  <span>🧠 DUAL AI HEALTH ASSISTANT</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-300">Ask in any Indian language or dialect</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-black/30 rounded-lg p-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-green-300">OpenAI GPT-4</span>
-                      </div>
-                      <p className="text-sm text-gray-300">Based on your symptoms, this could be...</p>
-                    </div>
-                    <div className="bg-black/30 rounded-lg p-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-blue-300">Google Gemini</span>
-                      </div>
-                      <p className="text-sm text-gray-300">I agree, but also consider...</p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      onClick={startVoiceCommand}
-                      className={`bg-red-500/20 border-red-500/30 ${isListening ? "animate-pulse" : ""}`}
-                    >
-                      <Mic className="w-4 h-4 mr-2" />
-                      {isListening ? "Listening..." : "Voice Input"}
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-purple-500/30 text-purple-300 bg-transparent">
-                      AI Debate Mode
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="col-span-1 md:col-span-2">
+              <DemoChatWidget />
+            </div>
 
             {/* Instant Report Analyzer */}
-            <Card className="bg-gradient-to-br from-green-500/20 to-teal-500/20 border-green-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Camera className="w-5 h-5 text-green-400" />
-                  <span className="text-sm">📸 INSTANT REPORT ANALYZER</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-4 border-2 border-dashed border-green-500/30">
-                    <div className="text-center">
-                      <Upload className="w-8 h-8 mx-auto mb-2 text-green-400" />
-                      <p className="text-xs text-gray-300">Drop/Photograph any medical report</p>
-                    </div>
-                  </div>
-                  <div className="bg-black/30 rounded-lg p-2">
-                    <div className="w-full h-20 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded flex items-center justify-center">
-                      <span className="text-xs text-gray-300">Live camera feed preview</span>
-                    </div>
-                  </div>
-                  <Button size="sm" className="w-full bg-green-500/20 border-green-500/30">
-                    Start OCR Analysis
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <DemoReportAnalyzer />
 
             {/* Symptom Body Mapper */}
-            <Card className="bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Users className="w-5 h-5 text-red-400" />
-                  <span className="text-sm">🎯 SYMPTOM BODY MAPPER</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-4">
-                    <div className="w-full h-32 bg-gradient-to-b from-red-500/20 to-orange-500/20 rounded flex items-center justify-center">
-                      <div className="text-center">
-                        <Users className="w-12 h-12 mx-auto mb-2 text-red-400" />
-                        <p className="text-xs text-gray-300">3D Human Body Model</p>
-                        <p className="text-xs text-gray-400">(Rotatable)</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-300">Headache</span>
-                      <span className="text-red-400">85%</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-300">Migraine</span>
-                      <span className="text-orange-400">72%</span>
-                    </div>
-                  </div>
-                  <Button size="sm" className="w-full bg-red-500/20 border-red-500/30">
-                    Book Nearest Doctor
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <DemoBodyMapper />
 
             {/* Visual Medicine Identifier */}
-            <Card className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border-blue-500/30 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-white">
-                  <Pill className="w-5 h-5 text-blue-400" />
-                  <span className="text-sm">💊 VISUAL MEDICINE IDENTIFIER</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-4 border-2 border-dashed border-blue-500/30">
-                    <div className="text-center">
-                      <Camera className="w-8 h-8 mx-auto mb-2 text-blue-400" />
-                      <p className="text-xs text-gray-300">Snap a photo of any pill/medicine</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="bg-black/30 rounded p-2">
-                      <p className="text-xs text-blue-300">Paracetamol 500mg</p>
-                      <p className="text-xs text-gray-400">Generic: ₹5 vs Brand: ₹25</p>
-                    </div>
-                  </div>
-                  <Button size="sm" className="w-full bg-blue-500/20 border-blue-500/30">
-                    Check Interactions
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <DemoMedicineIdentifier />
 
             {/* AI Meal Planner */}
             <Card className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border-yellow-500/30 backdrop-blur-sm">
@@ -381,32 +376,30 @@ export default function Home() {
                   <span className="text-sm">🍽️ AI MEAL PLANNER</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-3">
-                    <p className="text-xs text-gray-300 mb-2">Today's Recommendation:</p>
-                    <p className="text-xs text-yellow-300">Breakfast: Poha with vegetables</p>
-                    <p className="text-xs text-yellow-300">Lunch: Dal rice with sabzi</p>
-                    <p className="text-xs text-yellow-300">Dinner: Roti with curry</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="bg-black/30 rounded p-2 text-center">
-                      <p className="text-green-400">1800</p>
-                      <p className="text-gray-400">Calories</p>
-                    </div>
-                    <div className="bg-black/30 rounded p-2 text-center">
-                      <p className="text-blue-400">₹150</p>
-                      <p className="text-gray-400">Budget</p>
-                    </div>
-                    <div className="bg-black/30 rounded p-2 text-center">
-                      <p className="text-purple-400">Local</p>
-                      <p className="text-gray-400">Ingredients</p>
-                    </div>
-                  </div>
-                  <Button size="sm" className="w-full bg-yellow-500/20 border-yellow-500/30">
-                    Generate Grocery List
-                  </Button>
+              <CardContent className="space-y-4">
+                <div className="bg-black/30 rounded-lg p-3">
+                  <p className="text-xs text-gray-100 mb-2">Today's Recommendation:</p>
+                  <p className="text-xs text-yellow-300">Breakfast: Poha with vegetables</p>
+                  <p className="text-xs text-yellow-300">Lunch: Dal rice with sabzi</p>
+                  <p className="text-xs text-yellow-300">Dinner: Roti with curry</p>
                 </div>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="bg-black/30 rounded p-2 text-center">
+                    <p className="text-green-400">1800</p>
+                    <p className="text-gray-200">Calories</p>
+                  </div>
+                  <div className="bg-black/30 rounded p-2 text-center">
+                    <p className="text-blue-400">₹150</p>
+                    <p className="text-gray-200">Budget</p>
+                  </div>
+                  <div className="bg-black/30 rounded p-2 text-center">
+                    <p className="text-purple-400">Local</p>
+                    <p className="text-gray-200">Ingredients</p>
+                  </div>
+                </div>
+                <Button className="w-full bg-yellow-500/20 border-yellow-500/30 hover:bg-yellow-500/30 text-yellow-100">
+                  Generate Grocery List
+                </Button>
               </CardContent>
             </Card>
 
@@ -421,7 +414,7 @@ export default function Home() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="bg-black/30 rounded-lg p-3">
-                    <p className="text-xs text-gray-300 mb-2">Today's Routine:</p>
+                    <p className="text-xs text-gray-100 mb-2">Today's Routine:</p>
                     <p className="text-xs text-teal-300">• 10 min Pranayama</p>
                     <p className="text-xs text-teal-300">• 15 min Yoga Asanas</p>
                     <p className="text-xs text-teal-300">• 20 min Cardio Walk</p>
@@ -429,10 +422,10 @@ export default function Home() {
                   <div className="bg-black/30 rounded p-2">
                     <div className="flex items-center space-x-2">
                       <Eye className="w-4 h-4 text-teal-400" />
-                      <span className="text-xs text-gray-300">AR Exercise Preview</span>
+                      <span className="text-xs text-gray-100">AR Exercise Preview</span>
                     </div>
                   </div>
-                  <Button size="sm" className="w-full bg-teal-500/20 border-teal-500/30">
+                  <Button className="w-full bg-teal-500/20 border-teal-500/30 hover:bg-teal-500/30 text-teal-100">
                     Start Workout
                   </Button>
                 </div>
@@ -450,23 +443,23 @@ export default function Home() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="bg-black/30 rounded-lg p-3">
-                    <p className="text-xs text-gray-300 mb-2">Your health in 5 years:</p>
+                    <p className="text-xs text-gray-100 mb-2">Your health in 5 years:</p>
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-300">Diabetes Risk</span>
+                        <span className="text-gray-100">Diabetes Risk</span>
                         <span className="text-yellow-400">15%</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-300">Heart Disease</span>
+                        <span className="text-gray-100">Heart Disease</span>
                         <span className="text-green-400">8%</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-300">Overall Health</span>
+                        <span className="text-gray-100">Overall Health</span>
                         <span className="text-blue-400">Good</span>
                       </div>
                     </div>
                   </div>
-                  <Button size="sm" className="w-full bg-purple-500/20 border-purple-500/30">
+                  <Button className="w-full bg-purple-500/20 border-purple-500/30 hover:bg-purple-500/30 text-purple-100">
                     View Prevention Plan
                   </Button>
                 </div>
@@ -486,15 +479,15 @@ export default function Home() {
                   <div className="bg-black/30 rounded-lg p-4 border-2 border-dashed border-indigo-500/30">
                     <div className="text-center">
                       <FileText className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
-                      <p className="text-xs text-gray-300">Upload doctor's prescription</p>
+                      <p className="text-xs text-gray-100">Upload doctor's prescription</p>
                     </div>
                   </div>
                   <div className="bg-black/30 rounded p-2">
                     <p className="text-xs text-indigo-300">Questions to ask your doctor:</p>
-                    <p className="text-xs text-gray-400">• Are there alternative treatments?</p>
-                    <p className="text-xs text-gray-400">• What are the side effects?</p>
+                    <p className="text-xs text-gray-200">• Are there alternative treatments?</p>
+                    <p className="text-xs text-gray-200">• What are the side effects?</p>
                   </div>
-                  <Button size="sm" className="w-full bg-indigo-500/20 border-indigo-500/30">
+                  <Button className="w-full bg-indigo-500/20 border-indigo-500/30 hover:bg-indigo-500/30 text-indigo-100">
                     Analyze Prescription
                   </Button>
                 </div>
@@ -510,21 +503,19 @@ export default function Home() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-6 text-lg animate-pulse">
-                    🚨 EMERGENCY
-                  </Button>
-                  <div className="bg-black/30 rounded p-2">
-                    <div className="flex items-center space-x-2 text-xs">
-                      <MapPin className="w-3 h-3 text-red-400" />
-                      <span className="text-gray-300">Auto-location detected</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">Medical history ready to share</p>
+                <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-6 text-lg animate-pulse">
+                  🚨 EMERGENCY
+                </Button>
+                <div className="bg-black/30 rounded p-2">
+                  <div className="flex items-center space-x-2 text-xs">
+                    <MapPin className="w-3 h-3 text-red-400" />
+                    <span className="text-gray-100">Auto-location detected</span>
                   </div>
-                  <Button size="sm" className="w-full bg-red-500/20 border-red-500/30">
-                    First-Aid AR Guide
-                  </Button>
+                  <p className="text-xs text-gray-200 mt-1">Medical history ready to share</p>
                 </div>
+                <Button className="w-full bg-red-500/20 border-red-500/30 hover:bg-red-500/30 text-red-100">
+                  First-Aid AR Guide
+                </Button>
               </CardContent>
             </Card>
 
@@ -541,7 +532,7 @@ export default function Home() {
                   <div className="bg-black/30 rounded-lg p-3">
                     <div className="text-center">
                       <div className="w-full h-20 bg-gradient-to-b from-green-500/20 to-teal-500/20 rounded flex items-center justify-center">
-                        <span className="text-xs text-gray-300">Visual Family Tree</span>
+                        <span className="text-xs text-gray-100">Visual Family Tree</span>
                       </div>
                     </div>
                   </div>
@@ -549,7 +540,7 @@ export default function Home() {
                     <p className="text-green-300">Genetic Risk: Diabetes (Mother's side)</p>
                     <p className="text-yellow-300">Screening due: Cholesterol check</p>
                   </div>
-                  <Button size="sm" className="w-full bg-green-500/20 border-green-500/30">
+                  <Button className="w-full bg-green-500/20 border-green-500/30 hover:bg-green-500/30 text-green-100">
                     Share with Family
                   </Button>
                 </div>
@@ -568,16 +559,16 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="bg-black/30 rounded p-2">
                     <p className="text-xs text-cyan-300 mb-1">Next Due:</p>
-                    <p className="text-xs text-gray-300">COVID Booster - 2 months</p>
-                    <p className="text-xs text-gray-300">Pet Vaccination - 1 week</p>
+                    <p className="text-xs text-gray-100">COVID Booster - 2 months</p>
+                    <p className="text-xs text-gray-100">Pet Vaccination - 1 week</p>
                   </div>
                   <div className="bg-black/30 rounded p-2">
                     <div className="flex items-center space-x-2 text-xs">
                       <MapPin className="w-3 h-3 text-cyan-400" />
-                      <span className="text-gray-300">3 centers nearby</span>
+                      <span className="text-gray-100">3 centers nearby</span>
                     </div>
                   </div>
-                  <Button size="sm" className="w-full bg-cyan-500/20 border-cyan-500/30">
+                  <Button className="w-full bg-cyan-500/20 border-cyan-500/30 hover:bg-cyan-500/30 text-cyan-100">
                     Book Appointment
                   </Button>
                 </div>
@@ -597,24 +588,24 @@ export default function Home() {
                   <div className="space-y-2">
                     <div className="bg-black/30 rounded p-2">
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-300">City Hospital ER</span>
+                        <span className="text-gray-100">City Hospital ER</span>
                         <span className="text-green-400">15 min</span>
                       </div>
                     </div>
                     <div className="bg-black/30 rounded p-2">
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-300">Metro Medical</span>
+                        <span className="text-gray-100">Metro Medical</span>
                         <span className="text-yellow-400">45 min</span>
                       </div>
                     </div>
                     <div className="bg-black/30 rounded p-2">
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-300">Apollo Clinic</span>
+                        <span className="text-gray-100">Apollo Clinic</span>
                         <span className="text-red-400">2 hours</span>
                       </div>
                     </div>
                   </div>
-                  <Button size="sm" className="w-full bg-orange-500/20 border-orange-500/30">
+                  <Button className="w-full bg-orange-500/20 border-orange-500/30 hover:bg-orange-500/30 text-orange-100">
                     Check Insurance Coverage
                   </Button>
                 </div>
@@ -631,7 +622,7 @@ export default function Home() {
                   <Volume2 className="w-4 h-4 text-purple-400" />
                   <span className="text-sm font-semibold text-white">🎙️ VOICE COMMANDS</span>
                 </div>
-                <div className="space-y-2 text-xs text-gray-300">
+                <div className="space-y-2 text-xs text-gray-100">
                   <p>"Hey MyMedi" activation</p>
                   <p>• "What should I eat today?"</p>
                   <p>• "Analyze my sleep pattern"</p>
@@ -649,14 +640,14 @@ export default function Home() {
                   <span className="text-sm font-semibold text-white">📊 LIVE HEALTH SCORE</span>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-400 mb-2">{healthScore}</div>
+                  <div className="text-3xl font-bold text-green-400 mb-2">87</div>
                   <div className="w-full bg-gray-700 rounded-full h-2">
                     <div
                       className="bg-gradient-to-r from-green-400 to-blue-400 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${healthScore}%` }}
+                      style={{ width: `87%` }}
                     ></div>
                   </div>
-                  <p className="text-xs text-gray-300 mt-2">Excellent Health</p>
+                  <p className="text-xs text-gray-100 mt-2">Excellent Health</p>
                 </div>
               </CardContent>
             </Card>
@@ -668,7 +659,7 @@ export default function Home() {
                   <Users className="w-4 h-4 text-blue-400" />
                   <span className="text-sm font-semibold text-white">🌍 COMMUNITY</span>
                 </div>
-                <div className="space-y-2 text-xs text-gray-300">
+                <div className="space-y-2 text-xs text-gray-100">
                   <p>• Anonymous health discussions</p>
                   <p>• Local health alerts</p>
                   <p>• Find health buddies</p>
@@ -685,32 +676,16 @@ export default function Home() {
                   <span className="text-sm font-semibold text-white">🚀 TRY THESE</span>
                 </div>
                 <div className="space-y-1 text-xs">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="w-full justify-start p-1 h-auto text-xs text-gray-300 hover:text-white"
-                  >
+                  <Button className="w-full justify-start p-1 h-auto text-xs text-gray-100 hover:text-white">
                     🗣️ Cough into phone
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="w-full justify-start p-1 h-auto text-xs text-gray-300 hover:text-white"
-                  >
+                  <Button className="w-full justify-start p-1 h-auto text-xs text-gray-100 hover:text-white">
                     🤳 Selfie skin analysis
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="w-full justify-start p-1 h-auto text-xs text-gray-300 hover:text-white"
-                  >
+                  <Button className="w-full justify-start p-1 h-auto text-xs text-gray-100 hover:text-white">
                     👁️ Eye movement test
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="w-full justify-start p-1 h-auto text-xs text-gray-300 hover:text-white"
-                  >
+                  <Button className="w-full justify-start p-1 h-auto text-xs text-gray-100 hover:text-white">
                     🦷 Smile for dental check
                   </Button>
                 </div>
@@ -729,7 +704,7 @@ export default function Home() {
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-purple-400">2h 15m</div>
-                  <Button size="sm" className="w-full mt-2 bg-purple-500/20 border-purple-500/30">
+                  <Button className="w-full mt-2 bg-purple-500/20 border-purple-500/30 hover:bg-purple-500/30 text-purple-100">
                     Mark as Taken
                   </Button>
                 </div>
@@ -744,13 +719,13 @@ export default function Home() {
                   <span className="text-xs font-semibold text-white">Mood Today</span>
                 </div>
                 <div className="flex justify-center space-x-2">
-                  <Button size="sm" variant="ghost" className="text-lg p-1">
+                  <Button size="sm" variant="ghost" className="text-lg p-1" onClick={() => handleMoodChange("😊")}>
                     😊
                   </Button>
-                  <Button size="sm" variant="ghost" className="text-lg p-1">
+                  <Button size="sm" variant="ghost" className="text-lg p-1" onClick={() => handleMoodChange("😐")}>
                     😐
                   </Button>
-                  <Button size="sm" variant="ghost" className="text-lg p-1">
+                  <Button size="sm" variant="ghost" className="text-lg p-1" onClick={() => handleMoodChange("😔")}>
                     😔
                   </Button>
                 </div>
@@ -762,7 +737,7 @@ export default function Home() {
         {/* Status Footer */}
         <footer className="bg-black/40 border-t border-purple-500/30 py-4">
           <div className="container mx-auto px-4">
-            <div className="text-center text-xs text-gray-400">
+            <div className="text-center text-xs text-gray-200">
               Powered by OpenAI GPT-4 + Google Gemini | 256-bit Encryption | HIPAA Compliant | Made in India 🇮🇳
             </div>
           </div>
