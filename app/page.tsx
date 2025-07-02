@@ -588,20 +588,20 @@ Format the response as structured recommendations with clear sections.
       {/* About the Founder Section */}
       <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="w-full max-w-md mx-auto bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden shadow-lg">
+          <div className="flex items-start gap-8">
+            <div className="flex-shrink-0">
+              <div className="w-80 max-w-sm bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden shadow-lg">
                 <Image
                   src="/images/harsha-founder.jpeg"
                   alt="Bandarla Harshavardhan - Founder & CEO of MyMedi.ai"
-                  width={400}
-                  height={500}
+                  width={320}
+                  height={400}
                   className="w-full h-auto object-cover"
                   priority
                 />
               </div>
             </div>
-            <div className="space-y-6">
+            <div className="flex-1 space-y-6">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Bandarla Harshavardhan</h2>
                 <p className="text-xl text-purple-600 font-semibold mb-4">Founder & CEO, MyMedi.ai</p>
