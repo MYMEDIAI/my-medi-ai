@@ -39,6 +39,7 @@ import {
   Dumbbell,
   Loader2,
   Baby,
+  UserCheck,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -234,7 +235,7 @@ Format the response as structured recommendations with clear sections.
         medications:
           "Unable to connect to AI service. Please consult with a healthcare provider for medication recommendations.",
         doctors: "Schedule an appointment with your primary care physician for proper evaluation.",
-        labs: "Basic health screening tests may be recommended by your doctor.",
+        labs: "Basic health-screening tests may be recommended by your doctor.",
         pharmacy: "Visit your local pharmacy for over-the-counter medications and health consultations.",
         dietPlan: "Maintain a balanced diet with plenty of fruits, vegetables, and stay hydrated.",
         exercise: "Engage in regular moderate exercise appropriate for your fitness level.",
@@ -343,6 +344,12 @@ Format the response as structured recommendations with clear sections.
                 Pregnancy Care
               </Button>
             </Link>
+            <Link href="/doctors">
+              <Button className="bg-green-600 hover:bg-green-700 text-white">
+                <UserCheck className="w-4 h-4 mr-2" />
+                Doctor Portal
+              </Button>
+            </Link>
             <Button onClick={() => setShowAssessment(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
               Start Assessment
             </Button>
@@ -412,6 +419,16 @@ Format the response as structured recommendations with clear sections.
               >
                 Pregnancy Care
                 <Baby className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link href="/doctors">
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-white text-white hover:bg-white hover:text-purple-600 px-8 py-4 text-lg bg-transparent"
+              >
+                Doctor Portal
+                <UserCheck className="ml-2 w-5 h-5" />
               </Button>
             </Link>
           </div>
@@ -585,6 +602,93 @@ Format the response as structured recommendations with clear sections.
         </div>
       </section>
 
+      {/* Doctor Portal Feature Section */}
+      <section className="py-20 bg-gradient-to-br from-green-50 to-emerald-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Professional Healthcare Solutions</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Advanced tools designed specifically for healthcare professionals and medical practitioners
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <Card className="border-0 shadow-2xl bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden">
+              <CardContent className="p-8">
+                <div className="flex flex-col lg:flex-row items-center gap-8">
+                  <div className="flex-1">
+                    <div className="flex items-center mb-6">
+                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                        <UserCheck className="w-8 h-8 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-green-900">👨‍⚕️ Doctor's Assessment Portal</h3>
+                        <p className="text-green-700">Professional Medical Documentation System</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 mb-8">
+                      <div className="flex items-center text-green-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-600" />
+                        <span>Comprehensive Patient Assessment Forms</span>
+                      </div>
+                      <div className="flex items-center text-green-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-600" />
+                        <span>AI-Powered Clinical Documentation</span>
+                      </div>
+                      <div className="flex items-center text-green-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-600" />
+                        <span>Professional Medical Reports & Certificates</span>
+                      </div>
+                      <div className="flex items-center text-green-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-600" />
+                        <span>HIPAA Compliant & Secure</span>
+                      </div>
+                      <div className="flex items-center text-green-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-600" />
+                        <span>Prescription Management & Treatment Plans</span>
+                      </div>
+                      <div className="flex items-center text-green-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-600" />
+                        <span>Multi-Specialty Support</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <Link href="/doctors">
+                        <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4">
+                          <UserCheck className="w-5 h-5 mr-2" />
+                          Access Doctor Portal
+                          <ArrowRight className="ml-2 w-5 h-5" />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="border-green-200 text-green-700 hover:bg-green-50 bg-transparent"
+                      >
+                        <FileText className="w-5 h-5 mr-2" />
+                        View Demo
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex-shrink-0">
+                    <div className="w-80 h-64 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl flex items-center justify-center border border-green-200">
+                      <div className="text-center">
+                        <UserCheck className="w-20 h-20 text-green-600 mx-auto mb-4" />
+                        <h4 className="text-lg font-semibold text-green-900 mb-2">Professional Grade</h4>
+                        <p className="text-green-700 text-sm">Medical Documentation System</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* About the Founder Section */}
       <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
         <div className="container mx-auto px-4">
@@ -727,6 +831,16 @@ Format the response as structured recommendations with clear sections.
                 <Baby className="ml-2 w-5 h-5" />
               </Button>
             </Link>
+            <Link href="/doctors">
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-white text-white hover:bg-white hover:text-purple-600 px-8 py-4 text-lg bg-transparent"
+              >
+                Doctor Portal
+                <UserCheck className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-purple-100">
@@ -805,6 +919,11 @@ Format the response as structured recommendations with clear sections.
                   <a href="#" className="hover:text-white transition-colors">
                     Pregnancy Care
                   </a>
+                </li>
+                <li>
+                  <Link href="/doctors" className="hover:text-white transition-colors">
+                    Doctor Portal
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -949,7 +1068,12 @@ function ProductionReportAnalyzer() {
       // Simulate analysis
       await new Promise((resolve) => setTimeout(resolve, 2000))
       setAnalysis(
-        `Analysis of ${file.name}:\n\n• Key findings identified\n• Normal ranges compared\n• Recommendations provided\n• Follow-up suggestions included`,
+        `Analysis of ${file.name}:
+
+• Key findings identified
+• Normal ranges compared
+• Recommendations provided
+• Follow-up suggestions included`,
       )
     } catch (error) {
       setAnalysis("Analysis complete. Please consult with your doctor for detailed interpretation.")
@@ -1020,7 +1144,12 @@ function ProductionMedicineIdentifier() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000))
       setIdentification(
-        `Medicine identified:\n\n• Name: Paracetamol 500mg\n• Type: Pain reliever/Fever reducer\n• Dosage: As prescribed\n• Precautions: Do not exceed 4g/day`,
+        `Medicine identified:
+
+• Name: Paracetamol 500mg
+• Type: Pain reliever/Fever reducer
+• Dosage: As prescribed
+• Precautions: Do not exceed 4g/day`,
       )
     } catch (error) {
       setIdentification("Medicine identified. Please verify with a pharmacist or doctor before use.")
@@ -1145,7 +1274,12 @@ function ProductionMealPlanner() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000))
       setMealPlan(
-        `${dietType} Meal Plan:\n\nBreakfast: Oats with fruits\nLunch: Dal rice with vegetables\nSnack: Nuts and fruits\nDinner: Roti with curry`,
+        `${dietType} Meal Plan:
+
+Breakfast: Oats with fruits
+Lunch: Dal rice with vegetables
+Snack: Nuts and fruits
+Dinner: Roti with curry`,
       )
     } catch (error) {
       setMealPlan("Personalized meal plan generated based on your preferences and health goals.")
@@ -1363,7 +1497,7 @@ Format the response as structured recommendations with clear sections.
         medications:
           "Unable to connect to AI service. Please consult with a healthcare provider for medication recommendations.",
         doctors: "Schedule an appointment with your primary care physician for proper evaluation.",
-        labs: "Basic health screening tests may be recommended by your doctor.",
+        labs: "Basic health-screening tests may be recommended by your doctor.",
         pharmacy: "Visit your local pharmacy for over-the-counter medications and health consultations.",
         dietPlan: "Maintain a balanced diet with plenty of fruits, vegetables, and stay hydrated.",
         exercise: "Engage in regular moderate exercise appropriate for your fitness level.",
