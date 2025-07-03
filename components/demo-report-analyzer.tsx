@@ -1,5 +1,7 @@
 "use client"
 
+import { Calendar } from "@/components/ui/calendar"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -18,6 +20,11 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Scan,
+  Eye,
+  Sparkles,
+  Zap,
+  Crown,
 } from "lucide-react"
 
 interface ReportAnalysis {
@@ -33,29 +40,63 @@ interface ReportAnalysis {
   urgency: "low" | "medium" | "high"
   followUp: string
   rawAnalysis: string
+  extractedText?: string
 }
 
 function DemoReportAnalyzerComponent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [analysis, setAnalysis] = useState<ReportAnalysis | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isExtracting, setIsExtracting] = useState(false)
   const [error, setError] = useState("")
 
   const sampleReports = [
-    "Blood Test Report - CBC",
-    "Lipid Profile Report",
-    "Liver Function Test",
-    "Thyroid Function Test",
-    "Diabetes Screening Report",
+    { name: "Blood Test Report - CBC", color: "from-red-400 to-pink-500", icon: "🩸" },
+    { name: "Lipid Profile Report", color: "from-yellow-400 to-orange-500", icon: "💛" },
+    { name: "Liver Function Test", color: "from-green-400 to-emerald-500", icon: "🫀" },
+    { name: "Thyroid Function Test", color: "from-blue-400 to-cyan-500", icon: "🦋" },
+    { name: "Diabetes Screening Report", color: "from-purple-400 to-violet-500", icon: "🍯" },
+    { name: "Kidney Function Test", color: "from-teal-400 to-cyan-500", icon: "🫘" },
+    { name: "Cardiac Markers", color: "from-rose-400 to-red-500", icon: "❤️" },
+    { name: "Vitamin D Test", color: "from-amber-400 to-yellow-500", icon: "☀️" },
   ]
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setSelectedFile(file)
       setError("")
+
+      // First extract text using OCR
+      await extractTextFromImage(file)
+
+      // Then analyze the report
       analyzeReport(file)
     }
+  }
+
+  const extractTextFromImage = async (file: File) => {
+    setIsExtracting(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/ocr", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log("Extracted text:", data.extractedText)
+        return data.extractedText
+      }
+    } catch (error) {
+      console.error("OCR extraction error:", error)
+    } finally {
+      setIsExtracting(false)
+    }
+    return null
   }
 
   const handleSampleReport = (reportName: string) => {
@@ -70,9 +111,17 @@ function DemoReportAnalyzerComponent() {
     setError("")
 
     try {
+      // Extract text first if it's an image
+      let extractedText = ""
+      if (file.type.startsWith("image/")) {
+        extractedText = (await extractTextFromImage(file)) || ""
+      }
+
       // Create a comprehensive prompt for AI analysis
       const analysisPrompt = `
 Please analyze this medical report: ${file.name}
+
+${extractedText ? `Extracted text from the report:\n${extractedText}\n\n` : ""}
 
 As an AI medical report analyzer, provide a comprehensive analysis including:
 
@@ -86,9 +135,7 @@ As an AI medical report analyzer, provide a comprehensive analysis including:
 
 Please format your response in a clear, structured manner that's easy for patients to understand.
 
-Note: This is a simulated analysis for demonstration. In a real scenario, OCR would extract text from the uploaded document.
-
-For this demonstration, please provide analysis appropriate for a ${file.name} report with realistic medical insights including specific parameter values, normal ranges, and clinical interpretations.
+${extractedText ? "Base your analysis on the extracted text data above." : "For this demonstration, please provide analysis appropriate for a " + file.name + " report with realistic medical insights including specific parameter values, normal ranges, and clinical interpretations."}
 
 Focus on providing actionable medical insights while emphasizing that AI recommendations should be confirmed by qualified medical practitioners.
 `
@@ -120,6 +167,7 @@ Focus on providing actionable medical insights while emphasizing that AI recomme
 
       // Parse the AI response and structure it
       const structuredAnalysis = parseAIAnalysis(aiResponse, file.name)
+      structuredAnalysis.extractedText = extractedText
       setAnalysis(structuredAnalysis)
     } catch (error) {
       console.error("Report analysis error:", error)
@@ -149,7 +197,13 @@ Focus on providing actionable medical insights while emphasizing that AI recomme
               ? "Liver Function Test"
               : fileName.includes("Diabetes")
                 ? "Diabetes Screening"
-                : "Medical Report",
+                : fileName.includes("Kidney")
+                  ? "Kidney Function Test"
+                  : fileName.includes("Cardiac")
+                    ? "Cardiac Markers"
+                    : fileName.includes("Vitamin")
+                      ? "Vitamin D Test"
+                      : "Medical Report",
       keyFindings: [],
       abnormalValues: [],
       recommendations: [],
@@ -258,6 +312,7 @@ Focus on providing actionable medical insights while emphasizing that AI recomme
     setAnalysis(null)
     setError("")
     setIsAnalyzing(false)
+    setIsExtracting(false)
   }
 
   const getStatusIcon = (status: "high" | "low" | "normal") => {
@@ -274,50 +329,73 @@ Focus on providing actionable medical insights while emphasizing that AI recomme
   const getStatusColor = (status: "high" | "low" | "normal") => {
     switch (status) {
       case "high":
-        return "text-red-600 bg-red-50"
+        return "text-red-600 bg-gradient-to-r from-red-50 to-red-100 border-red-200"
       case "low":
-        return "text-blue-600 bg-blue-50"
+        return "text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200"
       default:
-        return "text-green-600 bg-green-50"
+        return "text-green-600 bg-gradient-to-r from-green-50 to-green-100 border-green-200"
     }
   }
 
   const getUrgencyColor = (urgency: "low" | "medium" | "high") => {
     switch (urgency) {
       case "high":
-        return "bg-red-100 text-red-800 border-red-200"
+        return "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-red-300"
       case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+        return "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300"
       default:
-        return "bg-green-100 text-green-800 border-green-200"
+        return "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300"
     }
   }
 
   return (
-    <Card className="border-green-100 hover:shadow-xl transition-all duration-300">
-      <CardHeader>
-        <CardTitle className="flex items-center text-green-700">
-          <FileText className="w-5 h-5 mr-2" />🔬 AI Report Analyzer
+    <Card className="border-0 shadow-2xl bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-1">
+      <CardHeader className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white rounded-t-lg">
+        <CardTitle className="flex items-center text-white text-xl">
+          <div className="p-2 bg-white/20 rounded-full mr-3">
+            <FileText className="w-6 h-6" />
+          </div>
+          🔬 AI Report Analyzer
+          <Sparkles className="w-5 h-5 ml-2 animate-pulse" />
         </CardTitle>
-        <div className="flex items-center gap-2">
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+        <div className="flex items-center gap-2 mt-2">
+          <Badge className="bg-white/20 text-white hover:bg-white/30 border-white/30">
+            <div className="w-2 h-2 bg-green-300 rounded-full mr-1 animate-pulse"></div>
             Live AI
           </Badge>
-          <span className="text-xs text-gray-500">Powered by OpenAI GPT-4</span>
+          <Badge className="bg-yellow-400 text-yellow-900 hover:bg-yellow-400">
+            <Crown className="w-3 h-3 mr-1" />
+            Premium OCR
+          </Badge>
+          <Badge className="bg-blue-400 text-blue-900 hover:bg-blue-400">
+            <Zap className="w-3 h-3 mr-1" />
+            OpenAI GPT-4
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-8">
         {!analysis ? (
           <>
             {/* File Upload Area */}
             <div
-              className="border-2 border-dashed border-green-300 rounded-lg p-6 text-center cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors"
+              className="border-2 border-dashed border-green-300 rounded-xl p-8 text-center cursor-pointer hover:border-green-400 hover:bg-gradient-to-br hover:from-green-50 hover:to-emerald-50 transition-all duration-300 transform hover:scale-105"
               onClick={() => document.getElementById("report-upload")?.click()}
             >
-              <Upload className="w-8 h-8 mx-auto mb-2 text-green-500" />
-              <p className="text-sm font-medium text-gray-800">Upload Medical Report</p>
-              <p className="text-xs text-gray-600 mt-1">PDF, JPG, PNG files supported</p>
+              <div className="flex flex-col items-center space-y-4">
+                <div className="p-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full">
+                  <Upload className="w-12 h-12 text-white" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-gray-800 mb-2">Upload Medical Report</p>
+                  <p className="text-gray-600 mb-2">Advanced OCR + AI Analysis</p>
+                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+                    <Scan className="w-4 h-4" />
+                    <span>PDF, JPG, PNG files supported</span>
+                    <Eye className="w-4 h-4" />
+                    <span>Text extraction included</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <Input
@@ -326,110 +404,160 @@ Focus on providing actionable medical insights while emphasizing that AI recomme
               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
               onChange={handleFileUpload}
               className="hidden"
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || isExtracting}
             />
 
             {selectedFile && !isAnalyzing && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">Selected: {selectedFile.name}</span>
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 mt-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-500 rounded-full">
+                    <FileText className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-green-800">Selected: {selectedFile.name}</span>
+                    <p className="text-xs text-green-600">Ready for AI analysis</p>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Sample Reports */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">Or try with sample reports:</p>
-              <div className="grid grid-cols-1 gap-2">
+            <div className="space-y-4 mt-6">
+              <p className="text-lg font-semibold text-gray-700 text-center">Or try with sample reports:</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {sampleReports.map((report, idx) => (
                   <Button
                     key={idx}
                     variant="outline"
                     size="sm"
-                    onClick={() => handleSampleReport(report)}
-                    disabled={isAnalyzing}
-                    className="text-xs text-left justify-start h-auto py-2 px-3 hover:bg-green-50 hover:border-green-200"
+                    onClick={() => handleSampleReport(report.name)}
+                    disabled={isAnalyzing || isExtracting}
+                    className={`h-auto py-3 px-3 bg-gradient-to-r ${report.color} text-white border-0 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl`}
                   >
-                    <FileText className="w-3 h-3 mr-2" />
-                    {report}
+                    <div className="flex flex-col items-center space-y-1">
+                      <span className="text-lg">{report.icon}</span>
+                      <span className="text-xs text-center font-medium">{report.name.split(" ")[0]}</span>
+                      <span className="text-xs text-center opacity-90">
+                        {report.name.split(" ").slice(1).join(" ")}
+                      </span>
+                    </div>
                   </Button>
                 ))}
               </div>
             </div>
 
-            {isAnalyzing && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center justify-center gap-3">
-                  <Loader2 className="w-5 h-5 animate-spin text-green-600" />
+            {(isExtracting || isAnalyzing) && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6 mt-4">
+                <div className="flex items-center justify-center gap-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-green-600" />
                   <div className="text-center">
-                    <p className="text-sm font-medium text-green-800">Analyzing Report...</p>
-                    <p className="text-xs text-green-600">OpenAI is processing your medical data</p>
+                    <p className="text-lg font-medium text-green-800">
+                      {isExtracting ? "Extracting Text..." : "Analyzing Report..."}
+                    </p>
+                    <p className="text-sm text-green-600">
+                      {isExtracting ? "OCR is reading your document" : "OpenAI is processing your medical data"}
+                    </p>
+                    <div className="flex items-center justify-center space-x-2 mt-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
+                      <div
+                        className="w-2 h-2 bg-green-500 rounded-full animate-bounce"
+                        style={{ animationDelay: "0.1s" }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 bg-green-500 rounded-full animate-bounce"
+                        style={{ animationDelay: "0.2s" }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
             {error && (
-              <Alert className="border-red-200 bg-red-50">
+              <Alert className="border-red-200 bg-gradient-to-r from-red-50 to-red-100 mt-4">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800">{error}</AlertDescription>
               </Alert>
             )}
           </>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* Analysis Header */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <h4 className="font-semibold text-gray-800">AI Analysis Complete</h4>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500 rounded-full">
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-gray-800">AI Analysis Complete</h4>
+                  <p className="text-sm text-gray-600">Powered by OpenAI GPT-4 + OCR</p>
+                </div>
               </div>
-              <Badge className={getUrgencyColor(analysis.urgency)}>{analysis.urgency.toUpperCase()} Priority</Badge>
+              <Badge className={`${getUrgencyColor(analysis.urgency)} px-4 py-2 text-sm font-bold`}>
+                {analysis.urgency.toUpperCase()} Priority
+              </Badge>
             </div>
 
             {/* Report Type */}
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-sm font-medium text-gray-800">{analysis.reportType}</p>
-              <p className="text-xs text-gray-600">Report: {selectedFile?.name}</p>
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+              <p className="text-lg font-bold text-gray-800">{analysis.reportType}</p>
+              <p className="text-sm text-gray-600">Report: {selectedFile?.name}</p>
+              {analysis.extractedText && <p className="text-xs text-green-600 mt-1">✓ Text extracted via OCR</p>}
             </div>
 
             {/* Key Findings */}
             {analysis.keyFindings.length > 0 && (
-              <div className="space-y-2">
-                <h5 className="font-medium text-gray-800">Key Findings:</h5>
-                <ul className="space-y-1">
+              <div className="space-y-3">
+                <h5 className="text-lg font-bold text-gray-800 flex items-center">
+                  <Sparkles className="w-5 h-5 mr-2 text-yellow-500" />
+                  Key Findings:
+                </h5>
+                <div className="grid gap-2">
                   {analysis.keyFindings.map((finding, idx) => (
-                    <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
-                      <span className="text-green-500 mt-1">•</span>
-                      {finding}
-                    </li>
+                    <div
+                      key={idx}
+                      className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">
+                          {idx + 1}
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium">{finding}</p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
             {/* Parameter Analysis */}
             {analysis.abnormalValues.length > 0 && (
-              <div className="space-y-2">
-                <h5 className="font-medium text-gray-800">Parameter Analysis:</h5>
-                <div className="space-y-2">
+              <div className="space-y-3">
+                <h5 className="text-lg font-bold text-gray-800 flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2 text-purple-500" />
+                  Parameter Analysis:
+                </h5>
+                <div className="grid gap-3">
                   {analysis.abnormalValues.map((param, idx) => (
-                    <div key={idx} className={`rounded-lg p-3 border ${getStatusColor(param.status)}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                    <div key={idx} className={`rounded-xl p-4 border-2 ${getStatusColor(param.status)} shadow-lg`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
                           {getStatusIcon(param.status)}
-                          <span className="font-medium text-sm">{param.parameter}</span>
+                          <span className="font-bold text-lg">{param.parameter}</span>
                         </div>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-sm font-bold">
                           {param.status.toUpperCase()}
                         </Badge>
                       </div>
-                      <div className="mt-1 text-xs">
-                        <p>
-                          Value: <strong>{param.value}</strong>
-                        </p>
-                        <p>Normal Range: {param.normalRange}</p>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-600">Current Value:</p>
+                          <p className="font-bold text-lg">{param.value}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Normal Range:</p>
+                          <p className="font-medium">{param.normalRange}</p>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -439,62 +567,103 @@ Focus on providing actionable medical insights while emphasizing that AI recomme
 
             {/* Recommendations */}
             {analysis.recommendations.length > 0 && (
-              <div className="space-y-2">
-                <h5 className="font-medium text-gray-800">AI Recommendations:</h5>
-                <ul className="space-y-1">
+              <div className="space-y-3">
+                <h5 className="text-lg font-bold text-gray-800 flex items-center">
+                  <Zap className="w-5 h-5 mr-2 text-orange-500" />
+                  AI Recommendations:
+                </h5>
+                <div className="grid gap-2">
                   {analysis.recommendations.map((rec, idx) => (
-                    <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
-                      <span className="text-blue-500 mt-1">•</span>
-                      {rec}
-                    </li>
+                    <div
+                      key={idx}
+                      className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">
+                          {idx + 1}
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium">{rec}</p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
             {/* Follow-up */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <h5 className="font-medium text-blue-800 mb-1">Follow-up Care:</h5>
-              <p className="text-sm text-blue-700">{analysis.followUp}</p>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
+              <h5 className="font-bold text-blue-800 mb-2 flex items-center">
+                <Calendar className="w-5 h-5 mr-2" />
+                Follow-up Care:
+              </h5>
+              <p className="text-blue-700 font-medium">{analysis.followUp}</p>
             </div>
 
+            {/* Extracted Text */}
+            {analysis.extractedText && (
+              <details className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                <summary className="cursor-pointer text-lg font-bold text-gray-700 hover:text-gray-900 flex items-center">
+                  <Eye className="w-5 h-5 mr-2" />
+                  View Extracted Text (OCR)
+                </summary>
+                <div className="mt-3 p-3 bg-white rounded-lg border text-sm text-gray-600 max-h-32 overflow-y-auto">
+                  {analysis.extractedText}
+                </div>
+              </details>
+            )}
+
             {/* Raw AI Analysis */}
-            <details className="bg-gray-50 rounded-lg p-3">
-              <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+            <details className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+              <summary className="cursor-pointer text-lg font-bold text-purple-700 hover:text-purple-900 flex items-center">
+                <Sparkles className="w-5 h-5 mr-2" />
                 View Full AI Analysis
               </summary>
-              <div className="mt-2 text-xs text-gray-600 whitespace-pre-line max-h-32 overflow-y-auto">
+              <div className="mt-3 p-3 bg-white rounded-lg border text-sm text-gray-600 whitespace-pre-line max-h-40 overflow-y-auto">
                 {analysis.rawAnalysis}
               </div>
             </details>
 
-            <Alert className="border-yellow-200 bg-yellow-50">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              <AlertDescription className="text-yellow-800 text-sm">
+            <Alert className="border-yellow-300 bg-gradient-to-r from-yellow-50 to-amber-50">
+              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              <AlertDescription className="text-yellow-800 font-medium">
                 This AI analysis is for informational purposes only. Always consult healthcare professionals for medical
                 interpretation and treatment decisions.
               </AlertDescription>
             </Alert>
 
-            <div className="flex gap-2">
-              <Button onClick={resetAnalyzer} variant="outline" size="sm" className="flex-1 bg-transparent">
+            <div className="flex gap-3">
+              <Button
+                onClick={resetAnalyzer}
+                variant="outline"
+                size="lg"
+                className="flex-1 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-2"
+              >
+                <Upload className="w-4 h-4 mr-2" />
                 Analyze Another Report
               </Button>
-              <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" asChild>
+              <Button
+                size="lg"
+                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg"
+                asChild
+              >
                 <a href="/chat">
                   Discuss with AI Doctor
-                  <ArrowRight className="w-3 h-3 ml-1" />
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </a>
               </Button>
             </div>
           </div>
         )}
 
-        <div className="pt-2 border-t">
-          <Button className="w-full bg-green-600 hover:bg-green-700" asChild>
+        <div className="pt-4 border-t border-gray-200 mt-6">
+          <Button
+            className="w-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 text-white shadow-xl text-lg py-3"
+            asChild
+          >
             <a href="/reports">
+              <Crown className="w-5 h-5 mr-2" />
               Open Full Report Analyzer
-              <ArrowRight className="w-4 h-4 ml-2" />
+              <ArrowRight className="w-5 h-5 ml-2" />
             </a>
           </Button>
         </div>
