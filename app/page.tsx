@@ -22,7 +22,6 @@ import {
   MapPin,
   Pill,
   User,
-  Loader2,
   Baby,
   UserCheck,
   Target,
@@ -32,8 +31,6 @@ import {
   Eye,
   Bone,
   TreesIcon as Lungs,
-  Star,
-  Users,
   Linkedin,
   Twitter,
   Github,
@@ -42,12 +39,11 @@ import {
   Lightbulb,
   Rocket,
 } from "lucide-react"
+import HealthAssessmentForm from "@/components/health-assessment-form"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import EnhancedNavigation from "@/components/enhanced-navigation"
@@ -522,24 +518,24 @@ Format the response as structured recommendations with clear sections.
                   <CardContent className="p-6">
                     <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                       <TrendingUp className="w-6 h-6 mr-2 text-orange-500" />
-                      Making an Impact
+                      Development Progress
                     </h4>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-blue-600">50K+</div>
-                        <div className="text-sm text-gray-600">Users Served</div>
+                        <div className="text-3xl font-bold text-blue-600">6</div>
+                        <div className="text-sm text-gray-600">AI Services in Beta</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-green-600">100K+</div>
-                        <div className="text-sm text-gray-600">AI Consultations</div>
+                        <div className="text-3xl font-bold text-green-600">95%</div>
+                        <div className="text-sm text-gray-600">AI Accuracy Rate</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-purple-600">95%</div>
-                        <div className="text-sm text-gray-600">Accuracy Rate</div>
+                        <div className="text-3xl font-bold text-purple-600">24/7</div>
+                        <div className="text-sm text-gray-600">Platform Availability</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-orange-600">24/7</div>
-                        <div className="text-sm text-gray-600">Availability</div>
+                        <div className="text-3xl font-bold text-orange-600">Beta</div>
+                        <div className="text-sm text-gray-600">Current Stage</div>
                       </div>
                     </div>
                   </CardContent>
@@ -754,19 +750,12 @@ Format the response as structured recommendations with clear sections.
   ]
 
   const specialties = [
-    { name: "Cardiology", icon: Heart, color: "text-red-500", patients: "2.5K+", rating: "4.9" },
-    { name: "Neurology", icon: Brain, color: "text-purple-500", patients: "1.8K+", rating: "4.8" },
-    { name: "Ophthalmology", icon: Eye, color: "text-blue-500", patients: "3.2K+", rating: "4.9" },
-    { name: "Orthopedics", icon: Bone, color: "text-gray-500", patients: "2.1K+", rating: "4.7" },
-    { name: "Pulmonology", icon: Lungs, color: "text-cyan-500", patients: "1.5K+", rating: "4.8" },
-    { name: "General Medicine", icon: Stethoscope, color: "text-green-500", patients: "4.8K+", rating: "4.9" },
-  ]
-
-  const stats = [
-    { icon: Users, label: "Active Users", value: "50K+", color: "text-blue-600", growth: "+25%" },
-    { icon: Stethoscope, label: "AI Consultations", value: "100K+", color: "text-green-600", growth: "+40%" },
-    { icon: Award, label: "Accuracy Rate", value: "95%", color: "text-purple-600", growth: "+5%" },
-    { icon: Clock, label: "Response Time", value: "<30s", color: "text-orange-600", growth: "-20%" },
+    { name: "Cardiology", icon: Heart, color: "text-red-500" },
+    { name: "Neurology", icon: Brain, color: "text-purple-500" },
+    { name: "Ophthalmology", icon: Eye, color: "text-blue-500" },
+    { name: "Orthopedics", icon: Bone, color: "text-gray-500" },
+    { name: "Pulmonology", icon: Lungs, color: "text-cyan-500" },
+    { name: "General Medicine", icon: Stethoscope, color: "text-green-500" },
   ]
 
   /* ----------  MAIN LANDING PAGE  ---------- */
@@ -814,7 +803,7 @@ Format the response as structured recommendations with clear sections.
       />
 
       {/* Enhanced Navigation */}
-      <EnhancedNavigation currentPage="home" />
+      <EnhancedNavigation currentPage="home" onAboutClick={() => setShowAbout(true)} />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -841,9 +830,9 @@ Format the response as structured recommendations with clear sections.
         <div className="container mx-auto px-4 py-20 relative">
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-6">
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600 px-4 py-2 text-sm animate-pulse">
-                <Crown className="w-4 h-4 mr-2" />
-                World's Most Advanced AI Healthcare Platform
+              <Badge className="bg-gradient-to-r from-orange-400 to-red-500 text-white hover:from-orange-500 hover:to-red-600 px-4 py-2 text-sm animate-pulse">
+                <Rocket className="w-4 h-4 mr-2" />
+                Beta Version - Experience the Future of Healthcare
               </Badge>
             </div>
 
@@ -898,19 +887,32 @@ Format the response as structured recommendations with clear sections.
               </Button>
             </div>
 
-            {/* Enhanced Stats */}
+            {/* Development Status Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-              {stats.map((stat, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  <stat.icon className={`w-8 h-8 ${stat.color} mx-auto mb-2`} />
-                  <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
-                  <div className="text-xs text-green-600 font-semibold">{stat.growth}</div>
-                </div>
-              ))}
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <Rocket className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-800">Beta</div>
+                <div className="text-sm text-gray-600">Current Stage</div>
+                <div className="text-xs text-orange-600 font-semibold">In Development</div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <Zap className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-800">6</div>
+                <div className="text-sm text-gray-600">AI Services</div>
+                <div className="text-xs text-green-600 font-semibold">Available</div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <Award className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-800">95%</div>
+                <div className="text-sm text-gray-600">AI Accuracy</div>
+                <div className="text-xs text-purple-600 font-semibold">Tested</div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <Clock className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-800">24/7</div>
+                <div className="text-sm text-gray-600">Availability</div>
+                <div className="text-xs text-orange-600 font-semibold">Always On</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1010,891 +1012,21 @@ Format the response as structured recommendations with clear sections.
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            <Suspense
-              fallback={
-                <div className="h-96 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                </div>
-              }
-            >
+            <Suspense fallback={<div>Loading...</div>}>
               <DemoReportAnalyzer />
             </Suspense>
-            <Suspense
-              fallback={
-                <div className="h-96 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                </div>
-              }
-            >
+            <Suspense fallback={<div>Loading...</div>}>
               <DemoMedicineIdentifier />
             </Suspense>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Suspense
-              fallback={
-                <div className="h-96 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                </div>
-              }
-            >
+            <Suspense fallback={<div>Loading...</div>}>
               <DemoBodyMapper />
             </Suspense>
-            <Suspense
-              fallback={
-                <div className="h-96 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                </div>
-              }
-            >
+            <Suspense fallback={<div>Loading...</div>}>
               <DemoChatWidget />
             </Suspense>
           </div>
         </div>
       </section>
-
-      {/* Health Tools Section */}
-      <section className="py-20 bg-gradient-to-br from-purple-50 to-pink-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge className="bg-gradient-to-r from-pink-100 to-purple-100 text-pink-800 hover:from-pink-200 hover:to-purple-200 mb-4">
-              <Shield className="w-4 h-4 mr-2" />
-              Comprehensive Care
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-6">
-              Complete Health Ecosystem
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Beyond AI consultations - your complete healthcare companion
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {healthTools.map((tool, idx) => (
-              <Card
-                key={idx}
-                className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group"
-              >
-                <CardContent className="p-8 text-center">
-                  <div
-                    className={`w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r ${tool.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
-                  >
-                    <tool.icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-3">{tool.title}</h3>
-                  <p className="text-gray-600 mb-6">{tool.description}</p>
-                  <Button
-                    className={`bg-gradient-to-r ${tool.color} hover:scale-105 transition-all duration-300 text-white shadow-lg`}
-                    asChild
-                  >
-                    <Link href={tool.href}>
-                      Explore
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Medical Specialties Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 hover:from-blue-200 hover:to-cyan-200 mb-4">
-              <Stethoscope className="w-4 h-4 mr-2" />
-              Medical Expertise
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-6">
-              Specialized Care
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Connect with specialists across all major medical fields
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {specialties.map((specialty, idx) => (
-              <Card
-                key={idx}
-                className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
-              >
-                <CardContent className="p-6 text-center">
-                  <specialty.icon
-                    className={`w-12 h-12 ${specialty.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
-                  />
-                  <h3 className="font-bold text-gray-800 mb-2">{specialty.name}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{specialty.patients} patients</p>
-                  <div className="flex items-center justify-center space-x-1">
-                    <Badge variant="outline" className="text-xs">
-                      <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
-                      {specialty.rating}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-4 shadow-xl"
-              asChild
-            >
-              <Link href="/doctors">
-                <UserCheck className="w-6 h-6 mr-2" />
-                Find Specialists
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* About Section Button */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="container mx-auto px-4 text-center">
-          <Badge className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 hover:from-blue-200 hover:to-purple-200 mb-4">
-            <User className="w-4 h-4 mr-2" />
-            Meet the Team
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-            The Visionary Behind MyMedi.ai
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Learn about our founder Harsha and the mission to revolutionize healthcare accessibility in India
-          </p>
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 shadow-xl"
-            onClick={() => setShowAbout(true)}
-          >
-            <User className="w-6 h-6 mr-2" />
-            Learn About Us
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="container mx-auto px-4 relative">
-          <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-6xl font-bold mb-6">
-              Ready to Transform
-              <br />
-              Your Healthcare?
-            </h2>
-            <p className="text-xl md:text-2xl mb-8 opacity-90">
-              Join thousands of users who trust MyMedi.ai for their health needs
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button
-                size="lg"
-                className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg shadow-2xl transform hover:scale-105 transition-all duration-300"
-                asChild
-              >
-                <Link href="/chat">
-                  <MessageCircle className="w-6 h-6 mr-2" />
-                  Start Free Consultation
-                </Link>
-              </Button>
-
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-purple-600 px-8 py-4 text-lg bg-transparent"
-                asChild
-              >
-                <Link href="/assessment">
-                  <User className="w-6 h-6 mr-2" />
-                  Take Health Assessment
-                </Link>
-              </Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8 text-sm opacity-80">
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Free to use
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Instant results
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Privacy protected
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                24/7 availability
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <MyMedLogo size="lg" theme="dark" />
-              <p className="text-gray-300">
-                AI-powered healthcare platform designed specifically for India's diverse healthcare needs.
-              </p>
-              <div className="space-y-2 text-sm text-gray-400">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>Amavarathi, Andhra Pradesh, India</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  <a href="tel:+919701744770" className="hover:text-white transition-colors">
-                    +91 9701744770
-                  </a>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  <a href="mailto:contact@mymed.ai" className="hover:text-white transition-colors">
-                    contact@mymed.ai
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">AI Services</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="/chat" className="hover:text-white transition-colors">
-                    AI Health Chat
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/assessment" className="hover:text-white transition-colors">
-                    Health Assessment
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/reports" className="hover:text-white transition-colors">
-                    Report Analysis
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/medicines" className="hover:text-white transition-colors">
-                    Medicine Identifier
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/vitals" className="hover:text-white transition-colors">
-                    Vitals Tracking
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/body-mapper" className="hover:text-white transition-colors">
-                    Body Symptom Mapper
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Health Tools</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="/diet" className="hover:text-white transition-colors">
-                    AI Diet Planner
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pregnancy" className="hover:text-white transition-colors">
-                    Pregnancy Care
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/doctors" className="hover:text-white transition-colors">
-                    Find Doctors
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/city" className="hover:text-white transition-colors">
-                    City Healthcare
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <button onClick={() => setShowAbout(true)} className="hover:text-white transition-colors">
-                    About Us
-                  </button>
-                </li>
-                <li>
-                  <a href="mailto:contact@mymed.ai" className="hover:text-white transition-colors">
-                    Contact
-                  </a>
-                </li>
-                <li>
-                  <Link href="/privacy" className="hover:text-white transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="hover:text-white transition-colors">
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/help" className="hover:text-white transition-colors">
-                    Help Center
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-center md:text-left">
-                &copy; 2024 MyMedi.ai. All rights reserved. | Founded by Harsha in Amavarathi, Andhra Pradesh, India
-              </p>
-              <div className="flex space-x-4 mt-4 md:mt-0">
-                <a
-                  href="https://linkedin.com/in/harsha-mymed"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Linkedin className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://twitter.com/harsha_mymed"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Twitter className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://github.com/harsha-mymed"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Github className="w-5 h-5" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      <PoweredByFooter />
-    </div>
-  )
-}
-
-/* ----------  HEALTH ASSESSMENT COMPONENT  ---------- */
-function HealthAssessmentForm() {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [formData, setFormData] = useState<AssessmentData>({
-    name: "",
-    age: "",
-    weight: "",
-    height: "",
-    gender: "",
-    primarySymptom: "",
-    symptomDuration: "",
-    symptomSeverity: "",
-    vitals: {
-      bloodPressureSystolic: "",
-      bloodPressureDiastolic: "",
-      heartRate: "",
-      temperature: "",
-      oxygenSaturation: "",
-      bloodSugar: "",
-    },
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [results, setResults] = useState<AIResponse | null>(null)
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true)
-    try {
-      const assessmentPrompt = `
-Comprehensive Health Assessment:
-
-Personal Information:
-- Name: ${formData.name}
-- Age: ${formData.age} years
-- Gender: ${formData.gender}
-- Weight: ${formData.weight} kg
-- Height: ${formData.height} cm
-
-Current Health Concerns:
-- Primary Symptom: ${formData.primarySymptom}
-- Duration: ${formData.symptomDuration}
-- Severity (1-10): ${formData.symptomSeverity}
-
-Vital Signs:
-- Blood Pressure: ${formData.vitals.bloodPressureSystolic}/${formData.vitals.bloodPressureDiastolic} mmHg
-- Heart Rate: ${formData.vitals.heartRate} bpm
-- Temperature: ${formData.vitals.temperature}°F
-- Oxygen Saturation: ${formData.vitals.oxygenSaturation}%
-- Blood Sugar: ${formData.vitals.bloodSugar} mg/dL
-
-Please provide a comprehensive health assessment including:
-
-1. **Immediate Recommendations**: What should the patient do right now?
-2. **Medication Suggestions**: Safe over-the-counter options (if appropriate)
-3. **Specialist Referrals**: Which doctors should they consult?
-4. **Diagnostic Tests**: What lab tests or imaging might be helpful?
-5. **Lifestyle Modifications**: Diet, exercise, and lifestyle changes
-6. **Follow-up Care**: When to seek immediate care vs routine follow-up
-7. **Risk Assessment**: Overall health risk level and monitoring recommendations
-
-Format the response with clear sections and actionable advice. Consider the patient's age, gender, and current symptoms when making recommendations.
-`
-
-      const response = await fetch("/api/ai-integration", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: assessmentPrompt,
-          type: "comprehensive-assessment",
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.response) {
-        const aiText = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
-
-        // Parse the comprehensive response
-        setResults({
-          medications:
-            extractSection(aiText, "medication") || "Consult healthcare provider for medication recommendations",
-          doctors:
-            extractSection(aiText, "specialist") ||
-            extractSection(aiText, "doctor") ||
-            "Primary care physician consultation recommended",
-          labs:
-            extractSection(aiText, "diagnostic") ||
-            extractSection(aiText, "test") ||
-            "Basic health screening as recommended",
-          pharmacy: "Visit local pharmacy for over-the-counter medications and health consultations",
-          dietPlan:
-            extractSection(aiText, "diet") ||
-            extractSection(aiText, "lifestyle") ||
-            "Balanced diet with adequate nutrition",
-          exercise: extractSection(aiText, "exercise") || "Regular moderate physical activity as appropriate",
-          generalAdvice:
-            extractSection(aiText, "immediate") ||
-            extractSection(aiText, "recommendation") ||
-            "Monitor symptoms and seek care if worsening",
-        })
-      }
-    } catch (error) {
-      console.error("Assessment error:", error)
-      setResults({
-        medications: "Please consult with a healthcare provider for medication recommendations",
-        doctors: "Schedule appointment with primary care physician",
-        labs: "Basic health screening tests as recommended by doctor",
-        pharmacy: "Local pharmacy consultation for over-the-counter options",
-        dietPlan: "Balanced diet with fruits, vegetables, and adequate hydration",
-        exercise: "Regular moderate exercise appropriate for your condition",
-        generalAdvice: "Monitor symptoms closely and seek medical attention if they worsen",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const extractSection = (text: string, keyword: string): string => {
-    const lines = text.split("\n")
-    let section = ""
-    let capturing = false
-
-    for (const line of lines) {
-      if (line.toLowerCase().includes(keyword) && (line.includes(":") || line.includes("."))) {
-        capturing = true
-        section = line
-        continue
-      }
-      if (capturing) {
-        if (line.trim() === "" || line.match(/^\d+\./)) {
-          if (section.length > 50) break
-        }
-        section += "\n" + line
-      }
-    }
-
-    return section.trim() || ""
-  }
-
-  if (results) {
-    return (
-      <div className="max-w-6xl mx-auto">
-        <Card className="border-0 shadow-2xl">
-          <CardHeader className="text-center bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
-            <CardTitle className="text-3xl font-bold flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 mr-3" />
-              Your AI Health Assessment Results
-            </CardTitle>
-            <p className="text-green-100 mt-2">Comprehensive analysis powered by advanced AI</p>
-          </CardHeader>
-          <CardContent className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-purple-700">
-                    <Pill className="w-5 h-5 mr-2" />
-                    Medication Guidance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">{results.medications}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-blue-700">
-                    <UserCheck className="w-5 h-5 mr-2" />
-                    Doctor Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">{results.doctors}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-green-700">
-                    <FileText className="w-5 h-5 mr-2" />
-                    Laboratory Tests
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">{results.labs}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-red-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-orange-700">
-                    <Apple className="w-5 h-5 mr-2" />
-                    Diet & Nutrition
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">{results.dietPlan}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-teal-700">
-                    <Activity className="w-5 h-5 mr-2" />
-                    Exercise Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">{results.exercise}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-indigo-700">
-                    <Heart className="w-5 h-5 mr-2" />
-                    General Health Advice
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">{results.generalAdvice}</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="mt-8 text-center">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white mr-4"
-                asChild
-              >
-                <Link href="/chat">
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Discuss with AI Doctor
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => window.location.reload()}>
-                Take New Assessment
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <Card className="border-0 shadow-2xl">
-        <CardHeader className="text-center pb-8 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-t-lg">
-          <CardTitle className="text-3xl font-bold">AI Health Assessment</CardTitle>
-          <p className="text-blue-100 mt-2">Get personalized health insights powered by advanced AI</p>
-          <div className="flex justify-center mt-4">
-            <Badge className="bg-white/20 text-white">Step {currentStep} of 3</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="p-8">
-          {isSubmitting ? (
-            <div className="text-center py-12">
-              <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Analyzing Your Health Data...</h3>
-              <p className="text-gray-600">
-                Our AI is processing your information to provide personalized recommendations.
-              </p>
-            </div>
-          ) : (
-            <>
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Personal Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                      <Input
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Enter your full name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
-                      <Input
-                        type="number"
-                        value={formData.age}
-                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                        placeholder="Enter your age"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-                      <Select
-                        value={formData.gender}
-                        onValueChange={(value) => setFormData({ ...formData, gender: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
-                      <Input
-                        type="number"
-                        value={formData.weight}
-                        onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                        placeholder="Enter weight in kg"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
-                      <Input
-                        type="number"
-                        value={formData.height}
-                        onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                        placeholder="Enter height in cm"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 2 && (
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Current Symptoms</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Primary Symptom or Concern</label>
-                      <Input
-                        value={formData.primarySymptom}
-                        onChange={(e) => setFormData({ ...formData, primarySymptom: e.target.value })}
-                        placeholder="Describe your main health concern"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
-                        <Select
-                          value={formData.symptomDuration}
-                          onValueChange={(value) => setFormData({ ...formData, symptomDuration: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="How long have you had this symptom?" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {durationOptions.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Severity (1-10)</label>
-                        <Select
-                          value={formData.symptomSeverity}
-                          onValueChange={(value) => setFormData({ ...formData, symptomSeverity: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Rate severity 1-10" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {severityOptions.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && (
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Vital Signs (Optional)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure (Systolic)</label>
-                      <Input
-                        type="number"
-                        value={formData.vitals.bloodPressureSystolic}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            vitals: { ...formData.vitals, bloodPressureSystolic: e.target.value },
-                          })
-                        }
-                        placeholder="e.g., 120"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure (Diastolic)</label>
-                      <Input
-                        type="number"
-                        value={formData.vitals.bloodPressureDiastolic}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            vitals: { ...formData.vitals, bloodPressureDiastolic: e.target.value },
-                          })
-                        }
-                        placeholder="e.g., 80"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Heart Rate (bpm)</label>
-                      <Input
-                        type="number"
-                        value={formData.vitals.heartRate}
-                        onChange={(e) =>
-                          setFormData({ ...formData, vitals: { ...formData.vitals, heartRate: e.target.value } })
-                        }
-                        placeholder="e.g., 72"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Temperature (°F)</label>
-                      <Input
-                        type="number"
-                        value={formData.vitals.temperature}
-                        onChange={(e) =>
-                          setFormData({ ...formData, vitals: { ...formData.vitals, temperature: e.target.value } })
-                        }
-                        placeholder="e.g., 98.6"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Oxygen Saturation (%)</label>
-                      <Input
-                        type="number"
-                        value={formData.vitals.oxygenSaturation}
-                        onChange={(e) =>
-                          setFormData({ ...formData, vitals: { ...formData.vitals, oxygenSaturation: e.target.value } })
-                        }
-                        placeholder="e.g., 98"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Sugar (mg/dL)</label>
-                      <Input
-                        type="number"
-                        value={formData.vitals.bloodSugar}
-                        onChange={(e) =>
-                          setFormData({ ...formData, vitals: { ...formData.vitals, bloodSugar: e.target.value } })
-                        }
-                        placeholder="e.g., 100"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between mt-8">
-                {currentStep > 1 && (
-                  <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}>
-                    Previous
-                  </Button>
-                )}
-                {currentStep < 3 ? (
-                  <Button
-                    className="ml-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    onClick={() => setCurrentStep(currentStep + 1)}
-                    disabled={
-                      (currentStep === 1 && (!formData.name || !formData.age || !formData.gender)) ||
-                      (currentStep === 2 && (!formData.primarySymptom || !formData.symptomDuration))
-                    }
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <Button
-                    className="ml-auto bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                    onClick={handleSubmit}
-                    disabled={!formData.primarySymptom}
-                  >
-                    <Sparkles className="w-5 h-5 mr-2" />
-                    Get AI Assessment
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }
