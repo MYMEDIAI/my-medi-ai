@@ -1,1374 +1,1255 @@
 "use client"
+
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import MyMedLogo from "@/components/mymed-logo"
-import Link from "next/link"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
 import {
-  User,
-  Heart,
-  AlertCircle,
-  StethoscopeIcon as Steth,
-  Brain,
-  Pill,
   UserCheck,
-  ImageIcon,
-  Printer,
-  Shield,
-  Award,
-  Clock,
-  Sparkles,
-  Calendar,
+  Stethoscope,
   FileText,
-  Plus,
-  RefreshCw,
-  Info,
+  Download,
+  Printer,
+  Loader2,
+  CheckCircle,
   Home,
+  User,
+  Activity,
+  MessageSquare,
+  Apple,
+  Baby,
 } from "lucide-react"
+import Link from "next/link"
 
-interface DoctorAssessmentData {
-  // Patient Information
-  patientName: string
-  patientAge: string
-  patientGender: string
-  patientContact: string
+import MyMedLogo from "@/components/mymed-logo"
+import PoweredByFooter from "@/components/powered-by-footer"
+import NavigationButtons from "@/components/navigation-buttons"
 
-  // Doctor Information
-  doctorName: string
-  doctorId: string
+interface PatientInfo {
+  name: string
+  age: string
+  gender: string
+  weight: string
+  height: string
+  contactNumber: string
+  emergencyContact: string
+  bloodGroup: string
+  allergies: string
+  currentMedications: string
+}
+
+interface DoctorInfo {
+  name: string
   specialization: string
-  hospitalName: string
+  licenseNumber: string
+  hospital: string
   consultationDate: string
+  consultationType: string
+}
 
-  // Clinical Information
+interface ClinicalHistory {
   chiefComplaint: string
   historyOfPresentIllness: string
   pastMedicalHistory: string
-  currentMedications: string
-  allergies: string
   familyHistory: string
   socialHistory: string
+  reviewOfSystems: string
+}
 
-  // Physical Examination
-  vitalSigns: string
-  physicalExamination: string
+interface PhysicalExamination {
+  vitalSigns: {
+    bloodPressure: string
+    heartRate: string
+    temperature: string
+    respiratoryRate: string
+    oxygenSaturation: string
+    weight: string
+    height: string
+    bmi: string
+  }
+  generalAppearance: string
+  heent: string
+  cardiovascular: string
+  respiratory: string
+  abdominal: string
+  neurological: string
+  musculoskeletal: string
+  skin: string
+}
 
-  // Assessment & Plan
-  clinicalAssessment: string
+interface AssessmentAndPlan {
+  primaryDiagnosis: string
+  differentialDiagnosis: string
+  diagnosticTests: string
   treatmentPlan: string
   medications: string
   followUpInstructions: string
-  additionalNotes: string
+  patientEducation: string
+  prognosis: string
 }
 
-interface AssessmentResults {
-  patientSummary: string
-  clinicalFindings: string
-  diagnosticImpression: string
-  treatmentRecommendations: string
-  medicationPlan: string
-  followUpPlan: string
-  patientCounseling: string
-  medicalCertificate: string
-  referralLetter: string
-  dischargeSummary: string
+interface MedicalAssessment {
+  patientInfo: PatientInfo
+  doctorInfo: DoctorInfo
+  clinicalHistory: ClinicalHistory
+  physicalExamination: PhysicalExamination
+  assessmentAndPlan: AssessmentAndPlan
 }
 
-export default function DoctorsAssessmentPage() {
-  const [formData, setFormData] = useState<DoctorAssessmentData>({
-    // Patient Information
-    patientName: "Sarah Johnson",
-    patientAge: "34",
-    patientGender: "Female",
-    patientContact: "+1-555-0123",
+export default function DoctorsPage() {
+  const [currentStep, setCurrentStep] = useState(1)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedReport, setGeneratedReport] = useState<string>("")
 
-    // Doctor Information
-    doctorName: "Dr. Michael Chen",
-    doctorId: "MD12345",
-    specialization: "Internal Medicine",
-    hospitalName: "City General Hospital",
-    consultationDate: new Date().toISOString().split("T")[0],
-
-    // Clinical Information
-    chiefComplaint: "Persistent headaches and fatigue for the past 2 weeks",
-    historyOfPresentIllness:
-      "Patient reports gradual onset of bilateral frontal headaches, described as dull and throbbing, rated 6/10 in severity. Associated with fatigue, difficulty concentrating, and mild nausea. Symptoms worsen with stress and improve with rest. No visual changes, fever, or neck stiffness. Sleep pattern has been disrupted with frequent awakening.",
-    pastMedicalHistory:
-      "Hypertension diagnosed 3 years ago, well controlled on medication. History of migraine headaches in teens, resolved in early 20s. No diabetes, heart disease, or major surgeries.",
-    currentMedications:
-      "Lisinopril 10mg daily for hypertension, Multivitamin daily, Occasional ibuprofen 400mg for headaches (2-3 times per week recently)",
-    allergies: "Penicillin (rash), Shellfish (mild GI upset), No known drug allergies otherwise",
-    familyHistory:
-      "Mother: Hypertension, diabetes type 2. Father: Heart disease, stroke at age 65. Maternal grandmother: Migraine headaches. No family history of cancer or neurological disorders.",
-    socialHistory:
-      "Non-smoker, occasional alcohol (1-2 glasses wine per week), works as accountant (high stress job), exercises 2-3 times per week, married with 2 children, good social support system",
-
-    // Physical Examination
-    vitalSigns:
-      "BP: 138/82 mmHg, HR: 78 bpm, Temp: 98.6°F (37°C), RR: 16/min, O2 Sat: 98% on room air, Height: 5'6\" (168 cm), Weight: 145 lbs (66 kg), BMI: 23.4",
-    physicalExamination:
-      "General: Alert, oriented, appears tired but not in acute distress. HEENT: Normocephalic, atraumatic, PERRLA, EOMI, no papilledema on fundoscopy, TMs clear, throat non-erythematous. Neck: Supple, no lymphadenopathy, no thyromegaly, no carotid bruits. Cardiovascular: RRR, no murmurs, rubs, or gallops. Pulmonary: Clear to auscultation bilaterally. Abdomen: Soft, non-tender, non-distended, normal bowel sounds. Neurological: CN II-XII intact, motor strength 5/5 throughout, DTRs 2+ and symmetric, negative Babinski, gait normal, no focal deficits.",
-
-    // Assessment & Plan
-    clinicalAssessment:
-      "Primary diagnosis: Tension-type headaches, likely stress-related, with possible medication overuse component. Secondary diagnosis: Hypertension, suboptimally controlled. Differential diagnoses to consider: Migraine headaches (less likely given description), secondary headaches (less likely given normal neurological exam), sleep disorder contributing to symptoms.",
-    treatmentPlan:
-      "1. Headache management: Discontinue frequent ibuprofen use to prevent medication overuse headaches. Initiate preventive therapy with amitriptyline 25mg at bedtime. Stress management techniques and relaxation therapy. 2. Hypertension optimization: Increase lisinopril to 15mg daily given current BP readings. 3. Lifestyle modifications: Improve sleep hygiene, regular exercise routine, stress reduction techniques. 4. Follow-up care: Return in 2 weeks to assess headache improvement and BP control.",
-    medications:
-      "1. Amitriptyline 25mg PO at bedtime for headache prevention - Start with 10mg for 3 days, then increase to 25mg. Take 2 hours before bedtime. 2. Lisinopril 15mg PO daily (increased from 10mg) - Take in morning with or without food. 3. Discontinue regular ibuprofen use - Use only for severe breakthrough headaches, maximum 2 days per week. 4. Magnesium supplement 400mg daily - May help with headache prevention.",
-    followUpInstructions:
-      "Return to clinic in 2 weeks for headache and blood pressure follow-up. Sooner if headaches worsen, develop fever, neck stiffness, visual changes, or severe hypertension symptoms. Keep headache diary noting triggers, severity, and frequency. Blood pressure monitoring at home 2-3 times per week. Contact office if BP consistently >150/90 or <100/60.",
-    additionalNotes:
-      "Patient counseled on medication overuse headaches and importance of limiting analgesic use. Discussed stress management techniques including deep breathing exercises and regular sleep schedule. Provided educational materials on tension headaches and hypertension management. Patient verbalized understanding of treatment plan and follow-up instructions.",
+  const [assessment, setAssessment] = useState<MedicalAssessment>({
+    patientInfo: {
+      name: "Rajesh Kumar",
+      age: "45",
+      gender: "Male",
+      weight: "75",
+      height: "170",
+      contactNumber: "+91 9876543210",
+      emergencyContact: "+91 9876543211",
+      bloodGroup: "B+",
+      allergies: "Penicillin, Dust mites",
+      currentMedications: "Metformin 500mg BD, Amlodipine 5mg OD",
+    },
+    doctorInfo: {
+      name: "Dr. Priya Sharma",
+      specialization: "Internal Medicine",
+      licenseNumber: "MCI-12345",
+      hospital: "Apollo Hospital, Hyderabad",
+      consultationDate: "2024-01-15",
+      consultationType: "Follow-up",
+    },
+    clinicalHistory: {
+      chiefComplaint: "Chest pain and shortness of breath for 2 days",
+      historyOfPresentIllness:
+        "Patient presents with substernal chest pain, non-radiating, associated with mild shortness of breath on exertion. Pain is described as pressure-like, 6/10 intensity. No associated nausea, vomiting, or diaphoresis. Symptoms started 2 days ago after climbing stairs.",
+      pastMedicalHistory: "Type 2 Diabetes Mellitus (5 years), Hypertension (3 years), No previous hospitalizations",
+      familyHistory: "Father - CAD, Mother - Diabetes, No family history of sudden cardiac death",
+      socialHistory: "Non-smoker, occasional alcohol use, sedentary lifestyle, works as software engineer",
+      reviewOfSystems: "No fever, no weight loss, no palpitations, no syncope, no leg swelling",
+    },
+    physicalExamination: {
+      vitalSigns: {
+        bloodPressure: "140/90",
+        heartRate: "88",
+        temperature: "98.6",
+        respiratoryRate: "18",
+        oxygenSaturation: "97",
+        weight: "75",
+        height: "170",
+        bmi: "26.0",
+      },
+      generalAppearance: "Alert, oriented, appears comfortable at rest, mild anxiety noted",
+      heent: "Normocephalic, atraumatic, PERRLA, no JVD, no lymphadenopathy",
+      cardiovascular: "Regular rate and rhythm, S1 S2 normal, no murmurs, rubs, or gallops",
+      respiratory: "Clear to auscultation bilaterally, no wheezes, rales, or rhonchi",
+      abdominal: "Soft, non-tender, non-distended, bowel sounds present",
+      neurological: "Alert and oriented x3, cranial nerves II-XII intact, motor strength 5/5",
+      musculoskeletal: "No joint swelling or deformity, full range of motion",
+      skin: "Warm, dry, no rashes or lesions",
+    },
+    assessmentAndPlan: {
+      primaryDiagnosis: "Atypical chest pain, rule out acute coronary syndrome",
+      differentialDiagnosis: "1. Unstable angina 2. GERD 3. Musculoskeletal pain 4. Anxiety",
+      diagnosticTests: "ECG, Troponin I, CBC, CMP, Lipid panel, Chest X-ray, Stress test if indicated",
+      treatmentPlan: "1. Cardiac monitoring 2. Serial troponins 3. Aspirin 81mg daily 4. Continue current medications",
+      medications:
+        "1. Aspirin 81mg PO daily 2. Continue Metformin 500mg BD 3. Continue Amlodipine 5mg OD 4. Sublingual nitroglycerin PRN chest pain",
+      followUpInstructions:
+        "Return to ED if chest pain worsens or associated with SOB, nausea, or diaphoresis. Follow up with cardiology in 1 week. Follow up with PCP in 2 weeks.",
+      patientEducation:
+        "Discussed signs and symptoms of heart attack, importance of medication compliance, lifestyle modifications including diet and exercise",
+      prognosis: "Good with appropriate follow-up and lifestyle modifications",
+    },
   })
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [results, setResults] = useState<AssessmentResults | null>(null)
+  const totalSteps = 5
 
-  const handleInputChange = (field: keyof DoctorAssessmentData, value: string) => {
-    setFormData((prev) => ({
+  const updatePatientInfo = (field: keyof PatientInfo, value: string) => {
+    setAssessment((prev) => ({
       ...prev,
-      [field]: value,
+      patientInfo: { ...prev.patientInfo, [field]: value },
     }))
   }
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true)
+  const updateDoctorInfo = (field: keyof DoctorInfo, value: string) => {
+    setAssessment((prev) => ({
+      ...prev,
+      doctorInfo: { ...prev.doctorInfo, [field]: value },
+    }))
+  }
+
+  const updateClinicalHistory = (field: keyof ClinicalHistory, value: string) => {
+    setAssessment((prev) => ({
+      ...prev,
+      clinicalHistory: { ...prev.clinicalHistory, [field]: value },
+    }))
+  }
+
+  const updatePhysicalExamination = (field: keyof PhysicalExamination, value: string) => {
+    if (field === "vitalSigns") return
+    setAssessment((prev) => ({
+      ...prev,
+      physicalExamination: { ...prev.physicalExamination, [field]: value },
+    }))
+  }
+
+  const updateVitalSigns = (field: keyof PhysicalExamination["vitalSigns"], value: string) => {
+    setAssessment((prev) => ({
+      ...prev,
+      physicalExamination: {
+        ...prev.physicalExamination,
+        vitalSigns: { ...prev.physicalExamination.vitalSigns, [field]: value },
+      },
+    }))
+  }
+
+  const updateAssessmentAndPlan = (field: keyof AssessmentAndPlan, value: string) => {
+    setAssessment((prev) => ({
+      ...prev,
+      assessmentAndPlan: { ...prev.assessmentAndPlan, [field]: value },
+    }))
+  }
+
+  const generateMedicalReport = async () => {
+    setIsGenerating(true)
 
     try {
-      const assessmentPrompt = `
-COMPREHENSIVE MEDICAL CONSULTATION REPORT
-
-DOCTOR INFORMATION:
-- Name: Dr. ${formData.doctorName}
-- Registration ID: ${formData.doctorId}
-- Specialization: ${formData.specialization}
-- Hospital/Clinic: ${formData.hospitalName}
-- Consultation Date: ${formData.consultationDate}
+      const medicalPrompt = `
+Generate a comprehensive medical assessment report based on the following patient information:
 
 PATIENT INFORMATION:
-- Name: ${formData.patientName}
-- Age: ${formData.patientAge}
-- Gender: ${formData.patientGender}
-- Contact: ${formData.patientContact}
+Name: ${assessment.patientInfo.name}
+Age: ${assessment.patientInfo.age}
+Gender: ${assessment.patientInfo.gender}
+Weight: ${assessment.patientInfo.weight}kg
+Height: ${assessment.patientInfo.height}cm
+Contact: ${assessment.patientInfo.contactNumber}
+Blood Group: ${assessment.patientInfo.bloodGroup}
+Allergies: ${assessment.patientInfo.allergies}
+Current Medications: ${assessment.patientInfo.currentMedications}
 
-CLINICAL PRESENTATION:
-Chief Complaint: ${formData.chiefComplaint}
+DOCTOR INFORMATION:
+Doctor: ${assessment.doctorInfo.name}
+Specialization: ${assessment.doctorInfo.specialization}
+License: ${assessment.doctorInfo.licenseNumber}
+Hospital: ${assessment.doctorInfo.hospital}
+Date: ${assessment.doctorInfo.consultationDate}
+Type: ${assessment.doctorInfo.consultationType}
 
-History of Present Illness:
-${formData.historyOfPresentIllness}
-
-Past Medical History:
-${formData.pastMedicalHistory}
-
-Current Medications:
-${formData.currentMedications}
-
-Known Allergies:
-${formData.allergies}
-
-Family History:
-${formData.familyHistory}
-
-Social History:
-${formData.socialHistory}
+CLINICAL HISTORY:
+Chief Complaint: ${assessment.clinicalHistory.chiefComplaint}
+History of Present Illness: ${assessment.clinicalHistory.historyOfPresentIllness}
+Past Medical History: ${assessment.clinicalHistory.pastMedicalHistory}
+Family History: ${assessment.clinicalHistory.familyHistory}
+Social History: ${assessment.clinicalHistory.socialHistory}
+Review of Systems: ${assessment.clinicalHistory.reviewOfSystems}
 
 PHYSICAL EXAMINATION:
-Vital Signs:
-${formData.vitalSigns}
+Vital Signs: BP ${assessment.physicalExamination.vitalSigns.bloodPressure}, HR ${assessment.physicalExamination.vitalSigns.heartRate}, Temp ${assessment.physicalExamination.vitalSigns.temperature}°F, RR ${assessment.physicalExamination.vitalSigns.respiratoryRate}, O2 Sat ${assessment.physicalExamination.vitalSigns.oxygenSaturation}%
+General Appearance: ${assessment.physicalExamination.generalAppearance}
+HEENT: ${assessment.physicalExamination.heent}
+Cardiovascular: ${assessment.physicalExamination.cardiovascular}
+Respiratory: ${assessment.physicalExamination.respiratory}
+Abdominal: ${assessment.physicalExamination.abdominal}
+Neurological: ${assessment.physicalExamination.neurological}
+Musculoskeletal: ${assessment.physicalExamination.musculoskeletal}
+Skin: ${assessment.physicalExamination.skin}
 
-Physical Examination Findings:
-${formData.physicalExamination}
+ASSESSMENT AND PLAN:
+Primary Diagnosis: ${assessment.assessmentAndPlan.primaryDiagnosis}
+Differential Diagnosis: ${assessment.assessmentAndPlan.differentialDiagnosis}
+Diagnostic Tests: ${assessment.assessmentAndPlan.diagnosticTests}
+Treatment Plan: ${assessment.assessmentAndPlan.treatmentPlan}
+Medications: ${assessment.assessmentAndPlan.medications}
+Follow-up: ${assessment.assessmentAndPlan.followUpInstructions}
+Patient Education: ${assessment.assessmentAndPlan.patientEducation}
+Prognosis: ${assessment.assessmentAndPlan.prognosis}
 
-CLINICAL ASSESSMENT:
-${formData.clinicalAssessment}
-
-TREATMENT PLAN:
-${formData.treatmentPlan}
-
-MEDICATIONS PRESCRIBED:
-${formData.medications}
-
-FOLLOW-UP INSTRUCTIONS:
-${formData.followUpInstructions}
-
-ADDITIONAL NOTES:
-${formData.additionalNotes}
-
-Please generate comprehensive medical documentation including:
-1. Patient Summary - Brief overview of patient and consultation
-2. Clinical Findings Summary - Key examination and assessment findings
-3. Diagnostic Impression - Primary and differential diagnoses
-4. Treatment Recommendations - Detailed treatment approach
-5. Medication Plan - Complete medication regimen with instructions
-6. Follow-up Plan - Monitoring and next steps
-7. Patient Counseling Points - Education and lifestyle advice
-8. Medical Certificate - If needed for work/school
-9. Referral Letter - If specialist consultation required
-10. Discharge Summary - If applicable
-
-Format as professional medical documentation suitable for medical records, patient communication, and healthcare continuity.
+Please generate a professional medical report with proper formatting, clinical reasoning, and recommendations. Include sections for:
+1. Patient Demographics
+2. Clinical Summary
+3. Assessment
+4. Treatment Plan
+5. Follow-up Instructions
+6. Medical Certificate (if applicable)
+7. Prescription Details
 `
 
-      const response = await fetch("/api/ai-integration", {
+      const response = await fetch("/api/gemini-health", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: assessmentPrompt,
-          type: "doctor-assessment",
+          message: medicalPrompt,
+          type: "medical_assessment",
         }),
       })
 
       const data = await response.json()
 
       if (data.response) {
-        const aiText = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
-
-        setResults({
-          patientSummary: extractSection(aiText, "patient summary") || generateFallbackSummary(),
-          clinicalFindings: extractSection(aiText, "clinical findings") || generateFallbackFindings(),
-          diagnosticImpression: extractSection(aiText, "diagnostic impression") || generateFallbackDiagnosis(),
-          treatmentRecommendations: extractSection(aiText, "treatment recommendations") || generateFallbackTreatment(),
-          medicationPlan: extractSection(aiText, "medication plan") || generateFallbackMedications(),
-          followUpPlan: extractSection(aiText, "follow-up plan") || generateFallbackFollowUp(),
-          patientCounseling: extractSection(aiText, "patient counseling") || generateFallbackCounseling(),
-          medicalCertificate: extractSection(aiText, "medical certificate") || generateFallbackCertificate(),
-          referralLetter: extractSection(aiText, "referral letter") || generateFallbackReferral(),
-          dischargeSummary: extractSection(aiText, "discharge summary") || generateFallbackDischarge(),
-        })
+        setGeneratedReport(data.response)
+      } else {
+        throw new Error("No response from AI")
       }
     } catch (error) {
-      console.error("Assessment error:", error)
-      setResults({
-        patientSummary: generateFallbackSummary(),
-        clinicalFindings: generateFallbackFindings(),
-        diagnosticImpression: generateFallbackDiagnosis(),
-        treatmentRecommendations: generateFallbackTreatment(),
-        medicationPlan: generateFallbackMedications(),
-        followUpPlan: generateFallbackFollowUp(),
-        patientCounseling: generateFallbackCounseling(),
-        medicalCertificate: generateFallbackCertificate(),
-        referralLetter: generateFallbackReferral(),
-        dischargeSummary: generateFallbackDischarge(),
-      })
+      console.error("Error generating report:", error)
+      setGeneratedReport(`
+MEDICAL ASSESSMENT REPORT
+
+Patient: ${assessment.patientInfo.name}
+Date: ${assessment.doctorInfo.consultationDate}
+Doctor: ${assessment.doctorInfo.name}
+Specialization: ${assessment.doctorInfo.specialization}
+
+CLINICAL SUMMARY:
+${assessment.clinicalHistory.chiefComplaint}
+
+ASSESSMENT:
+${assessment.assessmentAndPlan.primaryDiagnosis}
+
+TREATMENT PLAN:
+${assessment.assessmentAndPlan.treatmentPlan}
+
+MEDICATIONS:
+${assessment.assessmentAndPlan.medications}
+
+FOLLOW-UP:
+${assessment.assessmentAndPlan.followUpInstructions}
+
+This report has been generated using AI assistance and should be reviewed by a qualified healthcare professional.
+      `)
     } finally {
-      setIsSubmitting(false)
+      setIsGenerating(false)
     }
-  }
-
-  const generateFallbackSummary = () => `
-PATIENT SUMMARY
-Name: ${formData.patientName}
-Age: ${formData.patientAge}
-Gender: ${formData.patientGender}
-Chief Complaint: ${formData.chiefComplaint}
-Consultation Date: ${formData.consultationDate}
-Consulting Doctor: Dr. ${formData.doctorName} (${formData.specialization})
-
-The patient presented with ${formData.chiefComplaint}. Clinical assessment and examination findings have been documented for comprehensive care planning.
-`
-
-  const generateFallbackFindings = () => `
-CLINICAL FINDINGS
-Vital Signs: ${formData.vitalSigns}
-Physical Examination: ${formData.physicalExamination || "Physical examination findings documented during consultation."}
-Clinical Assessment: ${formData.clinicalAssessment}
-`
-
-  const generateFallbackDiagnosis = () => `
-DIAGNOSTIC IMPRESSION
-Clinical Assessment: ${formData.clinicalAssessment || "Clinical assessment based on presentation and examination findings."}
-Further evaluation and correlation with investigation results recommended for definitive diagnosis.
-`
-
-  const generateFallbackTreatment = () => `
-TREATMENT RECOMMENDATIONS
-${formData.treatmentPlan || "Comprehensive treatment plan individualized based on patient needs and clinical findings."}
-Medications prescribed as per clinical indication with appropriate monitoring.
-`
-
-  const generateFallbackMedications = () => `
-MEDICATION PLAN
-${formData.medications || "Medications prescribed as per clinical indication and patient requirements."}
-Patient counseled regarding medication compliance and potential side effects.
-`
-
-  const generateFallbackFollowUp = () => `
-FOLLOW-UP PLAN
-${formData.followUpInstructions || "Regular follow-up as clinically indicated."}
-Patient advised to seek immediate medical attention if symptoms worsen or new concerning symptoms develop.
-`
-
-  const generateFallbackCounseling = () => `
-PATIENT COUNSELING
-Patient counseled regarding condition, treatment plan, and lifestyle modifications.
-Key counseling points covered:
-• Understanding of diagnosis and treatment
-• Medication compliance and side effects
-• Lifestyle modifications
-• Warning signs to watch for
-• Follow-up care importance
-`
-
-  const generateFallbackCertificate = () => `
-MEDICAL CERTIFICATE
-
-This is to certify that ${formData.patientName}, age ${formData.patientAge}, was examined by me on ${formData.consultationDate}.
-
-Clinical findings and recommendations have been documented. The patient is advised to follow the prescribed treatment plan and attend follow-up appointments as scheduled.
-
-Dr. ${formData.doctorName}
-${formData.specialization}
-${formData.hospitalName}
-Date: ${formData.consultationDate}
-`
-
-  const generateFallbackReferral = () => `
-REFERRAL LETTER
-
-Dear Colleague,
-
-I am referring ${formData.patientName}, age ${formData.patientAge}, for specialist consultation regarding ${formData.chiefComplaint}.
-
-Clinical summary and examination findings are documented. Your expert opinion and management recommendations would be greatly appreciated.
-
-Thank you for your assistance in this patient's care.
-
-Dr. ${formData.doctorName}
-${formData.specialization}
-${formData.hospitalName}
-`
-
-  const generateFallbackDischarge = () => `
-DISCHARGE SUMMARY
-
-Patient: ${formData.patientName}
-Age: ${formData.patientAge}
-Date: ${formData.consultationDate}
-
-Diagnosis: ${formData.clinicalAssessment || "As documented"}
-Treatment Provided: As per clinical protocol
-Condition: Stable
-
-Discharge Instructions:
-• Continue prescribed medications
-• Follow-up as scheduled
-• Return if symptoms worsen
-
-Dr. ${formData.doctorName}
-${formData.specialization}
-`
-
-  const extractSection = (text: string, keyword: string): string => {
-    const lines = text.split("\n")
-    let section = ""
-    let capturing = false
-
-    for (const line of lines) {
-      if (line.toLowerCase().includes(keyword.toLowerCase()) && (line.includes(":") || line.includes("."))) {
-        capturing = true
-        section = line
-        continue
-      }
-      if (capturing) {
-        if (
-          line.trim() === "" ||
-          line.match(/^\d+\./) ||
-          line.toLowerCase().includes("summary") ||
-          line.toLowerCase().includes("findings") ||
-          line.toLowerCase().includes("plan") ||
-          line.toLowerCase().includes("recommendations")
-        ) {
-          if (section.length > 100) break
-        }
-        section += "\n" + line
-      }
-    }
-
-    return section.trim()
-  }
-
-  const resetAssessment = () => {
-    setResults(null)
-    setFormData({
-      patientName: "",
-      patientAge: "",
-      patientGender: "",
-      patientContact: "",
-      doctorName: "",
-      doctorId: "",
-      specialization: "",
-      hospitalName: "",
-      consultationDate: new Date().toISOString().split("T")[0],
-      chiefComplaint: "",
-      historyOfPresentIllness: "",
-      pastMedicalHistory: "",
-      currentMedications: "",
-      allergies: "",
-      familyHistory: "",
-      socialHistory: "",
-      vitalSigns: "",
-      physicalExamination: "",
-      clinicalAssessment: "",
-      treatmentPlan: "",
-      medications: "",
-      followUpInstructions: "",
-      additionalNotes: "",
-    })
   }
 
   const handlePrint = () => {
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Medical Consultation Report - ${formData.patientName}</title>
-        <style>
-          body { 
-            font-family: 'Times New Roman', serif; 
-            margin: 0; 
-            padding: 20px; 
-            line-height: 1.6; 
-            color: #000;
-            background: white;
-          }
-          .header { 
-            text-align: center; 
-            border-bottom: 2px solid #000; 
-            padding-bottom: 20px; 
-            margin-bottom: 30px;
-          }
-          .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: bold;
-          }
-          .header p {
-            margin: 5px 0;
-            font-size: 14px;
-          }
-          .section { 
-            margin-bottom: 25px; 
-            page-break-inside: avoid;
-          }
-          .section h3 { 
-            color: #000; 
-            border-bottom: 1px solid #000; 
-            padding-bottom: 5px; 
-            margin-bottom: 10px;
-            font-size: 16px;
-            font-weight: bold;
-          }
-          .patient-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-          }
-          .info-box {
-            border: 1px solid #000;
-            padding: 10px;
-          }
-          .signature-section {
-            margin-top: 50px;
-            display: flex;
-            justify-content: space-between;
-          }
-          .signature-box {
-            border-top: 1px solid #000;
-            width: 200px;
-            text-align: center;
-            padding-top: 5px;
-          }
-          @media print { 
-            body { margin: 0; } 
-            .no-print { display: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${formData.hospitalName || "Medical Center"}</h1>
-          <p>MEDICAL CONSULTATION REPORT</p>
-          <p>Date: ${formData.consultationDate}</p>
-        </div>
-        
-        <div class="patient-info">
-          <div class="info-box">
-            <strong>PATIENT INFORMATION</strong><br>
-            Name: ${formData.patientName}<br>
-            Age: ${formData.patientAge}<br>
-            Gender: ${formData.patientGender}<br>
-            Contact: ${formData.patientContact}
-          </div>
-          <div class="info-box">
-            <strong>DOCTOR INFORMATION</strong><br>
-            Name: Dr. ${formData.doctorName}<br>
-            ID: ${formData.doctorId}<br>
-            Specialization: ${formData.specialization}
-          </div>
-        </div>
-
-        <div class="section">
-          <h3>CHIEF COMPLAINT</h3>
-          <p>${formData.chiefComplaint}</p>
-        </div>
-
-        <div class="section">
-          <h3>CLINICAL FINDINGS</h3>
-          <p>${results?.clinicalFindings || "Clinical findings documented during examination."}</p>
-        </div>
-
-        <div class="section">
-          <h3>DIAGNOSTIC IMPRESSION</h3>
-          <p>${results?.diagnosticImpression || formData.clinicalAssessment}</p>
-        </div>
-
-        <div class="section">
-          <h3>TREATMENT PLAN</h3>
-          <p>${results?.treatmentRecommendations || formData.treatmentPlan}</p>
-        </div>
-
-        <div class="section">
-          <h3>MEDICATIONS PRESCRIBED</h3>
-          <p>${formData.medications}</p>
-        </div>
-
-        <div class="section">
-          <h3>FOLLOW-UP INSTRUCTIONS</h3>
-          <p>${formData.followUpInstructions}</p>
-        </div>
-
-        <div class="signature-section">
-          <div class="signature-box">
-            <strong>Dr. ${formData.doctorName}</strong><br>
-            ${formData.specialization}<br>
-            Registration No: ${formData.doctorId}
-          </div>
-          <div class="signature-box">
-            <strong>Date</strong><br>
-            ${formData.consultationDate}
-          </div>
-        </div>
-      </body>
-      </html>
-    `
-
-    const printWindow = window.open("", "_blank")
-    if (printWindow) {
-      printWindow.document.write(printContent)
-      printWindow.document.close()
-      printWindow.print()
-    }
+    window.print()
   }
 
   const handleDownload = () => {
-    const content = `
-MEDICAL CONSULTATION REPORT
-${formData.hospitalName || "Medical Center"}
-Date: ${formData.consultationDate}
-
-PATIENT INFORMATION:
-Name: ${formData.patientName}
-Age: ${formData.patientAge}
-Gender: ${formData.patientGender}
-Contact: ${formData.patientContact}
-
-DOCTOR INFORMATION:
-Name: Dr. ${formData.doctorName}
-ID: ${formData.doctorId}
-Specialization: ${formData.specialization}
-Hospital: ${formData.hospitalName}
-
-CHIEF COMPLAINT:
-${formData.chiefComplaint}
-
-HISTORY OF PRESENT ILLNESS:
-${formData.historyOfPresentIllness}
-
-CLINICAL FINDINGS:
-${results?.clinicalFindings || "Clinical findings documented during examination."}
-
-DIAGNOSTIC IMPRESSION:
-${results?.diagnosticImpression || formData.clinicalAssessment}
-
-TREATMENT RECOMMENDATIONS:
-${results?.treatmentRecommendations || formData.treatmentPlan}
-
-MEDICATIONS PRESCRIBED:
-${formData.medications}
-
-FOLLOW-UP PLAN:
-${results?.followUpPlan || formData.followUpInstructions}
-
-PATIENT COUNSELING:
-${results?.patientCounseling}
-
-ADDITIONAL NOTES:
-${formData.additionalNotes}
-
----
-Dr. ${formData.doctorName}
-${formData.specialization}
-Registration No: ${formData.doctorId}
-${formData.hospitalName}
-Date: ${formData.consultationDate}
-
-Generated by MyMedi.ai - Professional Medical Documentation System
-    `
-
-    const blob = new Blob([content], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `Medical-Report-${formData.patientName.replace(/\s+/g, "-")}-${formData.consultationDate}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    const element = document.createElement("a")
+    const file = new Blob([generatedReport], { type: "text/plain" })
+    element.href = URL.createObjectURL(file)
+    element.download = `medical_report_${assessment.patientInfo.name.replace(/\s+/g, "_")}_${assessment.doctorInfo.consultationDate}.txt`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
   }
 
-  // Check if required fields are filled
-  const isFormValid =
-    formData.patientName.trim() &&
-    formData.doctorName.trim() &&
-    formData.chiefComplaint.trim() &&
-    formData.clinicalAssessment.trim() &&
-    formData.treatmentPlan.trim()
+  const resetForm = () => {
+    setCurrentStep(1)
+    setGeneratedReport("")
+    // Reset to empty form
+    setAssessment({
+      patientInfo: {
+        name: "",
+        age: "",
+        gender: "",
+        weight: "",
+        height: "",
+        contactNumber: "",
+        emergencyContact: "",
+        bloodGroup: "",
+        allergies: "",
+        currentMedications: "",
+      },
+      doctorInfo: {
+        name: "",
+        specialization: "",
+        licenseNumber: "",
+        hospital: "",
+        consultationDate: "",
+        consultationType: "",
+      },
+      clinicalHistory: {
+        chiefComplaint: "",
+        historyOfPresentIllness: "",
+        pastMedicalHistory: "",
+        familyHistory: "",
+        socialHistory: "",
+        reviewOfSystems: "",
+      },
+      physicalExamination: {
+        vitalSigns: {
+          bloodPressure: "",
+          heartRate: "",
+          temperature: "",
+          respiratoryRate: "",
+          oxygenSaturation: "",
+          weight: "",
+          height: "",
+          bmi: "",
+        },
+        generalAppearance: "",
+        heent: "",
+        cardiovascular: "",
+        respiratory: "",
+        abdominal: "",
+        neurological: "",
+        musculoskeletal: "",
+        skin: "",
+      },
+      assessmentAndPlan: {
+        primaryDiagnosis: "",
+        differentialDiagnosis: "",
+        diagnosticTests: "",
+        treatmentPlan: "",
+        medications: "",
+        followUpInstructions: "",
+        patientEducation: "",
+        prognosis: "",
+      },
+    })
+  }
 
-  // Loading State
-  if (isSubmitting) {
+  if (isGenerating) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-teal-50">
-        {/* Header with Home Button */}
-        <div className="bg-white/95 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-50 shadow-sm">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+        <header className="bg-white/95 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50 shadow-sm">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <MyMedLogo size="lg" />
             <div className="flex items-center space-x-4">
-              <MyMedLogo size="lg" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Processing Assessment</h1>
-                <p className="text-sm text-gray-600">AI is generating medical documentation...</p>
-              </div>
+              <Link href="/">
+                <Button variant="outline" className="flex items-center bg-transparent">
+                  <Home className="w-4 h-4 mr-2" />
+                  Home
+                </Button>
+              </Link>
+              <Badge className="bg-green-100 text-green-800">
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                AI Processing
+              </Badge>
             </div>
-            <Link href="/">
-              <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
-                <Home className="w-4 h-4" />
-                <span>Home</span>
-              </Button>
-            </Link>
           </div>
-        </div>
+        </header>
 
-        <div className="max-w-4xl mx-auto p-6">
-          <Card className="border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-green-50 to-teal-50 overflow-hidden">
-            <CardContent className="flex flex-col items-center justify-center py-20">
-              <div className="relative mb-8">
-                <div className="w-24 h-24 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
-                <div className="absolute inset-0 w-24 h-24 border-4 border-green-200 rounded-full animate-ping opacity-75"></div>
-                <div className="absolute inset-4 w-16 h-16 border-4 border-teal-200 rounded-full animate-spin border-t-teal-600"></div>
+        <div className="container mx-auto px-4 py-16">
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
               </div>
-              <div className="text-center space-y-4 max-w-md">
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
-                  🏥 AI Processing Medical Assessment
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                    <p className="text-gray-600">Analyzing patient information and clinical data...</p>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2">
-                    <div
-                      className="w-2 h-2 bg-green-500 rounded-full animate-pulse"
-                      style={{ animationDelay: "0.5s" }}
-                    ></div>
-                    <p className="text-gray-600">Generating comprehensive medical documentation...</p>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2">
-                    <div
-                      className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"
-                      style={{ animationDelay: "1s" }}
-                    ></div>
-                    <p className="text-gray-600">Creating treatment recommendations and reports...</p>
-                  </div>
-                </div>
+              <h2 className="text-2xl font-bold text-green-900 mb-4">Generating Medical Report</h2>
+              <p className="text-green-700 text-center mb-6 max-w-md">
+                Our advanced AI is analyzing the patient information and generating a comprehensive medical assessment
+                report...
+              </p>
+              <div className="w-full max-w-xs bg-green-100 rounded-full h-2">
+                <div className="bg-green-600 h-2 rounded-full animate-pulse" style={{ width: "75%" }}></div>
               </div>
+              <p className="text-sm text-green-600 mt-2">Processing clinical data...</p>
             </CardContent>
           </Card>
         </div>
+        <PoweredByFooter />
       </div>
     )
   }
 
-  // Results Display
-  if (results) {
+  if (generatedReport) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-teal-50">
-        {/* Header with Home Button */}
-        <div className="bg-white/95 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-50 shadow-sm">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+        <header className="bg-white/95 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50 shadow-sm print:hidden">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <MyMedLogo size="lg" />
             <div className="flex items-center space-x-4">
-              <MyMedLogo size="lg" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Medical Assessment Results</h1>
-                <p className="text-sm text-gray-600">
-                  Patient: {formData.patientName} | Date: {formData.consultationDate}
-                </p>
-              </div>
-            </div>
-            <div className="flex space-x-2">
               <Link href="/">
-                <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
-                  <Home className="w-4 h-4" />
-                  <span>Home</span>
+                <Button variant="outline" className="flex items-center bg-transparent">
+                  <Home className="w-4 h-4 mr-2" />
+                  Home
                 </Button>
               </Link>
-              <Button onClick={handlePrint} variant="outline" size="sm">
+              <Button onClick={handlePrint} variant="outline">
                 <Printer className="w-4 h-4 mr-2" />
                 Print
               </Button>
-              <Button onClick={handleDownload} variant="outline" size="sm">
-                <ImageIcon className="w-4 h-4 mr-2" />
+              <Button onClick={handleDownload} variant="outline">
+                <Download className="w-4 h-4 mr-2" />
                 Download
               </Button>
-              <Button onClick={resetAssessment} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button onClick={resetForm} className="bg-green-600 hover:bg-green-700 text-white">
                 New Assessment
               </Button>
             </div>
           </div>
+        </header>
+
+        <div className="container mx-auto px-4 py-8">
+          <Card className="max-w-4xl mx-auto">
+            <CardHeader className="text-center border-b">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                  <FileText className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl text-green-900">Medical Assessment Report</CardTitle>
+                  <p className="text-green-700">Generated by AI-Powered Medical Assistant</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="prose max-w-none">
+                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-800">
+                  {generatedReport}
+                </pre>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="max-w-7xl mx-auto p-6 space-y-8">
-          {/* Summary Card */}
-          <Card className="border-0 shadow-2xl bg-gradient-to-r from-blue-600 via-green-600 to-teal-600 text-white overflow-hidden">
-            <CardContent className="p-8 relative">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16"></div>
-
-              <div className="relative z-10">
-                <div className="flex flex-col lg:flex-row items-center justify-between mb-8">
-                  <div className="flex items-center space-x-4 mb-4 lg:mb-0">
-                    <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <Steth className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <h1 className="text-3xl lg:text-4xl font-bold">Medical Assessment Complete</h1>
-                      <p className="text-blue-100 text-lg">Professional AI-Generated Medical Documentation</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center space-y-2">
-                    <Badge className="bg-white bg-opacity-20 text-white px-4 py-2 text-lg font-semibold border-2 border-white border-opacity-30">
-                      <Shield className="w-4 h-4 mr-2" />
-                      PROFESSIONAL GRADE
-                    </Badge>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">Dr. {formData.doctorName}</div>
-                      <div className="text-sm text-blue-100">{formData.specialization}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                  <div className="bg-white bg-opacity-10 rounded-lg p-4 text-center backdrop-blur-sm">
-                    <User className="w-8 h-8 mx-auto mb-2" />
-                    <div className="text-sm text-blue-100">Patient</div>
-                    <div className="font-semibold">{formData.patientName}</div>
-                  </div>
-                  <div className="bg-white bg-opacity-10 rounded-lg p-4 text-center backdrop-blur-sm">
-                    <Calendar className="w-8 h-8 mx-auto mb-2" />
-                    <div className="text-sm text-blue-100">Age</div>
-                    <div className="font-semibold">{formData.patientAge}</div>
-                  </div>
-                  <div className="bg-white bg-opacity-10 rounded-lg p-4 text-center backdrop-blur-sm">
-                    <Heart className="w-8 h-8 mx-auto mb-2" />
-                    <div className="text-sm text-blue-100">Hospital</div>
-                    <div className="font-semibold">{formData.hospitalName}</div>
-                  </div>
-                  <div className="bg-white bg-opacity-10 rounded-lg p-4 text-center backdrop-blur-sm">
-                    <Clock className="w-8 h-8 mx-auto mb-2" />
-                    <div className="text-sm text-blue-100">Date</div>
-                    <div className="font-semibold">{formData.consultationDate}</div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Results Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50 border-l-4 border-l-blue-500">
-              <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
-                <CardTitle className="flex items-center text-xl">
-                  <FileText className="w-6 h-6 mr-3" /> 📋 Patient Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans leading-relaxed text-sm">
-                  {results.patientSummary}
-                </pre>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-l-green-500">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-                <CardTitle className="flex items-center text-xl">
-                  <Steth className="w-6 h-6 mr-3" /> 🔬 Clinical Findings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans leading-relaxed text-sm">
-                  {results.clinicalFindings}
-                </pre>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 to-indigo-50 border-l-4 border-l-purple-500">
-              <CardHeader className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
-                <CardTitle className="flex items-center text-xl">
-                  <Brain className="w-6 h-6 mr-3" /> 🧠 Diagnostic Impression
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans leading-relaxed text-sm">
-                  {results.diagnosticImpression}
-                </pre>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-red-50 to-pink-50 border-l-4 border-l-red-500">
-              <CardHeader className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
-                <CardTitle className="flex items-center text-xl">
-                  <Heart className="w-6 h-6 mr-3" /> ❤️ Treatment Plan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans leading-relaxed text-sm">
-                  {results.treatmentRecommendations}
-                </pre>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-50 to-yellow-50 border-l-4 border-l-orange-500">
-              <CardHeader className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white">
-                <CardTitle className="flex items-center text-xl">
-                  <Pill className="w-6 h-6 mr-3" /> 💊 Medication Plan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans leading-relaxed text-sm">
-                  {results.medicationPlan}
-                </pre>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-teal-50 to-cyan-50 border-l-4 border-l-teal-500">
-              <CardHeader className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white">
-                <CardTitle className="flex items-center text-xl">
-                  <Calendar className="w-6 h-6 mr-3" /> 📅 Follow-up Plan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans leading-relaxed text-sm">
-                  {results.followUpPlan}
-                </pre>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Additional Documents */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-l-amber-500">
-              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                <CardTitle className="flex items-center text-xl">
-                  <Award className="w-6 h-6 mr-3" /> 🏆 Medical Certificate
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans leading-relaxed text-sm">
-                  {results.medicalCertificate}
-                </pre>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-violet-50 to-purple-50 border-l-4 border-l-violet-500">
-              <CardHeader className="bg-gradient-to-r from-violet-500 to-purple-500 text-white">
-                <CardTitle className="flex items-center text-xl">
-                  <UserCheck className="w-6 h-6 mr-3" /> 💬 Patient Counseling
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans leading-relaxed text-sm">
-                  {results.patientCounseling}
-                </pre>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Footer */}
-          <Card className="border-0 shadow-lg bg-gradient-to-r from-gray-50 to-gray-100">
-            <CardContent className="p-8 text-center">
-              <div className="flex flex-col items-center space-y-4">
-                <MyMedLogo />
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-gray-800">Powered by MyMedi.ai</h3>
-                  <p className="text-gray-600 max-w-2xl">
-                    Professional medical documentation generated using advanced AI technology. This system assists
-                    healthcare professionals in creating comprehensive medical records and documentation.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    This AI-generated documentation should be reviewed and validated by qualified healthcare
-                    professionals.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-4 justify-center text-sm text-gray-500">
-                  <span>🔒 HIPAA Compliant</span>
-                  <span>🛡️ Secure & Private</span>
-                  <span>🧠 AI-Powered</span>
-                  <span>⚡ Professional Grade</span>
-                  <span>📋 Medical Standard</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="print:hidden">
+          <PoweredByFooter />
         </div>
       </div>
     )
   }
 
-  // Main Form Display
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-teal-50">
-      {/* Header with Home Button */}
-      <div className="bg-white/95 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-50 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+      <header className="bg-white/95 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <MyMedLogo size="lg" />
           <div className="flex items-center space-x-4">
-            <MyMedLogo size="lg" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Doctor's Assessment Portal</h1>
-              <p className="text-sm text-gray-600">AI-Powered Medical Documentation System</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
+            {/* Navigation Tabs */}
+            <nav className="hidden md:flex items-center space-x-2">
+              <Link href="/assessment">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50 bg-transparent"
+                >
+                  <User className="w-3 h-3 mr-1" />
+                  Assessment
+                </Button>
+              </Link>
+              <Link href="/chat">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-purple-600 border-purple-200 hover:bg-purple-50 bg-transparent"
+                >
+                  <MessageSquare className="w-3 h-3 mr-1" />
+                  AI Chat
+                </Button>
+              </Link>
+              <Link href="/vitals">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-200 hover:bg-red-50 bg-transparent"
+                >
+                  <Activity className="w-3 h-3 mr-1" />
+                  Vitals
+                </Button>
+              </Link>
+              <Link href="/diet">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 border-green-200 hover:bg-green-50 bg-transparent"
+                >
+                  <Apple className="w-3 h-3 mr-1" />
+                  Diet
+                </Button>
+              </Link>
+              <Link href="/pregnancy">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-pink-600 border-pink-200 hover:bg-pink-50 bg-transparent"
+                >
+                  <Baby className="w-3 h-3 mr-1" />
+                  Pregnancy
+                </Button>
+              </Link>
+            </nav>
+
             <Link href="/">
-              <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
-                <Home className="w-4 h-4" />
-                <span>Home</span>
+              <Button variant="outline" className="flex items-center bg-transparent">
+                <Home className="w-4 h-4 mr-2" />
+                Home
               </Button>
             </Link>
-            <Badge className="bg-blue-100 text-blue-800">
-              <Shield className="w-3 h-3 mr-1" />
-              HIPAA Compliant
-            </Badge>
             <Badge className="bg-green-100 text-green-800">
-              <Brain className="w-3 h-3 mr-1" />
-              AI-Powered
+              <UserCheck className="w-3 h-3 mr-1" />
+              Professional Portal
+            </Badge>
+            <Badge className="bg-blue-100 text-blue-800">
+              <Stethoscope className="w-3 h-3 mr-1" />
+              Step {currentStep} of {totalSteps}
             </Badge>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-4xl mx-auto p-6">
-        <Card className="border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-green-50 to-teal-50 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-blue-600 via-green-600 to-teal-600 text-white p-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <Steth className="w-6 h-6 text-white" />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <Card className="mb-8">
+            <CardHeader className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                  <UserCheck className="w-8 h-8 text-green-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-3xl font-bold">Medical Assessment Form</CardTitle>
-                  <p className="text-blue-100 mt-2">Simple AI-powered documentation for healthcare professionals</p>
+                  <CardTitle className="text-3xl text-green-900">👨‍⚕️ Professional Medical Assessment</CardTitle>
+                  <p className="text-green-700 mt-2">Comprehensive Patient Evaluation & Documentation System</p>
                 </div>
               </div>
-              <MyMedLogo theme="dark" />
-            </div>
-          </CardHeader>
 
-          <CardContent className="p-8 space-y-8">
-            {/* Patient Information */}
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg border border-blue-200">
-              <h3 className="text-xl font-semibold text-blue-900 mb-6 flex items-center">
-                <User className="w-5 h-5 mr-2" />
-                Patient Information
-                <Badge className="ml-2 bg-blue-100 text-blue-800">Required</Badge>
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="patientName" className="text-blue-900 font-medium">
-                    Patient Name *
-                  </Label>
-                  <Input
-                    id="patientName"
-                    value={formData.patientName}
-                    onChange={(e) => handleInputChange("patientName", e.target.value)}
-                    className="mt-1 border-blue-200 focus:border-blue-500"
-                    placeholder="Enter patient full name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="patientAge" className="text-blue-900 font-medium">
-                    Age
-                  </Label>
-                  <Input
-                    id="patientAge"
-                    value={formData.patientAge}
-                    onChange={(e) => handleInputChange("patientAge", e.target.value)}
-                    className="mt-1 border-blue-200 focus:border-blue-500"
-                    placeholder="Patient age"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="patientGender" className="text-blue-900 font-medium">
-                    Gender
-                  </Label>
-                  <Input
-                    id="patientGender"
-                    value={formData.patientGender}
-                    onChange={(e) => handleInputChange("patientGender", e.target.value)}
-                    className="mt-1 border-blue-200 focus:border-blue-500"
-                    placeholder="Patient gender"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="patientContact" className="text-blue-900 font-medium">
-                    Contact Number
-                  </Label>
-                  <Input
-                    id="patientContact"
-                    value={formData.patientContact}
-                    onChange={(e) => handleInputChange("patientContact", e.target.value)}
-                    className="mt-1 border-blue-200 focus:border-blue-500"
-                    placeholder="Patient contact number"
-                  />
-                </div>
+              {/* Progress Bar */}
+              <div className="w-full bg-green-100 rounded-full h-2 mt-6">
+                <div
+                  className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+                ></div>
               </div>
-            </div>
+              <p className="text-sm text-green-600 mt-2">
+                Step {currentStep} of {totalSteps}
+              </p>
+            </CardHeader>
+          </Card>
 
-            {/* Doctor Information */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200">
-              <h3 className="text-xl font-semibold text-green-900 mb-6 flex items-center">
-                <UserCheck className="w-5 h-5 mr-2" />
-                Doctor Information
-                <Badge className="ml-2 bg-green-100 text-green-800">Professional Details</Badge>
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="doctorName" className="text-green-900 font-medium">
-                    Doctor Name *
-                  </Label>
-                  <Input
-                    id="doctorName"
-                    value={formData.doctorName}
-                    onChange={(e) => handleInputChange("doctorName", e.target.value)}
-                    className="mt-1 border-green-200 focus:border-green-500"
-                    placeholder="Enter doctor name"
-                  />
+          {/* Step 1: Patient Information */}
+          {currentStep === 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <User className="w-5 h-5 mr-2 text-blue-600" />
+                  Patient Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="patientName">Full Name *</Label>
+                    <Input
+                      id="patientName"
+                      value={assessment.patientInfo.name}
+                      onChange={(e) => updatePatientInfo("name", e.target.value)}
+                      placeholder="Enter patient's full name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="age">Age *</Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      value={assessment.patientInfo.age}
+                      onChange={(e) => updatePatientInfo("age", e.target.value)}
+                      placeholder="Age in years"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="gender">Gender *</Label>
+                    <Select
+                      value={assessment.patientInfo.gender}
+                      onValueChange={(value) => updatePatientInfo("gender", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="weight">Weight (kg)</Label>
+                    <Input
+                      id="weight"
+                      type="number"
+                      value={assessment.patientInfo.weight}
+                      onChange={(e) => updatePatientInfo("weight", e.target.value)}
+                      placeholder="Weight in kg"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="height">Height (cm)</Label>
+                    <Input
+                      id="height"
+                      type="number"
+                      value={assessment.patientInfo.height}
+                      onChange={(e) => updatePatientInfo("height", e.target.value)}
+                      placeholder="Height in cm"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact">Contact Number</Label>
+                    <Input
+                      id="contact"
+                      value={assessment.patientInfo.contactNumber}
+                      onChange={(e) => updatePatientInfo("contactNumber", e.target.value)}
+                      placeholder="+91 XXXXXXXXXX"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="emergency">Emergency Contact</Label>
+                    <Input
+                      id="emergency"
+                      value={assessment.patientInfo.emergencyContact}
+                      onChange={(e) => updatePatientInfo("emergencyContact", e.target.value)}
+                      placeholder="Emergency contact number"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="bloodGroup">Blood Group</Label>
+                    <Select
+                      value={assessment.patientInfo.bloodGroup}
+                      onValueChange={(value) => updatePatientInfo("bloodGroup", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select blood group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A+">A+</SelectItem>
+                        <SelectItem value="A-">A-</SelectItem>
+                        <SelectItem value="B+">B+</SelectItem>
+                        <SelectItem value="B-">B-</SelectItem>
+                        <SelectItem value="AB+">AB+</SelectItem>
+                        <SelectItem value="AB-">AB-</SelectItem>
+                        <SelectItem value="O+">O+</SelectItem>
+                        <SelectItem value="O-">O-</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="doctorId" className="text-green-900 font-medium">
-                    Registration ID
-                  </Label>
-                  <Input
-                    id="doctorId"
-                    value={formData.doctorId}
-                    onChange={(e) => handleInputChange("doctorId", e.target.value)}
-                    className="mt-1 border-green-200 focus:border-green-500"
-                    placeholder="Medical registration number"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="specialization" className="text-green-900 font-medium">
-                    Specialization
-                  </Label>
-                  <Input
-                    id="specialization"
-                    value={formData.specialization}
-                    onChange={(e) => handleInputChange("specialization", e.target.value)}
-                    className="mt-1 border-green-200 focus:border-green-500"
-                    placeholder="Medical specialization"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="hospitalName" className="text-green-900 font-medium">
-                    Hospital / Clinic Name
-                  </Label>
-                  <Input
-                    id="hospitalName"
-                    value={formData.hospitalName}
-                    onChange={(e) => handleInputChange("hospitalName", e.target.value)}
-                    className="mt-1 border-green-200 focus:border-green-500"
-                    placeholder="Hospital or clinic name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="consultationDate" className="text-green-900 font-medium">
-                    Consultation Date
-                  </Label>
-                  <Input
-                    id="consultationDate"
-                    type="date"
-                    value={formData.consultationDate}
-                    onChange={(e) => handleInputChange("consultationDate", e.target.value)}
-                    className="mt-1 border-green-200 focus:border-green-500"
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Clinical Information */}
-            <div className="bg-gradient-to-r from-red-50 to-pink-50 p-6 rounded-lg border border-red-200">
-              <h3 className="text-xl font-semibold text-red-900 mb-6 flex items-center">
-                <AlertCircle className="w-5 h-5 mr-2" />
-                Clinical Information
-                <Badge className="ml-2 bg-red-100 text-red-800">Primary Assessment</Badge>
-              </h3>
-              <div className="space-y-6">
                 <div>
-                  <Label htmlFor="chiefComplaint" className="text-red-900 font-medium">
-                    Chief Complaint *
-                  </Label>
-                  <Input
-                    id="chiefComplaint"
-                    value={formData.chiefComplaint}
-                    onChange={(e) => handleInputChange("chiefComplaint", e.target.value)}
-                    className="mt-1 border-red-200 focus:border-red-500"
-                    placeholder="Patient's main complaint"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="historyOfPresentIllness" className="text-red-900 font-medium">
-                    History of Present Illness
-                  </Label>
+                  <Label htmlFor="allergies">Known Allergies</Label>
                   <Textarea
-                    id="historyOfPresentIllness"
-                    value={formData.historyOfPresentIllness}
-                    onChange={(e) => handleInputChange("historyOfPresentIllness", e.target.value)}
-                    rows={4}
-                    className="mt-1 border-red-200 focus:border-red-500"
-                    placeholder="Detailed history of the present illness..."
+                    id="allergies"
+                    value={assessment.patientInfo.allergies}
+                    onChange={(e) => updatePatientInfo("allergies", e.target.value)}
+                    placeholder="List any known allergies (medications, food, environmental)"
+                    rows={3}
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div>
+                  <Label htmlFor="currentMeds">Current Medications</Label>
+                  <Textarea
+                    id="currentMeds"
+                    value={assessment.patientInfo.currentMedications}
+                    onChange={(e) => updatePatientInfo("currentMedications", e.target.value)}
+                    placeholder="List current medications with dosages"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => setCurrentStep(2)} className="bg-green-600 hover:bg-green-700">
+                    Next: Doctor Information
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 2: Doctor Information */}
+          {currentStep === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <UserCheck className="w-5 h-5 mr-2 text-green-600" />
+                  Doctor Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="pastMedicalHistory" className="text-red-900 font-medium">
-                      Past Medical History
-                    </Label>
-                    <Textarea
-                      id="pastMedicalHistory"
-                      value={formData.pastMedicalHistory}
-                      onChange={(e) => handleInputChange("pastMedicalHistory", e.target.value)}
-                      rows={3}
-                      className="mt-1 border-red-200 focus:border-red-500"
-                      placeholder="Previous medical conditions, surgeries, hospitalizations..."
+                    <Label htmlFor="doctorName">Doctor Name *</Label>
+                    <Input
+                      id="doctorName"
+                      value={assessment.doctorInfo.name}
+                      onChange={(e) => updateDoctorInfo("name", e.target.value)}
+                      placeholder="Dr. Full Name"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="currentMedications" className="text-red-900 font-medium">
-                      Current Medications
-                    </Label>
-                    <Textarea
-                      id="currentMedications"
-                      value={formData.currentMedications}
-                      onChange={(e) => handleInputChange("currentMedications", e.target.value)}
-                      rows={3}
-                      className="mt-1 border-red-200 focus:border-red-500"
-                      placeholder="Current medications with dosages..."
+                    <Label htmlFor="specialization">Specialization *</Label>
+                    <Input
+                      id="specialization"
+                      value={assessment.doctorInfo.specialization}
+                      onChange={(e) => updateDoctorInfo("specialization", e.target.value)}
+                      placeholder="Medical specialization"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="allergies" className="text-red-900 font-medium">
-                      Known Allergies
-                    </Label>
-                    <Textarea
-                      id="allergies"
-                      value={formData.allergies}
-                      onChange={(e) => handleInputChange("allergies", e.target.value)}
-                      rows={3}
-                      className="mt-1 border-red-200 focus:border-red-500"
-                      placeholder="Drug allergies, food allergies, environmental allergies..."
+                    <Label htmlFor="license">License Number *</Label>
+                    <Input
+                      id="license"
+                      value={assessment.doctorInfo.licenseNumber}
+                      onChange={(e) => updateDoctorInfo("licenseNumber", e.target.value)}
+                      placeholder="Medical license number"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="familyHistory" className="text-red-900 font-medium">
-                      Family History
-                    </Label>
-                    <Textarea
-                      id="familyHistory"
-                      value={formData.familyHistory}
-                      onChange={(e) => handleInputChange("familyHistory", e.target.value)}
-                      rows={3}
-                      className="mt-1 border-red-200 focus:border-red-500"
-                      placeholder="Relevant family medical history..."
+                    <Label htmlFor="hospital">Hospital/Clinic *</Label>
+                    <Input
+                      id="hospital"
+                      value={assessment.doctorInfo.hospital}
+                      onChange={(e) => updateDoctorInfo("hospital", e.target.value)}
+                      placeholder="Hospital or clinic name"
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="consultationDate">Consultation Date *</Label>
+                    <Input
+                      id="consultationDate"
+                      type="date"
+                      value={assessment.doctorInfo.consultationDate}
+                      onChange={(e) => updateDoctorInfo("consultationDate", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="consultationType">Consultation Type</Label>
+                    <Select
+                      value={assessment.doctorInfo.consultationType}
+                      onValueChange={(value) => updateDoctorInfo("consultationType", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select consultation type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Initial">Initial Consultation</SelectItem>
+                        <SelectItem value="Follow-up">Follow-up</SelectItem>
+                        <SelectItem value="Emergency">Emergency</SelectItem>
+                        <SelectItem value="Routine">Routine Check-up</SelectItem>
+                        <SelectItem value="Specialist">Specialist Referral</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
+
+                <div className="flex justify-between">
+                  <Button onClick={() => setCurrentStep(1)} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={() => setCurrentStep(3)} className="bg-green-600 hover:bg-green-700">
+                    Next: Clinical History
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 3: Clinical History */}
+          {currentStep === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-purple-600" />
+                  Clinical History
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div>
-                  <Label htmlFor="socialHistory" className="text-red-900 font-medium">
-                    Social History
-                  </Label>
+                  <Label htmlFor="chiefComplaint">Chief Complaint *</Label>
+                  <Textarea
+                    id="chiefComplaint"
+                    value={assessment.clinicalHistory.chiefComplaint}
+                    onChange={(e) => updateClinicalHistory("chiefComplaint", e.target.value)}
+                    placeholder="Patient's main complaint in their own words"
+                    rows={2}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="hpi">History of Present Illness *</Label>
+                  <Textarea
+                    id="hpi"
+                    value={assessment.clinicalHistory.historyOfPresentIllness}
+                    onChange={(e) => updateClinicalHistory("historyOfPresentIllness", e.target.value)}
+                    placeholder="Detailed description of current illness including onset, duration, character, location, radiation, timing, context, modifying factors, and associated symptoms"
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="pmh">Past Medical History</Label>
+                  <Textarea
+                    id="pmh"
+                    value={assessment.clinicalHistory.pastMedicalHistory}
+                    onChange={(e) => updateClinicalHistory("pastMedicalHistory", e.target.value)}
+                    placeholder="Previous illnesses, surgeries, hospitalizations, chronic conditions"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="familyHistory">Family History</Label>
+                  <Textarea
+                    id="familyHistory"
+                    value={assessment.clinicalHistory.familyHistory}
+                    onChange={(e) => updateClinicalHistory("familyHistory", e.target.value)}
+                    placeholder="Relevant family medical history"
+                    rows={2}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="socialHistory">Social History</Label>
                   <Textarea
                     id="socialHistory"
-                    value={formData.socialHistory}
-                    onChange={(e) => handleInputChange("socialHistory", e.target.value)}
-                    rows={3}
-                    className="mt-1 border-red-200 focus:border-red-500"
-                    placeholder="Smoking, alcohol, occupation, lifestyle factors..."
+                    value={assessment.clinicalHistory.socialHistory}
+                    onChange={(e) => updateClinicalHistory("socialHistory", e.target.value)}
+                    placeholder="Smoking, alcohol, drugs, occupation, living situation"
+                    rows={2}
                   />
                 </div>
-              </div>
-            </div>
 
-            {/* Physical Examination */}
-            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 rounded-lg border border-teal-200">
-              <h3 className="text-xl font-semibold text-teal-900 mb-6 flex items-center">
-                <Steth className="w-5 h-5 mr-2" />
-                Physical Examination
-                <Badge className="ml-2 bg-teal-100 text-teal-800">Clinical Assessment</Badge>
-              </h3>
-              <div className="space-y-6">
                 <div>
-                  <Label htmlFor="vitalSigns" className="text-teal-900 font-medium">
-                    Vital Signs
-                  </Label>
+                  <Label htmlFor="ros">Review of Systems</Label>
                   <Textarea
-                    id="vitalSigns"
-                    value={formData.vitalSigns}
-                    onChange={(e) => handleInputChange("vitalSigns", e.target.value)}
+                    id="ros"
+                    value={assessment.clinicalHistory.reviewOfSystems}
+                    onChange={(e) => updateClinicalHistory("reviewOfSystems", e.target.value)}
+                    placeholder="Systematic review of body systems"
                     rows={3}
-                    className="mt-1 border-teal-200 focus:border-teal-500"
-                    placeholder="Blood pressure, heart rate, temperature, respiratory rate, oxygen saturation, height, weight..."
                   />
                 </div>
-                <div>
-                  <Label htmlFor="physicalExamination" className="text-teal-900 font-medium">
-                    Physical Examination Findings
-                  </Label>
-                  <Textarea
-                    id="physicalExamination"
-                    value={formData.physicalExamination}
-                    onChange={(e) => handleInputChange("physicalExamination", e.target.value)}
-                    rows={6}
-                    className="mt-1 border-teal-200 focus:border-teal-500"
-                    placeholder="General appearance, head and neck, cardiovascular, respiratory, abdominal, neurological, musculoskeletal, skin examination findings..."
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Assessment & Plan */}
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-lg border border-purple-200">
-              <h3 className="text-xl font-semibold text-purple-900 mb-6 flex items-center">
-                <Brain className="w-5 h-5 mr-2" />
-                Assessment & Plan
-                <Badge className="ml-2 bg-purple-100 text-purple-800">Clinical Decision</Badge>
-              </h3>
-              <div className="space-y-6">
+                <div className="flex justify-between">
+                  <Button onClick={() => setCurrentStep(2)} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={() => setCurrentStep(4)} className="bg-green-600 hover:bg-green-700">
+                    Next: Physical Examination
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 4: Physical Examination */}
+          {currentStep === 4 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Stethoscope className="w-5 h-5 mr-2 text-red-600" />
+                  Physical Examination
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div>
-                  <Label htmlFor="clinicalAssessment" className="text-purple-900 font-medium">
-                    Clinical Assessment / Diagnosis *
-                  </Label>
+                  <h3 className="text-lg font-semibold mb-4">Vital Signs</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <Label htmlFor="bp">Blood Pressure</Label>
+                      <Input
+                        id="bp"
+                        value={assessment.physicalExamination.vitalSigns.bloodPressure}
+                        onChange={(e) => updateVitalSigns("bloodPressure", e.target.value)}
+                        placeholder="120/80"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="hr">Heart Rate</Label>
+                      <Input
+                        id="hr"
+                        value={assessment.physicalExamination.vitalSigns.heartRate}
+                        onChange={(e) => updateVitalSigns("heartRate", e.target.value)}
+                        placeholder="72"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="temp">Temperature (°F)</Label>
+                      <Input
+                        id="temp"
+                        value={assessment.physicalExamination.vitalSigns.temperature}
+                        onChange={(e) => updateVitalSigns("temperature", e.target.value)}
+                        placeholder="98.6"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="rr">Respiratory Rate</Label>
+                      <Input
+                        id="rr"
+                        value={assessment.physicalExamination.vitalSigns.respiratoryRate}
+                        onChange={(e) => updateVitalSigns("respiratoryRate", e.target.value)}
+                        placeholder="16"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="o2sat">O2 Saturation (%)</Label>
+                      <Input
+                        id="o2sat"
+                        value={assessment.physicalExamination.vitalSigns.oxygenSaturation}
+                        onChange={(e) => updateVitalSigns("oxygenSaturation", e.target.value)}
+                        placeholder="98"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="examWeight">Weight (kg)</Label>
+                      <Input
+                        id="examWeight"
+                        value={assessment.physicalExamination.vitalSigns.weight}
+                        onChange={(e) => updateVitalSigns("weight", e.target.value)}
+                        placeholder="70"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="examHeight">Height (cm)</Label>
+                      <Input
+                        id="examHeight"
+                        value={assessment.physicalExamination.vitalSigns.height}
+                        onChange={(e) => updateVitalSigns("height", e.target.value)}
+                        placeholder="170"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bmi">BMI</Label>
+                      <Input
+                        id="bmi"
+                        value={assessment.physicalExamination.vitalSigns.bmi}
+                        onChange={(e) => updateVitalSigns("bmi", e.target.value)}
+                        placeholder="24.2"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="generalAppearance">General Appearance</Label>
+                    <Textarea
+                      id="generalAppearance"
+                      value={assessment.physicalExamination.generalAppearance}
+                      onChange={(e) => updatePhysicalExamination("generalAppearance", e.target.value)}
+                      placeholder="Overall appearance, distress level, mental status"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="heent">HEENT (Head, Eyes, Ears, Nose, Throat)</Label>
+                    <Textarea
+                      id="heent"
+                      value={assessment.physicalExamination.heent}
+                      onChange={(e) => updatePhysicalExamination("heent", e.target.value)}
+                      placeholder="Head, eyes, ears, nose, throat examination findings"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="cardiovascular">Cardiovascular</Label>
+                    <Textarea
+                      id="cardiovascular"
+                      value={assessment.physicalExamination.cardiovascular}
+                      onChange={(e) => updatePhysicalExamination("cardiovascular", e.target.value)}
+                      placeholder="Heart sounds, murmurs, rhythm, peripheral pulses"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="respiratory">Respiratory</Label>
+                    <Textarea
+                      id="respiratory"
+                      value={assessment.physicalExamination.respiratory}
+                      onChange={(e) => updatePhysicalExamination("respiratory", e.target.value)}
+                      placeholder="Lung sounds, breathing pattern, chest wall"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="abdominal">Abdominal</Label>
+                    <Textarea
+                      id="abdominal"
+                      value={assessment.physicalExamination.abdominal}
+                      onChange={(e) => updatePhysicalExamination("abdominal", e.target.value)}
+                      placeholder="Inspection, palpation, percussion, auscultation"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="neurological">Neurological</Label>
+                    <Textarea
+                      id="neurological"
+                      value={assessment.physicalExamination.neurological}
+                      onChange={(e) => updatePhysicalExamination("neurological", e.target.value)}
+                      placeholder="Mental status, cranial nerves, motor, sensory, reflexes"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="musculoskeletal">Musculoskeletal</Label>
+                    <Textarea
+                      id="musculoskeletal"
+                      value={assessment.physicalExamination.musculoskeletal}
+                      onChange={(e) => updatePhysicalExamination("musculoskeletal", e.target.value)}
+                      placeholder="Joint examination, range of motion, deformities"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="skin">Skin</Label>
+                    <Textarea
+                      id="skin"
+                      value={assessment.physicalExamination.skin}
+                      onChange={(e) => updatePhysicalExamination("skin", e.target.value)}
+                      placeholder="Color, temperature, moisture, lesions"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button onClick={() => setCurrentStep(3)} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={() => setCurrentStep(5)} className="bg-green-600 hover:bg-green-700">
+                    Next: Assessment & Plan
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 5: Assessment and Plan */}
+          {currentStep === 5 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+                  Assessment & Treatment Plan
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="primaryDiagnosis">Primary Diagnosis *</Label>
                   <Textarea
-                    id="clinicalAssessment"
-                    value={formData.clinicalAssessment}
-                    onChange={(e) => handleInputChange("clinicalAssessment", e.target.value)}
-                    rows={4}
-                    className="mt-1 border-purple-200 focus:border-purple-500"
-                    placeholder="Primary diagnosis, differential diagnoses, clinical impression..."
+                    id="primaryDiagnosis"
+                    value={assessment.assessmentAndPlan.primaryDiagnosis}
+                    onChange={(e) => updateAssessmentAndPlan("primaryDiagnosis", e.target.value)}
+                    placeholder="Primary diagnosis with ICD-10 code if applicable"
+                    rows={2}
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="treatmentPlan" className="text-purple-900 font-medium">
-                    Treatment Plan *
-                  </Label>
+                  <Label htmlFor="differentialDiagnosis">Differential Diagnosis</Label>
+                  <Textarea
+                    id="differentialDiagnosis"
+                    value={assessment.assessmentAndPlan.differentialDiagnosis}
+                    onChange={(e) => updateAssessmentAndPlan("differentialDiagnosis", e.target.value)}
+                    placeholder="Alternative diagnoses to consider"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="diagnosticTests">Diagnostic Tests</Label>
+                  <Textarea
+                    id="diagnosticTests"
+                    value={assessment.assessmentAndPlan.diagnosticTests}
+                    onChange={(e) => updateAssessmentAndPlan("diagnosticTests", e.target.value)}
+                    placeholder="Laboratory tests, imaging, procedures ordered"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="treatmentPlan">Treatment Plan *</Label>
                   <Textarea
                     id="treatmentPlan"
-                    value={formData.treatmentPlan}
-                    onChange={(e) => handleInputChange("treatmentPlan", e.target.value)}
-                    rows={6}
-                    className="mt-1 border-purple-200 focus:border-purple-500"
-                    placeholder="Comprehensive treatment approach, procedures, lifestyle modifications, monitoring plan..."
+                    value={assessment.assessmentAndPlan.treatmentPlan}
+                    onChange={(e) => updateAssessmentAndPlan("treatmentPlan", e.target.value)}
+                    placeholder="Comprehensive treatment approach"
+                    rows={3}
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="medications" className="text-purple-900 font-medium">
-                    Medications Prescribed
-                  </Label>
+                  <Label htmlFor="medications">Medications</Label>
                   <Textarea
                     id="medications"
-                    value={formData.medications}
-                    onChange={(e) => handleInputChange("medications", e.target.value)}
+                    value={assessment.assessmentAndPlan.medications}
+                    onChange={(e) => updateAssessmentAndPlan("medications", e.target.value)}
+                    placeholder="Prescribed medications with dosages and instructions"
                     rows={4}
-                    className="mt-1 border-purple-200 focus:border-purple-500"
-                    placeholder="Medication name, dosage, frequency, duration, special instructions..."
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="followUpInstructions" className="text-purple-900 font-medium">
-                    Follow-up Instructions
-                  </Label>
+                  <Label htmlFor="followUp">Follow-up Instructions</Label>
                   <Textarea
-                    id="followUpInstructions"
-                    value={formData.followUpInstructions}
-                    onChange={(e) => handleInputChange("followUpInstructions", e.target.value)}
-                    rows={4}
-                    className="mt-1 border-purple-200 focus:border-purple-500"
-                    placeholder="When to return, what to monitor, warning signs, next appointment schedule..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="additionalNotes" className="text-purple-900 font-medium">
-                    Additional Notes
-                  </Label>
-                  <Textarea
-                    id="additionalNotes"
-                    value={formData.additionalNotes}
-                    onChange={(e) => handleInputChange("additionalNotes", e.target.value)}
+                    id="followUp"
+                    value={assessment.assessmentAndPlan.followUpInstructions}
+                    onChange={(e) => updateAssessmentAndPlan("followUpInstructions", e.target.value)}
+                    placeholder="When to return, warning signs, next appointments"
                     rows={3}
-                    className="mt-1 border-purple-200 focus:border-purple-500"
-                    placeholder="Any additional observations, considerations, or special instructions..."
                   />
                 </div>
-              </div>
-            </div>
 
-            {/* Submit Section */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-gray-200">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetAssessment}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Reset Form
-              </Button>
+                <div>
+                  <Label htmlFor="patientEducation">Patient Education</Label>
+                  <Textarea
+                    id="patientEducation"
+                    value={assessment.assessmentAndPlan.patientEducation}
+                    onChange={(e) => updateAssessmentAndPlan("patientEducation", e.target.value)}
+                    placeholder="Information provided to patient about condition and care"
+                    rows={3}
+                  />
+                </div>
 
-              <Button
-                onClick={handleSubmit}
-                disabled={!isFormValid}
-                className="bg-gradient-to-r from-blue-600 via-green-600 to-teal-600 hover:from-blue-700 hover:via-green-700 hover:to-teal-700 text-white px-8 py-3 text-lg font-semibold shadow-lg"
-              >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Generate AI Assessment Report
-              </Button>
-            </div>
+                <div>
+                  <Label htmlFor="prognosis">Prognosis</Label>
+                  <Textarea
+                    id="prognosis"
+                    value={assessment.assessmentAndPlan.prognosis}
+                    onChange={(e) => updateAssessmentAndPlan("prognosis", e.target.value)}
+                    placeholder="Expected outcome and recovery timeline"
+                    rows={2}
+                  />
+                </div>
 
-            {/* Required Fields Notice */}
-            <Alert className="border-blue-200 bg-blue-50">
-              <Info className="h-4 w-4" />
-              <AlertDescription className="text-blue-800">
-                <strong>Required fields:</strong> Patient Name, Doctor Name, Chief Complaint, Clinical Assessment, and
-                Treatment Plan must be completed to generate the assessment report.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    Review all information carefully before generating the AI-powered medical report. This will create
+                    comprehensive documentation including clinical summary, treatment plans, and professional
+                    certificates.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex justify-between">
+                  <Button onClick={() => setCurrentStep(4)} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={generateMedicalReport} className="bg-green-600 hover:bg-green-700 text-white">
+                    Generate AI Medical Report
+                    <FileText className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
+
+      <NavigationButtons />
+      <PoweredByFooter />
     </div>
   )
 }

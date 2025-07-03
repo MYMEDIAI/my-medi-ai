@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
-import NavigationButtons from "@/components/navigation-buttons"
+import Link from "next/link"
 import {
   Baby,
   Heart,
@@ -33,6 +33,8 @@ import {
   Brain,
   Star,
   Phone,
+  Home,
+  RefreshCw,
 } from "lucide-react"
 
 interface PregnancyData {
@@ -184,6 +186,38 @@ export default function PregnancyPage() {
       }))
     }
   }, [babyData.birthDate])
+
+  const handleReset = () => {
+    setActiveTab("pregnancy")
+    setPregnancyData({
+      lastPeriodDate: "",
+      expectedDeliveryDate: "",
+      currentWeek: 0,
+      currentTrimester: 1,
+      babyName: "",
+      motherAge: 25,
+      weight: 60,
+      height: 160,
+      bloodType: "",
+      complications: [],
+    })
+    setBabyData({
+      name: "",
+      birthDate: "",
+      birthWeight: 0,
+      birthHeight: 0,
+      bloodType: "",
+      ageInDays: 0,
+      ageInWeeks: 0,
+      ageInMonths: 0,
+      currentWeight: 0,
+      currentHeight: 0,
+      vaccinations: [],
+      milestones: [],
+    })
+    setWeeklyDietPlan([])
+    setSelectedWeek(1)
+  }
 
   const generateWeeklyDietPlan = async () => {
     setIsGeneratingDiet(true)
@@ -383,7 +417,18 @@ export default function PregnancyPage() {
       <header className="bg-white border-b border-pink-100 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <MyMedLogo size="lg" />
-          <NavigationButtons showReset={false} />
+          <div className="flex items-center space-x-4">
+            <Button onClick={handleReset} variant="outline" className="flex items-center space-x-2 bg-transparent">
+              <RefreshCw className="w-4 h-4" />
+              <span>Reset</span>
+            </Button>
+            <Link href="/">
+              <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
+                <Home className="w-4 h-4" />
+                <span>Back to Home</span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 

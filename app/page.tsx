@@ -332,22 +332,40 @@ Format the response as structured recommendations with clear sections.
                 ))}
               </SelectContent>
             </Select>
+            <Link href="/assessment">
+              <Button variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50 bg-transparent">
+                <User className="w-4 h-4 mr-2" />
+                Assessment
+              </Button>
+            </Link>
             <Link href="/chat">
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50 bg-transparent">
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Quick Chat
+                AI Chat
+              </Button>
+            </Link>
+            <Link href="/vitals">
+              <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 bg-transparent">
+                <Activity className="w-4 h-4 mr-2" />
+                Vitals
+              </Button>
+            </Link>
+            <Link href="/diet">
+              <Button variant="outline" className="text-green-600 border-green-200 hover:bg-green-50 bg-transparent">
+                <Apple className="w-4 h-4 mr-2" />
+                Diet
               </Button>
             </Link>
             <Link href="/pregnancy">
-              <Button className="bg-pink-600 hover:bg-pink-700 text-white">
+              <Button variant="outline" className="text-pink-600 border-pink-200 hover:bg-pink-50 bg-transparent">
                 <Baby className="w-4 h-4 mr-2" />
-                Pregnancy Care
+                Pregnancy
               </Button>
             </Link>
             <Link href="/doctors">
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
+              <Button variant="outline" className="text-green-600 border-green-200 hover:bg-green-50 bg-transparent">
                 <UserCheck className="w-4 h-4 mr-2" />
-                Doctor Portal
+                Doctors
               </Button>
             </Link>
             <Button onClick={() => setShowAssessment(true)} className="bg-blue-600 hover:bg-blue-700 text-white">

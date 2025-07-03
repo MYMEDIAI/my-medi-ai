@@ -1,7 +1,11 @@
+"use client"
+
 import DietPlanGenerator from "@/components/diet-plan-generator"
 import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
-import NavigationButtons from "@/components/navigation-buttons"
+import { Button } from "@/components/ui/button"
+import { Home, RefreshCw } from "lucide-react"
+import Link from "next/link"
 
 export default function DietPage() {
   // Sample user profile - in real app this would come from user data
@@ -11,13 +15,28 @@ export default function DietPage() {
     goal: "weight loss",
   }
 
+  const handleReset = () => {
+    window.location.reload()
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Header */}
       <header className="bg-white border-b border-green-100 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <MyMedLogo size="lg" />
-          <NavigationButtons showReset={false} />
+          <div className="flex items-center space-x-4">
+            <Button onClick={handleReset} variant="outline" className="flex items-center space-x-2 bg-transparent">
+              <RefreshCw className="w-4 h-4" />
+              <span>Reset Diet Plan</span>
+            </Button>
+            <Link href="/">
+              <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
+                <Home className="w-4 h-4" />
+                <span>Back to Home</span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
