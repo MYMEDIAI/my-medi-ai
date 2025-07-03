@@ -11,7 +11,7 @@ interface NavigationButtonsProps {
   showReset?: boolean
 }
 
-export default function NavigationButtons({ showReset = true }: NavigationButtonsProps) {
+function NavigationButtonsComponent({ showReset = true }: NavigationButtonsProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleReset = () => {
@@ -132,3 +132,12 @@ export default function NavigationButtons({ showReset = true }: NavigationButton
     </>
   )
 }
+
+// Default export
+export default NavigationButtonsComponent
+
+// Named export for compatibility
+export const NavigationButtons = NavigationButtonsComponent
+
+// Type export
+export type { NavigationButtonsProps }

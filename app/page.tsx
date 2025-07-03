@@ -399,7 +399,7 @@ Format the response as structured recommendations with clear sections.
           </h1>
           <p className="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">
             Get instant health insights in your language, powered by Google Gemini AI. Healthcare that understands
-            India's diversity and needs.
+            India's diversity and needs. Based in Amavarathi, Andhra Pradesh.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Button
@@ -783,7 +783,7 @@ Format the response as structured recommendations with clear sections.
               <div className="w-80 max-w-sm bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden shadow-lg">
                 <Image
                   src="/images/harsha-founder.jpeg"
-                  alt="Bandarla Harshavardhan - Founder & CEO of MyMedi.ai"
+                  alt="Bandarla Harshavardhan - Founder and CEO of MyMedi.ai, Stanford d.school Fellow, AI Healthcare Expert"
                   width={320}
                   height={400}
                   className="w-full h-auto object-cover"
@@ -813,10 +813,11 @@ Format the response as structured recommendations with clear sections.
               </div>
 
               <p className="text-gray-700 leading-relaxed text-lg">
-                With over a decade of experience as a Data Architect at leading multinational corporations,
-                Harshavardhan combines technical expertise with human-centered design. As a Stanford d.school University
-                Innovation Fellow and MBA graduate, he founded MyMedi.ai to democratize healthcare access for 1.4
-                billion Indians using AI technology.
+                Based in Amavarathi, Andhra Pradesh, with over a decade of experience as a Data Architect at leading
+                multinational corporations, Harshavardhan combines technical expertise with human-centered design. As a
+                Stanford d.school University Innovation Fellow and MBA graduate, he founded MyMedi.ai to democratize
+                healthcare access for 1.4 billion Indians using cutting-edge AI technology. Our mission is to make
+                quality healthcare accessible to every Indian, regardless of language barriers or geographical location.
               </p>
 
               <div className="flex space-x-4">
@@ -861,6 +862,109 @@ Format the response as structured recommendations with clear sections.
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section for SEO */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Common questions about MyMedi.ai's AI-powered healthcare services
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto space-y-6">
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Is MyMedi.ai free to use?</h3>
+                <p className="text-gray-700">
+                  Yes, MyMedi.ai offers 1000+ free AI medical consultations daily. Our basic health assessment, symptom
+                  analysis, and AI chat features are completely free for all Indian users.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Which Indian languages does MyMedi.ai support?
+                </h3>
+                <p className="text-gray-700">
+                  MyMedi.ai supports 10+ Indian languages including Hindi (हिंदी), Tamil (தமிழ்), Telugu (తెలుగు), Bengali
+                  (বাংলা), Gujarati (ગુજરાતી), Kannada (ಕನ್ನಡ), Malayalam (മലയാളം), Marathi (मराठी), and Punjabi (ਪੰਜਾਬੀ).
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  How accurate is the AI medical consultation?
+                </h3>
+                <p className="text-gray-700">
+                  Our AI is powered by Google Gemini with 1M+ token context window, trained on extensive medical data.
+                  However, AI consultation is for informational purposes only and should not replace professional
+                  medical advice from qualified doctors.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Can I upload medical reports for analysis?</h3>
+                <p className="text-gray-700">
+                  Yes, our AI Report Analyzer can analyze medical reports, lab results, and diagnostic documents. It
+                  provides key findings, normal value comparisons, and health recommendations based on your reports.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Is MyMedi.ai suitable for pregnancy care?</h3>
+                <p className="text-gray-700">
+                  MyMedi.ai offers comprehensive pregnancy tracking, baby milestone monitoring, vaccination schedules,
+                  and feeding guides specifically designed for Indian families and cultural practices.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">How does the medicine identifier work?</h3>
+                <p className="text-gray-700">
+                  Simply take a photo of any medicine, and our AI will identify it instantly. You'll get detailed
+                  information about uses, dosage, side effects, drug interactions, and price comparisons between brand
+                  and generic medicines in the Indian market.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Is my health data secure and private?</h3>
+                <p className="text-gray-700">
+                  Yes, MyMedi.ai is HIPAA compliant and follows strict data privacy standards. Your health information
+                  is encrypted and securely stored. We never share your personal medical data with third parties.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Can doctors use MyMedi.ai for their practice?
+                </h3>
+                <p className="text-gray-700">
+                  Yes, we offer a dedicated Doctor Portal with professional assessment forms, AI-powered clinical
+                  documentation, medical report generation, and prescription management tools designed for healthcare
+                  professionals.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -955,70 +1059,52 @@ Format the response as structured recommendations with clear sections.
               <p className="text-gray-300">
                 AI-powered healthcare platform designed specifically for India's diverse healthcare needs.
               </p>
-              <div className="flex space-x-4">
-                <a
-                  href="https://www.linkedin.com/company/my-medi-ai/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Linkedin className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://www.facebook.com/share/19X8ivFr6Z/?mibextid=wwXIfr"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Facebook className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://www.instagram.com/my_medi.ai?igsh=b283cDExejh4cjc1&utm_source=qr"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Instagram className="w-5 h-5" />
-                </a>
+              <div className="space-y-2 text-sm text-gray-400">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>Amavarathi, Andhra Pradesh, India</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  <a href="tel:+919701744770" className="hover:text-white">
+                    +91 9701744770
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  <a href="mailto:contact@mymed.ai" className="hover:text-white">
+                    contact@mymed.ai
+                  </a>
+                </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-gray-300">
+              <h3 className="text-lg font-semibold mb-4">Features</h3>
+              <ul className="space-y-2 text-gray-400">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    AI Health Assistant
-                  </a>
-                </li>
-                <li>
-                  <Link href="/reports" className="hover:text-white transition-colors">
-                    Report Analyzer
+                  <Link href="/chat" className="hover:text-white">
+                    AI Health Chat
                   </Link>
                 </li>
                 <li>
-                  <Link href="/medicines" className="hover:text-white transition-colors">
+                  <Link href="/assessment" className="hover:text-white">
+                    Health Assessment
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/reports" className="hover:text-white">
+                    Report Analysis
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/medicines" className="hover:text-white">
                     Medicine Identifier
                   </Link>
                 </li>
                 <li>
-                  <Link href="/body-mapper" className="hover:text-white transition-colors">
-                    Body Symptom Mapper
-                  </Link>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link href="/vitals" className="hover:text-white">
                     Vitals Tracking
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Pregnancy Care
-                  </a>
-                </li>
-                <li>
-                  <Link href="/doctors" className="hover:text-white transition-colors">
-                    Doctor Portal
                   </Link>
                 </li>
               </ul>
@@ -1026,53 +1112,59 @@ Format the response as structured recommendations with clear sections.
 
             <div>
               <h3 className="text-lg font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-gray-300">
+              <ul className="space-y-2 text-gray-400">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link href="#about" className="hover:text-white">
                     About Us
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link href="#contact" className="hover:text-white">
                     Contact
-                  </a>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="hover:text-white">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="hover:text-white">
+                    Terms of Service
+                  </Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Contact</h3>
-              <ul className="space-y-2 text-gray-300">
-                <li className="flex items-center">
-                  <Mail className="w-4 h-4 mr-2" />
-                  <a href="mailto:Harsha@mymedi.ai" className="hover:text-white transition-colors">
-                    Harsha@mymedi.ai
-                  </a>
+              <h3 className="text-lg font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li>
+                  <Link href="/help" className="hover:text-white">
+                    Help Center
+                  </Link>
                 </li>
-                <li className="flex items-center">
-                  <Phone className="w-4 h-4 mr-2" />
-                  <span>+91 9876543210</span>
+                <li>
+                  <Link href="/faq" className="hover:text-white">
+                    FAQ
+                  </Link>
                 </li>
-                <li className="flex items-center">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  <span>Hyderabad, India</span>
+                <li>
+                  <Link href="#contact" className="hover:text-white">
+                    Contact Support
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/feedback" className="hover:text-white">
+                    Feedback
+                  </Link>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 MyMedi.ai. All rights reserved. Made with ❤️ in India.</p>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 MyMedi.ai. All rights reserved. | Based in Amavarathi, Andhra Pradesh, India</p>
           </div>
         </div>
       </footer>
@@ -1278,13 +1370,18 @@ Dinner: Roti with curry`,
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Vegetarian">Vegetarian</SelectItem>
-            <SelectItem value="Non-Vegetarian">Non-Vegetarian</SelectItem>
+            <SelectItem value="Non-Veget arian">Non-Vegetarian</SelectItem>
             <SelectItem value="Vegan">Vegan</SelectItem>
             <SelectItem value="Diabetic">Diabetic-Friendly</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={generateMealPlan} disabled={isGenerating || !dietType} size="sm" className="w-full">
-          Generate Meal Plan
+        <Button
+          onClick={generateMealPlan}
+          disabled={!dietType || isGenerating}
+          size="sm"
+          className="w-full bg-teal-600 hover:bg-teal-700"
+        >
+          {isGenerating ? "Generating..." : "Generate Meal Plan"}
         </Button>
         <Link href="/diet">
           <Button variant="outline" size="sm" className="w-full bg-transparent">
@@ -1299,8 +1396,8 @@ Dinner: Roti with curry`,
 function ProductionVitalsTracker() {
   const [vitals, setVitals] = useState({
     bp: "",
-    hr: "",
-    temp: "",
+    heartRate: "",
+    weight: "",
   })
 
   const handleVitalChange = (key: string, value: string) => {
@@ -1325,19 +1422,18 @@ function ProductionVitalsTracker() {
           />
           <Input
             placeholder="Heart Rate (72 bpm)"
-            value={vitals.hr}
-            onChange={(e) => handleVitalChange("hr", e.target.value)}
+            value={vitals.heartRate}
+            onChange={(e) => handleVitalChange("heartRate", e.target.value)}
             className="text-sm"
           />
           <Input
-            placeholder="Temperature (98.6°F)"
-            value={vitals.temp}
-            onChange={(e) => handleVitalChange("temp", e.target.value)}
+            placeholder="Weight (70 kg)"
+            value={vitals.weight}
+            onChange={(e) => handleVitalChange("weight", e.target.value)}
             className="text-sm"
           />
         </div>
-        <Button size="sm" className="w-full bg-red-600 hover:bg-red-700">
-          <Heart className="w-4 h-4 mr-2" />
+        <Button size="sm" className="w-full bg-red-600 hover:bg-red-700" disabled>
           Track Vitals
         </Button>
         <Link href="/vitals">
@@ -1353,38 +1449,18 @@ function ProductionVitalsTracker() {
 function HealthAssessmentForm() {
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="bg-white shadow-xl border-0">
-        <CardHeader className="bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-t-lg">
-          <CardTitle className="flex items-center text-white text-2xl">
-            <Stethoscope className="w-8 h-8 mr-3" />
-            AI Health Assessment
-          </CardTitle>
+      <Card className="border-0 shadow-2xl">
+        <CardHeader className="text-center pb-8">
+          <CardTitle className="text-3xl font-bold text-gray-900">AI Health Assessment</CardTitle>
+          <p className="text-gray-600 mt-2">Get personalized health insights powered by Google Gemini AI</p>
         </CardHeader>
         <CardContent className="p-8">
-          <div className="text-center">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-4">Complete Health Assessment</h3>
-            <p className="text-gray-600 mb-8">
-              This comprehensive assessment will be available soon. Get personalized health insights powered by AI.
-            </p>
-            <div className="space-y-4">
-              <Link href="/assessment">
-                <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4">
-                  <User className="w-5 h-5 mr-2" />
-                  Start Assessment
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-              <Link href="/chat">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="bg-transparent border-purple-200 text-purple-600 hover:bg-purple-50 px-8 py-4"
-                >
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Chat with AI Doctor
-                </Button>
-              </Link>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Stethoscope className="w-8 h-8 text-blue-600" />
             </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Assessment Form Loading...</h3>
+            <p className="text-gray-600">Please wait while we prepare your personalized health assessment.</p>
           </div>
         </CardContent>
       </Card>
