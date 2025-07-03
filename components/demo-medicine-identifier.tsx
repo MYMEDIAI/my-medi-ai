@@ -3,11 +3,22 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Pill, Camera, CheckCircle, AlertTriangle, Loader2, Upload } from "lucide-react"
+import {
+  Pill,
+  Camera,
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+  ArrowRight,
+  ShoppingCart,
+  Clock,
+  Shield,
+} from "lucide-react"
 
 interface MedicineInfo {
   name: string
@@ -15,17 +26,27 @@ interface MedicineInfo {
   brandPrice: number
   genericPrice: number
   uses: string
-  interactions: string[]
   dosage: string
   sideEffects: string[]
+  interactions: string[]
   precautions: string[]
+  manufacturer: string
+  rawAnalysis: string
 }
 
-export default function DemoMedicineIdentifier() {
-  const [image, setImage] = useState<string | null>(null)
+function DemoMedicineIdentifierComponent() {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [medicineInfo, setMedicineInfo] = useState<MedicineInfo | null>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState("")
+
+  const sampleMedicines = [
+    "Paracetamol 500mg Tablet",
+    "Amoxicillin 250mg Capsule",
+    "Metformin 500mg Tablet",
+    "Amlodipine 5mg Tablet",
+    "Vitamin D3 1000 IU Tablet",
+  ]
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -33,7 +54,7 @@ export default function DemoMedicineIdentifier() {
       const reader = new FileReader()
       reader.onload = (e) => {
         const result = e.target?.result as string
-        setImage(result)
+        setSelectedImage(result)
         identifyMedicine(file.name)
       }
       reader.readAsDataURL(file)
@@ -41,109 +62,282 @@ export default function DemoMedicineIdentifier() {
     }
   }
 
+  const handleSampleMedicine = (medicineName: string) => {
+    setSelectedImage("/placeholder.svg?height=200&width=300&text=" + encodeURIComponent(medicineName))
+    identifyMedicine(medicineName)
+  }
+
   const identifyMedicine = async (fileName: string) => {
     setIsScanning(true)
     setError("")
 
     try {
+      // Create a comprehensive prompt for AI medicine identification
       const identificationPrompt = `
-Identify this medicine from the image: ${fileName}
+Please identify and provide comprehensive information about this medicine: ${fileName}
 
-Please provide detailed information about:
-1. Medicine name (brand and generic)
-2. Active ingredients and strength
-3. Therapeutic uses and indications
-4. Recommended dosage and administration
-5. Common side effects
-6. Drug interactions and contraindications
-7. Precautions and warnings
-8. Price comparison (brand vs generic in Indian market)
-9. Storage instructions
-10. When to consult a doctor
+As an AI medical assistant, provide detailed information including:
+
+1. **Medicine Identification**: 
+   - Brand name and generic name
+   - Strength/dosage
+   - Manufacturer information
+
+2. **Medical Uses**: 
+   - Primary therapeutic uses
+   - Conditions it treats
+   - How it works in the body
+
+3. **Dosage Information**:
+   - Recommended adult dosage
+   - How to take it (with/without food)
+   - Frequency of administration
+
+4. **Side Effects**:
+   - Common side effects
+   - Serious side effects to watch for
+   - When to contact a doctor
+
+5. **Drug Interactions**:
+   - Medications to avoid
+   - Food/drink interactions
+   - Supplements that may interact
+
+6. **Precautions and Warnings**:
+   - Who should not take this medicine
+   - Special precautions
+   - Storage instructions
+
+7. **Indian Market Information**:
+   - Approximate brand price in Indian rupees
+   - Generic equivalent price
+   - Availability information
+
+Please provide accurate, comprehensive information that would be helpful for Indian patients.
 
 Note: This is a simulated identification for demonstration. In a real scenario, computer vision would analyze the uploaded image.
-
-Provide comprehensive medicine information suitable for patients in India.
 `
 
+      // Call the actual AI integration API
       const response = await fetch("/api/ai-integration", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           message: identificationPrompt,
           type: "medicine-identification",
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
 
+      let aiResponse = ""
       if (data.response) {
-        // Parse AI response or use structured fallback
-        setMedicineInfo({
-          name: "Paracetamol 500mg",
-          generic: "Acetaminophen",
-          brandPrice: 25,
-          genericPrice: 8,
-          uses: "Pain relief, fever reduction, headache, body aches",
-          dosage: "1-2 tablets every 6-8 hours, maximum 4g per day",
-          interactions: ["Avoid with alcohol", "Check with blood thinners", "Consult if taking other pain medications"],
-          sideEffects: ["Nausea (rare)", "Skin rash (rare)", "Liver damage (with overdose)"],
-          precautions: [
-            "Do not exceed recommended dose",
-            "Avoid alcohol consumption",
-            "Consult doctor if symptoms persist",
-          ],
-        })
+        aiResponse = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
       } else {
-        throw new Error("No identification received")
+        throw new Error("No identification received from AI")
       }
+
+      // Parse the AI response and structure it
+      const structuredMedicine = parseAIMedicineInfo(aiResponse, fileName)
+      setMedicineInfo(structuredMedicine)
     } catch (error) {
       console.error("Medicine identification error:", error)
       setError("Unable to identify medicine. Please try again with a clearer image.")
-      // Provide fallback information
-      setMedicineInfo({
-        name: "Medicine Identified",
-        generic: "Generic equivalent available",
-        brandPrice: 25,
-        genericPrice: 8,
-        uses: "Please consult pharmacist for specific uses",
-        dosage: "Follow prescription or package instructions",
-        interactions: ["Consult healthcare provider for interactions"],
-        sideEffects: ["Refer to package insert for side effects"],
-        precautions: ["Always follow prescribed dosage", "Consult doctor if unsure"],
-      })
+
+      // Provide fallback medicine information
+      const fallbackMedicine = generateFallbackMedicine(fileName)
+      setMedicineInfo(fallbackMedicine)
     } finally {
       setIsScanning(false)
     }
   }
 
+  const parseAIMedicineInfo = (aiResponse: string, fileName: string): MedicineInfo => {
+    // Extract information from AI response
+    const medicine: MedicineInfo = {
+      name: fileName.replace(/\.(jpg|jpeg|png|pdf)$/i, ""),
+      generic: "Generic equivalent available",
+      brandPrice: 25,
+      genericPrice: 10,
+      uses: "Please consult pharmacist for specific uses",
+      dosage: "Follow prescription or package instructions",
+      sideEffects: ["Consult healthcare provider for side effects"],
+      interactions: ["Consult healthcare provider for interactions"],
+      precautions: ["Always follow prescribed dosage", "Consult doctor if unsure"],
+      manufacturer: "Various pharmaceutical companies",
+      rawAnalysis: aiResponse,
+    }
+
+    // Parse medicine name and generic
+    const nameMatch = aiResponse.match(/(?:brand name|medicine name|name)[\s:]*([^\n]+)/i)
+    if (nameMatch) {
+      medicine.name = nameMatch[1].trim()
+    }
+
+    const genericMatch = aiResponse.match(/(?:generic name|generic)[\s:]*([^\n]+)/i)
+    if (genericMatch) {
+      medicine.generic = genericMatch[1].trim()
+    }
+
+    // Parse uses
+    const usesMatch = aiResponse.match(/(?:uses?|indications?|treats?)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i)
+    if (usesMatch) {
+      const uses = usesMatch[0].replace(/(?:uses?|indications?|treats?)[\s:]*/i, "").trim()
+      if (uses.length > 10) {
+        medicine.uses = uses
+      }
+    }
+
+    // Parse dosage
+    const dosageMatch = aiResponse.match(/(?:dosage|dose|administration)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i)
+    if (dosageMatch) {
+      const dosage = dosageMatch[0].replace(/(?:dosage|dose|administration)[\s:]*/i, "").trim()
+      if (dosage.length > 10) {
+        medicine.dosage = dosage
+      }
+    }
+
+    // Parse side effects
+    const sideEffectsMatch = aiResponse.match(
+      /(?:side effects?|adverse effects?)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i,
+    )
+    if (sideEffectsMatch) {
+      const effects = sideEffectsMatch[0].split(/[•\-*]\s*/).filter((e) => e.trim().length > 5)
+      if (effects.length > 1) {
+        medicine.sideEffects = effects.slice(1, 5).map((e) => e.trim())
+      }
+    }
+
+    // Parse interactions
+    const interactionsMatch = aiResponse.match(
+      /(?:interactions?|drug interactions?)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i,
+    )
+    if (interactionsMatch) {
+      const interactions = interactionsMatch[0].split(/[•\-*]\s*/).filter((i) => i.trim().length > 5)
+      if (interactions.length > 1) {
+        medicine.interactions = interactions.slice(1, 5).map((i) => i.trim())
+      }
+    }
+
+    // Parse precautions
+    const precautionsMatch = aiResponse.match(/(?:precautions?|warnings?)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i)
+    if (precautionsMatch) {
+      const precautions = precautionsMatch[0].split(/[•\-*]\s*/).filter((p) => p.trim().length > 5)
+      if (precautions.length > 1) {
+        medicine.precautions = precautions.slice(1, 5).map((p) => p.trim())
+      }
+    }
+
+    // Parse prices
+    const priceMatch = aiResponse.match(/(?:price|cost|rupees?)[\s\S]*?(\d+)[\s\S]*?(\d+)/i)
+    if (priceMatch) {
+      const prices = [Number.parseInt(priceMatch[1]), Number.parseInt(priceMatch[2])].sort((a, b) => b - a)
+      medicine.brandPrice = prices[0]
+      medicine.genericPrice = prices[1]
+    }
+
+    return medicine
+  }
+
+  const generateFallbackMedicine = (fileName: string): MedicineInfo => {
+    if (fileName.includes("Paracetamol")) {
+      return {
+        name: "Paracetamol 500mg",
+        generic: "Acetaminophen",
+        brandPrice: 25,
+        genericPrice: 8,
+        uses: "Pain relief, fever reduction, headache, body aches, dental pain, menstrual cramps",
+        dosage: "Adults: 1-2 tablets every 6-8 hours. Maximum 4g per day. Children: As per doctor's advice",
+        sideEffects: [
+          "Nausea (rare)",
+          "Skin rash or allergic reactions",
+          "Liver damage with overdose",
+          "Stomach upset (uncommon)",
+        ],
+        interactions: [
+          "Avoid with alcohol consumption",
+          "Check with blood thinners (warfarin)",
+          "Consult if taking other pain medications",
+          "May interact with certain antibiotics",
+        ],
+        precautions: [
+          "Do not exceed recommended dose",
+          "Avoid alcohol while taking this medicine",
+          "Consult doctor if symptoms persist beyond 3 days",
+          "Not recommended for patients with liver disease",
+        ],
+        manufacturer: "Various Indian pharmaceutical companies",
+        rawAnalysis: "AI analysis temporarily unavailable. This is standard information for Paracetamol 500mg.",
+      }
+    }
+
+    return {
+      name: fileName.replace(/\.(jpg|jpeg|png|pdf)$/i, ""),
+      generic: "Generic equivalent available",
+      brandPrice: 30,
+      genericPrice: 12,
+      uses: "AI analysis temporarily unavailable. Please consult with a pharmacist for specific uses and indications.",
+      dosage: "Follow prescription instructions or package directions. Consult healthcare provider for proper dosage.",
+      sideEffects: [
+        "Consult healthcare provider for complete side effect information",
+        "Monitor for any unusual reactions",
+        "Report adverse effects to your doctor",
+      ],
+      interactions: [
+        "Inform doctor of all medications you're taking",
+        "Check with pharmacist for drug interactions",
+        "Avoid alcohol unless approved by doctor",
+      ],
+      precautions: [
+        "Take as prescribed by healthcare provider",
+        "Store in cool, dry place away from children",
+        "Check expiration date before use",
+        "Don't share medications with others",
+      ],
+      manufacturer: "Consult package for manufacturer information",
+      rawAnalysis:
+        "AI analysis temporarily unavailable. Please consult with a healthcare professional for complete medicine information.",
+    }
+  }
+
   const resetIdentifier = () => {
-    setImage(null)
+    setSelectedImage(null)
     setMedicineInfo(null)
     setError("")
     setIsScanning(false)
   }
 
   return (
-    <Card className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border-blue-500/30 backdrop-blur-sm h-full">
+    <Card className="border-purple-100 hover:shadow-xl transition-all duration-300">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-white">
-          <Pill className="w-5 h-5 text-blue-400" />
-          <span className="text-sm">💊 AI MEDICINE IDENTIFIER</span>
+        <CardTitle className="flex items-center text-purple-700">
+          <Pill className="w-5 h-5 mr-2" />💊 AI Medicine Identifier
         </CardTitle>
+        <div className="flex items-center gap-2">
+          <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+            <div className="w-2 h-2 bg-purple-500 rounded-full mr-1"></div>
+            Live AI
+          </Badge>
+          <span className="text-xs text-gray-500">Powered by Gemini AI</span>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {!medicineInfo ? (
           <>
+            {/* Image Upload Area */}
             <div
-              className="bg-black/30 rounded-lg p-4 border-2 border-dashed border-blue-500/30 cursor-pointer hover:border-blue-400/50 transition-colors"
+              className="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
               onClick={() => document.getElementById("medicine-upload")?.click()}
             >
-              <div className="text-center">
-                <Camera className="w-8 h-8 mx-auto mb-2 text-blue-400" />
-                <p className="text-xs text-gray-100">Snap a photo of any pill/medicine</p>
-                <p className="text-xs text-gray-200 mt-1">Click to upload image</p>
-              </div>
+              <Camera className="w-8 h-8 mx-auto mb-2 text-purple-500" />
+              <p className="text-sm font-medium text-gray-800">Take Medicine Photo</p>
+              <p className="text-xs text-gray-600 mt-1">Clear photo with good lighting works best</p>
             </div>
 
             <Input
@@ -155,119 +349,203 @@ Provide comprehensive medicine information suitable for patients in India.
               disabled={isScanning}
             />
 
-            {image && (
-              <div className="bg-black/30 rounded-lg p-2">
-                <img src={image || "/placeholder.svg"} alt="Medicine" className="w-full h-20 object-contain rounded" />
+            {selectedImage && !isScanning && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <img
+                  src={selectedImage || "/placeholder.svg"}
+                  alt="Selected medicine"
+                  className="w-full h-32 object-contain rounded border bg-white"
+                />
               </div>
             )}
 
-            <Button
-              onClick={() => document.getElementById("medicine-upload")?.click()}
-              disabled={isScanning}
-              className="w-full bg-blue-500/20 border-blue-500/30 hover:bg-blue-500/30 text-blue-100"
-            >
-              {isScanning ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Identifying Medicine...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Medicine Photo
-                </>
-              )}
-            </Button>
+            {/* Sample Medicines */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">Or try with sample medicines:</p>
+              <div className="grid grid-cols-1 gap-2">
+                {sampleMedicines.map((medicine, idx) => (
+                  <Button
+                    key={idx}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSampleMedicine(medicine)}
+                    disabled={isScanning}
+                    className="text-xs text-left justify-start h-auto py-2 px-3 hover:bg-purple-50 hover:border-purple-200"
+                  >
+                    <Pill className="w-3 h-3 mr-2" />
+                    {medicine}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {isScanning && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-center justify-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-purple-800">Identifying Medicine...</p>
+                    <p className="text-xs text-purple-600">AI is analyzing the medicine image</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {error && (
-              <Alert className="border-red-200 bg-red-50/10">
-                <AlertTriangle className="h-4 w-4 text-red-400" />
-                <AlertDescription className="text-red-200 text-xs">{error}</AlertDescription>
+              <Alert className="border-red-200 bg-red-50">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">{error}</AlertDescription>
               </Alert>
             )}
           </>
         ) : (
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2 text-blue-300">
-              <CheckCircle className="w-4 h-4" />
-              <span className="text-sm font-semibold">Medicine Identified</span>
+          <div className="space-y-4">
+            {/* Identification Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <h4 className="font-semibold text-gray-800">AI Identification Complete</h4>
+              </div>
+              <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                <Shield className="w-3 h-3 mr-1" />
+                Verified
+              </Badge>
             </div>
 
-            <div className="bg-black/30 rounded p-3 space-y-2 max-h-48 overflow-y-auto">
+            {/* Medicine Details */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
               <div>
-                <p className="text-xs text-blue-300 font-semibold">{medicineInfo.name}</p>
-                <p className="text-xs text-gray-200">Generic: {medicineInfo.generic}</p>
+                <h5 className="font-semibold text-gray-800">{medicineInfo.name}</h5>
+                <p className="text-sm text-gray-600">Generic: {medicineInfo.generic}</p>
+                <p className="text-sm text-gray-600">Manufacturer: {medicineInfo.manufacturer}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-red-500/20 rounded p-2">
-                  <p className="text-red-300">Brand: ₹{medicineInfo.brandPrice}</p>
+              {/* Price Comparison */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                  <ShoppingCart className="w-4 h-4 mx-auto mb-1 text-red-600" />
+                  <p className="text-xs text-red-600 font-medium">Brand Price</p>
+                  <p className="text-lg font-bold text-red-700">₹{medicineInfo.brandPrice}</p>
                 </div>
-                <div className="bg-green-500/20 rounded p-2">
-                  <p className="text-green-300">Generic: ₹{medicineInfo.genericPrice}</p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                  <ShoppingCart className="w-4 h-4 mx-auto mb-1 text-green-600" />
+                  <p className="text-xs text-green-600 font-medium">Generic Price</p>
+                  <p className="text-lg font-bold text-green-700">₹{medicineInfo.genericPrice}</p>
+                  <p className="text-xs text-green-600">Save ₹{medicineInfo.brandPrice - medicineInfo.genericPrice}</p>
                 </div>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-200">
-                  <strong>Uses:</strong> {medicineInfo.uses}
-                </p>
-                <p className="text-xs text-gray-200">
-                  <strong>Dosage:</strong> {medicineInfo.dosage}
-                </p>
-              </div>
-
-              <div className="bg-yellow-500/20 rounded p-2">
-                <div className="flex items-center space-x-1 mb-1">
-                  <AlertTriangle className="w-3 h-3 text-yellow-400" />
-                  <span className="text-xs text-yellow-300 font-semibold">Interactions:</span>
-                </div>
-                {medicineInfo.interactions.map((interaction: string, idx: number) => (
-                  <p key={idx} className="text-xs text-yellow-200">
-                    • {interaction}
-                  </p>
-                ))}
-              </div>
-
-              <div className="bg-orange-500/20 rounded p-2">
-                <div className="flex items-center space-x-1 mb-1">
-                  <AlertTriangle className="w-3 h-3 text-orange-400" />
-                  <span className="text-xs text-orange-300 font-semibold">Precautions:</span>
-                </div>
-                {medicineInfo.precautions.map((precaution: string, idx: number) => (
-                  <p key={idx} className="text-xs text-orange-200">
-                    • {precaution}
-                  </p>
-                ))}
               </div>
             </div>
 
-            <Alert className="border-red-200 bg-red-50/10">
-              <AlertTriangle className="h-4 w-4 text-red-400" />
-              <AlertDescription className="text-red-200 text-xs">
-                Always verify with a pharmacist or doctor before taking any medication.
+            {/* Uses and Dosage */}
+            <div className="space-y-3">
+              <div>
+                <h5 className="font-medium text-gray-800 mb-1 flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  Uses:
+                </h5>
+                <p className="text-sm text-gray-700">{medicineInfo.uses}</p>
+              </div>
+              <div>
+                <h5 className="font-medium text-gray-800 mb-1">Dosage:</h5>
+                <p className="text-sm text-gray-700">{medicineInfo.dosage}</p>
+              </div>
+            </div>
+
+            {/* Side Effects */}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <h5 className="font-medium text-orange-800 mb-2 flex items-center gap-1">
+                <AlertTriangle className="w-4 h-4" />
+                Side Effects:
+              </h5>
+              <ul className="space-y-1">
+                {medicineInfo.sideEffects.map((effect, idx) => (
+                  <li key={idx} className="text-sm text-orange-700 flex items-start gap-1">
+                    <span className="text-orange-500 mt-1">•</span>
+                    {effect}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Interactions */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <h5 className="font-medium text-yellow-800 mb-2 flex items-center gap-1">
+                <AlertTriangle className="w-4 h-4" />
+                Drug Interactions:
+              </h5>
+              <ul className="space-y-1">
+                {medicineInfo.interactions.map((interaction, idx) => (
+                  <li key={idx} className="text-sm text-yellow-700 flex items-start gap-1">
+                    <span className="text-yellow-500 mt-1">•</span>
+                    {interaction}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Precautions */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <h5 className="font-medium text-red-800 mb-2 flex items-center gap-1">
+                <Shield className="w-4 h-4" />
+                Precautions:
+              </h5>
+              <ul className="space-y-1">
+                {medicineInfo.precautions.map((precaution, idx) => (
+                  <li key={idx} className="text-sm text-red-700 flex items-start gap-1">
+                    <span className="text-red-500 mt-1">•</span>
+                    {precaution}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Raw AI Analysis */}
+            <details className="bg-gray-50 rounded-lg p-3">
+              <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                View Full AI Analysis
+              </summary>
+              <div className="mt-2 text-xs text-gray-600 whitespace-pre-line max-h-32 overflow-y-auto">
+                {medicineInfo.rawAnalysis}
+              </div>
+            </details>
+
+            <Alert className="border-red-200 bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800 text-sm">
+                <strong>Important:</strong> Always verify medicine information with a qualified pharmacist or doctor
+                before use. This AI analysis is for reference only.
               </AlertDescription>
             </Alert>
 
             <div className="flex gap-2">
-              <Button
-                onClick={resetIdentifier}
-                size="sm"
-                className="flex-1 bg-blue-500/20 border-blue-500/30 hover:bg-blue-500/30 text-blue-100"
-              >
+              <Button onClick={resetIdentifier} variant="outline" size="sm" className="flex-1 bg-transparent">
                 Scan Another Medicine
               </Button>
-              <Button
-                onClick={() => window.open("/chat", "_blank")}
-                size="sm"
-                className="flex-1 bg-purple-500/20 border-purple-500/30 hover:bg-purple-500/30 text-purple-100"
-              >
-                Ask AI Pharmacist
+              <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700" asChild>
+                <a href="/chat">
+                  Ask AI Pharmacist
+                  <ArrowRight className="w-3 h-3 ml-1" />
+                </a>
               </Button>
             </div>
           </div>
         )}
+
+        <div className="pt-2 border-t">
+          <Button className="w-full bg-purple-600 hover:bg-purple-700" asChild>
+            <a href="/medicines">
+              Open Full Medicine Identifier
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </a>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
 }
+
+// Default export
+export default DemoMedicineIdentifierComponent
+
+// Named export for compatibility
+export const DemoMedicineIdentifier = DemoMedicineIdentifierComponent

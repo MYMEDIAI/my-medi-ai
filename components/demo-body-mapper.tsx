@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { User, MapPin, AlertCircle, Stethoscope, ArrowRight } from "lucide-react"
+import { User, MapPin, AlertCircle, Stethoscope, ArrowRight, Loader2 } from "lucide-react"
 
 interface BodyPart {
   id: string
@@ -42,30 +42,127 @@ function DemoBodyMapperComponent() {
 
     setIsAnalyzing(true)
     try {
-      // Simulate AI analysis
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Create a comprehensive prompt for AI symptom analysis
+      const analysisPrompt = `
+Please analyze these symptoms for the ${selectedPart.name.toLowerCase()}:
 
-      const mockAnalysis = `Based on your symptoms in the ${selectedPart.name.toLowerCase()}, here are some insights:
+**Body Part**: ${selectedPart.name}
+**Symptoms Described**: ${symptoms}
 
-• Your symptoms may indicate common conditions related to this area
-• Consider monitoring the severity and duration of symptoms
-• Stay hydrated and get adequate rest
-• If symptoms persist or worsen, consult a healthcare professional
+As an AI medical assistant, provide a comprehensive analysis including:
 
-Recommended next steps:
-1. Track symptom patterns
-2. Note any triggers or relieving factors
-3. Consider over-the-counter remedies if appropriate
-4. Schedule a medical consultation if needed
+1. **Symptom Assessment**: 
+   - Evaluation of the described symptoms
+   - Possible severity level
+   - Duration considerations
 
-⚠️ This is AI-generated information for educational purposes only. Always consult healthcare professionals for medical advice.`
+2. **Potential Causes**:
+   - Common conditions that could cause these symptoms
+   - Less common but important possibilities
+   - When symptoms might be related to other body systems
 
-      setAnalysis(mockAnalysis)
+3. **Immediate Care Recommendations**:
+   - Self-care measures that might help
+   - Over-the-counter treatments to consider
+   - Activities to avoid
+
+4. **Warning Signs**:
+   - Symptoms that would require immediate medical attention
+   - Red flags to watch for
+   - When to call emergency services
+
+5. **Follow-up Care**:
+   - When to see a doctor
+   - What type of specialist might be needed
+   - Questions to ask healthcare providers
+
+6. **Prevention Tips**:
+   - How to prevent similar symptoms in the future
+   - Lifestyle modifications that might help
+   - Risk factors to be aware of
+
+Please provide practical, actionable advice while emphasizing the importance of professional medical consultation for proper diagnosis and treatment.
+
+Note: This analysis is for educational purposes and should not replace professional medical advice.
+`
+
+      // Call the actual AI integration API
+      const response = await fetch("/api/ai-integration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: analysisPrompt,
+          type: "symptom-analysis",
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      let aiResponse = ""
+      if (data.response) {
+        aiResponse = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
+      } else {
+        throw new Error("No analysis received from AI")
+      }
+
+      setAnalysis(aiResponse)
     } catch (error) {
-      setAnalysis("Unable to analyze symptoms at the moment. Please try again or consult a healthcare professional.")
+      console.error("Symptom analysis error:", error)
+
+      // Provide fallback analysis
+      const fallbackAnalysis = generateFallbackAnalysis(selectedPart, symptoms)
+      setAnalysis(fallbackAnalysis)
     } finally {
       setIsAnalyzing(false)
     }
+  }
+
+  const generateFallbackAnalysis = (part: BodyPart, symptomDescription: string): string => {
+    const commonAdvice = `
+**AI Analysis for ${part.name} Symptoms**
+
+**Symptom Assessment:**
+Based on your description of symptoms in the ${part.name.toLowerCase()}, here are some general considerations:
+
+**Immediate Care Recommendations:**
+• Rest and avoid activities that worsen the symptoms
+• Apply appropriate hot or cold therapy as comfortable
+• Stay hydrated and maintain good nutrition
+• Monitor symptom changes over time
+
+**When to Seek Medical Care:**
+• If symptoms persist for more than a few days
+• If symptoms worsen significantly
+• If you experience severe pain or discomfort
+• If symptoms interfere with daily activities
+
+**Warning Signs - Seek Immediate Medical Attention:**
+• Severe, sudden onset pain
+• Difficulty breathing or swallowing
+• Signs of infection (fever, redness, swelling)
+• Loss of function or mobility
+• Any symptoms that concern you
+
+**General Prevention:**
+• Maintain good posture and ergonomics
+• Stay physically active within your limits
+• Manage stress levels
+• Follow a healthy diet and lifestyle
+
+**Important Note:**
+This is general information only. AI analysis is temporarily unavailable. For proper diagnosis and treatment, please consult with a qualified healthcare professional who can perform a physical examination and consider your complete medical history.
+
+**Next Steps:**
+Consider scheduling an appointment with your primary care physician or appropriate specialist for a proper evaluation of your symptoms.
+`
+
+    return commonAdvice
   }
 
   const resetMapper = () => {
@@ -81,6 +178,13 @@ Recommended next steps:
           <User className="w-5 h-5 mr-2" />
           🗺️ AI Body Symptom Mapper
         </CardTitle>
+        <div className="flex items-center gap-2">
+          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">
+            <div className="w-2 h-2 bg-orange-500 rounded-full mr-1"></div>
+            Live AI
+          </Badge>
+          <span className="text-xs text-gray-500">Powered by Gemini AI</span>
+        </div>
         <p className="text-sm text-gray-600">Click on a body part and describe your symptoms for AI analysis</p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -111,6 +215,7 @@ Recommended next steps:
                 style={{ left: `${part.x}%`, top: `${part.y}%` }}
                 onClick={() => handlePartClick(part)}
                 title={part.name}
+                disabled={isAnalyzing}
               >
                 <MapPin className="w-2 h-2 text-white absolute top-0.5 left-0.5" />
               </button>
@@ -136,6 +241,7 @@ Recommended next steps:
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
                 className="min-h-[100px]"
+                disabled={isAnalyzing}
               />
             </div>
 
@@ -165,8 +271,8 @@ Recommended next steps:
               >
                 {isAnalyzing ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Analyzing...
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    AI Analyzing...
                   </>
                 ) : (
                   <>
@@ -175,7 +281,7 @@ Recommended next steps:
                   </>
                 )}
               </Button>
-              <Button onClick={resetMapper} variant="outline">
+              <Button onClick={resetMapper} variant="outline" disabled={isAnalyzing}>
                 Reset
               </Button>
             </div>
@@ -189,7 +295,7 @@ Recommended next steps:
               <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
               <h4 className="font-semibold text-orange-900">AI Analysis Results</h4>
             </div>
-            <div className="text-sm text-orange-800 whitespace-pre-line">{analysis}</div>
+            <div className="text-sm text-orange-800 whitespace-pre-line max-h-64 overflow-y-auto">{analysis}</div>
           </div>
         )}
 
