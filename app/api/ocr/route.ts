@@ -29,7 +29,28 @@ export async function POST(request: NextRequest) {
             content: [
               {
                 type: "text",
-                text: "Extract all text from this medicine image. Focus on: medicine name, brand name, generic name, dosage/strength, manufacturer, batch number, expiry date, and any other visible text on the medicine packaging or tablet. Provide the extracted text in a clear, organized format.",
+                text: `Extract all text from this medicine image with high accuracy. Focus on:
+
+PRIMARY INFORMATION:
+- Medicine name (brand name)
+- Generic name (if visible)
+- Dosage/strength (mg, IU, ml, etc.)
+- Manufacturer/company name
+
+SECONDARY INFORMATION:
+- Batch number
+- Manufacturing date
+- Expiry date
+- Pack size/quantity
+- Any warnings or instructions
+
+FORMATTING:
+- Provide extracted text in a clear, organized format
+- Separate different types of information
+- Include exact spelling as shown on packaging
+- Note if text is unclear or partially visible
+
+Please extract ALL visible text accurately, paying special attention to medicine names, dosages, and manufacturer details.`,
               },
               {
                 type: "image_url",
@@ -40,18 +61,34 @@ export async function POST(request: NextRequest) {
             ],
           },
         ],
-        max_tokens: 1000,
+        max_tokens: 1500,
+        temperature: 0.1, // Lower temperature for more accurate text extraction
       }),
     })
 
     if (!response.ok) {
       const errorData = await response.json()
       console.error("OpenAI API error:", errorData)
-      throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || "Unknown error"}`)
+
+      // Provide more specific error messages
+      if (response.status === 400) {
+        throw new Error("Invalid image format. Please upload a clear JPG or PNG image.")
+      } else if (response.status === 429) {
+        throw new Error("Service temporarily busy. Please try again in a moment.")
+      } else if (response.status === 401) {
+        throw new Error("Authentication error. Please contact support.")
+      } else {
+        throw new Error(`OCR service error: ${errorData.error?.message || "Unknown error"}`)
+      }
     }
 
     const data = await response.json()
     const extractedText = data.choices[0]?.message?.content || "No text could be extracted from the image."
+
+    // Validate extracted text quality
+    if (extractedText.length < 10) {
+      console.warn("Very little text extracted:", extractedText)
+    }
 
     return NextResponse.json({
       success: true,
@@ -59,6 +96,8 @@ export async function POST(request: NextRequest) {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
+      textLength: extractedText.length,
+      timestamp: new Date().toISOString(),
     })
   } catch (error) {
     console.error("OCR processing error:", error)

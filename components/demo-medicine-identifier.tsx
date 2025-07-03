@@ -61,11 +61,25 @@ function DemoMedicineIdentifierComponent() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Validate file type and size
+      if (!file.type.startsWith("image/")) {
+        setError("Please upload a valid image file (JPG, PNG, etc.)")
+        return
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
+        setError("Image file is too large. Please upload an image smaller than 10MB.")
+        return
+      }
+
       const reader = new FileReader()
       reader.onload = async (e) => {
         const result = e.target?.result as string
         setSelectedImage(result)
         setError("")
+
+        console.log("Image uploaded:", file.name, "Size:", file.size, "Type:", file.type)
 
         // First extract text using OCR
         const extractedText = await extractTextFromImage(file)
@@ -80,6 +94,8 @@ function DemoMedicineIdentifierComponent() {
   const extractTextFromImage = async (file: File): Promise<string | null> => {
     setIsExtracting(true)
     try {
+      console.log("Starting OCR extraction for:", file.name)
+
       const formData = new FormData()
       formData.append("file", file)
 
@@ -90,15 +106,25 @@ function DemoMedicineIdentifierComponent() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.details || "OCR extraction failed")
+        console.error("OCR API error:", errorData)
+        throw new Error(errorData.details || errorData.error || "OCR extraction failed")
       }
 
       const data = await response.json()
-      console.log("OCR extracted text:", data.extractedText)
+      console.log("OCR extraction successful:", data.extractedText)
+
+      if (!data.extractedText || data.extractedText.trim().length < 5) {
+        console.warn("OCR extracted very little text:", data.extractedText)
+        setError("Could not extract clear text from image. Please try a clearer photo with better lighting.")
+        return null
+      }
+
       return data.extractedText || null
     } catch (error) {
       console.error("OCR extraction error:", error)
-      setError(`OCR extraction failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+      setError(
+        `OCR extraction failed: ${error instanceof Error ? error.message : "Unknown error"}. Please try a clearer image with good lighting.`,
+      )
       return null
     } finally {
       setIsExtracting(false)
@@ -121,52 +147,68 @@ function DemoMedicineIdentifierComponent() {
     setError("")
 
     try {
+      console.log("Starting medicine identification for:", fileName)
+      console.log("Extracted text available:", !!extractedText)
+
       // Create a comprehensive prompt for AI medicine identification
       const identificationPrompt = `
-Please identify and provide comprehensive information about this medicine: ${fileName}
+You are an expert AI pharmacist analyzing a medicine. Please provide comprehensive information.
 
-${extractedText ? `OCR Extracted text from the medicine image:\n${extractedText}\n\n` : ""}
+MEDICINE TO ANALYZE: ${fileName}
 
-As an expert AI pharmacist, provide detailed information in the following format:
+${
+  extractedText
+    ? `
+EXTRACTED TEXT FROM MEDICINE IMAGE:
+${extractedText}
+
+Please analyze this extracted text carefully to identify the medicine name, dosage, manufacturer, and any other relevant details visible on the packaging.
+`
+    : "This is a sample medicine analysis."
+}
+
+Please provide detailed information in this EXACT format:
 
 **MEDICINE IDENTIFICATION:**
-- Brand Name: [Brand name]
-- Generic Name: [Generic/chemical name]
-- Strength/Dosage: [e.g., 500mg]
-- Manufacturer: [Company name]
+Brand Name: [Exact brand name from packaging]
+Generic Name: [Chemical/generic name]
+Strength: [Dosage strength like 500mg, 250mg etc]
+Manufacturer: [Company name]
 
 **MEDICAL USES:**
-- Primary indications and therapeutic uses
-- Conditions it treats effectively
-- How it works (mechanism of action)
+[Detailed description of what this medicine treats, primary indications, and how it works]
 
 **DOSAGE INFORMATION:**
-- Recommended adult dosage
-- Frequency of administration
-- How to take (with/without food, timing)
-- Special considerations
+[Specific dosage instructions including frequency, timing, and special instructions]
 
 **SIDE EFFECTS:**
-- Common side effects (list 3-5)
-- Serious side effects to watch for
+- [Common side effect 1]
+- [Common side effect 2]
+- [Common side effect 3]
+- [Serious side effect to watch for]
 
 **DRUG INTERACTIONS:**
-- Important medications to avoid
-- Food/drink interactions
-- Timing considerations
+- [Important drug interaction 1]
+- [Important drug interaction 2]
+- [Food/alcohol interactions]
 
 **PRECAUTIONS:**
-- Who should not take this medicine
-- Special warnings
-- Storage instructions
+- [Important precaution 1]
+- [Important precaution 2]
+- [Storage instructions]
+- [Who should not take this medicine]
 
 **INDIAN MARKET PRICING:**
-- Brand price: ₹[realistic price]
-- Generic price: ₹[realistic lower price]
+Brand Price: ₹[realistic price for brand version]
+Generic Price: ₹[realistic price for generic version]
 
-Please provide accurate, comprehensive information suitable for Indian patients. Include specific dosages and realistic pricing.
+${
+  extractedText
+    ? "IMPORTANT: Base your analysis primarily on the extracted text above. If the text mentions specific brand names, dosages, or manufacturer details, use those exact details in your response."
+    : "Provide comprehensive information for this common medicine."
+}
 
-${extractedText ? "Base your identification primarily on the extracted OCR text above." : "For this sample medicine, provide comprehensive information based on the medicine name."}
+Ensure all information is accurate, practical, and suitable for Indian patients.
 `
 
       // Call the AI integration API
@@ -183,10 +225,12 @@ ${extractedText ? "Base your identification primarily on the extracted OCR text 
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.details || `HTTP error! status: ${response.status}`)
+        console.error("AI API error:", errorData)
+        throw new Error(errorData.details || errorData.error || `HTTP error! status: ${response.status}`)
       }
 
       const data = await response.json()
+      console.log("AI response received:", !!data.response)
 
       if (!data.response) {
         throw new Error("No identification received from AI")
@@ -196,6 +240,8 @@ ${extractedText ? "Base your identification primarily on the extracted OCR text 
       const structuredMedicine = parseAIMedicineInfo(data.response, fileName)
       structuredMedicine.extractedText = extractedText || undefined
       setMedicineInfo(structuredMedicine)
+
+      console.log("Medicine identification completed successfully")
     } catch (error) {
       console.error("Medicine identification error:", error)
       setError(`Medicine identification failed: ${error instanceof Error ? error.message : "Unknown error"}`)
@@ -672,6 +718,33 @@ ${extractedText ? "Base your identification primarily on the extracted OCR text 
       <CardContent className="p-8">
         {!medicineInfo ? (
           <>
+            {/* Instructions for better photo upload */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-6">
+              <h4 className="text-lg font-bold text-blue-800 mb-3 flex items-center">
+                <Camera className="w-5 h-5 mr-2" />📸 Tips for Best Results
+              </h4>
+              <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-700">
+                <div className="space-y-2">
+                  <p className="font-medium">✅ Good Photo Tips:</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• Clear, well-lit medicine packaging</li>
+                    <li>• Focus on medicine name and details</li>
+                    <li>• Avoid shadows and reflections</li>
+                    <li>• Include dosage information if visible</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-medium">📋 What We Extract:</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• Medicine name and brand</li>
+                    <li>• Dosage strength (mg, IU, etc.)</li>
+                    <li>• Manufacturer details</li>
+                    <li>• Batch number and expiry date</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             {/* Image Upload Area */}
             <div
               className="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 transition-all duration-300 transform hover:scale-105"
