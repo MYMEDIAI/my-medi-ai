@@ -3,87 +3,127 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { User, MapPin, AlertCircle, Stethoscope, ArrowRight, Loader2 } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { User, MapPin, CheckCircle, AlertTriangle, Loader2, ArrowRight, Activity, Clock, Shield } from "lucide-react"
 
-interface BodyPart {
-  id: string
-  name: string
-  x: number
-  y: number
-  symptoms?: string[]
+interface SymptomAnalysis {
+  bodyPart: string
+  symptoms: string[]
+  possibleCauses: string[]
+  severity: "mild" | "moderate" | "severe"
+  urgency: "routine" | "soon" | "urgent"
+  recommendations: string[]
+  warningSigns: string[]
+  selfCare: string[]
+  whenToSeek: string
+  rawAnalysis: string
 }
 
-const bodyParts: BodyPart[] = [
-  { id: "head", name: "Head", x: 50, y: 15, symptoms: ["Headache", "Dizziness", "Migraine"] },
-  { id: "chest", name: "Chest", x: 50, y: 35, symptoms: ["Chest pain", "Breathing difficulty", "Heart palpitations"] },
-  { id: "abdomen", name: "Abdomen", x: 50, y: 50, symptoms: ["Stomach pain", "Nausea", "Bloating"] },
-  { id: "left-arm", name: "Left Arm", x: 25, y: 40, symptoms: ["Arm pain", "Numbness", "Weakness"] },
-  { id: "right-arm", name: "Right Arm", x: 75, y: 40, symptoms: ["Arm pain", "Numbness", "Weakness"] },
-  { id: "left-leg", name: "Left Leg", x: 40, y: 75, symptoms: ["Leg pain", "Swelling", "Cramps"] },
-  { id: "right-leg", name: "Right Leg", x: 60, y: 75, symptoms: ["Leg pain", "Swelling", "Cramps"] },
-]
-
 function DemoBodyMapperComponent() {
-  const [selectedPart, setSelectedPart] = useState<BodyPart | null>(null)
-  const [symptoms, setSymptoms] = useState("")
-  const [analysis, setAnalysis] = useState("")
+  const [selectedBodyPart, setSelectedBodyPart] = useState<string | null>(null)
+  const [symptomAnalysis, setSymptomAnalysis] = useState<SymptomAnalysis | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState("")
 
-  const handlePartClick = (part: BodyPart) => {
-    setSelectedPart(part)
-    setSymptoms("")
-    setAnalysis("")
+  const bodyParts = [
+    { name: "Head", position: { top: "10%", left: "45%" }, symptoms: "Headache, dizziness, vision problems" },
+    { name: "Neck", position: { top: "20%", left: "45%" }, symptoms: "Neck pain, stiffness, swollen glands" },
+    { name: "Chest", position: { top: "30%", left: "45%" }, symptoms: "Chest pain, breathing difficulty, cough" },
+    { name: "Abdomen", position: { top: "45%", left: "45%" }, symptoms: "Stomach pain, nausea, bloating" },
+    { name: "Back", position: { top: "35%", left: "55%" }, symptoms: "Back pain, muscle spasms, stiffness" },
+    { name: "Arms", position: { top: "35%", left: "25%" }, symptoms: "Arm pain, numbness, weakness" },
+    { name: "Legs", position: { top: "65%", left: "40%" }, symptoms: "Leg pain, swelling, cramps" },
+  ]
+
+  const commonSymptoms = [
+    "Persistent headache for 3 days",
+    "Sharp chest pain when breathing",
+    "Lower back pain after lifting",
+    "Stomach pain with nausea",
+    "Neck stiffness and headache",
+    "Leg swelling and pain",
+  ]
+
+  const handleBodyPartClick = (bodyPart: string) => {
+    setSelectedBodyPart(bodyPart)
+    analyzeSymptoms(bodyPart, `General symptoms in ${bodyPart}`)
   }
 
-  const analyzeSymptoms = async () => {
-    if (!selectedPart || !symptoms.trim()) return
+  const handleSymptomClick = (symptom: string) => {
+    const bodyPart =
+      symptom.includes("headache") || symptom.includes("neck")
+        ? "Head/Neck"
+        : symptom.includes("chest")
+          ? "Chest"
+          : symptom.includes("back")
+            ? "Back"
+            : symptom.includes("stomach")
+              ? "Abdomen"
+              : symptom.includes("leg")
+                ? "Legs"
+                : "General"
 
+    setSelectedBodyPart(bodyPart)
+    analyzeSymptoms(bodyPart, symptom)
+  }
+
+  const analyzeSymptoms = async (bodyPart: string, symptoms: string) => {
     setIsAnalyzing(true)
+    setError("")
+
     try {
       // Create a comprehensive prompt for AI symptom analysis
       const analysisPrompt = `
-Please analyze these symptoms for the ${selectedPart.name.toLowerCase()}:
+Please analyze these symptoms for the ${bodyPart} area: ${symptoms}
 
-**Body Part**: ${selectedPart.name}
-**Symptoms Described**: ${symptoms}
-
-As an AI medical assistant, provide a comprehensive analysis including:
+As an AI diagnostic assistant specializing in symptom analysis, provide comprehensive assessment including:
 
 1. **Symptom Assessment**: 
-   - Evaluation of the described symptoms
-   - Possible severity level
-   - Duration considerations
+   - Detailed interpretation of the reported symptoms
+   - How these symptoms typically present and progress
+   - Associated symptoms that commonly occur together
 
-2. **Potential Causes**:
-   - Common conditions that could cause these symptoms
-   - Less common but important possibilities
-   - When symptoms might be related to other body systems
+2. **Possible Causes**: 
+   - Range from most common to less common causes
+   - Include both minor and serious conditions to consider
+   - Differentiate between acute and chronic conditions
+   - Consider age-related and lifestyle factors
 
-3. **Immediate Care Recommendations**:
-   - Self-care measures that might help
-   - Over-the-counter treatments to consider
-   - Activities to avoid
+3. **Severity Assessment**: 
+   - Rate as mild, moderate, or severe based on symptom description
+   - Factors that would increase or decrease severity
+   - Red flag symptoms that indicate serious conditions
 
-4. **Warning Signs**:
-   - Symptoms that would require immediate medical attention
-   - Red flags to watch for
-   - When to call emergency services
+4. **Urgency Level**: 
+   - Routine care (can wait for regular appointment)
+   - Soon (should be seen within days)
+   - Urgent (needs immediate medical attention)
 
-5. **Follow-up Care**:
-   - When to see a doctor
-   - What type of specialist might be needed
-   - Questions to ask healthcare providers
+5. **Self-Care Recommendations**: 
+   - Safe home remedies and comfort measures
+   - Activity modifications and rest recommendations
+   - Over-the-counter treatments that may help
+   - What to monitor and track
 
-6. **Prevention Tips**:
-   - How to prevent similar symptoms in the future
-   - Lifestyle modifications that might help
-   - Risk factors to be aware of
+6. **Warning Signs**: 
+   - Specific symptoms that require immediate medical attention
+   - Changes that indicate worsening condition
+   - Emergency situations to watch for
 
-Please provide practical, actionable advice while emphasizing the importance of professional medical consultation for proper diagnosis and treatment.
+7. **When to Seek Medical Care**: 
+   - Clear guidelines on when to contact healthcare provider
+   - What type of healthcare provider to see (primary care, specialist, emergency)
+   - Information to have ready when calling doctor
 
-Note: This analysis is for educational purposes and should not replace professional medical advice.
+8. **Prevention and Lifestyle**: 
+   - Ways to prevent recurrence
+   - Lifestyle modifications that may help
+   - Long-term management strategies
+
+Please provide practical, evidence-based guidance appropriate for Indian healthcare context. Include specific timeframes, clear action steps, and emphasize when professional medical evaluation is essential.
+
+Focus on being helpful while maintaining appropriate medical caution and emphasizing the importance of professional medical assessment for proper diagnosis and treatment.
 `
 
       // Call the actual AI integration API
@@ -111,64 +151,183 @@ Note: This analysis is for educational purposes and should not replace professio
         throw new Error("No analysis received from AI")
       }
 
-      setAnalysis(aiResponse)
+      // Parse the AI response and structure it
+      const structuredAnalysis = parseAISymptomAnalysis(aiResponse, bodyPart, symptoms)
+      setSymptomAnalysis(structuredAnalysis)
     } catch (error) {
       console.error("Symptom analysis error:", error)
+      setError("Unable to analyze symptoms. Please try again.")
 
       // Provide fallback analysis
-      const fallbackAnalysis = generateFallbackAnalysis(selectedPart, symptoms)
-      setAnalysis(fallbackAnalysis)
+      const fallbackAnalysis = generateFallbackAnalysis(bodyPart, symptoms)
+      setSymptomAnalysis(fallbackAnalysis)
     } finally {
       setIsAnalyzing(false)
     }
   }
 
-  const generateFallbackAnalysis = (part: BodyPart, symptomDescription: string): string => {
-    const commonAdvice = `
-**AI Analysis for ${part.name} Symptoms**
+  const parseAISymptomAnalysis = (aiResponse: string, bodyPart: string, symptoms: string): SymptomAnalysis => {
+    const analysis: SymptomAnalysis = {
+      bodyPart,
+      symptoms: [symptoms],
+      possibleCauses: [],
+      severity: "moderate",
+      urgency: "soon",
+      recommendations: [],
+      warningSigns: [],
+      selfCare: [],
+      whenToSeek: "Consult healthcare provider if symptoms persist or worsen",
+      rawAnalysis: aiResponse,
+    }
 
-**Symptom Assessment:**
-Based on your description of symptoms in the ${part.name.toLowerCase()}, here are some general considerations:
+    // Parse possible causes
+    const causesMatch = aiResponse.match(
+      /(?:possible causes?|causes?|conditions?)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i,
+    )
+    if (causesMatch) {
+      const causes = causesMatch[0].split(/[•\-*]\s*/).filter((c) => c.trim().length > 10)
+      analysis.possibleCauses = causes.slice(0, 5).map((c) => c.trim())
+    }
 
-**Immediate Care Recommendations:**
-• Rest and avoid activities that worsen the symptoms
-• Apply appropriate hot or cold therapy as comfortable
-• Stay hydrated and maintain good nutrition
-• Monitor symptom changes over time
+    // Parse recommendations
+    const recommendationsMatch = aiResponse.match(
+      /(?:recommendations?|self-care|home remedies?)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i,
+    )
+    if (recommendationsMatch) {
+      const recommendations = recommendationsMatch[0].split(/[•\-*]\s*/).filter((r) => r.trim().length > 10)
+      analysis.recommendations = recommendations.slice(0, 5).map((r) => r.trim())
+    }
 
-**When to Seek Medical Care:**
-• If symptoms persist for more than a few days
-• If symptoms worsen significantly
-• If you experience severe pain or discomfort
-• If symptoms interfere with daily activities
+    // Parse warning signs
+    const warningMatch = aiResponse.match(
+      /(?:warning signs?|red flags?|emergency)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i,
+    )
+    if (warningMatch) {
+      const warnings = warningMatch[0].split(/[•\-*]\s*/).filter((w) => w.trim().length > 10)
+      analysis.warningSigns = warnings.slice(0, 4).map((w) => w.trim())
+    }
 
-**Warning Signs - Seek Immediate Medical Attention:**
-• Severe, sudden onset pain
-• Difficulty breathing or swallowing
-• Signs of infection (fever, redness, swelling)
-• Loss of function or mobility
-• Any symptoms that concern you
+    // Parse self-care
+    const selfCareMatch = aiResponse.match(
+      /(?:self-care|home care|comfort measures?)[\s\S]*?(?=\n\s*(?:\d+\.|[A-Z][a-z]+:|$))/i,
+    )
+    if (selfCareMatch) {
+      const selfCare = selfCareMatch[0].split(/[•\-*]\s*/).filter((s) => s.trim().length > 10)
+      analysis.selfCare = selfCare.slice(0, 4).map((s) => s.trim())
+    }
 
-**General Prevention:**
-• Maintain good posture and ergonomics
-• Stay physically active within your limits
-• Manage stress levels
-• Follow a healthy diet and lifestyle
+    // Determine severity and urgency
+    if (aiResponse.toLowerCase().includes("severe") || aiResponse.toLowerCase().includes("emergency")) {
+      analysis.severity = "severe"
+      analysis.urgency = "urgent"
+    } else if (aiResponse.toLowerCase().includes("mild") || aiResponse.toLowerCase().includes("minor")) {
+      analysis.severity = "mild"
+      analysis.urgency = "routine"
+    }
 
-**Important Note:**
-This is general information only. AI analysis is temporarily unavailable. For proper diagnosis and treatment, please consult with a qualified healthcare professional who can perform a physical examination and consider your complete medical history.
+    return analysis
+  }
 
-**Next Steps:**
-Consider scheduling an appointment with your primary care physician or appropriate specialist for a proper evaluation of your symptoms.
-`
+  const generateFallbackAnalysis = (bodyPart: string, symptoms: string): SymptomAnalysis => {
+    if (symptoms.includes("headache")) {
+      return {
+        bodyPart: "Head",
+        symptoms: ["Persistent headache"],
+        possibleCauses: [
+          "Tension headache from stress or poor posture",
+          "Dehydration or lack of sleep",
+          "Eye strain from screen time",
+          "Sinus congestion or infection",
+          "Migraine headache",
+        ],
+        severity: "moderate",
+        urgency: "soon",
+        recommendations: [
+          "Rest in a quiet, dark room",
+          "Apply cold compress to forehead",
+          "Stay well hydrated",
+          "Consider over-the-counter pain relief",
+          "Practice relaxation techniques",
+        ],
+        warningSigns: [
+          "Sudden, severe headache unlike any before",
+          "Headache with fever and stiff neck",
+          "Headache with vision changes",
+          "Headache after head injury",
+        ],
+        selfCare: [
+          "Maintain regular sleep schedule",
+          "Manage stress levels",
+          "Stay hydrated throughout the day",
+          "Take breaks from screen time",
+        ],
+        whenToSeek: "See a doctor if headache persists more than 3 days or is severe",
+        rawAnalysis: "AI analysis temporarily unavailable. This is general guidance for headache symptoms.",
+      }
+    }
 
-    return commonAdvice
+    return {
+      bodyPart,
+      symptoms: [symptoms],
+      possibleCauses: [
+        "Common conditions related to this body area",
+        "Muscle strain or overuse",
+        "Minor injury or inflammation",
+        "Stress-related symptoms",
+      ],
+      severity: "moderate",
+      urgency: "soon",
+      recommendations: [
+        "Rest the affected area",
+        "Apply ice or heat as appropriate",
+        "Gentle stretching or movement",
+        "Over-the-counter pain relief if needed",
+      ],
+      warningSigns: [
+        "Severe or worsening pain",
+        "Signs of infection (fever, redness, swelling)",
+        "Loss of function or mobility",
+        "Numbness or tingling",
+      ],
+      selfCare: [
+        "Monitor symptoms closely",
+        "Maintain good posture",
+        "Stay active within comfort limits",
+        "Get adequate rest",
+      ],
+      whenToSeek: "Consult healthcare provider if symptoms persist or worsen",
+      rawAnalysis:
+        "AI analysis temporarily unavailable. Please consult with a healthcare professional for proper assessment.",
+    }
   }
 
   const resetMapper = () => {
-    setSelectedPart(null)
-    setSymptoms("")
-    setAnalysis("")
+    setSelectedBodyPart(null)
+    setSymptomAnalysis(null)
+    setError("")
+    setIsAnalyzing(false)
+  }
+
+  const getSeverityColor = (severity: "mild" | "moderate" | "severe") => {
+    switch (severity) {
+      case "severe":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "moderate":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      default:
+        return "bg-green-100 text-green-800 border-green-200"
+    }
+  }
+
+  const getUrgencyColor = (urgency: "routine" | "soon" | "urgent") => {
+    switch (urgency) {
+      case "urgent":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "soon":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      default:
+        return "bg-green-100 text-green-800 border-green-200"
+    }
   }
 
   return (
@@ -183,133 +342,203 @@ Consider scheduling an appointment with your primary care physician or appropria
             <div className="w-2 h-2 bg-orange-500 rounded-full mr-1"></div>
             Live AI
           </Badge>
-          <span className="text-xs text-gray-500">Powered by Gemini AI</span>
+          <span className="text-xs text-gray-500">Powered by OpenAI GPT-4</span>
         </div>
-        <p className="text-sm text-gray-600">Click on a body part and describe your symptoms for AI analysis</p>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Body Diagram */}
-        <div className="relative bg-gradient-to-b from-orange-50 to-orange-100 rounded-lg p-6 min-h-[300px]">
-          <div className="relative w-full h-64 mx-auto">
-            {/* Simple body outline */}
-            <svg viewBox="0 0 100 100" className="w-full h-full">
-              {/* Body outline */}
-              <ellipse cx="50" cy="12" rx="8" ry="10" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1" />
-              <rect x="42" y="22" width="16" height="25" rx="3" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1" />
-              <rect x="42" y="47" width="16" height="20" rx="3" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1" />
-              <rect x="25" y="25" width="12" height="20" rx="2" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1" />
-              <rect x="63" y="25" width="12" height="20" rx="2" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1" />
-              <rect x="38" y="67" width="8" height="25" rx="2" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1" />
-              <rect x="54" y="67" width="8" height="25" rx="2" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1" />
-            </svg>
-
-            {/* Clickable body parts */}
-            {bodyParts.map((part) => (
-              <button
-                key={part.id}
-                className={`absolute w-4 h-4 rounded-full border-2 transform -translate-x-2 -translate-y-2 transition-all duration-200 ${
-                  selectedPart?.id === part.id
-                    ? "bg-orange-500 border-orange-600 scale-125"
-                    : "bg-orange-300 border-orange-400 hover:bg-orange-400 hover:scale-110"
-                }`}
-                style={{ left: `${part.x}%`, top: `${part.y}%` }}
-                onClick={() => handlePartClick(part)}
-                title={part.name}
-                disabled={isAnalyzing}
-              >
-                <MapPin className="w-2 h-2 text-white absolute top-0.5 left-0.5" />
-              </button>
-            ))}
-          </div>
-
-          {selectedPart && (
-            <div className="mt-4 text-center">
-              <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Selected: {selectedPart.name}</Badge>
-            </div>
-          )}
-        </div>
-
-        {/* Symptom Input */}
-        {selectedPart && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Describe your symptoms in the {selectedPart.name.toLowerCase()}:
-              </label>
-              <Textarea
-                placeholder={`Describe any pain, discomfort, or symptoms you're experiencing in your ${selectedPart.name.toLowerCase()}...`}
-                value={symptoms}
-                onChange={(e) => setSymptoms(e.target.value)}
-                className="min-h-[100px]"
-                disabled={isAnalyzing}
-              />
+      <CardContent className="space-y-4">
+        {!symptomAnalysis ? (
+          <>
+            {/* Body Map */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <p className="text-sm font-medium text-gray-700 mb-4 text-center">
+                Click on a body part to analyze symptoms:
+              </p>
+              <div className="relative mx-auto w-48 h-64 bg-blue-50 rounded-full border-2 border-blue-200">
+                {bodyParts.map((part) => (
+                  <Button
+                    key={part.name}
+                    size="sm"
+                    variant="outline"
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 text-xs px-2 py-1 h-auto hover:bg-orange-100 hover:border-orange-300 bg-transparent"
+                    style={{ top: part.position.top, left: part.position.left }}
+                    onClick={() => handleBodyPartClick(part.name)}
+                    disabled={isAnalyzing}
+                  >
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {part.name}
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            {selectedPart.symptoms && (
-              <div>
-                <p className="text-sm text-gray-600 mb-2">Common symptoms for this area:</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedPart.symptoms.map((symptom) => (
-                    <Badge
-                      key={symptom}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-orange-50"
-                      onClick={() => setSymptoms((prev) => (prev ? `${prev}, ${symptom}` : symptom))}
-                    >
-                      {symptom}
-                    </Badge>
-                  ))}
+            {/* Common Symptoms */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">Or select a common symptom:</p>
+              <div className="grid grid-cols-1 gap-2">
+                {commonSymptoms.map((symptom, idx) => (
+                  <Button
+                    key={idx}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSymptomClick(symptom)}
+                    disabled={isAnalyzing}
+                    className="text-xs text-left justify-start h-auto py-2 px-3 hover:bg-orange-50 hover:border-orange-200"
+                  >
+                    <Activity className="w-3 h-3 mr-2" />
+                    {symptom}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {isAnalyzing && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="flex items-center justify-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-orange-600" />
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-orange-800">Analyzing Symptoms...</p>
+                    <p className="text-xs text-orange-600">OpenAI is processing your health data</p>
+                  </div>
                 </div>
               </div>
             )}
 
+            {error && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">{error}</AlertDescription>
+              </Alert>
+            )}
+          </>
+        ) : (
+          <div className="space-y-4">
+            {/* Analysis Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <h4 className="font-semibold text-gray-800">AI Symptom Analysis</h4>
+              </div>
+              <div className="flex gap-2">
+                <Badge className={getSeverityColor(symptomAnalysis.severity)}>
+                  {symptomAnalysis.severity.toUpperCase()}
+                </Badge>
+                <Badge className={getUrgencyColor(symptomAnalysis.urgency)}>
+                  {symptomAnalysis.urgency.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Body Part & Symptoms */}
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <MapPin className="w-4 h-4 text-orange-600" />
+                <span className="font-medium text-gray-800">{symptomAnalysis.bodyPart}</span>
+              </div>
+              <div className="space-y-1">
+                {symptomAnalysis.symptoms.map((symptom, idx) => (
+                  <p key={idx} className="text-sm text-gray-700">
+                    • {symptom}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            {/* Possible Causes */}
+            {symptomAnalysis.possibleCauses.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="font-medium text-gray-800">Possible Causes:</h5>
+                <ul className="space-y-1">
+                  {symptomAnalysis.possibleCauses.map((cause, idx) => (
+                    <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="text-blue-500 mt-1">•</span>
+                      {cause}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Self-Care Recommendations */}
+            {symptomAnalysis.selfCare.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="font-medium text-gray-800 flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Self-Care Recommendations:
+                </h5>
+                <ul className="space-y-1">
+                  {symptomAnalysis.selfCare.map((care, idx) => (
+                    <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="text-green-500 mt-1">•</span>
+                      {care}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Warning Signs */}
+            {symptomAnalysis.warningSigns.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="font-medium text-gray-800 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  Warning Signs - Seek Immediate Care:
+                </h5>
+                <ul className="space-y-1">
+                  {symptomAnalysis.warningSigns.map((warning, idx) => (
+                    <li key={idx} className="text-sm text-red-700 flex items-start gap-2">
+                      <span className="text-red-500 mt-1">•</span>
+                      {warning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* When to Seek Care */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <h5 className="font-medium text-blue-800 mb-1 flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                When to Seek Medical Care:
+              </h5>
+              <p className="text-sm text-blue-700">{symptomAnalysis.whenToSeek}</p>
+            </div>
+
+            {/* Raw AI Analysis */}
+            <details className="bg-gray-50 rounded-lg p-3">
+              <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                View Full AI Analysis
+              </summary>
+              <div className="mt-2 text-xs text-gray-600 whitespace-pre-line max-h-32 overflow-y-auto">
+                {symptomAnalysis.rawAnalysis}
+              </div>
+            </details>
+
+            <Alert className="border-yellow-200 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800 text-sm">
+                This AI symptom analysis is for educational purposes only. It does not replace professional medical
+                diagnosis. Always consult healthcare providers for proper medical evaluation and treatment.
+              </AlertDescription>
+            </Alert>
+
             <div className="flex gap-2">
-              <Button
-                onClick={analyzeSymptoms}
-                disabled={!symptoms.trim() || isAnalyzing}
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    AI Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Stethoscope className="w-4 h-4 mr-2" />
-                    Analyze Symptoms
-                  </>
-                )}
+              <Button onClick={resetMapper} variant="outline" size="sm" className="flex-1 bg-transparent">
+                Analyze Other Symptoms
               </Button>
-              <Button onClick={resetMapper} variant="outline" disabled={isAnalyzing}>
-                Reset
+              <Button size="sm" className="flex-1 bg-orange-600 hover:bg-orange-700" asChild>
+                <a href="/chat">
+                  Discuss with AI Doctor
+                  <ArrowRight className="w-3 h-3 ml-1" />
+                </a>
               </Button>
             </div>
           </div>
         )}
 
-        {/* Analysis Results */}
-        {analysis && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div className="flex items-start gap-2 mb-2">
-              <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-              <h4 className="font-semibold text-orange-900">AI Analysis Results</h4>
-            </div>
-            <div className="text-sm text-orange-800 whitespace-pre-line max-h-64 overflow-y-auto">{analysis}</div>
-          </div>
-        )}
-
-        {!selectedPart && (
-          <div className="text-center py-8 text-gray-500">
-            <User className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-            <p>Click on any body part above to start mapping your symptoms</p>
-          </div>
-        )}
-
-        <div className="pt-4 border-t">
+        <div className="pt-2 border-t">
           <Button className="w-full bg-orange-600 hover:bg-orange-700" asChild>
             <a href="/body-mapper">
-              Open Full Body Mapper
+              Open Full Body Symptom Mapper
               <ArrowRight className="w-4 h-4 ml-2" />
             </a>
           </Button>
@@ -324,6 +553,3 @@ export default DemoBodyMapperComponent
 
 // Named export for compatibility
 export const DemoBodyMapper = DemoBodyMapperComponent
-
-// Type export
-export type { BodyPart }

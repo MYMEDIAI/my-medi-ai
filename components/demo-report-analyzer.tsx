@@ -74,11 +74,11 @@ function DemoReportAnalyzerComponent() {
       const analysisPrompt = `
 Please analyze this medical report: ${file.name}
 
-As an AI medical assistant, provide a comprehensive analysis including:
+As an AI medical report analyzer, provide a comprehensive analysis including:
 
 1. **Report Type Identification**: What type of medical report this is
 2. **Key Findings**: List the most important findings from the report
-3. **Parameter Analysis**: For each parameter, indicate if it's normal, high, or low
+3. **Parameter Analysis**: For each parameter, indicate if it's normal, high, or low with specific values and normal ranges
 4. **Health Implications**: What these results might indicate about the patient's health
 5. **Recommendations**: Specific actionable recommendations based on the results
 6. **Urgency Level**: Whether this requires immediate, moderate, or routine follow-up
@@ -88,7 +88,9 @@ Please format your response in a clear, structured manner that's easy for patien
 
 Note: This is a simulated analysis for demonstration. In a real scenario, OCR would extract text from the uploaded document.
 
-For this demonstration, please provide analysis appropriate for a ${file.name} report with realistic medical insights.
+For this demonstration, please provide analysis appropriate for a ${file.name} report with realistic medical insights including specific parameter values, normal ranges, and clinical interpretations.
+
+Focus on providing actionable medical insights while emphasizing that AI recommendations should be confirmed by qualified medical practitioners.
 `
 
       // Call the actual AI integration API
@@ -302,7 +304,7 @@ For this demonstration, please provide analysis appropriate for a ${file.name} r
             <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
             Live AI
           </Badge>
-          <span className="text-xs text-gray-500">Powered by Gemini AI</span>
+          <span className="text-xs text-gray-500">Powered by OpenAI GPT-4</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -362,7 +364,7 @@ For this demonstration, please provide analysis appropriate for a ${file.name} r
                   <Loader2 className="w-5 h-5 animate-spin text-green-600" />
                   <div className="text-center">
                     <p className="text-sm font-medium text-green-800">Analyzing Report...</p>
-                    <p className="text-xs text-green-600">AI is processing your medical data</p>
+                    <p className="text-xs text-green-600">OpenAI is processing your medical data</p>
                   </div>
                 </div>
               </div>

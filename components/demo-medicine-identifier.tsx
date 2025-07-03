@@ -76,46 +76,50 @@ function DemoMedicineIdentifierComponent() {
       const identificationPrompt = `
 Please identify and provide comprehensive information about this medicine: ${fileName}
 
-As an AI medical assistant, provide detailed information including:
+As an AI pharmacist and medicine expert, provide detailed information including:
 
 1. **Medicine Identification**: 
    - Brand name and generic name
-   - Strength/dosage
-   - Manufacturer information
+   - Strength/dosage form
+   - Manufacturer information (focus on Indian pharmaceutical companies)
 
 2. **Medical Uses**: 
-   - Primary therapeutic uses
-   - Conditions it treats
-   - How it works in the body
+   - Primary therapeutic uses and indications
+   - Conditions it treats effectively
+   - Mechanism of action in simple terms
 
 3. **Dosage Information**:
-   - Recommended adult dosage
-   - How to take it (with/without food)
+   - Recommended adult dosage with specific amounts
+   - How to take it (with/without food, timing)
    - Frequency of administration
+   - Special considerations for elderly or children
 
 4. **Side Effects**:
-   - Common side effects
+   - Common side effects (frequency >1%)
    - Serious side effects to watch for
-   - When to contact a doctor
+   - When to contact a doctor immediately
 
 5. **Drug Interactions**:
-   - Medications to avoid
-   - Food/drink interactions
+   - Medications to avoid or use with caution
+   - Food/drink interactions (alcohol, grapefruit, etc.)
    - Supplements that may interact
+   - Timing considerations with other medications
 
 6. **Precautions and Warnings**:
-   - Who should not take this medicine
-   - Special precautions
-   - Storage instructions
+   - Who should not take this medicine (contraindications)
+   - Special precautions for pregnancy, breastfeeding
+   - Kidney/liver disease considerations
+   - Storage instructions and shelf life
 
 7. **Indian Market Information**:
-   - Approximate brand price in Indian rupees
-   - Generic equivalent price
-   - Availability information
+   - Approximate brand price in Indian rupees (realistic pricing)
+   - Generic equivalent price (typically 30-70% less)
+   - Common Indian manufacturers
+   - Availability information (prescription vs OTC)
 
-Please provide accurate, comprehensive information that would be helpful for Indian patients.
+Please provide accurate, comprehensive information that would be helpful for Indian patients. Include specific dosages, realistic pricing, and practical advice.
 
-Note: This is a simulated identification for demonstration. In a real scenario, computer vision would analyze the uploaded image.
+Note: This is a simulated identification for demonstration. In a real scenario, computer vision would analyze the uploaded image to identify the medicine from its appearance, packaging, and text.
 `
 
       // Call the actual AI integration API
@@ -324,7 +328,7 @@ Note: This is a simulated identification for demonstration. In a real scenario, 
             <div className="w-2 h-2 bg-purple-500 rounded-full mr-1"></div>
             Live AI
           </Badge>
-          <span className="text-xs text-gray-500">Powered by Gemini AI</span>
+          <span className="text-xs text-gray-500">Powered by OpenAI GPT-4</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -385,7 +389,7 @@ Note: This is a simulated identification for demonstration. In a real scenario, 
                   <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
                   <div className="text-center">
                     <p className="text-sm font-medium text-purple-800">Identifying Medicine...</p>
-                    <p className="text-xs text-purple-600">AI is analyzing the medicine image</p>
+                    <p className="text-xs text-purple-600">OpenAI is analyzing the medicine image</p>
                   </div>
                 </div>
               </div>
@@ -431,73 +435,73 @@ Note: This is a simulated identification for demonstration. In a real scenario, 
                   <ShoppingCart className="w-4 h-4 mx-auto mb-1 text-green-600" />
                   <p className="text-xs text-green-600 font-medium">Generic Price</p>
                   <p className="text-lg font-bold text-green-700">₹{medicineInfo.genericPrice}</p>
-                  <p className="text-xs text-green-600">Save ₹{medicineInfo.brandPrice - medicineInfo.genericPrice}</p>
                 </div>
               </div>
             </div>
 
-            {/* Uses and Dosage */}
-            <div className="space-y-3">
-              <div>
-                <h5 className="font-medium text-gray-800 mb-1 flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  Uses:
-                </h5>
-                <p className="text-sm text-gray-700">{medicineInfo.uses}</p>
-              </div>
-              <div>
-                <h5 className="font-medium text-gray-800 mb-1">Dosage:</h5>
-                <p className="text-sm text-gray-700">{medicineInfo.dosage}</p>
-              </div>
+            {/* Uses */}
+            <div className="space-y-2">
+              <h5 className="font-medium text-gray-800 flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Medical Uses:
+              </h5>
+              <p className="text-sm text-gray-700 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                {medicineInfo.uses}
+              </p>
+            </div>
+
+            {/* Dosage */}
+            <div className="space-y-2">
+              <h5 className="font-medium text-gray-800">Dosage Instructions:</h5>
+              <p className="text-sm text-gray-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                {medicineInfo.dosage}
+              </p>
             </div>
 
             {/* Side Effects */}
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-              <h5 className="font-medium text-orange-800 mb-2 flex items-center gap-1">
-                <AlertTriangle className="w-4 h-4" />
-                Side Effects:
-              </h5>
-              <ul className="space-y-1">
-                {medicineInfo.sideEffects.map((effect, idx) => (
-                  <li key={idx} className="text-sm text-orange-700 flex items-start gap-1">
-                    <span className="text-orange-500 mt-1">•</span>
-                    {effect}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {medicineInfo.sideEffects.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="font-medium text-gray-800">Common Side Effects:</h5>
+                <ul className="space-y-1">
+                  {medicineInfo.sideEffects.map((effect, idx) => (
+                    <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="text-orange-500 mt-1">•</span>
+                      {effect}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            {/* Interactions */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <h5 className="font-medium text-yellow-800 mb-2 flex items-center gap-1">
-                <AlertTriangle className="w-4 h-4" />
-                Drug Interactions:
-              </h5>
-              <ul className="space-y-1">
-                {medicineInfo.interactions.map((interaction, idx) => (
-                  <li key={idx} className="text-sm text-yellow-700 flex items-start gap-1">
-                    <span className="text-yellow-500 mt-1">•</span>
-                    {interaction}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {/* Drug Interactions */}
+            {medicineInfo.interactions.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="font-medium text-gray-800">Drug Interactions:</h5>
+                <ul className="space-y-1">
+                  {medicineInfo.interactions.map((interaction, idx) => (
+                    <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="text-red-500 mt-1">•</span>
+                      {interaction}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Precautions */}
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <h5 className="font-medium text-red-800 mb-2 flex items-center gap-1">
-                <Shield className="w-4 h-4" />
-                Precautions:
-              </h5>
-              <ul className="space-y-1">
-                {medicineInfo.precautions.map((precaution, idx) => (
-                  <li key={idx} className="text-sm text-red-700 flex items-start gap-1">
-                    <span className="text-red-500 mt-1">•</span>
-                    {precaution}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {medicineInfo.precautions.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="font-medium text-gray-800">Important Precautions:</h5>
+                <ul className="space-y-1">
+                  {medicineInfo.precautions.map((precaution, idx) => (
+                    <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span className="text-blue-500 mt-1">•</span>
+                      {precaution}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Raw AI Analysis */}
             <details className="bg-gray-50 rounded-lg p-3">
@@ -509,17 +513,17 @@ Note: This is a simulated identification for demonstration. In a real scenario, 
               </div>
             </details>
 
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800 text-sm">
-                <strong>Important:</strong> Always verify medicine information with a qualified pharmacist or doctor
-                before use. This AI analysis is for reference only.
+            <Alert className="border-yellow-200 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800 text-sm">
+                This AI identification is for informational purposes only. Always verify medicine details with a
+                qualified pharmacist or healthcare provider before use.
               </AlertDescription>
             </Alert>
 
             <div className="flex gap-2">
               <Button onClick={resetIdentifier} variant="outline" size="sm" className="flex-1 bg-transparent">
-                Scan Another Medicine
+                Identify Another Medicine
               </Button>
               <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700" asChild>
                 <a href="/chat">

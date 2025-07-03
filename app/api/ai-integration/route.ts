@@ -5,41 +5,49 @@ import { type NextRequest, NextResponse } from "next/server"
 /* -------------------------------------------------------------------------- */
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY
-
-// Prefer OpenAI if available, fallback to Gemini
-const AI_PROVIDER = OPENAI_API_KEY ? "openai" : GEMINI_API_KEY ? "gemini" : "none"
-
 const OPENAI_API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
-const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 
 function isKeyMissing(key: string | undefined): boolean {
-  return !key || (key.startsWith("sk-") === false && key.startsWith("AIza") === false) || key.length < 20
+  return !key || !key.startsWith("sk-") || key.length < 20
 }
 
-const NO_API_KEY = AI_PROVIDER === "none"
+const NO_API_KEY = isKeyMissing(OPENAI_API_KEY)
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
 
-function extractPrompt(body: Record<string, unknown>): { prompt: string; mode: "chat" | "assessment" } {
+function extractPrompt(body: Record<string, unknown>): {
+  prompt: string
+  mode: "chat" | "assessment" | "report-analysis" | "medicine-identification" | "symptom-analysis"
+} {
   if (typeof body.prompt === "string" && body.prompt.trim()) {
     return { prompt: body.prompt.trim(), mode: "chat" }
   }
 
   if (typeof body.message === "string") {
-    const mode = body.type === "assessment" ? "assessment" : "chat"
+    let mode: "chat" | "assessment" | "report-analysis" | "medicine-identification" | "symptom-analysis" = "chat"
+
+    if (body.type === "assessment") mode = "assessment"
+    else if (body.type === "report-analysis") mode = "report-analysis"
+    else if (body.type === "medicine-identification") mode = "medicine-identification"
+    else if (body.type === "symptom-analysis") mode = "symptom-analysis"
+
     return { prompt: body.message.trim(), mode }
   }
 
   return { prompt: JSON.stringify(body), mode: "chat" }
 }
 
-async function callOpenAI(prompt: string, mode: "chat" | "assessment") {
-  const systemMessage =
-    mode === "assessment"
-      ? `You are a revolutionary AI medical assistant with cutting-edge capabilities not available anywhere else in the world. You have expertise in:
+async function callOpenAI(
+  prompt: string,
+  mode: "chat" | "assessment" | "report-analysis" | "medicine-identification" | "symptom-analysis",
+) {
+  let systemMessage = ""
+
+  switch (mode) {
+    case "assessment":
+      systemMessage = `You are a revolutionary AI medical assistant with cutting-edge capabilities. You have expertise in:
 
 1. 🧬 AI Genetic Health Prediction - Analyze family history and predict genetic risks 10 years before symptoms
 2. 🗣️ Voice Biomarker Detection - Detect 47+ conditions from voice analysis including COVID, depression, Alzheimer's
@@ -52,10 +60,87 @@ async function callOpenAI(prompt: string, mode: "chat" | "assessment") {
 9. 🔬 Smart Medical Validation - AI validates medical inputs for accuracy
 10. 🚨 AI Emergency Detection - Automatic emergency service recommendations
 
-Based on the type of request, provide revolutionary insights that are evidence-based, culturally appropriate for India, and utilize cutting-edge AI capabilities.
+Based on the health assessment request, provide revolutionary insights that are evidence-based, culturally appropriate for India, and utilize cutting-edge AI capabilities.
 
 IMPORTANT: Always provide actionable, accurate medical insights while emphasizing that AI recommendations should be confirmed by qualified medical practitioners.`
-      : "You are a helpful medical AI assistant. Provide clear, concise health information with appropriate medical disclaimers."
+      break
+
+    case "report-analysis":
+      systemMessage = `You are an expert AI medical report analyzer with advanced capabilities in interpreting medical test results. You specialize in:
+
+1. 📊 Comprehensive Report Analysis - Detailed interpretation of lab results, imaging, and diagnostic tests
+2. 🎯 Parameter Assessment - Identifying normal, abnormal, and borderline values with clinical significance
+3. 🔍 Pattern Recognition - Detecting trends and correlations across multiple parameters
+4. ⚠️ Risk Stratification - Assessing urgency levels and potential health implications
+5. 💡 Clinical Insights - Providing evidence-based interpretations and recommendations
+6. 🏥 Indian Healthcare Context - Understanding local reference ranges and population-specific factors
+7. 📋 Structured Analysis - Organizing findings into clear, actionable categories
+8. 🚨 Red Flag Detection - Identifying critical values requiring immediate attention
+
+Provide comprehensive, structured analysis that includes:
+- Report type identification
+- Key findings summary
+- Parameter-by-parameter analysis with normal ranges
+- Clinical significance and implications
+- Actionable recommendations
+- Follow-up care guidance
+- Urgency assessment
+
+Always emphasize that AI analysis supplements but does not replace professional medical interpretation.`
+      break
+
+    case "medicine-identification":
+      systemMessage = `You are an expert AI pharmacist and medicine identifier with comprehensive knowledge of:
+
+1. 💊 Medicine Identification - Accurate identification of medications from descriptions or images
+2. 🧪 Drug Information Database - Comprehensive knowledge of generic and brand medications
+3. 💰 Price Analysis - Indian pharmaceutical market pricing for brand vs generic options
+4. ⚠️ Safety Profiles - Complete side effects, contraindications, and drug interactions
+5. 📋 Dosage Guidelines - Proper administration, timing, and dosing recommendations
+6. 🏥 Indian Pharmacy Context - Local availability, manufacturers, and regulatory information
+7. 🔄 Drug Interactions - Comprehensive interaction checking and warnings
+8. 👥 Patient Safety - Age-specific, condition-specific, and pregnancy-related considerations
+
+Provide detailed medicine information including:
+- Accurate identification with generic and brand names
+- Therapeutic uses and mechanism of action
+- Proper dosage and administration guidelines
+- Complete side effect profile
+- Drug interaction warnings
+- Precautions and contraindications
+- Indian market pricing information
+- Storage and handling instructions
+
+Always emphasize verification with qualified pharmacists and healthcare providers.`
+      break
+
+    case "symptom-analysis":
+      systemMessage = `You are an expert AI diagnostic assistant specializing in symptom analysis and clinical assessment. Your expertise includes:
+
+1. 🎯 Symptom Pattern Recognition - Advanced analysis of symptom combinations and presentations
+2. 🔍 Differential Diagnosis - Systematic evaluation of possible conditions and causes
+3. ⚡ Triage Assessment - Determining urgency levels and appropriate care pathways
+4. 🏥 Clinical Decision Support - Evidence-based recommendations for next steps
+5. 🚨 Red Flag Detection - Identifying warning signs requiring immediate medical attention
+6. 🌍 Indian Healthcare Context - Understanding local disease patterns and healthcare access
+7. 💡 Patient Education - Clear explanations of symptoms and their implications
+8. 📋 Structured Assessment - Organized evaluation following clinical protocols
+
+Provide comprehensive symptom analysis including:
+- Detailed symptom assessment and interpretation
+- Possible causes ranging from common to serious conditions
+- Immediate self-care recommendations
+- Warning signs requiring urgent medical attention
+- Appropriate follow-up care guidance
+- Prevention strategies and lifestyle modifications
+- When and what type of healthcare provider to consult
+
+Always emphasize that symptom analysis is for educational purposes and professional medical evaluation is essential for proper diagnosis and treatment.`
+      break
+
+    default:
+      systemMessage = `You are a helpful AI medical assistant powered by OpenAI. Provide clear, accurate health information with appropriate medical disclaimers. Focus on being helpful while emphasizing the importance of consulting healthcare professionals for medical advice.`
+  }
 
   const response = await fetch(OPENAI_API_ENDPOINT, {
     method: "POST",
@@ -70,7 +155,7 @@ IMPORTANT: Always provide actionable, accurate medical insights while emphasizin
         { role: "user", content: prompt },
       ],
       temperature: 0.7,
-      max_tokens: 1500,
+      max_tokens: 2000,
     }),
   })
 
@@ -83,57 +168,9 @@ IMPORTANT: Always provide actionable, accurate medical insights while emphasizin
   return data.choices?.[0]?.message?.content || "No response generated."
 }
 
-async function callGemini(prompt: string, mode: "chat" | "assessment") {
-  const systemPreamble =
-    mode === "assessment"
-      ? `You are a revolutionary AI medical assistant with cutting-edge capabilities not available anywhere else in the world. You have expertise in:
-
-1. 🧬 AI Genetic Health Prediction - Analyze family history and predict genetic risks 10 years before symptoms
-2. 🗣️ Voice Biomarker Detection - Detect 47+ conditions from voice analysis including COVID, depression, Alzheimer's
-3. 👁️ Real-Time Health Vision AI - Camera-based disease screening for cancer, diabetes complications, skin conditions
-4. 🌿 AI Ayurveda Integration - World's first platform combining modern medicine with validated Ayurvedic treatments
-5. 👨‍👩‍👧‍👦 Family Health Ecosystem - AI manages entire family health with collective genetic insights
-6. 💰 Healthcare Economics AI - Finds cheapest treatments, optimizes insurance, medical tourism planning
-7. 🧠 AI Mental Health Screening - Comprehensive psychological assessment integration
-8. ⚡ Real-time AI Analysis - Immediate symptom analysis and risk alerts
-9. 🔬 Smart Medical Validation - AI validates medical inputs for accuracy
-10. 🚨 AI Emergency Detection - Automatic emergency service recommendations
-
-Based on the type of request, provide revolutionary insights that are evidence-based, culturally appropriate for India, and utilize cutting-edge AI capabilities.
-
-IMPORTANT: Always provide actionable, accurate medical insights while emphasizing that AI recommendations should be confirmed by qualified medical practitioners.`
-      : "You are a helpful medical AI assistant. Provide clear, concise health information with appropriate medical disclaimers."
-
-  const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${encodeURIComponent(GEMINI_API_KEY!)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: `${systemPreamble}\n\n${prompt}` }] }],
-      generationConfig: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 1500,
-      },
-    }),
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
-  }
-
-  const data = await response.json()
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated."
-}
-
 /* -------------------------------------------------------------------------- */
 /*  Route Handler                                                             */
 /* -------------------------------------------------------------------------- */
-
-/* ------------------------------------------------------------------ */
-/*  Unified body parser                                               */
-/* ------------------------------------------------------------------ */
 
 async function parseBody(req: NextRequest): Promise<Record<string, any>> {
   const contentType = req.headers.get("content-type") || ""
@@ -163,9 +200,7 @@ async function parseBody(req: NextRequest): Promise<Record<string, any>> {
 
 export async function POST(req: NextRequest) {
   try {
-    // ------------------------------------------------------------------
-    //  Parse request body (works for JSON *or* multipart)
-    // ------------------------------------------------------------------
+    // Parse request body (works for JSON *or* multipart)
     const body = await parseBody(req)
 
     const { prompt, mode } = extractPrompt(body)
@@ -178,7 +213,7 @@ export async function POST(req: NextRequest) {
     /*  Local / preview fallback if no API keys are set                  */
     /* ------------------------------------------------------------------ */
     if (NO_API_KEY) {
-      console.warn("⚠️  No AI API keys found – returning simplified stub data")
+      console.warn("⚠️  No OpenAI API key found – returning simplified stub data")
 
       const stub =
         mode === "assessment"
@@ -218,36 +253,30 @@ export async function POST(req: NextRequest) {
 • Seek immediate care if symptoms worsen significantly
 • This is not a substitute for professional medical advice`,
             }
-          : "I'm a medical AI assistant. I provide general health information, but always consult healthcare professionals for proper medical advice and treatment."
+          : "I'm a medical AI assistant powered by OpenAI. I provide general health information, but always consult healthcare professionals for proper medical advice and treatment. Please add your OpenAI API key to enable full AI capabilities."
 
       return NextResponse.json({
         response: stub,
         provider: "stub",
-        message: "Using simplified demo data. Add OPENAI_API_KEY or GEMINI_API_KEY for live AI responses.",
+        message: "Using simplified demo data. Add OPENAI_API_KEY for live AI responses.",
       })
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Real AI API calls                                                 */
+    /*  Real OpenAI API calls                                             */
     /* ------------------------------------------------------------------ */
-    let aiResponse: string
-
-    if (AI_PROVIDER === "openai") {
-      aiResponse = await callOpenAI(prompt, mode)
-    } else {
-      aiResponse = await callGemini(prompt, mode)
-    }
+    const aiResponse = await callOpenAI(prompt, mode)
 
     return NextResponse.json({
       response: aiResponse,
-      provider: AI_PROVIDER,
+      provider: "openai",
     })
   } catch (err) {
-    console.error("AI integration route error:", err)
+    console.error("OpenAI integration route error:", err)
     return NextResponse.json(
       {
         error: "AI service temporarily unavailable",
-        provider: AI_PROVIDER,
+        provider: "openai",
         detail: err instanceof Error ? err.message : "Unknown error",
       },
       { status: 500 },

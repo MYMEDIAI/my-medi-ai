@@ -22,7 +22,7 @@ function DemoChatWidgetComponent() {
       id: "1",
       type: "ai",
       content:
-        "Hello! I'm your AI health assistant powered by Google Gemini. I can help you with health questions, symptom analysis, and medical guidance. What would you like to know?",
+        "Hello! I'm your AI health assistant powered by OpenAI's GPT-4. I can help you with health questions, symptom analysis, and medical guidance. What would you like to know?",
       timestamp: new Date(),
     },
   ])
@@ -183,7 +183,7 @@ Please try asking your question again, or visit our full AI chat for more compre
             <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
             Live AI
           </Badge>
-          <span className="text-xs text-gray-500">Powered by Gemini AI</span>
+          <span className="text-xs text-gray-500">Powered by OpenAI GPT-4</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
