@@ -68,7 +68,6 @@ function DemoMedicineIdentifierComponent() {
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        // 10MB limit
         setError("Image file is too large. Please upload an image smaller than 10MB.")
         return
       }
@@ -78,14 +77,21 @@ function DemoMedicineIdentifierComponent() {
         const result = e.target?.result as string
         setSelectedImage(result)
         setError("")
+        setMedicineInfo(null) // Clear previous results
 
-        console.log("Image uploaded:", file.name, "Size:", file.size, "Type:", file.type)
+        console.log("🔄 Starting medicine identification process...")
+        console.log("📁 File:", file.name, "Size:", file.size, "Type:", file.type)
 
         // First extract text using OCR
         const extractedText = await extractTextFromImage(file)
 
-        // Then identify the medicine
-        await identifyMedicine(file.name, extractedText)
+        // Then identify the medicine using AI
+        if (extractedText) {
+          await identifyMedicineWithAI(file.name, extractedText)
+        } else {
+          // If OCR fails, still try AI with just filename
+          await identifyMedicineWithAI(file.name, null)
+        }
       }
       reader.readAsDataURL(file)
     }
@@ -94,7 +100,7 @@ function DemoMedicineIdentifierComponent() {
   const extractTextFromImage = async (file: File): Promise<string | null> => {
     setIsExtracting(true)
     try {
-      console.log("Starting OCR extraction for:", file.name)
+      console.log("🔍 Starting OCR extraction...")
 
       const formData = new FormData()
       formData.append("file", file)
@@ -106,25 +112,24 @@ function DemoMedicineIdentifierComponent() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error("OCR API error:", errorData)
+        console.error("❌ OCR API error:", errorData)
         throw new Error(errorData.details || errorData.error || "OCR extraction failed")
       }
 
       const data = await response.json()
-      console.log("OCR extraction successful:", data.extractedText)
+      console.log("✅ OCR extraction successful!")
+      console.log("📝 Extracted text:", data.extractedText)
 
       if (!data.extractedText || data.extractedText.trim().length < 5) {
-        console.warn("OCR extracted very little text:", data.extractedText)
-        setError("Could not extract clear text from image. Please try a clearer photo with better lighting.")
-        return null
+        console.warn("⚠️ Very little text extracted")
+        setError("Could not extract clear text from image. Trying AI analysis anyway...")
+        return data.extractedText || null
       }
 
-      return data.extractedText || null
+      return data.extractedText
     } catch (error) {
-      console.error("OCR extraction error:", error)
-      setError(
-        `OCR extraction failed: ${error instanceof Error ? error.message : "Unknown error"}. Please try a clearer image with good lighting.`,
-      )
+      console.error("❌ OCR extraction error:", error)
+      setError(`OCR failed: ${error instanceof Error ? error.message : "Unknown error"}. Trying AI analysis...`)
       return null
     } finally {
       setIsExtracting(false)
@@ -134,27 +139,27 @@ function DemoMedicineIdentifierComponent() {
   const handleSampleMedicine = async (medicineName: string) => {
     setSelectedImage("/placeholder.svg?height=200&width=300&text=" + encodeURIComponent(medicineName))
     setError("")
+    setMedicineInfo(null)
 
-    // Add a small delay to show the scanning animation
+    console.log("🧪 Testing sample medicine:", medicineName)
+
+    // Add delay for UX
     setIsScanning(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    await identifyMedicine(medicineName, null)
+    await identifyMedicineWithAI(medicineName, null)
   }
 
-  const identifyMedicine = async (fileName: string, extractedText: string | null) => {
+  const identifyMedicineWithAI = async (fileName: string, extractedText: string | null) => {
     setIsScanning(true)
     setError("")
 
     try {
-      console.log("Starting medicine identification for:", fileName)
-      console.log("Extracted text available:", !!extractedText)
+      console.log("🤖 Starting AI medicine identification...")
+      console.log("📄 File name:", fileName)
+      console.log("📝 Has extracted text:", !!extractedText)
 
-      // Create a comprehensive prompt for AI medicine identification
-      const identificationPrompt = `
-You are an expert AI pharmacist analyzing a medicine. Please provide comprehensive information.
-
-MEDICINE TO ANALYZE: ${fileName}
+      const prompt = `You are an expert AI pharmacist. Analyze this medicine and provide comprehensive information.
 
 ${
   extractedText
@@ -162,502 +167,257 @@ ${
 EXTRACTED TEXT FROM MEDICINE IMAGE:
 ${extractedText}
 
-Please analyze this extracted text carefully to identify the medicine name, dosage, manufacturer, and any other relevant details visible on the packaging.
+Please analyze this extracted text to identify the medicine.
 `
-    : "This is a sample medicine analysis."
+    : `
+MEDICINE NAME: ${fileName}
+`
 }
 
-Please provide detailed information in this EXACT format:
+Provide detailed information in this EXACT format:
 
 **MEDICINE IDENTIFICATION:**
-Brand Name: [Exact brand name from packaging]
-Generic Name: [Chemical/generic name]
-Strength: [Dosage strength like 500mg, 250mg etc]
+Brand Name: [Brand name]
+Generic Name: [Generic name]
+Strength: [Dosage like 500mg]
 Manufacturer: [Company name]
 
 **MEDICAL USES:**
-[Detailed description of what this medicine treats, primary indications, and how it works]
+[Detailed uses and indications]
 
 **DOSAGE INFORMATION:**
-[Specific dosage instructions including frequency, timing, and special instructions]
+[Specific dosage instructions]
 
 **SIDE EFFECTS:**
-- [Common side effect 1]
-- [Common side effect 2]
-- [Common side effect 3]
-- [Serious side effect to watch for]
+- [Side effect 1]
+- [Side effect 2]
+- [Side effect 3]
+- [Side effect 4]
 
 **DRUG INTERACTIONS:**
-- [Important drug interaction 1]
-- [Important drug interaction 2]
-- [Food/alcohol interactions]
+- [Interaction 1]
+- [Interaction 2]
+- [Interaction 3]
 
 **PRECAUTIONS:**
-- [Important precaution 1]
-- [Important precaution 2]
-- [Storage instructions]
-- [Who should not take this medicine]
+- [Precaution 1]
+- [Precaution 2]
+- [Precaution 3]
+- [Precaution 4]
 
 **INDIAN MARKET PRICING:**
-Brand Price: ₹[realistic price for brand version]
-Generic Price: ₹[realistic price for generic version]
+Brand Price: ₹[price]
+Generic Price: ₹[lower price]
 
-${
-  extractedText
-    ? "IMPORTANT: Base your analysis primarily on the extracted text above. If the text mentions specific brand names, dosages, or manufacturer details, use those exact details in your response."
-    : "Provide comprehensive information for this common medicine."
-}
+${extractedText ? "Base your analysis on the extracted text above." : "Provide comprehensive information for this medicine."}`
 
-Ensure all information is accurate, practical, and suitable for Indian patients.
-`
+      console.log("📤 Sending request to AI API...")
 
-      // Call the AI integration API
       const response = await fetch("/api/ai-integration", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: identificationPrompt,
+          message: prompt,
           type: "medicine-identification",
         }),
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error("AI API error:", errorData)
-        throw new Error(errorData.details || errorData.error || `HTTP error! status: ${response.status}`)
+        console.error("❌ AI API error:", errorData)
+        throw new Error(errorData.details || errorData.error || `AI API failed: ${response.status}`)
       }
 
       const data = await response.json()
-      console.log("AI response received:", !!data.response)
+      console.log("✅ AI response received!")
 
       if (!data.response) {
-        throw new Error("No identification received from AI")
+        throw new Error("No response from AI")
       }
 
-      // Parse the AI response and structure it
-      const structuredMedicine = parseAIMedicineInfo(data.response, fileName)
+      console.log("🔄 Parsing AI response...")
+      const structuredMedicine = parseAIResponse(data.response, fileName)
       structuredMedicine.extractedText = extractedText || undefined
+
+      console.log("✅ Medicine identification completed!")
+      console.log("💊 Medicine:", structuredMedicine.name)
+
       setMedicineInfo(structuredMedicine)
-
-      console.log("Medicine identification completed successfully")
     } catch (error) {
-      console.error("Medicine identification error:", error)
-      setError(`Medicine identification failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+      console.error("❌ AI identification error:", error)
+      setError(`AI identification failed: ${error instanceof Error ? error.message : "Unknown error"}`)
 
-      // Provide fallback medicine information
-      const fallbackMedicine = generateFallbackMedicine(fileName)
-      fallbackMedicine.extractedText = extractedText || undefined
-      setMedicineInfo(fallbackMedicine)
+      // Only use fallback if it's a known medicine
+      if (fileName.toLowerCase().includes("paracetamol") || fileName.toLowerCase().includes("acetaminophen")) {
+        console.log("🔄 Using Paracetamol fallback...")
+        const fallback = getParacetamolFallback()
+        fallback.extractedText = extractedText || undefined
+        setMedicineInfo(fallback)
+      } else {
+        console.log("🔄 Using generic fallback...")
+        const fallback = getGenericFallback(fileName)
+        fallback.extractedText = extractedText || undefined
+        setMedicineInfo(fallback)
+      }
     } finally {
       setIsScanning(false)
     }
   }
 
-  const parseAIMedicineInfo = (aiResponse: string, fileName: string): MedicineInfo => {
-    // Initialize with defaults
+  const parseAIResponse = (aiResponse: string, fileName: string): MedicineInfo => {
+    console.log("🔍 Parsing AI response...")
+
     const medicine: MedicineInfo = {
       name: fileName.replace(/\.(jpg|jpeg|png|pdf)$/i, ""),
       generic: "Generic equivalent available",
-      brandPrice: 25,
-      genericPrice: 10,
-      uses: "Please consult pharmacist for specific uses",
-      dosage: "Follow prescription or package instructions",
-      sideEffects: ["Consult healthcare provider for side effects"],
-      interactions: ["Consult healthcare provider for interactions"],
-      precautions: ["Always follow prescribed dosage", "Consult doctor if unsure"],
-      manufacturer: "Various pharmaceutical companies",
+      brandPrice: 30,
+      genericPrice: 12,
+      uses: "Consult healthcare provider for specific uses",
+      dosage: "Follow prescription instructions",
+      sideEffects: ["Consult healthcare provider"],
+      interactions: ["Consult healthcare provider"],
+      precautions: ["Follow medical advice"],
+      manufacturer: "Various manufacturers",
       rawAnalysis: aiResponse,
     }
 
     try {
-      // Parse medicine name and generic
-      const brandMatch = aiResponse.match(/(?:brand name|medicine name)[\s:]*([^\n]+)/i)
+      // Parse brand name
+      const brandMatch = aiResponse.match(/Brand Name:\s*([^\n]+)/i)
       if (brandMatch) {
-        medicine.name = brandMatch[1].trim().replace(/[*-]/g, "").trim()
+        medicine.name = brandMatch[1].trim()
+        console.log("📝 Found brand name:", medicine.name)
       }
 
-      const genericMatch = aiResponse.match(/(?:generic name)[\s:]*([^\n]+)/i)
+      // Parse generic name
+      const genericMatch = aiResponse.match(/Generic Name:\s*([^\n]+)/i)
       if (genericMatch) {
-        medicine.generic = genericMatch[1].trim().replace(/[*-]/g, "").trim()
+        medicine.generic = genericMatch[1].trim()
+        console.log("📝 Found generic name:", medicine.generic)
       }
 
       // Parse manufacturer
-      const manufacturerMatch = aiResponse.match(/(?:manufacturer)[\s:]*([^\n]+)/i)
+      const manufacturerMatch = aiResponse.match(/Manufacturer:\s*([^\n]+)/i)
       if (manufacturerMatch) {
-        medicine.manufacturer = manufacturerMatch[1].trim().replace(/[*-]/g, "").trim()
+        medicine.manufacturer = manufacturerMatch[1].trim()
+        console.log("📝 Found manufacturer:", medicine.manufacturer)
       }
 
       // Parse uses
-      const usesMatch = aiResponse.match(/(?:medical uses|uses|indications)[\s\S]*?(?=\*\*|$)/i)
+      const usesMatch = aiResponse.match(/\*\*MEDICAL USES:\*\*\s*\n([^*]+)/i)
       if (usesMatch) {
-        const uses = usesMatch[0]
-          .replace(/(?:medical uses|uses|indications)[\s:]*/i, "")
-          .replace(/\*\*/g, "")
-          .trim()
-        if (uses.length > 20) {
-          medicine.uses = uses
-        }
+        medicine.uses = usesMatch[1].trim()
+        console.log("📝 Found uses")
       }
 
       // Parse dosage
-      const dosageMatch = aiResponse.match(/(?:dosage information|dosage)[\s\S]*?(?=\*\*|$)/i)
+      const dosageMatch = aiResponse.match(/\*\*DOSAGE INFORMATION:\*\*\s*\n([^*]+)/i)
       if (dosageMatch) {
-        const dosage = dosageMatch[0]
-          .replace(/(?:dosage information|dosage)[\s:]*/i, "")
-          .replace(/\*\*/g, "")
-          .trim()
-        if (dosage.length > 20) {
-          medicine.dosage = dosage
-        }
+        medicine.dosage = dosageMatch[1].trim()
+        console.log("📝 Found dosage")
       }
 
       // Parse side effects
-      const sideEffectsMatch = aiResponse.match(/(?:side effects)[\s\S]*?(?=\*\*|$)/i)
+      const sideEffectsMatch = aiResponse.match(/\*\*SIDE EFFECTS:\*\*\s*\n((?:- [^\n]+\n?)+)/i)
       if (sideEffectsMatch) {
-        const effects = sideEffectsMatch[0]
-          .split(/[-•*]\s*/)
-          .filter((e) => e.trim().length > 10)
-          .map((e) => e.replace(/\*\*/g, "").trim())
-          .slice(0, 5)
+        const effects = sideEffectsMatch[1]
+          .split("\n")
+          .filter((line) => line.trim().startsWith("-"))
+          .map((line) => line.replace(/^-\s*/, "").trim())
+          .filter((effect) => effect.length > 0)
         if (effects.length > 0) {
           medicine.sideEffects = effects
+          console.log("📝 Found", effects.length, "side effects")
         }
       }
 
       // Parse interactions
-      const interactionsMatch = aiResponse.match(/(?:drug interactions|interactions)[\s\S]*?(?=\*\*|$)/i)
+      const interactionsMatch = aiResponse.match(/\*\*DRUG INTERACTIONS:\*\*\s*\n((?:- [^\n]+\n?)+)/i)
       if (interactionsMatch) {
-        const interactions = interactionsMatch[0]
-          .split(/[-•*]\s*/)
-          .filter((i) => i.trim().length > 10)
-          .map((i) => i.replace(/\*\*/g, "").trim())
-          .slice(0, 5)
+        const interactions = interactionsMatch[1]
+          .split("\n")
+          .filter((line) => line.trim().startsWith("-"))
+          .map((line) => line.replace(/^-\s*/, "").trim())
+          .filter((interaction) => interaction.length > 0)
         if (interactions.length > 0) {
           medicine.interactions = interactions
+          console.log("📝 Found", interactions.length, "interactions")
         }
       }
 
       // Parse precautions
-      const precautionsMatch = aiResponse.match(/(?:precautions|warnings)[\s\S]*?(?=\*\*|$)/i)
+      const precautionsMatch = aiResponse.match(/\*\*PRECAUTIONS:\*\*\s*\n((?:- [^\n]+\n?)+)/i)
       if (precautionsMatch) {
-        const precautions = precautionsMatch[0]
-          .split(/[-•*]\s*/)
-          .filter((p) => p.trim().length > 10)
-          .map((p) => p.replace(/\*\*/g, "").trim())
-          .slice(0, 5)
+        const precautions = precautionsMatch[1]
+          .split("\n")
+          .filter((line) => line.trim().startsWith("-"))
+          .map((line) => line.replace(/^-\s*/, "").trim())
+          .filter((precaution) => precaution.length > 0)
         if (precautions.length > 0) {
           medicine.precautions = precautions
+          console.log("📝 Found", precautions.length, "precautions")
         }
       }
 
       // Parse prices
-      const priceMatch = aiResponse.match(/brand price[\s:]*₹(\d+)[\s\S]*?generic price[\s:]*₹(\d+)/i)
-      if (priceMatch) {
-        medicine.brandPrice = Number.parseInt(priceMatch[1])
-        medicine.genericPrice = Number.parseInt(priceMatch[2])
-      } else {
-        // Try to find any price mentions
-        const anyPriceMatch = aiResponse.match(/₹(\d+)/g)
-        if (anyPriceMatch && anyPriceMatch.length >= 2) {
-          const prices = anyPriceMatch.map((p) => Number.parseInt(p.replace("₹", ""))).sort((a, b) => b - a)
-          medicine.brandPrice = prices[0]
-          medicine.genericPrice = prices[1]
-        }
+      const brandPriceMatch = aiResponse.match(/Brand Price:\s*₹(\d+)/i)
+      const genericPriceMatch = aiResponse.match(/Generic Price:\s*₹(\d+)/i)
+
+      if (brandPriceMatch) {
+        medicine.brandPrice = Number.parseInt(brandPriceMatch[1])
+        console.log("📝 Found brand price: ₹", medicine.brandPrice)
+      }
+
+      if (genericPriceMatch) {
+        medicine.genericPrice = Number.parseInt(genericPriceMatch[1])
+        console.log("📝 Found generic price: ₹", medicine.genericPrice)
       }
     } catch (parseError) {
-      console.error("Error parsing AI response:", parseError)
+      console.error("❌ Error parsing AI response:", parseError)
     }
 
     return medicine
   }
 
-  const generateFallbackMedicine = (fileName: string): MedicineInfo => {
-    const medicineName = fileName.toLowerCase()
-
-    if (medicineName.includes("paracetamol")) {
-      return {
-        name: "Paracetamol 500mg Tablet",
-        generic: "Acetaminophen",
-        brandPrice: 25,
-        genericPrice: 8,
-        uses: "Pain relief, fever reduction, headache, body aches, dental pain, menstrual cramps, arthritis pain, and post-operative pain management",
-        dosage:
-          "Adults: 1-2 tablets (500-1000mg) every 6-8 hours. Maximum 4g per day. Children: 10-15mg/kg body weight every 6 hours",
-        sideEffects: [
-          "Nausea and vomiting (rare)",
-          "Skin rash or allergic reactions",
-          "Liver damage with overdose",
-          "Stomach upset (uncommon)",
-          "Blood disorders (very rare)",
-        ],
-        interactions: [
-          "Avoid with alcohol consumption - increases liver toxicity risk",
-          "Check with blood thinners (warfarin) - may increase bleeding risk",
-          "Consult if taking other pain medications to avoid overdose",
-          "May interact with certain antibiotics and seizure medications",
-        ],
-        precautions: [
-          "Do not exceed recommended dose - can cause serious liver damage",
-          "Avoid alcohol while taking this medicine",
-          "Consult doctor if symptoms persist beyond 3 days",
-          "Not recommended for patients with liver disease",
-          "Use with caution in elderly patients",
-        ],
-        manufacturer: "Cipla, Sun Pharma, Dr. Reddy's, Lupin",
-        rawAnalysis:
-          "Comprehensive information for Paracetamol 500mg - India's most commonly used pain reliever and fever reducer.",
-      }
+  const getParacetamolFallback = (): MedicineInfo => {
+    return {
+      name: "Paracetamol 500mg Tablet",
+      generic: "Acetaminophen",
+      brandPrice: 25,
+      genericPrice: 8,
+      uses: "Pain relief, fever reduction, headache, body aches, dental pain, menstrual cramps",
+      dosage: "Adults: 1-2 tablets every 6-8 hours. Maximum 4g per day. Take with or without food",
+      sideEffects: [
+        "Nausea (rare)",
+        "Skin rash or allergic reactions",
+        "Liver damage with overdose",
+        "Stomach upset (uncommon)",
+      ],
+      interactions: [
+        "Avoid with alcohol - increases liver toxicity",
+        "Check with blood thinners (warfarin)",
+        "Consult if taking other pain medications",
+        "May interact with certain antibiotics",
+      ],
+      precautions: [
+        "Do not exceed recommended dose",
+        "Avoid alcohol while taking",
+        "Consult doctor if symptoms persist beyond 3 days",
+        "Not recommended for liver disease patients",
+      ],
+      manufacturer: "Cipla, Sun Pharma, Dr. Reddy's",
+      rawAnalysis: "Fallback information for Paracetamol 500mg - common pain reliever and fever reducer",
     }
+  }
 
-    if (medicineName.includes("amoxicillin")) {
-      return {
-        name: "Amoxicillin 250mg Capsule",
-        generic: "Amoxicillin Trihydrate",
-        brandPrice: 45,
-        genericPrice: 18,
-        uses: "Bacterial infections including respiratory tract infections, urinary tract infections, skin infections, dental infections, and ear infections",
-        dosage:
-          "Adults: 250-500mg every 8 hours. Children: 20-40mg/kg/day divided into 3 doses. Take with or without food",
-        sideEffects: [
-          "Nausea and diarrhea (common)",
-          "Allergic reactions including skin rash",
-          "Stomach upset and abdominal pain",
-          "Yeast infections (oral or vaginal)",
-          "Severe allergic reactions (rare but serious)",
-        ],
-        interactions: [
-          "May reduce effectiveness of birth control pills",
-          "Avoid with methotrexate - increases toxicity",
-          "May interact with blood thinners",
-          "Can affect live vaccines - consult doctor",
-        ],
-        precautions: [
-          "Complete the full course even if feeling better",
-          "Inform doctor of any penicillin allergies",
-          "Take probiotics to prevent stomach upset",
-          "Not effective against viral infections",
-          "Store in cool, dry place",
-        ],
-        manufacturer: "Cipla, Ranbaxy, Aurobindo Pharma",
-        rawAnalysis: "Amoxicillin is a widely used penicillin antibiotic effective against many bacterial infections.",
-      }
-    }
-
-    if (medicineName.includes("metformin")) {
-      return {
-        name: "Metformin 500mg Tablet",
-        generic: "Metformin Hydrochloride",
-        brandPrice: 35,
-        genericPrice: 12,
-        uses: "Type 2 diabetes management, PCOS treatment, pre-diabetes prevention, and weight management in diabetic patients",
-        dosage:
-          "Adults: Start with 500mg twice daily with meals. May increase to 1000mg twice daily. Maximum 2000mg per day",
-        sideEffects: [
-          "Nausea and stomach upset (common initially)",
-          "Diarrhea and loose stools",
-          "Metallic taste in mouth",
-          "Loss of appetite",
-          "Lactic acidosis (rare but serious)",
-        ],
-        interactions: [
-          "Avoid excessive alcohol - increases lactic acidosis risk",
-          "May interact with contrast dyes used in scans",
-          "Can affect vitamin B12 absorption",
-          "May enhance effects of other diabetes medications",
-        ],
-        precautions: [
-          "Take with meals to reduce stomach upset",
-          "Monitor kidney function regularly",
-          "Stop before surgery or medical procedures",
-          "Not suitable for type 1 diabetes",
-          "Regular blood sugar monitoring required",
-        ],
-        manufacturer: "Sun Pharma, Cipla, Torrent Pharmaceuticals",
-        rawAnalysis: "Metformin is the first-line treatment for type 2 diabetes and helps improve insulin sensitivity.",
-      }
-    }
-
-    if (medicineName.includes("amlodipine")) {
-      return {
-        name: "Amlodipine 5mg Tablet",
-        generic: "Amlodipine Besylate",
-        brandPrice: 40,
-        genericPrice: 15,
-        uses: "High blood pressure (hypertension), chest pain (angina), coronary artery disease, and heart disease prevention",
-        dosage: "Adults: Start with 2.5-5mg once daily. May increase to 10mg daily. Take at the same time each day",
-        sideEffects: [
-          "Ankle swelling and fluid retention",
-          "Dizziness and lightheadedness",
-          "Fatigue and drowsiness",
-          "Flushing and warm feeling",
-          "Headache and nausea",
-        ],
-        interactions: [
-          "May interact with other blood pressure medications",
-          "Grapefruit juice can increase drug levels",
-          "May enhance effects of other heart medications",
-          "Can interact with certain antibiotics",
-        ],
-        precautions: [
-          "Rise slowly from sitting/lying position to avoid dizziness",
-          "Regular blood pressure monitoring required",
-          "Avoid grapefruit and grapefruit juice",
-          "Use caution in liver disease",
-          "May cause ankle swelling - elevate legs when resting",
-        ],
-        manufacturer: "Pfizer, Cipla, Dr. Reddy's Laboratories",
-        rawAnalysis:
-          "Amlodipine is a calcium channel blocker commonly used for blood pressure control and heart protection.",
-      }
-    }
-
-    if (medicineName.includes("vitamin d3")) {
-      return {
-        name: "Vitamin D3 1000 IU Tablet",
-        generic: "Cholecalciferol",
-        brandPrice: 30,
-        genericPrice: 10,
-        uses: "Vitamin D deficiency, bone health, immune system support, calcium absorption, and osteoporosis prevention",
-        dosage:
-          "Adults: 1000-2000 IU daily with food. Higher doses may be needed for deficiency. Take with fat-containing meal",
-        sideEffects: [
-          "Nausea and vomiting (with high doses)",
-          "Constipation",
-          "Loss of appetite",
-          "Kidney stones (with excessive intake)",
-          "Hypercalcemia (rare with normal doses)",
-        ],
-        interactions: [
-          "May increase calcium absorption - monitor calcium levels",
-          "Can enhance effects of calcium supplements",
-          "May interact with thiazide diuretics",
-          "Can affect certain heart medications",
-        ],
-        precautions: [
-          "Take with food containing fat for better absorption",
-          "Regular vitamin D level monitoring recommended",
-          "Don't exceed recommended dose without medical supervision",
-          "Safe for long-term use at appropriate doses",
-          "Store away from light and moisture",
-        ],
-        manufacturer: "Cipla, Sun Pharma, Abbott, Mankind Pharma",
-        rawAnalysis:
-          "Vitamin D3 is essential for bone health, immune function, and overall wellness, especially important in India due to limited sun exposure.",
-      }
-    }
-
-    if (medicineName.includes("aspirin")) {
-      return {
-        name: "Aspirin 75mg Tablet",
-        generic: "Acetylsalicylic Acid",
-        brandPrice: 20,
-        genericPrice: 6,
-        uses: "Heart attack prevention, stroke prevention, blood clot prevention, pain relief, and anti-inflammatory treatment",
-        dosage:
-          "Adults: 75-100mg once daily for heart protection. 300-600mg every 4-6 hours for pain relief. Take with food",
-        sideEffects: [
-          "Stomach irritation and ulcers",
-          "Increased bleeding risk",
-          "Nausea and heartburn",
-          "Allergic reactions including asthma",
-          "Ringing in ears (with high doses)",
-        ],
-        interactions: [
-          "Increases bleeding risk with blood thinners",
-          "May interact with diabetes medications",
-          "Can reduce effectiveness of blood pressure medications",
-          "Avoid with alcohol - increases stomach bleeding risk",
-        ],
-        precautions: [
-          "Take with food to reduce stomach irritation",
-          "Not suitable for children under 16 (Reye's syndrome risk)",
-          "Inform doctors before surgery - may need to stop",
-          "Monitor for signs of bleeding",
-          "Use gastroprotective agents if long-term use",
-        ],
-        manufacturer: "Bayer, Cipla, Dr. Reddy's, Lupin",
-        rawAnalysis:
-          "Low-dose aspirin is widely used for cardiovascular protection, while higher doses provide pain relief and anti-inflammatory effects.",
-      }
-    }
-
-    if (medicineName.includes("omeprazole")) {
-      return {
-        name: "Omeprazole 20mg Capsule",
-        generic: "Omeprazole",
-        brandPrice: 50,
-        genericPrice: 20,
-        uses: "Acid reflux (GERD), stomach ulcers, heartburn, Zollinger-Ellison syndrome, and H. pylori infection treatment",
-        dosage: "Adults: 20mg once daily before breakfast. May increase to 40mg daily. Take 30-60 minutes before meals",
-        sideEffects: [
-          "Headache and dizziness",
-          "Nausea and abdominal pain",
-          "Diarrhea or constipation",
-          "Vitamin B12 deficiency (long-term use)",
-          "Increased infection risk (rare)",
-        ],
-        interactions: [
-          "May reduce absorption of certain medications",
-          "Can interact with blood thinners (clopidogrel)",
-          "May affect antifungal medications",
-          "Can reduce effectiveness of some antibiotics",
-        ],
-        precautions: [
-          "Take on empty stomach, 30-60 minutes before meals",
-          "Long-term use may cause vitamin B12 deficiency",
-          "May mask symptoms of serious stomach conditions",
-          "Gradual dose reduction recommended when stopping",
-          "Regular monitoring needed for long-term use",
-        ],
-        manufacturer: "AstraZeneca, Dr. Reddy's, Cipla, Sun Pharma",
-        rawAnalysis:
-          "Omeprazole is a proton pump inhibitor that effectively reduces stomach acid production for various acid-related conditions.",
-      }
-    }
-
-    if (medicineName.includes("atorvastatin")) {
-      return {
-        name: "Atorvastatin 10mg Tablet",
-        generic: "Atorvastatin Calcium",
-        brandPrice: 60,
-        genericPrice: 25,
-        uses: "High cholesterol, heart disease prevention, stroke prevention, and cardiovascular risk reduction",
-        dosage:
-          "Adults: Start with 10-20mg once daily in the evening. May increase to 80mg daily. Take with or without food",
-        sideEffects: [
-          "Muscle pain and weakness",
-          "Headache and dizziness",
-          "Nausea and stomach upset",
-          "Liver enzyme elevation (rare)",
-          "Memory problems (rare)",
-        ],
-        interactions: [
-          "Avoid grapefruit juice - increases drug levels",
-          "May interact with certain antibiotics",
-          "Can enhance effects of blood thinners",
-          "May interact with other cholesterol medications",
-        ],
-        precautions: [
-          "Regular liver function tests recommended",
-          "Monitor for muscle pain or weakness",
-          "Avoid grapefruit and grapefruit juice",
-          "Take in the evening for best effect",
-          "Maintain healthy diet and exercise",
-        ],
-        manufacturer: "Pfizer, Ranbaxy, Cipla, Dr. Reddy's",
-        rawAnalysis:
-          "Atorvastatin is a widely prescribed statin medication for cholesterol management and cardiovascular protection.",
-      }
-    }
-
-    // Default fallback for unknown medicines
+  const getGenericFallback = (fileName: string): MedicineInfo => {
     return {
       name: fileName.replace(/\.(jpg|jpeg|png|pdf)$/i, ""),
-      generic: "Generic equivalent available",
-      brandPrice: 30,
-      genericPrice: 12,
+      generic: "Generic equivalent may be available",
+      brandPrice: 35,
+      genericPrice: 15,
       uses: "AI analysis temporarily unavailable. Please consult with a pharmacist for specific uses and indications.",
       dosage: "Follow prescription instructions or package directions. Consult healthcare provider for proper dosage.",
       sideEffects: [
@@ -688,6 +448,7 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
     setError("")
     setIsScanning(false)
     setIsExtracting(false)
+    console.log("🔄 Medicine identifier reset")
   }
 
   return (
@@ -718,7 +479,7 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
       <CardContent className="p-8">
         {!medicineInfo ? (
           <>
-            {/* Instructions for better photo upload */}
+            {/* Instructions */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-6">
               <h4 className="text-lg font-bold text-blue-800 mb-3 flex items-center">
                 <Camera className="w-5 h-5 mr-2" />📸 Tips for Best Results
@@ -745,7 +506,7 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
               </div>
             </div>
 
-            {/* Image Upload Area */}
+            {/* Upload Area */}
             <div
               className="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 transition-all duration-300 transform hover:scale-105"
               onClick={() => document.getElementById("medicine-upload")?.click()}
@@ -776,7 +537,7 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
               disabled={isScanning || isExtracting}
             />
 
-            {selectedImage && !isScanning && (
+            {selectedImage && !isScanning && !medicineInfo && (
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 mt-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 bg-purple-500 rounded-full">
@@ -784,7 +545,7 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
                   </div>
                   <div>
                     <span className="text-sm font-medium text-purple-800">Image captured successfully</span>
-                    <p className="text-xs text-purple-600">Ready for AI identification</p>
+                    <p className="text-xs text-purple-600">Processing with OCR + AI...</p>
                   </div>
                 </div>
                 <img
@@ -856,7 +617,7 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
           </>
         ) : (
           <div className="space-y-6">
-            {/* Identification Header */}
+            {/* Success Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-500 rounded-full">
@@ -867,7 +628,7 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
                   <p className="text-sm text-gray-600">Powered by OpenAI GPT-4 + OCR</p>
                 </div>
               </div>
-              <Badge className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 hover:from-green-200 hover:to-green-300 px-4 py-2">
+              <Badge className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 px-4 py-2">
                 <Shield className="w-3 h-3 mr-1" />
                 Verified
               </Badge>
@@ -881,7 +642,7 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
                   <p className="text-lg text-gray-600">Generic: {medicineInfo.generic}</p>
                   <p className="text-sm text-gray-600">Manufacturer: {medicineInfo.manufacturer}</p>
                   {medicineInfo.extractedText && (
-                    <p className="text-xs text-green-600 mt-1">✓ Text extracted via OCR</p>
+                    <p className="text-xs text-green-600 mt-1">✅ Text extracted via OCR</p>
                   )}
                 </div>
 
@@ -1075,8 +836,4 @@ Ensure all information is accurate, practical, and suitable for Indian patients.
   )
 }
 
-// Default export
 export default DemoMedicineIdentifierComponent
-
-// Named export for compatibility
-const DemoMedicineIdentifier = DemoMedicineIdentifierComponent

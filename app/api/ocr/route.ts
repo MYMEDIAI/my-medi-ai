@@ -2,17 +2,24 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("🔍 OCR API: Starting text extraction...")
+
     const formData = await request.formData()
     const file = formData.get("file") as File
 
     if (!file) {
+      console.error("❌ OCR API: No file provided")
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
+
+    console.log("📁 OCR API: Processing file:", file.name, "Size:", file.size, "Type:", file.type)
 
     // Convert file to base64
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const base64 = buffer.toString("base64")
+
+    console.log("📤 OCR API: Sending to OpenAI Vision API...")
 
     // Use OpenAI Vision API for OCR
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -62,15 +69,14 @@ Please extract ALL visible text accurately, paying special attention to medicine
           },
         ],
         max_tokens: 1500,
-        temperature: 0.1, // Lower temperature for more accurate text extraction
+        temperature: 0.1,
       }),
     })
 
     if (!response.ok) {
       const errorData = await response.json()
-      console.error("OpenAI API error:", errorData)
+      console.error("❌ OCR API: OpenAI API error:", errorData)
 
-      // Provide more specific error messages
       if (response.status === 400) {
         throw new Error("Invalid image format. Please upload a clear JPG or PNG image.")
       } else if (response.status === 429) {
@@ -85,10 +91,9 @@ Please extract ALL visible text accurately, paying special attention to medicine
     const data = await response.json()
     const extractedText = data.choices[0]?.message?.content || "No text could be extracted from the image."
 
-    // Validate extracted text quality
-    if (extractedText.length < 10) {
-      console.warn("Very little text extracted:", extractedText)
-    }
+    console.log("✅ OCR API: Text extraction successful!")
+    console.log("📝 OCR API: Extracted text length:", extractedText.length)
+    console.log("📝 OCR API: Extracted text preview:", extractedText.substring(0, 200) + "...")
 
     return NextResponse.json({
       success: true,
@@ -100,7 +105,7 @@ Please extract ALL visible text accurately, paying special attention to medicine
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("OCR processing error:", error)
+    console.error("❌ OCR API: Processing error:", error)
     return NextResponse.json(
       {
         error: "Failed to process image for text extraction",

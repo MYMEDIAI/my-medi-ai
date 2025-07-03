@@ -1,9 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-/* -------------------------------------------------------------------------- */
-/*  Configuration                                                             */
-/* -------------------------------------------------------------------------- */
-
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const OPENAI_API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 
@@ -12,10 +8,6 @@ function isKeyMissing(key: string | undefined): boolean {
 }
 
 const NO_API_KEY = isKeyMissing(OPENAI_API_KEY)
-
-/* -------------------------------------------------------------------------- */
-/*  Helpers                                                                   */
-/* -------------------------------------------------------------------------- */
 
 function extractPrompt(body: Record<string, unknown>): {
   prompt: string
@@ -46,93 +38,41 @@ async function callOpenAI(
   let systemMessage = ""
 
   switch (mode) {
+    case "medicine-identification":
+      systemMessage = `You are an expert AI pharmacist and medicine specialist with comprehensive knowledge of Indian pharmaceutical market. 
+
+Your task is to analyze medicine information and provide accurate, detailed, and helpful information about medicines, health conditions, and medical advice. 
+
+For medicine identification requests, you MUST provide structured information in the EXACT format requested by the user. Pay special attention to:
+
+1. **Accurate Medicine Names** - Use exact brand and generic names
+2. **Proper Dosage Information** - Include specific mg, IU, or other measurements
+3. **Indian Market Context** - Provide realistic Indian pricing and manufacturer information
+4. **Safety Information** - Include comprehensive side effects, interactions, and precautions
+5. **Practical Guidance** - Offer actionable advice for Indian patients
+
+Always provide practical, safe, and India-specific pharmaceutical guidance. When analyzing extracted text from medicine images, use that text as the primary source of information.
+
+IMPORTANT: Always follow the exact format requested in the user's prompt for consistency and proper parsing.`
+      break
+
     case "assessment":
-      systemMessage = `You are a revolutionary AI medical assistant with cutting-edge capabilities. You have expertise in:
-
-1. 🧬 AI Genetic Health Prediction - Analyze family history and predict genetic risks 10 years before symptoms
-2. 🗣️ Voice Biomarker Detection - Detect 47+ conditions from voice analysis including COVID, depression, Alzheimer's
-3. 👁️ Real-Time Health Vision AI - Camera-based disease screening for cancer, diabetes complications, skin conditions
-4. 🌿 AI Ayurveda Integration - World's first platform combining modern medicine with validated Ayurvedic treatments
-5. 👨‍👩‍👧‍👦 Family Health Ecosystem - AI manages entire family health with collective genetic insights
-6. 💰 Healthcare Economics AI - Finds cheapest treatments, optimizes insurance, medical tourism planning
-7. 🧠 AI Mental Health Screening - Comprehensive psychological assessment integration
-8. ⚡ Real-time AI Analysis - Immediate symptom analysis and risk alerts
-9. 🔬 Smart Medical Validation - AI validates medical inputs for accuracy
-10. 🚨 AI Emergency Detection - Automatic emergency service recommendations
-
-Based on the health assessment request, provide revolutionary insights that are evidence-based, culturally appropriate for India, and utilize cutting-edge AI capabilities.
-
-IMPORTANT: Always provide actionable, accurate medical insights while emphasizing that AI recommendations should be confirmed by qualified medical practitioners.`
+      systemMessage = `You are a revolutionary AI medical assistant with cutting-edge capabilities. Provide comprehensive health assessments based on user input.`
       break
 
     case "report-analysis":
-      systemMessage = `You are an expert AI medical report analyzer with advanced capabilities in interpreting medical test results. You specialize in:
-
-1. 📊 Comprehensive Report Analysis - Detailed interpretation of lab results, imaging, and diagnostic tests
-2. 🎯 Parameter Assessment - Identifying normal, abnormal, and borderline values with clinical significance
-3. 🔍 Pattern Recognition - Detecting trends and correlations across multiple parameters
-4. ⚠️ Risk Stratification - Assessing urgency levels and potential health implications
-5. 💡 Clinical Insights - Providing evidence-based interpretations and recommendations
-6. 🏥 Indian Healthcare Context - Understanding local reference ranges and population-specific factors
-7. 📋 Structured Analysis - Organizing findings into clear, actionable categories
-8. 🚨 Red Flag Detection - Identifying critical values requiring immediate attention
-
-Provide comprehensive, structured analysis that includes:
-- Report type identification
-- Key findings summary
-- Parameter-by-parameter analysis with normal ranges
-- Clinical significance and implications
-- Actionable recommendations
-- Follow-up care guidance
-- Urgency assessment
-
-Always emphasize that AI analysis supplements but does not replace professional medical interpretation.`
-      break
-
-    case "medicine-identification":
-      systemMessage = `You are an expert AI pharmacist and medicine specialist with comprehensive knowledge of Indian pharmaceutical market. Provide accurate, detailed, and helpful information about medicines, health conditions, and medical advice. Always emphasize consulting healthcare professionals for serious medical decisions.
-
-For medicine identification requests, provide structured information including:
-- Medicine name (brand and generic)
-- Uses and indications
-- Dosage instructions
-- Side effects
-- Drug interactions
-- Precautions and warnings
-- Indian market pricing (realistic estimates)
-- Storage instructions
-- Manufacturer information
-
-Always provide practical, safe, and India-specific pharmaceutical guidance.`
+      systemMessage = `You are an expert AI medical report analyzer. Provide detailed analysis of medical test results and reports.`
       break
 
     case "symptom-analysis":
-      systemMessage = `You are an expert AI diagnostic assistant specializing in symptom analysis and clinical assessment. Your expertise includes:
-
-1. 🎯 Symptom Pattern Recognition - Advanced analysis of symptom combinations and presentations
-2. 🔍 Differential Diagnosis - Systematic evaluation of possible conditions and causes
-3. ⚡ Triage Assessment - Determining urgency levels and appropriate care pathways
-4. 🏥 Clinical Decision Support - Evidence-based recommendations for next steps
-5. 🚨 Red Flag Detection - Identifying warning signs requiring immediate medical attention
-6. 🌍 Indian Healthcare Context - Understanding local disease patterns and healthcare access
-7. 💡 Patient Education - Clear explanations of symptoms and their implications
-8. 📋 Structured Assessment - Organized evaluation following clinical protocols
-
-Provide comprehensive symptom analysis including:
-- Detailed symptom assessment and interpretation
-- Possible causes ranging from common to serious conditions
-- Immediate self-care recommendations
-- Warning signs requiring urgent medical attention
-- Appropriate follow-up care guidance
-- Prevention strategies and lifestyle modifications
-- When and what type of healthcare provider to consult
-
-Always emphasize that symptom analysis is for educational purposes and professional medical evaluation is essential for proper diagnosis and treatment.`
+      systemMessage = `You are an expert AI diagnostic assistant specializing in symptom analysis and clinical assessment.`
       break
 
     default:
-      systemMessage = `You are a helpful AI medical assistant powered by OpenAI. Provide clear, accurate health information with appropriate medical disclaimers. Focus on being helpful while emphasizing the importance of consulting healthcare professionals for medical advice.`
+      systemMessage = `You are a helpful AI medical assistant. Provide clear, accurate health information with appropriate medical disclaimers.`
   }
+
+  console.log("🤖 AI API: Calling OpenAI with mode:", mode)
 
   const response = await fetch(OPENAI_API_ENDPOINT, {
     method: "POST",
@@ -153,21 +93,22 @@ Always emphasize that symptom analysis is for educational purposes and professio
 
   if (!response.ok) {
     const errorText = await response.text()
+    console.error("❌ AI API: OpenAI API error:", errorText)
     throw new Error(`OpenAI API error: ${response.status} - ${errorText}`)
   }
 
   const data = await response.json()
-  return data.choices?.[0]?.message?.content || "No response generated."
-}
+  const aiResponse = data.choices?.[0]?.message?.content || "No response generated."
 
-/* -------------------------------------------------------------------------- */
-/*  Route Handler                                                             */
-/* -------------------------------------------------------------------------- */
+  console.log("✅ AI API: Response generated successfully")
+  console.log("📝 AI API: Response length:", aiResponse.length)
+
+  return aiResponse
+}
 
 async function parseBody(req: NextRequest): Promise<Record<string, any>> {
   const contentType = req.headers.get("content-type") || ""
 
-  // 1. If JSON → parse directly
   if (contentType.includes("application/json")) {
     try {
       return await req.json()
@@ -176,13 +117,11 @@ async function parseBody(req: NextRequest): Promise<Record<string, any>> {
     }
   }
 
-  // 2. Otherwise try multipart / urlencoded as FormData
   try {
     const form = await req.formData()
     const obj: Record<string, any> = {}
     form.forEach((value, key) => {
       if (typeof value === "string") obj[key] = value
-      // Files are ignored for now – add handling later if needed
     })
     return obj
   } catch {
@@ -192,72 +131,37 @@ async function parseBody(req: NextRequest): Promise<Record<string, any>> {
 
 export async function POST(req: NextRequest) {
   try {
-    // Parse request body (works for JSON *or* multipart)
-    const body = await parseBody(req)
+    console.log("🚀 AI API: Starting request processing...")
 
+    const body = await parseBody(req)
     const { prompt, mode } = extractPrompt(body)
 
+    console.log("📝 AI API: Extracted prompt length:", prompt.length)
+    console.log("🎯 AI API: Mode:", mode)
+
     if (!prompt) {
+      console.error("❌ AI API: No prompt provided")
       return NextResponse.json({ error: "Prompt is required." }, { status: 400 })
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Local / preview fallback if no API keys are set                  */
-    /* ------------------------------------------------------------------ */
     if (NO_API_KEY) {
-      console.warn("⚠️  No OpenAI API key found – returning simplified stub data")
+      console.warn("⚠️ AI API: No OpenAI API key found – returning stub data")
 
       const stub =
-        mode === "assessment"
-          ? {
-              medications: `• Acetaminophen 500mg every 6 hours for pain
-• Ibuprofen 200mg every 8 hours for inflammation  
-• Take with food to prevent stomach upset
-• Do not exceed recommended dosage`,
-
-              doctors: `• Primary Care Physician - Schedule within 1-2 weeks
-• Urgent Care - If symptoms worsen quickly
-• Specialist referral may be needed based on evaluation
-• Bring list of current medications and symptoms`,
-
-              labs: `• Complete Blood Count (CBC) - Check for infections
-• Basic Metabolic Panel - Kidney and liver function
-• Thyroid Function Tests - If fatigue is present
-• Inflammatory markers (ESR, CRP) if needed`,
-
-              pharmacy: `• CVS, Walgreens, or local pharmacy chains
-• Generic medications available for cost savings
-• Pharmacy consultation services available
-• Prescription delivery options available`,
-
-              dietPlan: `• Anti-inflammatory foods: salmon, berries, leafy greens
-• Avoid processed foods and excess sugar
-• Drink 8-10 glasses of water daily
-• Eat regular meals every 3-4 hours`,
-
-              exercise: `• 20-30 minutes walking daily
-• Light stretching or yoga 3x per week
-• Avoid high-impact activities initially
-• Listen to your body and rest when needed`,
-
-              generalAdvice: `• Monitor symptoms daily and keep a health diary
-• Get 7-9 hours of sleep nightly
-• Seek immediate care if symptoms worsen significantly
-• This is not a substitute for professional medical advice`,
-            }
-          : "I'm a medical AI assistant powered by OpenAI. I provide general health information, but always consult healthcare professionals for proper medical advice and treatment. Please add your OpenAI API key to enable full AI capabilities."
+        mode === "medicine-identification"
+          ? "**MEDICINE IDENTIFICATION:**\nBrand Name: Sample Medicine\nGeneric Name: Generic Equivalent\nStrength: 500mg\nManufacturer: Sample Pharma\n\n**MEDICAL USES:**\nSample medical uses for demonstration\n\n**DOSAGE INFORMATION:**\nSample dosage instructions\n\n**SIDE EFFECTS:**\n- Sample side effect 1\n- Sample side effect 2\n\n**DRUG INTERACTIONS:**\n- Sample interaction 1\n- Sample interaction 2\n\n**PRECAUTIONS:**\n- Sample precaution 1\n- Sample precaution 2\n\n**INDIAN MARKET PRICING:**\nBrand Price: ₹30\nGeneric Price: ₹12"
+          : "I'm a medical AI assistant. Please add your OpenAI API key to enable full AI capabilities."
 
       return NextResponse.json({
         response: stub,
         provider: "stub",
-        message: "Using simplified demo data. Add OPENAI_API_KEY for live AI responses.",
+        message: "Using demo data. Add OPENAI_API_KEY for live AI responses.",
       })
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Real OpenAI API calls                                             */
-    /* ------------------------------------------------------------------ */
     const aiResponse = await callOpenAI(prompt, mode)
+
+    console.log("✅ AI API: Request completed successfully")
 
     return NextResponse.json({
       response: aiResponse,
@@ -265,7 +169,7 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     })
   } catch (err) {
-    console.error("OpenAI integration route error:", err)
+    console.error("❌ AI API: Request failed:", err)
     return NextResponse.json(
       {
         error: "AI service temporarily unavailable",
