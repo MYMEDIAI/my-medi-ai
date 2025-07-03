@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
             content: [
               {
                 type: "text",
-                text: "Extract all text from this image. Focus on medical information, medicine names, dosages, test results, parameter values, and any other relevant medical data. Provide the extracted text in a clear, organized format.",
+                text: "Extract all text from this medicine image. Focus on: medicine name, brand name, generic name, dosage/strength, manufacturer, batch number, expiry date, and any other visible text on the medicine packaging or tablet. Provide the extracted text in a clear, organized format.",
               },
               {
                 type: "image_url",
@@ -45,7 +45,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`)
+      const errorData = await response.json()
+      console.error("OpenAI API error:", errorData)
+      throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || "Unknown error"}`)
     }
 
     const data = await response.json()
@@ -60,6 +62,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("OCR processing error:", error)
-    return NextResponse.json({ error: "Failed to process image for text extraction" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to process image for text extraction",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

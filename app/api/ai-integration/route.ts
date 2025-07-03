@@ -90,28 +90,20 @@ Always emphasize that AI analysis supplements but does not replace professional 
       break
 
     case "medicine-identification":
-      systemMessage = `You are an expert AI pharmacist and medicine identifier with comprehensive knowledge of:
+      systemMessage = `You are an expert AI pharmacist and medicine specialist with comprehensive knowledge of Indian pharmaceutical market. Provide accurate, detailed, and helpful information about medicines, health conditions, and medical advice. Always emphasize consulting healthcare professionals for serious medical decisions.
 
-1. 💊 Medicine Identification - Accurate identification of medications from descriptions or images
-2. 🧪 Drug Information Database - Comprehensive knowledge of generic and brand medications
-3. 💰 Price Analysis - Indian pharmaceutical market pricing for brand vs generic options
-4. ⚠️ Safety Profiles - Complete side effects, contraindications, and drug interactions
-5. 📋 Dosage Guidelines - Proper administration, timing, and dosing recommendations
-6. 🏥 Indian Pharmacy Context - Local availability, manufacturers, and regulatory information
-7. 🔄 Drug Interactions - Comprehensive interaction checking and warnings
-8. 👥 Patient Safety - Age-specific, condition-specific, and pregnancy-related considerations
+For medicine identification requests, provide structured information including:
+- Medicine name (brand and generic)
+- Uses and indications
+- Dosage instructions
+- Side effects
+- Drug interactions
+- Precautions and warnings
+- Indian market pricing (realistic estimates)
+- Storage instructions
+- Manufacturer information
 
-Provide detailed medicine information including:
-- Accurate identification with generic and brand names
-- Therapeutic uses and mechanism of action
-- Proper dosage and administration guidelines
-- Complete side effect profile
-- Drug interaction warnings
-- Precautions and contraindications
-- Indian market pricing information
-- Storage and handling instructions
-
-Always emphasize verification with qualified pharmacists and healthcare providers.`
+Always provide practical, safe, and India-specific pharmaceutical guidance.`
       break
 
     case "symptom-analysis":
@@ -269,7 +261,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       response: aiResponse,
-      provider: "openai",
+      type: body.type || "general",
+      timestamp: new Date().toISOString(),
     })
   } catch (err) {
     console.error("OpenAI integration route error:", err)
