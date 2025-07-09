@@ -48,27 +48,24 @@ function DemoMedicineIdentifierComponent() {
   const [error, setError] = useState("")
 
   const sampleMedicines = [
-    { name: "Paracetamol 500mg Tablet", color: "from-red-400 to-pink-500", icon: "💊" },
-    { name: "Amoxicillin 250mg Capsule", color: "from-blue-400 to-cyan-500", icon: "💉" },
-    { name: "Metformin 500mg Tablet", color: "from-green-400 to-emerald-500", icon: "🍯" },
-    { name: "Amlodipine 5mg Tablet", color: "from-purple-400 to-violet-500", icon: "❤️" },
-    { name: "Vitamin D3 1000 IU Tablet", color: "from-yellow-400 to-orange-500", icon: "☀️" },
-    { name: "Aspirin 75mg Tablet", color: "from-teal-400 to-cyan-500", icon: "🩹" },
-    { name: "Omeprazole 20mg Capsule", color: "from-indigo-400 to-purple-500", icon: "🫀" },
-    { name: "Atorvastatin 10mg Tablet", color: "from-rose-400 to-red-500", icon: "💝" },
+    { name: "Paracetamol 500mg", color: "from-red-400 to-pink-500", icon: "💊" },
+    { name: "Amoxicillin 250mg", color: "from-blue-400 to-cyan-500", icon: "💉" },
+    { name: "Metformin 500mg", color: "from-green-400 to-emerald-500", icon: "🍯" },
+    { name: "Amlodipine 5mg", color: "from-purple-400 to-violet-500", icon: "❤️" },
+    { name: "Vitamin D3 1000 IU", color: "from-yellow-400 to-orange-500", icon: "☀️" },
+    { name: "Aspirin 75mg", color: "from-teal-400 to-cyan-500", icon: "🩹" },
   ]
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate file type and size
       if (!file.type.startsWith("image/")) {
-        setError("Please upload a valid image file (JPG, PNG, etc.)")
+        setError("Please upload a valid image file")
         return
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        setError("Image file is too large. Please upload an image smaller than 10MB.")
+        setError("Image too large. Max 10MB allowed")
         return
       }
 
@@ -77,19 +74,14 @@ function DemoMedicineIdentifierComponent() {
         const result = e.target?.result as string
         setSelectedImage(result)
         setError("")
-        setMedicineInfo(null) // Clear previous results
+        setMedicineInfo(null)
 
-        console.log("🔄 Starting medicine identification process...")
-        console.log("📁 File:", file.name, "Size:", file.size, "Type:", file.type)
+        console.log("🔄 Starting medicine identification...")
 
-        // First extract text using OCR
         const extractedText = await extractTextFromImage(file)
-
-        // Then identify the medicine using AI
         if (extractedText) {
           await identifyMedicineWithAI(file.name, extractedText)
         } else {
-          // If OCR fails, still try AI with just filename
           await identifyMedicineWithAI(file.name, null)
         }
       }
@@ -100,7 +92,7 @@ function DemoMedicineIdentifierComponent() {
   const extractTextFromImage = async (file: File): Promise<string | null> => {
     setIsExtracting(true)
     try {
-      console.log("🔍 Starting OCR extraction...")
+      console.log("🔍 Starting OCR...")
 
       const formData = new FormData()
       formData.append("file", file)
@@ -112,24 +104,21 @@ function DemoMedicineIdentifierComponent() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error("❌ OCR API error:", errorData)
-        throw new Error(errorData.details || errorData.error || "OCR extraction failed")
+        throw new Error(errorData.details || errorData.error || "OCR failed")
       }
 
       const data = await response.json()
-      console.log("✅ OCR extraction successful!")
-      console.log("📝 Extracted text:", data.extractedText)
+      console.log("✅ OCR successful!")
 
       if (!data.extractedText || data.extractedText.trim().length < 5) {
-        console.warn("⚠️ Very little text extracted")
-        setError("Could not extract clear text from image. Trying AI analysis anyway...")
+        setError("Could not extract clear text. Trying AI analysis...")
         return data.extractedText || null
       }
 
       return data.extractedText
     } catch (error) {
-      console.error("❌ OCR extraction error:", error)
-      setError(`OCR failed: ${error instanceof Error ? error.message : "Unknown error"}. Trying AI analysis...`)
+      console.error("❌ OCR error:", error)
+      setError(`OCR failed: ${error instanceof Error ? error.message : "Unknown error"}`)
       return null
     } finally {
       setIsExtracting(false)
@@ -137,16 +126,14 @@ function DemoMedicineIdentifierComponent() {
   }
 
   const handleSampleMedicine = async (medicineName: string) => {
-    setSelectedImage("/placeholder.svg?height=200&width=300&text=" + encodeURIComponent(medicineName))
+    setSelectedImage("/placeholder.svg?height=150&width=200&text=" + encodeURIComponent(medicineName))
     setError("")
     setMedicineInfo(null)
 
-    console.log("🧪 Testing sample medicine:", medicineName)
+    console.log("🧪 Testing:", medicineName)
 
-    // Add delay for UX
     setIsScanning(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
+    await new Promise((resolve) => setTimeout(resolve, 1000))
     await identifyMedicineWithAI(medicineName, null)
   }
 
@@ -155,44 +142,30 @@ function DemoMedicineIdentifierComponent() {
     setError("")
 
     try {
-      console.log("🤖 Starting AI medicine identification...")
-      console.log("📄 File name:", fileName)
-      console.log("📝 Has extracted text:", !!extractedText)
+      console.log("🤖 AI identification starting...")
 
-      const prompt = `You are an expert AI pharmacist. Analyze this medicine and provide comprehensive information.
+      const prompt = `You are an expert AI pharmacist. Analyze this medicine:
 
-${
-  extractedText
-    ? `
-EXTRACTED TEXT FROM MEDICINE IMAGE:
-${extractedText}
+${extractedText ? `EXTRACTED TEXT: ${extractedText}` : `MEDICINE: ${fileName}`}
 
-Please analyze this extracted text to identify the medicine.
-`
-    : `
-MEDICINE NAME: ${fileName}
-`
-}
-
-Provide detailed information in this EXACT format:
+Provide information in this format:
 
 **MEDICINE IDENTIFICATION:**
 Brand Name: [Brand name]
 Generic Name: [Generic name]
-Strength: [Dosage like 500mg]
-Manufacturer: [Company name]
+Strength: [Dosage]
+Manufacturer: [Company]
 
 **MEDICAL USES:**
-[Detailed uses and indications]
+[Uses and indications]
 
 **DOSAGE INFORMATION:**
-[Specific dosage instructions]
+[Dosage instructions]
 
 **SIDE EFFECTS:**
-- [Side effect 1]
-- [Side effect 2]
-- [Side effect 3]
-- [Side effect 4]
+- [Effect 1]
+- [Effect 2]
+- [Effect 3]
 
 **DRUG INTERACTIONS:**
 - [Interaction 1]
@@ -203,15 +176,10 @@ Manufacturer: [Company name]
 - [Precaution 1]
 - [Precaution 2]
 - [Precaution 3]
-- [Precaution 4]
 
-**INDIAN MARKET PRICING:**
+**INDIAN PRICING:**
 Brand Price: ₹[price]
-Generic Price: ₹[lower price]
-
-${extractedText ? "Base your analysis on the extracted text above." : "Provide comprehensive information for this medicine."}`
-
-      console.log("📤 Sending request to AI API...")
+Generic Price: ₹[lower price]`
 
       const response = await fetch("/api/ai-integration", {
         method: "POST",
@@ -226,100 +194,66 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error("❌ AI API error:", errorData)
-        throw new Error(errorData.details || errorData.error || `AI API failed: ${response.status}`)
+        throw new Error(errorData.details || errorData.error || `AI API failed`)
       }
 
       const data = await response.json()
       console.log("✅ AI response received!")
 
       if (!data.response) {
-        throw new Error("No response from AI")
+        throw new Error("No AI response")
       }
 
-      console.log("🔄 Parsing AI response...")
       const structuredMedicine = parseAIResponse(data.response, fileName)
       structuredMedicine.extractedText = extractedText || undefined
-
-      console.log("✅ Medicine identification completed!")
-      console.log("💊 Medicine:", structuredMedicine.name)
-
       setMedicineInfo(structuredMedicine)
-    } catch (error) {
-      console.error("❌ AI identification error:", error)
-      setError(`AI identification failed: ${error instanceof Error ? error.message : "Unknown error"}`)
 
-      // Only use fallback if it's a known medicine
-      if (fileName.toLowerCase().includes("paracetamol") || fileName.toLowerCase().includes("acetaminophen")) {
-        console.log("🔄 Using Paracetamol fallback...")
-        const fallback = getParacetamolFallback()
-        fallback.extractedText = extractedText || undefined
-        setMedicineInfo(fallback)
-      } else {
-        console.log("🔄 Using generic fallback...")
-        const fallback = getGenericFallback(fileName)
-        fallback.extractedText = extractedText || undefined
-        setMedicineInfo(fallback)
-      }
+      console.log("✅ Identification complete!")
+    } catch (error) {
+      console.error("❌ AI error:", error)
+      setError(`AI failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+
+      const fallback = fileName.toLowerCase().includes("paracetamol")
+        ? getParacetamolFallback()
+        : getGenericFallback(fileName)
+      fallback.extractedText = extractedText || undefined
+      setMedicineInfo(fallback)
     } finally {
       setIsScanning(false)
     }
   }
 
   const parseAIResponse = (aiResponse: string, fileName: string): MedicineInfo => {
-    console.log("🔍 Parsing AI response...")
-
     const medicine: MedicineInfo = {
       name: fileName.replace(/\.(jpg|jpeg|png|pdf)$/i, ""),
-      generic: "Generic equivalent available",
+      generic: "Generic available",
       brandPrice: 30,
       genericPrice: 12,
-      uses: "Consult healthcare provider for specific uses",
-      dosage: "Follow prescription instructions",
-      sideEffects: ["Consult healthcare provider"],
-      interactions: ["Consult healthcare provider"],
+      uses: "Consult healthcare provider",
+      dosage: "Follow prescription",
+      sideEffects: ["Consult doctor"],
+      interactions: ["Check with pharmacist"],
       precautions: ["Follow medical advice"],
       manufacturer: "Various manufacturers",
       rawAnalysis: aiResponse,
     }
 
     try {
-      // Parse brand name
       const brandMatch = aiResponse.match(/Brand Name:\s*([^\n]+)/i)
-      if (brandMatch) {
-        medicine.name = brandMatch[1].trim()
-        console.log("📝 Found brand name:", medicine.name)
-      }
+      if (brandMatch) medicine.name = brandMatch[1].trim()
 
-      // Parse generic name
       const genericMatch = aiResponse.match(/Generic Name:\s*([^\n]+)/i)
-      if (genericMatch) {
-        medicine.generic = genericMatch[1].trim()
-        console.log("📝 Found generic name:", medicine.generic)
-      }
+      if (genericMatch) medicine.generic = genericMatch[1].trim()
 
-      // Parse manufacturer
       const manufacturerMatch = aiResponse.match(/Manufacturer:\s*([^\n]+)/i)
-      if (manufacturerMatch) {
-        medicine.manufacturer = manufacturerMatch[1].trim()
-        console.log("📝 Found manufacturer:", medicine.manufacturer)
-      }
+      if (manufacturerMatch) medicine.manufacturer = manufacturerMatch[1].trim()
 
-      // Parse uses
       const usesMatch = aiResponse.match(/\*\*MEDICAL USES:\*\*\s*\n([^*]+)/i)
-      if (usesMatch) {
-        medicine.uses = usesMatch[1].trim()
-        console.log("📝 Found uses")
-      }
+      if (usesMatch) medicine.uses = usesMatch[1].trim()
 
-      // Parse dosage
       const dosageMatch = aiResponse.match(/\*\*DOSAGE INFORMATION:\*\*\s*\n([^*]+)/i)
-      if (dosageMatch) {
-        medicine.dosage = dosageMatch[1].trim()
-        console.log("📝 Found dosage")
-      }
+      if (dosageMatch) medicine.dosage = dosageMatch[1].trim()
 
-      // Parse side effects
       const sideEffectsMatch = aiResponse.match(/\*\*SIDE EFFECTS:\*\*\s*\n((?:- [^\n]+\n?)+)/i)
       if (sideEffectsMatch) {
         const effects = sideEffectsMatch[1]
@@ -327,13 +261,9 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
           .filter((line) => line.trim().startsWith("-"))
           .map((line) => line.replace(/^-\s*/, "").trim())
           .filter((effect) => effect.length > 0)
-        if (effects.length > 0) {
-          medicine.sideEffects = effects
-          console.log("📝 Found", effects.length, "side effects")
-        }
+        if (effects.length > 0) medicine.sideEffects = effects
       }
 
-      // Parse interactions
       const interactionsMatch = aiResponse.match(/\*\*DRUG INTERACTIONS:\*\*\s*\n((?:- [^\n]+\n?)+)/i)
       if (interactionsMatch) {
         const interactions = interactionsMatch[1]
@@ -341,13 +271,9 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
           .filter((line) => line.trim().startsWith("-"))
           .map((line) => line.replace(/^-\s*/, "").trim())
           .filter((interaction) => interaction.length > 0)
-        if (interactions.length > 0) {
-          medicine.interactions = interactions
-          console.log("📝 Found", interactions.length, "interactions")
-        }
+        if (interactions.length > 0) medicine.interactions = interactions
       }
 
-      // Parse precautions
       const precautionsMatch = aiResponse.match(/\*\*PRECAUTIONS:\*\*\s*\n((?:- [^\n]+\n?)+)/i)
       if (precautionsMatch) {
         const precautions = precautionsMatch[1]
@@ -355,27 +281,16 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
           .filter((line) => line.trim().startsWith("-"))
           .map((line) => line.replace(/^-\s*/, "").trim())
           .filter((precaution) => precaution.length > 0)
-        if (precautions.length > 0) {
-          medicine.precautions = precautions
-          console.log("📝 Found", precautions.length, "precautions")
-        }
+        if (precautions.length > 0) medicine.precautions = precautions
       }
 
-      // Parse prices
       const brandPriceMatch = aiResponse.match(/Brand Price:\s*₹(\d+)/i)
       const genericPriceMatch = aiResponse.match(/Generic Price:\s*₹(\d+)/i)
 
-      if (brandPriceMatch) {
-        medicine.brandPrice = Number.parseInt(brandPriceMatch[1])
-        console.log("📝 Found brand price: ₹", medicine.brandPrice)
-      }
-
-      if (genericPriceMatch) {
-        medicine.genericPrice = Number.parseInt(genericPriceMatch[1])
-        console.log("📝 Found generic price: ₹", medicine.genericPrice)
-      }
+      if (brandPriceMatch) medicine.brandPrice = Number.parseInt(brandPriceMatch[1])
+      if (genericPriceMatch) medicine.genericPrice = Number.parseInt(genericPriceMatch[1])
     } catch (parseError) {
-      console.error("❌ Error parsing AI response:", parseError)
+      console.error("❌ Parse error:", parseError)
     }
 
     return medicine
@@ -387,58 +302,29 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
       generic: "Acetaminophen",
       brandPrice: 25,
       genericPrice: 8,
-      uses: "Pain relief, fever reduction, headache, body aches, dental pain, menstrual cramps",
-      dosage: "Adults: 1-2 tablets every 6-8 hours. Maximum 4g per day. Take with or without food",
-      sideEffects: [
-        "Nausea (rare)",
-        "Skin rash or allergic reactions",
-        "Liver damage with overdose",
-        "Stomach upset (uncommon)",
-      ],
-      interactions: [
-        "Avoid with alcohol - increases liver toxicity",
-        "Check with blood thinners (warfarin)",
-        "Consult if taking other pain medications",
-        "May interact with certain antibiotics",
-      ],
-      precautions: [
-        "Do not exceed recommended dose",
-        "Avoid alcohol while taking",
-        "Consult doctor if symptoms persist beyond 3 days",
-        "Not recommended for liver disease patients",
-      ],
+      uses: "Pain relief, fever reduction, headache, body aches, dental pain",
+      dosage: "Adults: 1-2 tablets every 6-8 hours. Max 4g per day",
+      sideEffects: ["Nausea (rare)", "Skin rash", "Liver damage with overdose", "Stomach upset"],
+      interactions: ["Avoid with alcohol", "Check with blood thinners", "Consult if taking other pain meds"],
+      precautions: ["Don't exceed recommended dose", "Avoid alcohol", "Consult doctor if symptoms persist"],
       manufacturer: "Cipla, Sun Pharma, Dr. Reddy's",
-      rawAnalysis: "Fallback information for Paracetamol 500mg - common pain reliever and fever reducer",
+      rawAnalysis: "Paracetamol - common pain reliever and fever reducer",
     }
   }
 
   const getGenericFallback = (fileName: string): MedicineInfo => {
     return {
       name: fileName.replace(/\.(jpg|jpeg|png|pdf)$/i, ""),
-      generic: "Generic equivalent may be available",
+      generic: "Generic may be available",
       brandPrice: 35,
       genericPrice: 15,
-      uses: "AI analysis temporarily unavailable. Please consult with a pharmacist for specific uses and indications.",
-      dosage: "Follow prescription instructions or package directions. Consult healthcare provider for proper dosage.",
-      sideEffects: [
-        "Consult healthcare provider for complete side effect information",
-        "Monitor for any unusual reactions",
-        "Report adverse effects to your doctor",
-      ],
-      interactions: [
-        "Inform doctor of all medications you're taking",
-        "Check with pharmacist for drug interactions",
-        "Avoid alcohol unless approved by doctor",
-      ],
-      precautions: [
-        "Take as prescribed by healthcare provider",
-        "Store in cool, dry place away from children",
-        "Check expiration date before use",
-        "Don't share medications with others",
-      ],
-      manufacturer: "Consult package for manufacturer information",
-      rawAnalysis:
-        "AI analysis temporarily unavailable. Please consult with a healthcare professional for complete medicine information.",
+      uses: "AI analysis unavailable. Consult pharmacist for uses.",
+      dosage: "Follow prescription or package directions.",
+      sideEffects: ["Consult healthcare provider", "Monitor for reactions", "Report adverse effects"],
+      interactions: ["Inform doctor of all medications", "Check with pharmacist", "Avoid alcohol unless approved"],
+      precautions: ["Take as prescribed", "Store properly", "Check expiration date"],
+      manufacturer: "Check package for details",
+      rawAnalysis: "AI analysis temporarily unavailable",
     }
   }
 
@@ -448,81 +334,71 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
     setError("")
     setIsScanning(false)
     setIsExtracting(false)
-    console.log("🔄 Medicine identifier reset")
   }
 
   return (
-    <Card className="border-0 shadow-2xl bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-1">
-      <CardHeader className="bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 text-white rounded-t-lg">
-        <CardTitle className="flex items-center text-white text-xl">
-          <div className="p-2 bg-white/20 rounded-full mr-3">
-            <Pill className="w-6 h-6" />
+    <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 mx-2 sm:mx-0">
+      <CardHeader className="bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 text-white rounded-t-lg p-4 sm:p-6">
+        <CardTitle className="flex items-center text-white text-lg sm:text-xl">
+          <div className="p-1.5 sm:p-2 bg-white/20 rounded-full mr-2 sm:mr-3">
+            <Pill className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          💊 AI Medicine Identifier
-          <Sparkles className="w-5 h-5 ml-2 animate-pulse" />
+          💊 AI Medicine ID
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 ml-2 animate-pulse" />
         </CardTitle>
-        <div className="flex items-center gap-2 mt-2">
-          <Badge className="bg-white/20 text-white hover:bg-white/30 border-white/30">
-            <div className="w-2 h-2 bg-purple-300 rounded-full mr-1 animate-pulse"></div>
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-2">
+          <Badge className="bg-white/20 text-white text-xs px-2 py-1">
+            <div className="w-1.5 h-1.5 bg-purple-300 rounded-full mr-1 animate-pulse"></div>
             Live AI
           </Badge>
-          <Badge className="bg-yellow-400 text-yellow-900 hover:bg-yellow-400">
-            <Crown className="w-3 h-3 mr-1" />
-            Premium OCR
+          <Badge className="bg-yellow-400 text-yellow-900 text-xs px-2 py-1">
+            <Crown className="w-2.5 h-2.5 mr-1" />
+            OCR
           </Badge>
-          <Badge className="bg-blue-400 text-blue-900 hover:bg-blue-400">
-            <Zap className="w-3 h-3 mr-1" />
-            OpenAI GPT-4
+          <Badge className="bg-blue-400 text-blue-900 text-xs px-2 py-1">
+            <Zap className="w-2.5 h-2.5 mr-1" />
+            GPT-4
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="p-8">
+      <CardContent className="p-4 sm:p-6">
         {!medicineInfo ? (
           <>
-            {/* Instructions */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-6">
-              <h4 className="text-lg font-bold text-blue-800 mb-3 flex items-center">
-                <Camera className="w-5 h-5 mr-2" />📸 Tips for Best Results
+            {/* Mobile-optimized Instructions */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+              <h4 className="text-base sm:text-lg font-bold text-blue-800 mb-2 flex items-center">
+                <Camera className="w-4 h-4 mr-2" />📸 Photo Tips
               </h4>
-              <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-700">
-                <div className="space-y-2">
-                  <p className="font-medium">✅ Good Photo Tips:</p>
-                  <ul className="space-y-1 text-xs">
-                    <li>• Clear, well-lit medicine packaging</li>
-                    <li>• Focus on medicine name and details</li>
-                    <li>• Avoid shadows and reflections</li>
-                    <li>• Include dosage information if visible</li>
-                  </ul>
+              <div className="space-y-2 text-xs sm:text-sm text-blue-700">
+                <div>
+                  <p className="font-medium">✅ Good Photos:</p>
+                  <p>• Clear, well-lit packaging • Focus on medicine name • Avoid shadows</p>
                 </div>
-                <div className="space-y-2">
-                  <p className="font-medium">📋 What We Extract:</p>
-                  <ul className="space-y-1 text-xs">
-                    <li>• Medicine name and brand</li>
-                    <li>• Dosage strength (mg, IU, etc.)</li>
-                    <li>• Manufacturer details</li>
-                    <li>• Batch number and expiry date</li>
-                  </ul>
+                <div>
+                  <p className="font-medium">📋 We Extract:</p>
+                  <p>• Medicine name • Dosage • Manufacturer • Expiry date</p>
                 </div>
               </div>
             </div>
 
-            {/* Upload Area */}
+            {/* Enhanced Mobile Upload Area - Minimum 48px height for touch */}
             <div
-              className="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 transition-all duration-300 transform hover:scale-105"
+              className="border-2 border-dashed border-purple-300 rounded-lg p-6 sm:p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-all duration-300 active:scale-95 min-h-[120px] flex items-center justify-center"
               onClick={() => document.getElementById("medicine-upload")?.click()}
+              style={{ minHeight: "120px" }} // Ensure adequate touch target
             >
-              <div className="flex flex-col items-center space-y-4">
-                <div className="p-4 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full">
-                  <Camera className="w-12 h-12 text-white" />
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full">
+                  <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-gray-800 mb-2">Take Medicine Photo</p>
-                  <p className="text-gray-600 mb-2">Advanced OCR + AI Identification</p>
-                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
-                    <Scan className="w-4 h-4" />
-                    <span>Clear photo with good lighting</span>
-                    <Eye className="w-4 h-4" />
-                    <span>Text extraction included</span>
+                  <p className="text-lg sm:text-xl font-bold text-gray-800">Take Photo</p>
+                  <p className="text-sm text-gray-600">OCR + AI Analysis</p>
+                  <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 mt-1">
+                    <Scan className="w-3 h-3" />
+                    <span>Clear lighting</span>
+                    <Eye className="w-3 h-3" />
+                    <span>Text extraction</span>
                   </div>
                 </div>
               </div>
@@ -538,43 +414,40 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
             />
 
             {selectedImage && !isScanning && !medicineInfo && (
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 mt-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-purple-500 rounded-full">
-                    <Camera className="w-4 h-4 text-white" />
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 bg-purple-500 rounded-full">
+                    <Camera className="w-3 h-3 text-white" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-purple-800">Image captured successfully</span>
-                    <p className="text-xs text-purple-600">Processing with OCR + AI...</p>
+                    <span className="text-sm font-medium text-purple-800">Image captured</span>
+                    <p className="text-xs text-purple-600">Processing...</p>
                   </div>
                 </div>
                 <img
                   src={selectedImage || "/placeholder.svg"}
-                  alt="Selected medicine"
-                  className="w-full h-40 object-contain rounded-lg border bg-white shadow-sm"
+                  alt="Medicine"
+                  className="w-full h-32 sm:h-40 object-contain rounded border bg-white"
                 />
               </div>
             )}
 
-            {/* Sample Medicines */}
-            <div className="space-y-4 mt-6">
-              <p className="text-lg font-semibold text-gray-700 text-center">Or try with sample medicines:</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Enhanced Mobile Sample Medicines - Minimum 48px touch targets */}
+            <div className="space-y-3 mt-4">
+              <p className="text-base sm:text-lg font-semibold text-gray-700 text-center">Try samples:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {sampleMedicines.map((medicine, idx) => (
                   <Button
                     key={idx}
                     variant="outline"
-                    size="sm"
                     onClick={() => handleSampleMedicine(medicine.name)}
                     disabled={isScanning || isExtracting}
-                    className={`h-auto py-3 px-3 bg-gradient-to-r ${medicine.color} text-white border-0 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl`}
+                    className={`h-auto py-4 px-3 bg-gradient-to-r ${medicine.color} text-white border-0 hover:scale-105 active:scale-95 transition-all duration-200 shadow-md text-xs min-h-[60px] touch-manipulation`}
+                    style={{ minHeight: "60px", minWidth: "120px" }} // Ensure adequate touch target
                   >
                     <div className="flex flex-col items-center space-y-1">
                       <span className="text-lg">{medicine.icon}</span>
-                      <span className="text-xs text-center font-medium">{medicine.name.split(" ")[0]}</span>
-                      <span className="text-xs text-center opacity-90">
-                        {medicine.name.split(" ").slice(1).join(" ")}
-                      </span>
+                      <span className="text-center font-medium leading-tight">{medicine.name}</span>
                     </div>
                   </Button>
                 ))}
@@ -582,130 +455,111 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
             </div>
 
             {(isExtracting || isScanning) && (
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6 mt-4">
-                <div className="flex items-center justify-center gap-4">
-                  <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mt-4">
+                <div className="flex items-center justify-center gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
                   <div className="text-center">
-                    <p className="text-lg font-medium text-purple-800">
-                      {isExtracting ? "Extracting Text..." : "Identifying Medicine..."}
+                    <p className="text-base font-medium text-purple-800">
+                      {isExtracting ? "Reading Text..." : "Analyzing..."}
                     </p>
-                    <p className="text-sm text-purple-600">
-                      {isExtracting ? "OCR is reading medicine details" : "OpenAI is analyzing the medicine"}
-                    </p>
-                    <div className="flex items-center justify-center space-x-2 mt-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                    </div>
+                    <p className="text-sm text-purple-600">{isExtracting ? "OCR processing" : "AI identification"}</p>
                   </div>
                 </div>
               </div>
             )}
 
             {error && (
-              <Alert className="border-red-200 bg-gradient-to-r from-red-50 to-red-100 mt-4">
+              <Alert className="border-red-200 bg-red-50 mt-4">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-800">{error}</AlertDescription>
+                <AlertDescription className="text-red-800 text-sm">{error}</AlertDescription>
               </Alert>
             )}
           </>
         ) : (
-          <div className="space-y-6">
-            {/* Success Header */}
+          <div className="space-y-4 sm:space-y-6">
+            {/* Enhanced Mobile Success Header */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <div className="p-2 bg-green-500 rounded-full">
-                  <CheckCircle className="w-6 h-6 text-white" />
+                  <CheckCircle className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-800">AI Identification Complete</h4>
-                  <p className="text-sm text-gray-600">Powered by OpenAI GPT-4 + OCR</p>
+                  <h4 className="text-lg font-bold text-gray-800">Complete</h4>
+                  <p className="text-xs text-gray-600">AI + OCR</p>
                 </div>
               </div>
-              <Badge className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 px-4 py-2">
+              <Badge className="bg-green-100 text-green-800 px-3 py-1.5 text-xs">
                 <Shield className="w-3 h-3 mr-1" />
                 Verified
               </Badge>
             </div>
 
-            {/* Medicine Details */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-lg">
-              <div className="space-y-4">
+            {/* Enhanced Mobile Medicine Details */}
+            <div className="bg-gray-50 rounded-lg p-4 border shadow-sm">
+              <div className="space-y-3">
                 <div>
-                  <h5 className="text-2xl font-bold text-gray-800">{medicineInfo.name}</h5>
-                  <p className="text-lg text-gray-600">Generic: {medicineInfo.generic}</p>
-                  <p className="text-sm text-gray-600">Manufacturer: {medicineInfo.manufacturer}</p>
-                  {medicineInfo.extractedText && (
-                    <p className="text-xs text-green-600 mt-1">✅ Text extracted via OCR</p>
-                  )}
+                  <h5 className="text-lg sm:text-xl font-bold text-gray-800 leading-tight">{medicineInfo.name}</h5>
+                  <p className="text-sm text-gray-600">Generic: {medicineInfo.generic}</p>
+                  <p className="text-xs text-gray-600">{medicineInfo.manufacturer}</p>
+                  {medicineInfo.extractedText && <p className="text-xs text-green-600">✅ OCR extracted</p>}
                 </div>
 
-                {/* Price Comparison */}
+                {/* Enhanced Mobile Price Comparison - Larger touch targets */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-200 rounded-xl p-4 text-center shadow-lg">
-                    <ShoppingCart className="w-6 h-6 mx-auto mb-2 text-red-600" />
-                    <p className="text-sm text-red-600 font-bold">Brand Price</p>
-                    <p className="text-2xl font-bold text-red-700">₹{medicineInfo.brandPrice}</p>
-                    <p className="text-xs text-red-600">Original medicine</p>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center min-h-[80px] flex flex-col justify-center">
+                    <ShoppingCart className="w-5 h-5 mx-auto mb-2 text-red-600" />
+                    <p className="text-xs text-red-600 font-bold">Brand</p>
+                    <p className="text-xl font-bold text-red-700">₹{medicineInfo.brandPrice}</p>
                   </div>
-                  <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl p-4 text-center shadow-lg">
-                    <ShoppingCart className="w-6 h-6 mx-auto mb-2 text-green-600" />
-                    <p className="text-sm text-green-600 font-bold">Generic Price</p>
-                    <p className="text-2xl font-bold text-green-700">₹{medicineInfo.genericPrice}</p>
-                    <p className="text-xs text-green-600">
-                      Save ₹{medicineInfo.brandPrice - medicineInfo.genericPrice}
-                    </p>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center min-h-[80px] flex flex-col justify-center">
+                    <ShoppingCart className="w-5 h-5 mx-auto mb-2 text-green-600" />
+                    <p className="text-xs text-green-600 font-bold">Generic</p>
+                    <p className="text-xl font-bold text-green-700">₹{medicineInfo.genericPrice}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Uses */}
-            <div className="space-y-3">
-              <h5 className="text-lg font-bold text-gray-800 flex items-center">
-                <Clock className="w-5 h-5 mr-2 text-blue-500" />
-                Medical Uses:
+            {/* Enhanced Mobile Uses */}
+            <div className="space-y-2">
+              <h5 className="text-base font-bold text-gray-800 flex items-center">
+                <Clock className="w-4 h-4 mr-2 text-blue-500" />
+                Uses:
               </h5>
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-4 shadow-lg">
-                <p className="text-gray-700 font-medium leading-relaxed">{medicineInfo.uses}</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-gray-700 leading-relaxed">{medicineInfo.uses}</p>
               </div>
             </div>
 
-            {/* Dosage */}
-            <div className="space-y-3">
-              <h5 className="text-lg font-bold text-gray-800 flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-orange-500" />
-                Dosage Instructions:
+            {/* Enhanced Mobile Dosage */}
+            <div className="space-y-2">
+              <h5 className="text-base font-bold text-gray-800 flex items-center">
+                <Calendar className="w-4 h-4 mr-2 text-orange-500" />
+                Dosage:
               </h5>
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-4 shadow-lg">
-                <p className="text-gray-700 font-medium leading-relaxed">{medicineInfo.dosage}</p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-gray-700 leading-relaxed">{medicineInfo.dosage}</p>
               </div>
             </div>
 
-            {/* Side Effects */}
+            {/* Enhanced Mobile Side Effects */}
             {medicineInfo.sideEffects.length > 0 && (
-              <div className="space-y-3">
-                <h5 className="text-lg font-bold text-gray-800 flex items-center">
-                  <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
-                  Common Side Effects:
+              <div className="space-y-2">
+                <h5 className="text-base font-bold text-gray-800 flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-2 text-orange-500" />
+                  Side Effects:
                 </h5>
-                <div className="grid gap-2">
-                  {medicineInfo.sideEffects.map((effect, idx) => (
+                <div className="space-y-2">
+                  {medicineInfo.sideEffects.slice(0, 3).map((effect, idx) => (
                     <div
                       key={idx}
-                      className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-3 shadow-sm"
+                      className="bg-orange-50 border border-orange-200 rounded-lg p-3 min-h-[48px] flex items-center"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">
+                      <div className="flex items-start gap-3 w-full">
+                        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
                           {idx + 1}
                         </div>
-                        <p className="text-sm text-gray-700 font-medium">{effect}</p>
+                        <p className="text-sm text-gray-700 flex-1">{effect}</p>
                       </div>
                     </div>
                   ))}
@@ -713,24 +567,24 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
               </div>
             )}
 
-            {/* Drug Interactions */}
+            {/* Enhanced Mobile Interactions */}
             {medicineInfo.interactions.length > 0 && (
-              <div className="space-y-3">
-                <h5 className="text-lg font-bold text-gray-800 flex items-center">
-                  <AlertTriangle className="w-5 h-5 mr-2 text-red-500" />
-                  Drug Interactions:
+              <div className="space-y-2">
+                <h5 className="text-base font-bold text-gray-800 flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
+                  Interactions:
                 </h5>
-                <div className="grid gap-2">
-                  {medicineInfo.interactions.map((interaction, idx) => (
+                <div className="space-y-2">
+                  {medicineInfo.interactions.slice(0, 3).map((interaction, idx) => (
                     <div
                       key={idx}
-                      className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-3 shadow-sm"
+                      className="bg-red-50 border border-red-200 rounded-lg p-3 min-h-[48px] flex items-center"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">
+                      <div className="flex items-start gap-3 w-full">
+                        <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
                           {idx + 1}
                         </div>
-                        <p className="text-sm text-gray-700 font-medium">{interaction}</p>
+                        <p className="text-sm text-gray-700 flex-1">{interaction}</p>
                       </div>
                     </div>
                   ))}
@@ -738,24 +592,24 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
               </div>
             )}
 
-            {/* Precautions */}
+            {/* Enhanced Mobile Precautions */}
             {medicineInfo.precautions.length > 0 && (
-              <div className="space-y-3">
-                <h5 className="text-lg font-bold text-gray-800 flex items-center">
-                  <Shield className="w-5 h-5 mr-2 text-purple-500" />
-                  Important Precautions:
+              <div className="space-y-2">
+                <h5 className="text-base font-bold text-gray-800 flex items-center">
+                  <Shield className="w-4 h-4 mr-2 text-purple-500" />
+                  Precautions:
                 </h5>
-                <div className="grid gap-2">
-                  {medicineInfo.precautions.map((precaution, idx) => (
+                <div className="space-y-2">
+                  {medicineInfo.precautions.slice(0, 3).map((precaution, idx) => (
                     <div
                       key={idx}
-                      className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3 shadow-sm"
+                      className="bg-purple-50 border border-purple-200 rounded-lg p-3 min-h-[48px] flex items-center"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">
+                      <div className="flex items-start gap-3 w-full">
+                        <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
                           {idx + 1}
                         </div>
-                        <p className="text-sm text-gray-700 font-medium">{precaution}</p>
+                        <p className="text-sm text-gray-700 flex-1">{precaution}</p>
                       </div>
                     </div>
                   ))}
@@ -763,55 +617,52 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
               </div>
             )}
 
-            {/* Extracted Text */}
+            {/* Enhanced Mobile Collapsible Sections */}
             {medicineInfo.extractedText && (
-              <details className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
-                <summary className="cursor-pointer text-lg font-bold text-gray-700 hover:text-gray-900 flex items-center">
-                  <Eye className="w-5 h-5 mr-2" />
-                  View Extracted Text (OCR)
+              <details className="bg-gray-50 rounded-lg p-4 border">
+                <summary className="cursor-pointer text-sm font-bold text-gray-700 flex items-center py-2 min-h-[44px] touch-manipulation">
+                  <Eye className="w-4 h-4 mr-2" />
+                  OCR Text
                 </summary>
-                <div className="mt-3 p-3 bg-white rounded-lg border text-sm text-gray-600 max-h-32 overflow-y-auto">
+                <div className="mt-2 p-3 bg-white rounded border text-xs text-gray-600 max-h-24 overflow-y-auto">
                   {medicineInfo.extractedText}
                 </div>
               </details>
             )}
 
-            {/* Raw AI Analysis */}
-            <details className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
-              <summary className="cursor-pointer text-lg font-bold text-purple-700 hover:text-purple-900 flex items-center">
-                <Sparkles className="w-5 h-5 mr-2" />
-                View Full AI Analysis
+            <details className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+              <summary className="cursor-pointer text-sm font-bold text-purple-700 flex items-center py-2 min-h-[44px] touch-manipulation">
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI Analysis
               </summary>
-              <div className="mt-3 p-3 bg-white rounded-lg border text-sm text-gray-600 whitespace-pre-line max-h-40 overflow-y-auto">
+              <div className="mt-2 p-3 bg-white rounded border text-xs text-gray-600 whitespace-pre-line max-h-32 overflow-y-auto">
                 {medicineInfo.rawAnalysis}
               </div>
             </details>
 
-            <Alert className="border-yellow-300 bg-gradient-to-r from-yellow-50 to-amber-50">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
-              <AlertDescription className="text-yellow-800 font-medium">
-                This AI identification is for informational purposes only. Always verify medicine details with a
-                qualified pharmacist or healthcare provider before use.
+            <Alert className="border-yellow-300 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800 text-sm">
+                AI identification for information only. Verify with healthcare provider before use.
               </AlertDescription>
             </Alert>
 
-            <div className="flex gap-3">
+            {/* Enhanced Mobile Action Buttons - Minimum 48px height */}
+            <div className="space-y-3 sm:space-y-0 sm:flex sm:gap-3">
               <Button
                 onClick={resetIdentifier}
                 variant="outline"
-                size="lg"
-                className="flex-1 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-2"
+                className="w-full sm:flex-1 bg-gray-50 hover:bg-gray-100 active:scale-95 transition-transform duration-150 min-h-[48px] text-sm font-medium touch-manipulation"
               >
                 <Camera className="w-4 h-4 mr-2" />
-                Identify Another Medicine
+                Try Another
               </Button>
               <Button
-                size="lg"
-                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg"
+                className="w-full sm:flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:scale-95 transition-transform duration-150 text-white min-h-[48px] text-sm font-medium touch-manipulation"
                 asChild
               >
                 <a href="/chat">
-                  Ask AI Pharmacist
+                  Ask AI Doctor
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </a>
               </Button>
@@ -819,15 +670,16 @@ ${extractedText ? "Base your analysis on the extracted text above." : "Provide c
           </div>
         )}
 
-        <div className="pt-4 border-t border-gray-200 mt-6">
+        {/* Enhanced Mobile Footer Button - Minimum 48px height */}
+        <div className="pt-4 border-t border-gray-200 mt-4 sm:mt-6">
           <Button
-            className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 hover:from-purple-600 hover:via-pink-600 hover:to-indigo-600 text-white shadow-xl text-lg py-3"
+            className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 hover:from-purple-600 hover:via-pink-600 hover:to-indigo-600 active:scale-95 transition-transform duration-150 text-white text-sm sm:text-base min-h-[48px] font-medium touch-manipulation"
             asChild
           >
             <a href="/medicines">
-              <Crown className="w-5 h-5 mr-2" />
-              Open Full Medicine Identifier
-              <ArrowRight className="w-5 h-5 ml-2" />
+              <Crown className="w-4 h-4 mr-2" />
+              Full Medicine Identifier
+              <ArrowRight className="w-4 h-4 ml-2" />
             </a>
           </Button>
         </div>
