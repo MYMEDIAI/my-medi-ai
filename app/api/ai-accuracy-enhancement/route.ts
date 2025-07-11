@@ -1,23 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-interface AccuracyFeedback {
-  recommendationId: string
-  userFeedback: "accurate" | "partially_accurate" | "inaccurate" | "harmful"
-  actualOutcome?: string
-  professionalVerification?: {
-    verified: boolean
-    doctorFeedback: string
-    corrections: string[]
-  }
-  userProfile: {
-    age: number
-    gender: string
-    location: string
-    medicalHistory: string[]
-  }
-  timestamp: string
-}
-
 interface AccuracyMetrics {
   overallAccuracy: number
   categoryAccuracy: {
@@ -36,335 +18,270 @@ interface AccuracyMetrics {
   lastUpdated: string
 }
 
-// Simulated accuracy tracking (in production, this would be in a database)
-const accuracyData: AccuracyFeedback[] = []
-let knowledgeBaseVersion = "1.0.0"
-let lastKnowledgeUpdate = new Date().toISOString()
-
-// Indian Medical Guidelines Integration
-const INDIAN_MEDICAL_GUIDELINES = {
-  fever_management: {
-    temperature_threshold: 100.4, // Fahrenheit
-    first_line_treatment: ["Paracetamol 500mg", "Adequate hydration", "Rest"],
-    red_flags: ["High fever >103°F", "Persistent fever >3 days", "Associated symptoms"],
-    cultural_considerations: ["Avoid cold foods in fever", "Tulsi and ginger tea beneficial"],
-  },
-  hypertension_india: {
-    diagnostic_criteria: "≥140/90 mmHg",
-    lifestyle_modifications: ["Low salt diet", "Regular exercise", "Stress management"],
-    common_medications: ["Amlodipine", "Telmisartan", "Metoprolol"],
-    dietary_advice: ["Reduce salt intake", "Include potassium-rich foods", "Limit processed foods"],
-  },
-  diabetes_management: {
-    hba1c_target: "<7%",
-    fasting_glucose: "80-130 mg/dL",
-    lifestyle_factors: ["Carbohydrate counting", "Regular exercise", "Weight management"],
-    indian_diet_considerations: ["Portion control of rice/roti", "Include millets", "Avoid sugary drinks"],
-  },
+interface FeedbackSubmission {
+  recommendationId: string
+  userFeedback: "accurate" | "partially_accurate" | "inaccurate" | "harmful"
+  actualOutcome?: string
+  userProfile?: {
+    age: number
+    gender: string
+    location: string
+    medicalHistory: string[]
+  }
+  timestamp: string
 }
 
-// Specialist Review Queue
-interface SpecialistReview {
-  id: string
-  aiRecommendation: string
+interface SpecialistReviewRequest {
+  recommendation: string
   userCase: string
-  specialistFeedback?: string
-  accuracy: number
-  improvements: string[]
-  status: "pending" | "reviewed" | "approved"
+  priority: "low" | "medium" | "high" | "urgent"
+  specialtyRequired?: string
 }
 
-const specialistReviewQueue: SpecialistReview[] = []
+// Mock data for demonstration - in production, this would come from a database
+const mockAccuracyMetrics: AccuracyMetrics = {
+  overallAccuracy: 87.3,
+  categoryAccuracy: {
+    diagnosis: 82.1,
+    medication: 91.5,
+    lifestyle: 94.2,
+    emergency: 78.9,
+  },
+  demographicAccuracy: {
+    "18-30": 89.2,
+    "31-50": 87.8,
+    "51-70": 85.4,
+    "70+": 82.1,
+    male: 88.1,
+    female: 86.7,
+  },
+  regionalAccuracy: {
+    "North India": 88.5,
+    "South India": 87.1,
+    "West India": 89.2,
+    "East India": 85.8,
+    "Northeast India": 84.3,
+  },
+  improvementAreas: [
+    "Emergency symptom recognition for elderly patients",
+    "Regional disease pattern recognition",
+    "Traditional medicine integration",
+    "Pediatric symptom assessment",
+    "Mental health screening accuracy",
+  ],
+  lastUpdated: new Date().toISOString(),
+}
 
-function calculateAccuracyMetrics(): AccuracyMetrics {
-  if (accuracyData.length === 0) {
-    return {
-      overallAccuracy: 85, // Default baseline
-      categoryAccuracy: {
-        diagnosis: 80,
-        medication: 90,
-        lifestyle: 95,
-        emergency: 98,
-      },
-      demographicAccuracy: {},
-      regionalAccuracy: {},
-      improvementAreas: ["Increase diagnostic accuracy", "Improve cultural adaptation"],
-      lastUpdated: new Date().toISOString(),
+// Store feedback submissions (in production, this would be a database)
+const feedbackStorage: FeedbackSubmission[] = []
+
+// Store specialist review requests
+const specialistReviews: (SpecialistReviewRequest & { id: string; status: string; estimatedTime: string })[] = []
+
+function analyzeFeedback(feedback: FeedbackSubmission): void {
+  // In production, this would update the AI model and accuracy metrics
+  console.log("Processing feedback:", feedback)
+
+  // Update accuracy metrics based on feedback
+  if (feedback.userFeedback === "accurate") {
+    // Positive feedback - no immediate action needed
+  } else if (feedback.userFeedback === "inaccurate" || feedback.userFeedback === "harmful") {
+    // Negative feedback - flag for review and model improvement
+    console.log("Flagging for model improvement:", feedback.recommendationId)
+  }
+
+  // Store feedback for analysis
+  feedbackStorage.push(feedback)
+}
+
+function generateReviewId(): string {
+  return `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+}
+
+function determineSpecialty(recommendation: string): string {
+  const specialtyKeywords = {
+    cardiology: ["heart", "chest pain", "cardiac", "blood pressure", "cholesterol"],
+    neurology: ["headache", "seizure", "stroke", "brain", "neurological"],
+    dermatology: ["skin", "rash", "acne", "dermatitis", "eczema"],
+    gastroenterology: ["stomach", "digestive", "nausea", "diarrhea", "constipation"],
+    orthopedics: ["bone", "joint", "fracture", "arthritis", "back pain"],
+    psychiatry: ["depression", "anxiety", "mental health", "stress", "mood"],
+    pediatrics: ["child", "infant", "baby", "pediatric", "vaccination"],
+    gynecology: ["pregnancy", "menstrual", "reproductive", "gynecological"],
+  }
+
+  const lowerRecommendation = recommendation.toLowerCase()
+
+  for (const [specialty, keywords] of Object.entries(specialtyKeywords)) {
+    if (keywords.some((keyword) => lowerRecommendation.includes(keyword))) {
+      return specialty
     }
   }
 
-  const totalFeedback = accuracyData.length
-  const accurateFeedback = accuracyData.filter(
-    (f) => f.userFeedback === "accurate" || f.userFeedback === "partially_accurate",
-  ).length
+  return "general medicine"
+}
 
-  const overallAccuracy = Math.round((accurateFeedback / totalFeedback) * 100)
+function calculatePriority(recommendation: string, userCase: string): "low" | "medium" | "high" | "urgent" {
+  const urgentKeywords = ["emergency", "severe", "critical", "urgent", "immediate"]
+  const highKeywords = ["pain", "bleeding", "infection", "fever", "difficulty"]
+  const mediumKeywords = ["chronic", "persistent", "recurring", "ongoing"]
 
-  // Calculate category-wise accuracy
-  const categories = ["diagnosis", "medication", "lifestyle", "emergency"]
-  const categoryAccuracy: any = {}
+  const combinedText = `${recommendation} ${userCase}`.toLowerCase()
 
-  categories.forEach((category) => {
-    const categoryData = accuracyData.filter((f) => f.recommendationId.includes(category))
-    if (categoryData.length > 0) {
-      const categoryAccurate = categoryData.filter(
-        (f) => f.userFeedback === "accurate" || f.userFeedback === "partially_accurate",
-      ).length
-      categoryAccuracy[category] = Math.round((categoryAccurate / categoryData.length) * 100)
-    } else {
-      categoryAccuracy[category] = 85 // Default
-    }
-  })
-
-  // Calculate demographic accuracy
-  const demographicAccuracy: any = {}
-  const ageGroups = ["18-30", "31-50", "51-70", "70+"]
-  ageGroups.forEach((group) => {
-    const [min, max] = group === "70+" ? [70, 150] : group.split("-").map(Number)
-    const groupData = accuracyData.filter((f) => f.userProfile.age >= min && (max ? f.userProfile.age <= max : true))
-    if (groupData.length > 0) {
-      const groupAccurate = groupData.filter(
-        (f) => f.userFeedback === "accurate" || f.userFeedback === "partially_accurate",
-      ).length
-      demographicAccuracy[group] = Math.round((groupAccurate / groupData.length) * 100)
-    }
-  })
-
-  // Calculate regional accuracy
-  const regionalAccuracy: any = {}
-  const regions = [...new Set(accuracyData.map((f) => f.userProfile.location.split(",")[1]?.trim()))]
-  regions.forEach((region) => {
-    if (region) {
-      const regionData = accuracyData.filter((f) => f.userProfile.location.includes(region))
-      if (regionData.length > 0) {
-        const regionAccurate = regionData.filter(
-          (f) => f.userFeedback === "accurate" || f.userFeedback === "partially_accurate",
-        ).length
-        regionalAccuracy[region] = Math.round((regionAccurate / regionData.length) * 100)
-      }
-    }
-  })
-
-  // Identify improvement areas
-  const improvementAreas: string[] = []
-  if (categoryAccuracy.diagnosis < 85) improvementAreas.push("Improve diagnostic accuracy")
-  if (categoryAccuracy.medication < 90) improvementAreas.push("Enhance medication recommendations")
-  if (overallAccuracy < 80) improvementAreas.push("General accuracy improvement needed")
-
-  const inaccurateFeedback = accuracyData.filter((f) => f.userFeedback === "inaccurate")
-  if (inaccurateFeedback.length > totalFeedback * 0.1) {
-    improvementAreas.push("Address common inaccuracy patterns")
+  if (urgentKeywords.some((keyword) => combinedText.includes(keyword))) {
+    return "urgent"
+  } else if (highKeywords.some((keyword) => combinedText.includes(keyword))) {
+    return "high"
+  } else if (mediumKeywords.some((keyword) => combinedText.includes(keyword))) {
+    return "medium"
   }
 
-  return {
-    overallAccuracy,
-    categoryAccuracy,
-    demographicAccuracy,
-    regionalAccuracy,
-    improvementAreas,
-    lastUpdated: new Date().toISOString(),
-  }
+  return "low"
 }
 
-function updateKnowledgeBase(feedback: AccuracyFeedback[]): string[] {
-  const updates: string[] = []
-
-  // Analyze feedback patterns
-  const commonIssues = feedback
-    .filter((f) => f.userFeedback === "inaccurate")
-    .map((f) => f.actualOutcome)
-    .filter(Boolean)
-
-  // Update guidelines based on professional verification
-  const verifiedCorrections = feedback
-    .filter((f) => f.professionalVerification?.verified)
-    .flatMap((f) => f.professionalVerification?.corrections || [])
-
-  if (verifiedCorrections.length > 0) {
-    updates.push(`Updated medical guidelines based on ${verifiedCorrections.length} professional corrections`)
-    knowledgeBaseVersion = incrementVersion(knowledgeBaseVersion)
-    lastKnowledgeUpdate = new Date().toISOString()
-  }
-
-  // Regional adaptations
-  const regionalFeedback = feedback.reduce(
-    (acc, f) => {
-      const region = f.userProfile.location.split(",")[1]?.trim()
-      if (region) {
-        if (!acc[region]) acc[region] = []
-        acc[region].push(f)
-      }
-      return acc
-    },
-    {} as { [key: string]: AccuracyFeedback[] },
-  )
-
-  Object.entries(regionalFeedback).forEach(([region, regionFeedback]) => {
-    if (regionFeedback.length >= 5) {
-      // Minimum threshold for regional updates
-      updates.push(`Updated regional guidelines for ${region}`)
-    }
-  })
-
-  return updates
-}
-
-function incrementVersion(version: string): string {
-  const parts = version.split(".")
-  const patch = Number.parseInt(parts[2]) + 1
-  return `${parts[0]}.${parts[1]}.${patch}`
-}
-
-function generateSpecialistReview(recommendation: string, userCase: string): string {
-  const reviewId = `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-  specialistReviewQueue.push({
-    id: reviewId,
-    aiRecommendation: recommendation,
-    userCase: userCase,
-    accuracy: 0,
-    improvements: [],
-    status: "pending",
-  })
-
-  return reviewId
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const action = body.action
-
-    switch (action) {
-      case "submit_feedback":
-        const feedback: AccuracyFeedback = body.feedback
-        accuracyData.push(feedback)
-
-        // Update knowledge base if significant feedback received
-        if (accuracyData.length % 10 === 0) {
-          // Update every 10 feedback items
-          const updates = updateKnowledgeBase(accuracyData.slice(-10))
-          return NextResponse.json({
-            success: true,
-            message: "Feedback recorded successfully",
-            knowledgeBaseUpdates: updates,
-            currentVersion: knowledgeBaseVersion,
-          })
-        }
-
-        return NextResponse.json({
-          success: true,
-          message: "Feedback recorded successfully",
-        })
-
-      case "request_specialist_review":
-        const { recommendation, userCase } = body
-        const reviewId = generateSpecialistReview(recommendation, userCase)
-
-        return NextResponse.json({
-          success: true,
-          reviewId,
-          message: "Specialist review requested",
-          estimatedTime: "24-48 hours",
-        })
-
-      case "get_accuracy_metrics":
-        const metrics = calculateAccuracyMetrics()
-        return NextResponse.json(metrics)
-
-      case "get_knowledge_base_info":
-        return NextResponse.json({
-          version: knowledgeBaseVersion,
-          lastUpdated: lastKnowledgeUpdate,
-          guidelines: Object.keys(INDIAN_MEDICAL_GUIDELINES),
-          totalFeedback: accuracyData.length,
-          pendingReviews: specialistReviewQueue.filter((r) => r.status === "pending").length,
-        })
-
-      case "update_guidelines":
-        // This would typically be restricted to admin users
-        const { guideline, updates } = body
-        if (INDIAN_MEDICAL_GUIDELINES[guideline as keyof typeof INDIAN_MEDICAL_GUIDELINES]) {
-          // Update guidelines (in production, this would update the database)
-          knowledgeBaseVersion = incrementVersion(knowledgeBaseVersion)
-          lastKnowledgeUpdate = new Date().toISOString()
-
-          return NextResponse.json({
-            success: true,
-            message: `Guidelines updated for ${guideline}`,
-            newVersion: knowledgeBaseVersion,
-          })
-        }
-
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Guideline not found",
-          },
-          { status: 404 },
-        )
-
-      default:
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Invalid action",
-          },
-          { status: 400 },
-        )
-    }
-  } catch (error) {
-    console.error("Accuracy enhancement error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Internal server error",
-      },
-      { status: 500 },
-    )
+function getEstimatedReviewTime(priority: string): string {
+  switch (priority) {
+    case "urgent":
+      return "Within 1 hour"
+    case "high":
+      return "Within 4 hours"
+    case "medium":
+      return "Within 24 hours"
+    case "low":
+      return "Within 72 hours"
+    default:
+      return "Within 48 hours"
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url)
-    const type = url.searchParams.get("type")
+    const { searchParams } = new URL(request.url)
+    const type = searchParams.get("type")
 
-    switch (type) {
-      case "metrics":
-        return NextResponse.json(calculateAccuracyMetrics())
+    if (type === "metrics") {
+      return NextResponse.json(mockAccuracyMetrics)
+    }
 
-      case "guidelines":
+    return NextResponse.json({ error: "Invalid request type" }, { status: 400 })
+  } catch (error) {
+    console.error("Accuracy Enhancement GET Error:", error)
+    return NextResponse.json({ error: "Failed to fetch accuracy metrics" }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { action } = body
+
+    switch (action) {
+      case "submit_feedback": {
+        const { feedback }: { feedback: FeedbackSubmission } = body
+
+        // Validate feedback
+        if (!feedback.recommendationId || !feedback.userFeedback) {
+          return NextResponse.json({ error: "Invalid feedback data" }, { status: 400 })
+        }
+
+        // Process feedback
+        analyzeFeedback(feedback)
+
         return NextResponse.json({
-          guidelines: INDIAN_MEDICAL_GUIDELINES,
-          version: knowledgeBaseVersion,
-          lastUpdated: lastKnowledgeUpdate,
+          success: true,
+          message: "Feedback submitted successfully",
+          feedbackId: `feedback_${Date.now()}`,
+        })
+      }
+
+      case "request_specialist_review": {
+        const { recommendation, userCase }: { recommendation: string; userCase: string } = body
+
+        if (!recommendation) {
+          return NextResponse.json({ error: "Recommendation is required" }, { status: 400 })
+        }
+
+        const reviewId = generateReviewId()
+        const specialty = determineSpecialty(recommendation)
+        const priority = calculatePriority(recommendation, userCase || "")
+        const estimatedTime = getEstimatedReviewTime(priority)
+
+        const reviewRequest = {
+          id: reviewId,
+          recommendation,
+          userCase: userCase || "",
+          priority,
+          specialtyRequired: specialty,
+          status: "pending",
+          estimatedTime,
+        }
+
+        specialistReviews.push(reviewRequest)
+
+        return NextResponse.json({
+          success: true,
+          reviewId,
+          specialty,
+          priority,
+          estimatedTime,
+          message: `Specialist review requested. A ${specialty} specialist will review your case.`,
+        })
+      }
+
+      case "update_knowledge_base": {
+        // This would update the AI knowledge base with new medical information
+        const { medicalGuidelines, researchPapers, specialistRecommendations } = body
+
+        // In production, this would trigger a model update process
+        console.log("Updating knowledge base with:", {
+          medicalGuidelines: medicalGuidelines?.length || 0,
+          researchPapers: researchPapers?.length || 0,
+          specialistRecommendations: specialistRecommendations?.length || 0,
         })
 
-      case "specialist_queue":
         return NextResponse.json({
-          pending: specialistReviewQueue.filter((r) => r.status === "pending").length,
-          reviewed: specialistReviewQueue.filter((r) => r.status === "reviewed").length,
-          approved: specialistReviewQueue.filter((r) => r.status === "approved").length,
-          queue: specialistReviewQueue.slice(0, 10), // Return first 10 for preview
+          success: true,
+          message: "Knowledge base update initiated",
+          updateId: `update_${Date.now()}`,
         })
+      }
+
+      case "get_improvement_suggestions": {
+        const suggestions = [
+          {
+            area: "Emergency Detection",
+            suggestion: "Improve recognition of cardiac emergency symptoms in elderly patients",
+            priority: "high",
+            estimatedImpact: "15% accuracy improvement",
+          },
+          {
+            area: "Regional Adaptation",
+            suggestion: "Add more regional disease patterns for Northeast India",
+            priority: "medium",
+            estimatedImpact: "8% accuracy improvement",
+          },
+          {
+            area: "Traditional Medicine",
+            suggestion: "Better integration of Ayurvedic and traditional remedies",
+            priority: "medium",
+            estimatedImpact: "12% user satisfaction improvement",
+          },
+          {
+            area: "Pediatric Care",
+            suggestion: "Enhanced symptom assessment for children under 5",
+            priority: "high",
+            estimatedImpact: "20% accuracy improvement for pediatric cases",
+          },
+        ]
+
+        return NextResponse.json({ suggestions })
+      }
 
       default:
-        return NextResponse.json({
-          message: "AI Accuracy Enhancement System",
-          version: knowledgeBaseVersion,
-          lastUpdated: lastKnowledgeUpdate,
-          totalFeedback: accuracyData.length,
-          overallAccuracy: calculateAccuracyMetrics().overallAccuracy,
-        })
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
   } catch (error) {
-    console.error("GET request error:", error)
-    return NextResponse.json(
-      {
-        error: "Unable to retrieve data",
-      },
-      { status: 500 },
-    )
+    console.error("Accuracy Enhancement POST Error:", error)
+    return NextResponse.json({ error: "Failed to process request" }, { status: 500 })
   }
 }

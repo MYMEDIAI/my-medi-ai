@@ -30,12 +30,7 @@ interface FormHelperResponse {
     economicAlternatives: string[]
     familyInvolvement: string[]
   }
-  structuredData?: {
-    symptoms: string[]
-    duration: string
-    severity: number
-    associatedSymptoms: string[]
-  }
+  structuredData?: StructuredMedicalData
   autoComplete?: Array<{
     text: string
     category: string
@@ -48,447 +43,238 @@ interface FormHelperResponse {
   }
 }
 
-// Medical terms dictionary with simple explanations
-const MEDICAL_TERMS = {
-  hypertension: {
-    simple: "High Blood Pressure",
-    explanation:
-      "When the force of blood against your artery walls is too high. Like water flowing through a pipe with too much pressure.",
-    symptoms: ["headache", "dizziness", "chest pain"],
-    indianContext:
-      "Very common in India due to stress, salt intake, and lifestyle. Can be managed with diet changes and yoga.",
-  },
-  diabetes: {
-    simple: "High Blood Sugar",
-    explanation:
-      "When your body cannot properly use sugar from food, causing sugar levels in blood to become too high.",
-    symptoms: ["frequent urination", "excessive thirst", "fatigue"],
-    indianContext:
-      "Common in Indian families. Rice, roti, and sweets can affect blood sugar. Regular monitoring is important.",
-  },
-  gastritis: {
-    simple: "Stomach Inflammation",
-    explanation:
-      "When the lining of your stomach becomes swollen and irritated, often causing pain and burning sensation.",
-    symptoms: ["stomach pain", "nausea", "bloating"],
-    indianContext: "Often caused by spicy food, irregular eating habits, or stress. Common in Indian diet patterns.",
-  },
-  migraine: {
-    simple: "Severe Headache",
-    explanation: "A very painful headache that can last hours or days, often with sensitivity to light and sound.",
-    symptoms: ["severe headache", "nausea", "light sensitivity"],
-    indianContext: "Can be triggered by heat, dehydration, or stress. Common during summer months in India.",
-  },
-  arthritis: {
-    simple: "Joint Pain and Stiffness",
-    explanation: "When joints become swollen, painful, and stiff. Like rusty hinges that don't move smoothly.",
-    symptoms: ["joint pain", "stiffness", "swelling"],
-    indianContext: "Common in older adults. Monsoon weather can worsen symptoms. Turmeric and warm oil massage help.",
-  },
-  asthma: {
-    simple: "Breathing Difficulty",
-    explanation: "When airways in lungs become narrow, making it hard to breathe. Like breathing through a straw.",
-    symptoms: ["shortness of breath", "wheezing", "cough"],
-    indianContext: "Air pollution in Indian cities can trigger asthma. Dust and smoke are common triggers.",
-  },
+interface VoiceProcessingRequest {
+  type: "process_voice" | "analyze_symptoms" | "extract_medical_terms" | "generate_suggestions"
+  data: {
+    voiceInput?: string
+    symptoms?: string[]
+    medicalHistory?: string[]
+    currentMedications?: string[]
+    language?: string
+  }
 }
 
-// Ayurvedic considerations for common conditions
-const AYURVEDIC_WISDOM = {
-  digestive: {
-    recommendations: [
-      "Drink warm water with lemon in morning",
-      "Eat largest meal at lunch when digestion is strongest",
-      "Include ginger, cumin, and coriander in cooking",
-      "Avoid cold drinks with meals",
-    ],
-    herbs: ["Triphala for digestion", "Ajwain for gas", "Jeera water for acidity"],
-  },
-  respiratory: {
-    recommendations: [
-      "Practice pranayama (breathing exercises)",
-      "Steam inhalation with eucalyptus oil",
-      "Drink warm turmeric milk before bed",
-      "Avoid cold and damp foods",
-    ],
-    herbs: ["Tulsi for cough", "Mulethi for throat", "Ginger for congestion"],
-  },
-  stress: {
-    recommendations: [
-      "Practice meditation or yoga daily",
-      "Oil massage (abhyanga) before bath",
-      "Maintain regular sleep schedule",
-      "Spend time in nature",
-    ],
-    herbs: ["Ashwagandha for stress", "Brahmi for mental clarity", "Jatamansi for sleep"],
-  },
+interface MedicalTermExtraction {
+  symptoms: string[]
+  medications: string[]
+  bodyParts: string[]
+  timeReferences: string[]
+  severityIndicators: string[]
+  medicalConditions: string[]
 }
 
-// Regional adaptations for different parts of India
-const REGIONAL_ADAPTATIONS = {
-  north: {
-    climate: "Cold winters, hot summers",
-    commonIssues: ["joint pain in winter", "heat stroke in summer"],
-    dietaryAdvice: ["Include warming spices in winter", "Cooling foods like lassi in summer"],
-  },
-  south: {
-    climate: "Hot and humid",
-    commonIssues: ["skin infections", "digestive issues"],
-    dietaryAdvice: ["Include coconut water", "Use curry leaves and tamarind"],
-  },
-  west: {
-    climate: "Dry and hot",
-    commonIssues: ["dehydration", "respiratory problems"],
-    dietaryAdvice: ["Increase water intake", "Include buttermilk and fresh fruits"],
-  },
-  east: {
-    climate: "Humid with monsoons",
-    commonIssues: ["fungal infections", "joint pain"],
-    dietaryAdvice: ["Include fish for omega-3", "Use mustard oil for cooking"],
-  },
+interface StructuredMedicalData {
+  primarySymptoms: string[]
+  secondarySymptoms: string[]
+  duration: string
+  severity: number
+  bodyParts: string[]
+  associatedFactors: string[]
+  medicalTerms: MedicalTermExtraction
+  urgencyLevel: "low" | "medium" | "high" | "critical"
+  suggestedQuestions: string[]
+  recommendedActions: string[]
 }
 
-// Voice processing patterns
-const VOICE_PATTERNS = [
+// Medical conditions dictionary for explanations
+const MEDICAL_CONDITIONS = [
   {
-    pattern: /feeling (tired|exhausted|weak|fatigue)/i,
-    symptom: "fatigue",
-    severity: 5,
+    term: "hypertension",
+    explanation: "High blood pressure - when blood pressure in arteries is consistently too high",
   },
+  { term: "diabetes", explanation: "A group of metabolic disorders characterized by high blood sugar levels" },
   {
-    pattern: /head(ache|pain)|my head (hurts|is paining)/i,
-    symptom: "headache",
-    severity: 6,
+    term: "asthma",
+    explanation: "A respiratory condition marked by attacks of spasm in the bronchi causing difficulty breathing",
   },
+  { term: "migraine", explanation: "A recurrent throbbing headache that typically affects one side of the head" },
+  { term: "arthritis", explanation: "Inflammation of one or more joints, causing pain and stiffness" },
+  { term: "fever", explanation: "Elevated body temperature, usually indicating infection or illness" },
+  { term: "cough", explanation: "A sudden expulsion of air from the lungs to clear irritants from airways" },
+  { term: "headache", explanation: "Pain in the head or upper neck, can be tension, cluster, or migraine type" },
+  { term: "nausea", explanation: "Feeling of sickness with an inclination to vomit" },
+  { term: "fatigue", explanation: "Extreme tiredness resulting from mental or physical exertion or illness" },
+  { term: "chest pain", explanation: "Discomfort in the chest area, can indicate heart, lung, or muscle issues" },
+  { term: "shortness of breath", explanation: "Difficulty breathing or feeling of not getting enough air" },
+  { term: "dizziness", explanation: "Feeling of being lightheaded, unsteady, or having a spinning sensation" },
+  { term: "insomnia", explanation: "Inability to fall asleep or stay asleep regularly" },
   {
-    pattern: /stomach (pain|ache|hurts)|pet mein dard/i,
-    symptom: "stomach pain",
-    severity: 6,
-  },
-  {
-    pattern: /fever|bukhar|temperature/i,
-    symptom: "fever",
-    severity: 7,
-  },
-  {
-    pattern: /cough|khansi|throat/i,
-    symptom: "cough",
-    severity: 4,
-  },
-  {
-    pattern: /for (\d+) days?/i,
-    duration: "days",
-    extract: "number",
-  },
-  {
-    pattern: /since (yesterday|morning|evening)/i,
-    duration: "1-2 days",
-  },
-  {
-    pattern: /very (bad|severe|painful)/i,
-    severity: 8,
-  },
-  {
-    pattern: /little bit|mild|slight/i,
-    severity: 3,
+    term: "anxiety",
+    explanation: "Feeling of worry, nervousness, or unease about something with an uncertain outcome",
   },
 ]
 
-function explainMedicalTerm(term: string, userProfile?: any): string {
-  const termLower = term.toLowerCase()
-  const medicalTerm = MEDICAL_TERMS[termLower as keyof typeof MEDICAL_TERMS]
+// Common medical terms for autocomplete
+const MEDICAL_TERMS = [
+  "fever",
+  "headache",
+  "cough",
+  "sore throat",
+  "nausea",
+  "vomiting",
+  "diarrhea",
+  "constipation",
+  "chest pain",
+  "shortness of breath",
+  "dizziness",
+  "fatigue",
+  "insomnia",
+  "anxiety",
+  "depression",
+  "hypertension",
+  "diabetes",
+  "asthma",
+  "arthritis",
+  "migraine",
+  "allergies",
+  "rash",
+  "itching",
+  "stomach ache",
+  "back pain",
+  "joint pain",
+  "muscle pain",
+  "burning sensation",
+  "numbness",
+  "swelling",
+  "weight loss",
+  "weight gain",
+  "loss of appetite",
+  "increased appetite",
+]
 
-  if (!medicalTerm) {
-    return `${term} is a medical condition. Please consult with a healthcare provider for detailed information about this condition.`
-  }
-
-  let explanation = `**${medicalTerm.simple}**\n\n${medicalTerm.explanation}\n\n`
-
-  if (medicalTerm.symptoms.length > 0) {
-    explanation += `**Common symptoms:** ${medicalTerm.symptoms.join(", ")}\n\n`
-  }
-
-  if (medicalTerm.indianContext) {
-    explanation += `**In Indian context:** ${medicalTerm.indianContext}\n\n`
-  }
-
-  // Add regional considerations if location is provided
-  if (userProfile?.location) {
-    const region = getRegionFromLocation(userProfile.location)
-    const regionalInfo = REGIONAL_ADAPTATIONS[region as keyof typeof REGIONAL_ADAPTATIONS]
-    if (regionalInfo) {
-      explanation += `**For your region (${region}):** ${regionalInfo.dietaryAdvice.join(", ")}`
-    }
-  }
-
-  return explanation
-}
-
-function generateQuestionSuggestions(symptom: string, context?: string): string[] {
-  const suggestions: string[] = []
-
-  // Basic symptom questions
-  suggestions.push(
-    `When did your ${symptom} start?`,
-    `How severe is your ${symptom} on a scale of 1-10?`,
-    `What makes your ${symptom} better or worse?`,
+function explainMedicalTerm(term: string): string {
+  const normalizedTerm = term.toLowerCase().trim()
+  const condition = MEDICAL_CONDITIONS.find(
+    (condition) =>
+      condition.term.toLowerCase() === normalizedTerm ||
+      condition.term.toLowerCase().includes(normalizedTerm) ||
+      normalizedTerm.includes(condition.term.toLowerCase()),
   )
 
-  // Symptom-specific questions
-  switch (symptom.toLowerCase()) {
-    case "headache":
-      suggestions.push(
-        "Is the headache on one side or both sides?",
-        "Do you have sensitivity to light or sound?",
-        "Have you been stressed lately?",
-        "Are you drinking enough water?",
-      )
-      break
-    case "stomach pain":
-      suggestions.push(
-        "Is the pain before or after eating?",
-        "Do you have nausea or vomiting?",
-        "Have you eaten anything unusual?",
-        "Is the pain sharp or dull?",
-      )
-      break
-    case "fever":
-      suggestions.push(
-        "What is your temperature?",
-        "Do you have chills or sweating?",
-        "Any body aches?",
-        "Have you been around sick people?",
-      )
-      break
-    case "cough":
-      suggestions.push(
-        "Is it a dry cough or with phlegm?",
-        "Is it worse at night?",
-        "Any chest pain with coughing?",
-        "Have you been exposed to dust or smoke?",
-      )
-      break
+  if (condition) {
+    return condition.explanation
   }
 
-  return suggestions.slice(0, 6) // Return top 6 suggestions
-}
-
-function generateCulturalAdaptation(symptom: string, userProfile: any) {
-  const adaptation = {
-    dietaryRecommendations: [] as string[],
-    lifestyleAdjustments: [] as string[],
-    ayurvedicConsiderations: [] as string[],
-    economicAlternatives: [] as string[],
-    familyInvolvement: [] as string[],
+  // Fallback explanations for common terms
+  const fallbackExplanations: { [key: string]: string } = {
+    pain: "Physical suffering or discomfort caused by illness or injury",
+    ache: "A continuous or prolonged dull pain",
+    swelling: "Enlargement of a body part due to fluid buildup or inflammation",
+    rash: "Area of irritated or swollen skin",
+    burning: "A hot, stinging sensation",
+    numbness: "Loss of sensation or feeling in a body part",
+    weakness: "Lack of physical strength or energy",
   }
 
-  // Dietary recommendations based on diet preference
-  if (userProfile.diet === "vegetarian") {
-    adaptation.dietaryRecommendations.push(
-      "Include protein-rich dal and paneer",
-      "Add iron-rich spinach and dates",
-      "Include vitamin B12 supplements if needed",
-    )
-  } else {
-    adaptation.dietaryRecommendations.push(
-      "Include lean chicken or fish for protein",
-      "Eggs are good source of nutrients",
-      "Balance meat with vegetables",
-    )
-  }
-
-  // Economic considerations
-  if (userProfile.economicStatus === "low") {
-    adaptation.economicAlternatives.push(
-      "Use home remedies like ginger-honey for cough",
-      "Generic medicines are equally effective",
-      "Government hospitals provide affordable care",
-      "Community health centers offer free consultations",
-    )
-  }
-
-  // Family involvement for joint families
-  if (userProfile.familyType === "joint") {
-    adaptation.familyInvolvement.push(
-      "Inform family elders about your condition",
-      "Ask family to help with medication reminders",
-      "Share dietary restrictions with family cook",
-      "Family support is important for recovery",
-    )
-  }
-
-  // Ayurvedic considerations based on symptom
-  const symptomCategory = categorizeSymptom(symptom)
-  const ayurvedicAdvice = AYURVEDIC_WISDOM[symptomCategory as keyof typeof AYURVEDIC_WISDOM]
-  if (ayurvedicAdvice) {
-    adaptation.ayurvedicConsiderations = ayurvedicAdvice.recommendations
-  }
-
-  return adaptation
-}
-
-function processVoiceInput(voiceText: string) {
-  const structuredData = {
-    symptoms: [] as string[],
-    duration: "",
-    severity: 5,
-    associatedSymptoms: [] as string[],
-  }
-
-  // Process voice text through patterns
-  for (const pattern of VOICE_PATTERNS) {
-    const match = voiceText.match(pattern.pattern)
-    if (match) {
-      if (pattern.symptom) {
-        structuredData.symptoms.push(pattern.symptom)
-      }
-      if (pattern.severity) {
-        structuredData.severity = pattern.severity
-      }
-      if (pattern.duration) {
-        if (pattern.extract === "number" && match[1]) {
-          structuredData.duration = `${match[1]} ${pattern.duration}`
-        } else {
-          structuredData.duration = pattern.duration
-        }
-      }
+  for (const [key, explanation] of Object.entries(fallbackExplanations)) {
+    if (normalizedTerm.includes(key)) {
+      return explanation
     }
   }
 
-  return structuredData
+  return `${term} is a medical term that may require professional evaluation. Please consult with a healthcare provider for detailed information.`
 }
 
-function generateAutoComplete(partialInput: string): Array<{
-  text: string
-  category: string
-  confidence: number
-}> {
-  const suggestions: Array<{
-    text: string
-    category: string
-    confidence: number
-  }> = []
+function generateAutoComplete(query: string): string[] {
+  if (!query || query.length < 2) return []
 
-  const input = partialInput.toLowerCase()
-
-  // Medical terms auto-complete
-  Object.entries(MEDICAL_TERMS).forEach(([term, data]) => {
-    if (term.includes(input) || data.simple.toLowerCase().includes(input)) {
-      suggestions.push({
-        text: data.simple,
-        category: "Medical Term",
-        confidence: term.startsWith(input) ? 0.9 : 0.7,
-      })
-    }
-  })
-
-  // Common symptoms
-  const commonSymptoms = [
-    "headache",
-    "fever",
-    "cough",
-    "stomach pain",
-    "back pain",
-    "chest pain",
-    "dizziness",
-    "fatigue",
-    "nausea",
-    "vomiting",
-  ]
-
-  commonSymptoms.forEach((symptom) => {
-    if (symptom.includes(input)) {
-      suggestions.push({
-        text: symptom,
-        category: "Symptom",
-        confidence: symptom.startsWith(input) ? 0.9 : 0.6,
-      })
-    }
-  })
-
-  // Sort by confidence and return top 5
-  return suggestions.sort((a, b) => b.confidence - a.confidence).slice(0, 5)
+  const normalizedQuery = query.toLowerCase().trim()
+  return MEDICAL_TERMS.filter((term) => term.toLowerCase().includes(normalizedQuery)).slice(0, 5) // Return top 5 matches
 }
 
-function getRegionFromLocation(location: string): string {
-  const northStates = ["delhi", "punjab", "haryana", "rajasthan", "uttar pradesh", "himachal pradesh"]
-  const southStates = ["tamil nadu", "kerala", "karnataka", "andhra pradesh", "telangana"]
-  const westStates = ["maharashtra", "gujarat", "rajasthan", "goa"]
-  const eastStates = ["west bengal", "odisha", "jharkhand", "bihar"]
+function processVoiceInput(transcript: string): { processedText: string; suggestions: string[] } {
+  // Clean up common voice recognition errors
+  const processed = transcript
+    .replace(/\bfever\b/gi, "fever")
+    .replace(/\bhead ache\b/gi, "headache")
+    .replace(/\bstomach ache\b/gi, "stomach ache")
+    .replace(/\bsore throat\b/gi, "sore throat")
+    .replace(/\bchest pain\b/gi, "chest pain")
 
-  const locationLower = location.toLowerCase()
+  // Extract potential symptoms
+  const suggestions = MEDICAL_TERMS.filter((term) => processed.toLowerCase().includes(term.toLowerCase())).slice(0, 3)
 
-  if (northStates.some((state) => locationLower.includes(state))) return "north"
-  if (southStates.some((state) => locationLower.includes(state))) return "south"
-  if (westStates.some((state) => locationLower.includes(state))) return "west"
-  if (eastStates.some((state) => locationLower.includes(state))) return "east"
-
-  return "general"
-}
-
-function categorizeSymptom(symptom: string): string {
-  const digestiveSymptoms = ["stomach pain", "nausea", "vomiting", "diarrhea", "constipation", "acidity"]
-  const respiratorySymptoms = ["cough", "shortness of breath", "chest pain", "wheezing"]
-  const stressSymptoms = ["headache", "fatigue", "insomnia", "anxiety", "depression"]
-
-  const symptomLower = symptom.toLowerCase()
-
-  if (digestiveSymptoms.some((s) => symptomLower.includes(s))) return "digestive"
-  if (respiratorySymptoms.some((s) => symptomLower.includes(s))) return "respiratory"
-  if (stressSymptoms.some((s) => symptomLower.includes(s))) return "stress"
-
-  return "general"
+  return {
+    processedText: processed,
+    suggestions,
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { type, data }: FormHelperRequest = await request.json()
+    const body = await request.json()
+    const { action, data } = body
 
-    const response: FormHelperResponse = {}
-
-    switch (type) {
+    switch (action) {
       case "explain_term":
-        if (data.term) {
-          response.explanation = explainMedicalTerm(data.term, data.userProfile)
+        const { term } = data || {}
+        if (!term) {
+          return NextResponse.json({ error: "Term is required" }, { status: 400 })
         }
-        break
+        return NextResponse.json({
+          success: true,
+          explanation: explainMedicalTerm(term),
+          term,
+        })
 
-      case "suggest_questions":
-        if (data.symptom) {
-          response.suggestions = generateQuestionSuggestions(data.symptom, data.context)
+      case "autocomplete":
+        const { query } = data || {}
+        if (!query) {
+          return NextResponse.json({ error: "Query is required" }, { status: 400 })
         }
-        break
-
-      case "cultural_adapt":
-        if (data.symptom && data.userProfile) {
-          response.culturalAdaptation = generateCulturalAdaptation(data.symptom, data.userProfile)
-        }
-        break
+        return NextResponse.json({
+          success: true,
+          suggestions: generateAutoComplete(query),
+        })
 
       case "process_voice":
-        if (data.voiceInput) {
-          response.structuredData = processVoiceInput(data.voiceInput)
+        const { transcript } = data || {}
+        if (!transcript) {
+          return NextResponse.json({ error: "Transcript is required" }, { status: 400 })
         }
-        break
+        const voiceResult = processVoiceInput(transcript)
+        return NextResponse.json({
+          success: true,
+          ...voiceResult,
+        })
 
-      case "auto_complete":
-        if (data.partialInput) {
-          response.autoComplete = generateAutoComplete(data.partialInput)
+      case "form_validation":
+        const { formData } = data || {}
+        if (!formData) {
+          return NextResponse.json({ error: "Form data is required" }, { status: 400 })
         }
-        break
+
+        const validation = {
+          isValid: true,
+          errors: [] as string[],
+          suggestions: [] as string[],
+        }
+
+        // Basic validation
+        if (formData.symptoms && formData.symptoms.length < 3) {
+          validation.errors.push("Please provide more detailed symptom description")
+        }
+
+        if (formData.age && (formData.age < 0 || formData.age > 120)) {
+          validation.errors.push("Please enter a valid age")
+        }
+
+        if (validation.errors.length > 0) {
+          validation.isValid = false
+        }
+
+        return NextResponse.json({
+          success: true,
+          validation,
+        })
 
       default:
-        throw new Error("Invalid request type")
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
-
-    return NextResponse.json(response)
   } catch (error) {
-    console.error("AI Form Helper error:", error)
+    console.error("AI Form Helper Error:", error)
     return NextResponse.json(
-      {
-        error: "Unable to process request",
-        explanation: "AI assistant is temporarily unavailable. Please try again.",
-      },
+      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     )
   }
