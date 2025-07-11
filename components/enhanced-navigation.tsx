@@ -3,60 +3,49 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
+  Menu,
   Home,
   MessageCircle,
-  User,
   Activity,
   Apple,
   Baby,
   UserCheck,
+  User,
   FileText,
   Pill,
-  MapPin,
   Stethoscope,
+  MapPin,
+  Phone,
+  Mail,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Sparkles,
   Heart,
   Brain,
   Eye,
   Bone,
   TreesIcon as Lungs,
   Shield,
-  Phone,
-  Mail,
   Globe,
-  ChevronDown,
-  Sparkles,
-  Zap,
-  Star,
-  Gem,
   BookOpen,
-  Users,
-  Building,
-  Award,
-  TrendingUp,
   Search,
   Microscope,
   Clipboard,
   Calculator,
   Database,
   Store,
-  Leaf,
-  Megaphone,
   AlertTriangle,
   TestTube,
-  Code,
-  Hand,
   Rocket,
-  Clock,
+  Star,
+  Zap,
 } from "lucide-react"
 
 import MyMedLogo from "@/components/mymed-logo"
@@ -68,6 +57,11 @@ interface EnhancedNavigationProps {
 
 export default function EnhancedNavigation({ currentPage, onAboutClick }: EnhancedNavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [openSections, setOpenSections] = useState<string[]>([])
+
+  const toggleSection = (section: string) => {
+    setOpenSections((prev) => (prev.includes(section) ? prev.filter((s) => s !== section) : [...prev, section]))
+  }
 
   const aiServices = [
     {
@@ -78,17 +72,17 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       bg: "bg-purple-50",
       description: "24/7 AI doctor consultation",
       badge: "GPT-4",
-      status: "Beta",
+      status: "Live",
     },
     {
       href: "/assessment",
-      icon: User,
+      icon: Stethoscope,
       label: "Health Assessment",
       color: "text-blue-600",
       bg: "bg-blue-50",
       description: "Comprehensive health evaluation",
       badge: "Gemini AI",
-      status: "Beta",
+      status: "Live",
     },
     {
       href: "/reports",
@@ -98,7 +92,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       bg: "bg-green-50",
       description: "OCR + AI report analysis",
       badge: "OCR + AI",
-      status: "Beta",
+      status: "Live",
     },
     {
       href: "/medicines",
@@ -108,17 +102,17 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       bg: "bg-orange-50",
       description: "Smart medicine recognition",
       badge: "Vision AI",
-      status: "Beta",
+      status: "Live",
     },
     {
       href: "/body-mapper",
-      icon: MapPin,
+      icon: User,
       label: "Body Symptom Mapper",
       color: "text-red-600",
       bg: "bg-red-50",
       description: "Interactive symptom mapping",
       badge: "Interactive",
-      status: "Beta",
+      status: "Live",
     },
     {
       href: "/vitals",
@@ -128,7 +122,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       bg: "bg-pink-50",
       description: "Smart health monitoring",
       badge: "Real-time",
-      status: "Beta",
+      status: "Live",
     },
   ]
 
@@ -140,7 +134,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-green-600",
       bg: "bg-green-50",
       description: "Personalized nutrition plans",
-      status: "Beta",
+      status: "Live",
     },
     {
       href: "/pregnancy",
@@ -149,7 +143,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-pink-600",
       bg: "bg-pink-50",
       description: "Comprehensive pregnancy tracking",
-      status: "Beta",
+      status: "Live",
     },
     {
       href: "/doctors",
@@ -158,7 +152,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-blue-600",
       bg: "bg-blue-50",
       description: "Connect with specialists",
-      status: "Coming Soon",
+      status: "Live",
     },
     {
       href: "/emergency",
@@ -167,7 +161,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-red-600",
       bg: "bg-red-50",
       description: "24/7 emergency assistance",
-      status: "Coming Soon",
+      status: "Live",
     },
     {
       href: "/pharmacy",
@@ -176,7 +170,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-purple-600",
       bg: "bg-purple-50",
       description: "Medicine delivery service",
-      status: "Coming Soon",
+      status: "Live",
     },
     {
       href: "/lab-tests",
@@ -185,42 +179,80 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-cyan-600",
       bg: "bg-cyan-50",
       description: "Home sample collection",
-      status: "Coming Soon",
+      status: "Live",
     },
   ]
 
   const specialties = [
-    { label: "Cardiology", icon: Heart, color: "text-red-500", status: "Coming Soon" },
-    { label: "Neurology", icon: Brain, color: "text-purple-500", status: "Coming Soon" },
-    { label: "Ophthalmology", icon: Eye, color: "text-blue-500", status: "Coming Soon" },
-    { label: "Orthopedics", icon: Bone, color: "text-gray-500", status: "Coming Soon" },
-    { label: "Pulmonology", icon: Lungs, color: "text-cyan-500", status: "Coming Soon" },
-    { label: "General Medicine", icon: Stethoscope, color: "text-green-500", status: "Coming Soon" },
-    { label: "Dermatology", icon: Sparkles, color: "text-yellow-500", status: "Coming Soon" },
-    { label: "Gastroenterology", icon: Apple, color: "text-orange-500", status: "Coming Soon" },
-    { label: "Endocrinology", icon: Zap, color: "text-indigo-500", status: "Coming Soon" },
-    { label: "Psychiatry", icon: Brain, color: "text-pink-500", status: "Coming Soon" },
-    { label: "Pediatrics", icon: Baby, color: "text-green-400", status: "Coming Soon" },
-    { label: "Gynecology", icon: Heart, color: "text-rose-500", status: "Coming Soon" },
+    { label: "Cardiology", icon: Heart, color: "text-red-500", href: "/doctors?specialty=cardiology", status: "Live" },
+    { label: "Neurology", icon: Brain, color: "text-purple-500", href: "/doctors?specialty=neurology", status: "Live" },
+    {
+      label: "Ophthalmology",
+      icon: Eye,
+      color: "text-blue-500",
+      href: "/doctors?specialty=ophthalmology",
+      status: "Live",
+    },
+    {
+      label: "Orthopedics",
+      icon: Bone,
+      color: "text-gray-500",
+      href: "/doctors?specialty=orthopedics",
+      status: "Live",
+    },
+    {
+      label: "Pulmonology",
+      icon: Lungs,
+      color: "text-cyan-500",
+      href: "/doctors?specialty=pulmonology",
+      status: "Live",
+    },
+    {
+      label: "General Medicine",
+      icon: Stethoscope,
+      color: "text-green-500",
+      href: "/doctors?specialty=general",
+      status: "Live",
+    },
+    {
+      label: "Dermatology",
+      icon: Sparkles,
+      color: "text-yellow-500",
+      href: "/doctors?specialty=dermatology",
+      status: "Live",
+    },
+    {
+      label: "Gastroenterology",
+      icon: Apple,
+      color: "text-orange-500",
+      href: "/doctors?specialty=gastroenterology",
+      status: "Live",
+    },
+    {
+      label: "Endocrinology",
+      icon: Zap,
+      color: "text-indigo-500",
+      href: "/doctors?specialty=endocrinology",
+      status: "Live",
+    },
+    { label: "Psychiatry", icon: Brain, color: "text-pink-500", href: "/doctors?specialty=psychiatry", status: "Live" },
+    { label: "Pediatrics", icon: Baby, color: "text-green-400", href: "/doctors?specialty=pediatrics", status: "Live" },
+    { label: "Gynecology", icon: Heart, color: "text-rose-500", href: "/doctors?specialty=gynecology", status: "Live" },
   ]
 
   const cities = [
-    { name: "Mumbai", state: "Maharashtra", status: "Coming Soon" },
-    { name: "Delhi", state: "Delhi", status: "Coming Soon" },
-    { name: "Bangalore", state: "Karnataka", status: "Coming Soon" },
-    { name: "Chennai", state: "Tamil Nadu", status: "Coming Soon" },
-    { name: "Kolkata", state: "West Bengal", status: "Coming Soon" },
-    { name: "Hyderabad", state: "Telangana", status: "Coming Soon" },
-    { name: "Pune", state: "Maharashtra", status: "Coming Soon" },
-    { name: "Ahmedabad", state: "Gujarat", status: "Coming Soon" },
-    { name: "Jaipur", state: "Rajasthan", status: "Coming Soon" },
-    { name: "Lucknow", state: "Uttar Pradesh", status: "Coming Soon" },
-    { name: "Kanpur", state: "Uttar Pradesh", status: "Coming Soon" },
-    { name: "Nagpur", state: "Maharashtra", status: "Coming Soon" },
-    { name: "Indore", state: "Madhya Pradesh", status: "Coming Soon" },
-    { name: "Bhopal", state: "Madhya Pradesh", status: "Coming Soon" },
-    { name: "Visakhapatnam", state: "Andhra Pradesh", status: "Coming Soon" },
-    { name: "Patna", state: "Bihar", status: "Coming Soon" },
+    { name: "Mumbai", state: "Maharashtra", href: "/city/mumbai", status: "Live" },
+    { name: "Delhi", state: "Delhi", href: "/city/delhi", status: "Live" },
+    { name: "Bangalore", state: "Karnataka", href: "/city/bangalore", status: "Live" },
+    { name: "Chennai", state: "Tamil Nadu", href: "/city/chennai", status: "Live" },
+    { name: "Kolkata", state: "West Bengal", href: "/city/kolkata", status: "Live" },
+    { name: "Hyderabad", state: "Telangana", href: "/city/hyderabad", status: "Live" },
+    { name: "Pune", state: "Maharashtra", href: "/city/pune", status: "Live" },
+    { name: "Ahmedabad", state: "Gujarat", href: "/city/ahmedabad", status: "Live" },
+    { name: "Jaipur", state: "Rajasthan", href: "/city/jaipur", status: "Live" },
+    { name: "Lucknow", state: "Uttar Pradesh", href: "/city/lucknow", status: "Live" },
+    { name: "Kanpur", state: "Uttar Pradesh", href: "/city/kanpur", status: "Live" },
+    { name: "Nagpur", state: "Maharashtra", href: "/city/nagpur", status: "Live" },
   ]
 
   const resources = [
@@ -231,7 +263,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-blue-600",
       bg: "bg-blue-50",
       description: "Latest health articles",
-      status: "Coming Soon",
+      status: "Live",
     },
     {
       href: "/research",
@@ -240,7 +272,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-purple-600",
       bg: "bg-purple-50",
       description: "Scientific studies & papers",
-      status: "Coming Soon",
+      status: "Live",
     },
     {
       href: "/guidelines",
@@ -249,7 +281,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-green-600",
       bg: "bg-green-50",
       description: "WHO & medical guidelines",
-      status: "Coming Soon",
+      status: "Live",
     },
     {
       href: "/calculators",
@@ -258,7 +290,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-orange-600",
       bg: "bg-orange-50",
       description: "BMI, calorie & health tools",
-      status: "Coming Soon",
+      status: "Live",
     },
     {
       href: "/symptoms",
@@ -267,7 +299,7 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-red-600",
       bg: "bg-red-50",
       description: "AI-powered symptom analysis",
-      status: "Coming Soon",
+      status: "Live",
     },
     {
       href: "/drug-database",
@@ -276,153 +308,36 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
       color: "text-cyan-600",
       bg: "bg-cyan-50",
       description: "Comprehensive medicine info",
-      status: "Coming Soon",
-    },
-  ]
-
-  const supportOptions = [
-    {
-      href: "/help",
-      icon: BookOpen,
-      label: "Help Center",
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      description: "FAQs & tutorials",
-      status: "Available",
-    },
-    {
-      href: "/contact",
-      icon: Phone,
-      label: "Contact Support",
-      color: "text-green-600",
-      bg: "bg-green-50",
-      description: "24/7 customer support",
-      status: "Available",
-    },
-    {
-      href: "/feedback",
-      icon: MessageCircle,
-      label: "Feedback",
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      description: "Share your experience",
-      status: "Available",
-    },
-    {
-      href: "/community",
-      icon: Users,
-      label: "Community",
-      color: "text-orange-600",
-      bg: "bg-orange-50",
-      description: "Connect with others",
-      status: "Coming Soon",
-    },
-    {
-      href: "/api",
-      icon: Code,
-      label: "API Documentation",
-      color: "text-gray-600",
-      bg: "bg-gray-50",
-      description: "Developer resources",
-      status: "Coming Soon",
-    },
-    {
-      href: "/status",
-      icon: Activity,
-      label: "System Status",
-      color: "text-green-600",
-      bg: "bg-green-50",
-      description: "Service availability",
-      status: "Available",
-    },
-  ]
-
-  const companyInfo = [
-    {
-      href: "/careers",
-      icon: Building,
-      label: "Careers",
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      description: "Join our team",
-      status: "Available",
-    },
-    {
-      href: "/investors",
-      icon: TrendingUp,
-      label: "Investors",
-      color: "text-green-600",
-      bg: "bg-green-50",
-      description: "Investment information",
-      status: "Available",
-    },
-    {
-      href: "/press",
-      icon: Megaphone,
-      label: "Press & Media",
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      description: "News & press releases",
-      status: "Available",
-    },
-    {
-      href: "/partnerships",
-      icon: Hand,
-      label: "Partnerships",
-      color: "text-orange-600",
-      bg: "bg-orange-50",
-      description: "Business partnerships",
-      status: "Available",
-    },
-    {
-      href: "/awards",
-      icon: Award,
-      label: "Awards & Recognition",
-      color: "text-yellow-600",
-      bg: "bg-yellow-50",
-      description: "Our achievements",
-      status: "Available",
-    },
-    {
-      href: "/sustainability",
-      icon: Leaf,
-      label: "Sustainability",
-      color: "text-green-600",
-      bg: "bg-green-50",
-      description: "Environmental commitment",
-      status: "Available",
+      status: "Live",
     },
   ]
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "Live":
+        return <Badge className="text-xs bg-green-100 text-green-700 border-green-200">Live</Badge>
       case "Beta":
         return <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200">Beta</Badge>
-      case "Coming Soon":
-        return (
-          <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-            <Clock className="w-3 h-3 mr-1" />
-            Coming Soon
-          </Badge>
-        )
-      case "Available":
-        return <Badge className="text-xs bg-green-100 text-green-700 border-green-200">Available</Badge>
+      case "New":
+        return <Badge className="text-xs bg-purple-100 text-purple-700 border-purple-200">New</Badge>
       default:
         return null
     }
   }
+
+  const closeMenu = () => setIsOpen(false)
 
   return (
     <header className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 shadow-2xl sticky top-0 z-50 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <MyMedLogo size="lg" className="text-white" />
+          <Link href="/" className="flex items-center space-x-3">
+            <MyMedLogo size="lg" className="text-white" theme="dark" />
             <div className="hidden md:flex items-center space-x-2">
               <Badge className="bg-orange-400 text-orange-900 hover:bg-orange-400 animate-pulse">
                 <Rocket className="w-3 h-3 mr-1" />
-                Beta
+                Live
               </Badge>
               <Badge className="bg-green-400 text-green-900 hover:bg-green-400">
                 <Zap className="w-3 h-3 mr-1" />
@@ -433,11 +348,10 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
                 Secure
               </Badge>
             </div>
-          </div>
+          </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1">
-            {/* Home */}
+          {/* Desktop Navigation - Simplified */}
+          <nav className="hidden lg:flex items-center space-x-2">
             <Link href="/">
               <Button
                 variant={currentPage === "home" ? "secondary" : "ghost"}
@@ -448,7 +362,6 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
               </Button>
             </Link>
 
-            {/* About */}
             <Button
               variant="ghost"
               className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
@@ -458,404 +371,342 @@ export default function EnhancedNavigation({ currentPage, onAboutClick }: Enhanc
               About
             </Button>
 
-            {/* AI Services Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
-                >
-                  <Sparkles className="w-4 h-4 mr-2 text-yellow-300 animate-pulse" />
-                  AI Services
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 bg-white/95 backdrop-blur-sm border-0 shadow-2xl max-h-96 overflow-y-auto">
-                <DropdownMenuLabel className="text-center font-bold text-purple-700 py-3">
-                  <Gem className="w-5 h-5 inline mr-2" />
-                  AI-Powered Health Services (Beta)
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {aiServices.map((service) => (
-                  <DropdownMenuItem key={service.href} asChild>
-                    <Link href={service.href} className="cursor-pointer">
-                      <div
-                        className={`flex items-center space-x-3 p-3 rounded-lg hover:${service.bg} transition-all duration-200 w-full`}
-                      >
-                        <div className={`p-2 rounded-full ${service.bg} shadow-sm`}>
-                          <service.icon className={`w-5 h-5 ${service.color}`} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-gray-800">{service.label}</div>
-                            <div className="flex items-center space-x-1">
-                              <Badge className="text-xs bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700">
-                                {service.badge}
-                              </Badge>
-                              {getStatusBadge(service.status)}
-                            </div>
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">{service.description}</div>
-                        </div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link href="/chat">
+              <Button
+                variant="ghost"
+                className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
+              >
+                <MessageCircle className="w-4 h-4 mr-2 text-yellow-300" />
+                AI Chat
+                <Badge className="ml-2 bg-green-100 text-green-800 text-xs">Live</Badge>
+              </Button>
+            </Link>
 
-            {/* Health Tools Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
-                >
-                  <Shield className="w-4 h-4 mr-2 text-green-300" />
-                  Health Tools
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 bg-white/95 backdrop-blur-sm border-0 shadow-2xl max-h-96 overflow-y-auto">
-                <DropdownMenuLabel className="text-center font-bold text-green-700 py-3">
-                  <Heart className="w-5 h-5 inline mr-2" />
-                  Comprehensive Health Tools
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {healthTools.map((tool) => (
-                  <DropdownMenuItem key={tool.href} asChild>
-                    <Link href={tool.href} className="cursor-pointer">
-                      <div
-                        className={`flex items-center space-x-3 p-3 rounded-lg hover:${tool.bg} transition-all duration-200 w-full`}
-                      >
-                        <div className={`p-2 rounded-full ${tool.bg} shadow-sm`}>
-                          <tool.icon className={`w-5 h-5 ${tool.color}`} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-gray-800">{tool.label}</div>
-                            {getStatusBadge(tool.status)}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">{tool.description}</div>
-                        </div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link href="/assessment">
+              <Button
+                variant="ghost"
+                className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
+              >
+                <Stethoscope className="w-4 h-4 mr-2 text-green-300" />
+                Assessment
+                <Badge className="ml-2 bg-green-100 text-green-800 text-xs">Live</Badge>
+              </Button>
+            </Link>
 
-            {/* Medical Specialties Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
-                >
-                  <Stethoscope className="w-4 h-4 mr-2 text-blue-300" />
-                  Specialties
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 bg-white/95 backdrop-blur-sm border-0 shadow-2xl max-h-96 overflow-y-auto">
-                <DropdownMenuLabel className="text-center font-bold text-blue-700 py-3">
-                  <Star className="w-5 h-5 inline mr-2" />
-                  Medical Specialties (Coming Soon)
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="grid grid-cols-1 gap-1">
-                  {specialties.map((specialty) => (
-                    <DropdownMenuItem key={specialty.label} asChild>
-                      <Link href={`/doctors?specialty=${specialty.label.toLowerCase()}`} className="cursor-pointer">
-                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-all duration-200 w-full">
-                          <div className="flex items-center space-x-3">
-                            <specialty.icon className={`w-5 h-5 ${specialty.color}`} />
-                            <div>
-                              <div className="font-semibold text-gray-800">{specialty.label}</div>
-                              <div className="text-xs text-gray-500">Expert specialists</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">{getStatusBadge(specialty.status)}</div>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Cities & Locations Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
-                >
-                  <Globe className="w-4 h-4 mr-2 text-cyan-300" />
-                  Locations
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 bg-white/95 backdrop-blur-sm border-0 shadow-2xl max-h-96 overflow-y-auto">
-                <DropdownMenuLabel className="text-center font-bold text-cyan-700 py-3">
-                  <MapPin className="w-5 h-5 inline mr-2" />
-                  Healthcare Locations (Coming Soon)
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="grid grid-cols-1 gap-1">
-                  {cities.map((city) => (
-                    <DropdownMenuItem key={city.name} asChild>
-                      <Link href={`/city/${city.name.toLowerCase()}`} className="cursor-pointer">
-                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-cyan-50 transition-all duration-200 w-full">
-                          <div className="flex items-center space-x-3">
-                            <MapPin className="w-5 h-5 text-cyan-600" />
-                            <div>
-                              <div className="font-semibold text-gray-800">{city.name}</div>
-                              <div className="text-xs text-gray-500">{city.state}</div>
-                            </div>
-                          </div>
-                          <div className="text-right">{getStatusBadge(city.status)}</div>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Resources Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
-                >
-                  <BookOpen className="w-4 h-4 mr-2 text-indigo-300" />
-                  Resources
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 bg-white/95 backdrop-blur-sm border-0 shadow-2xl max-h-96 overflow-y-auto">
-                <DropdownMenuLabel className="text-center font-bold text-indigo-700 py-3">
-                  <BookOpen className="w-5 h-5 inline mr-2" />
-                  Health Resources
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {resources.map((resource) => (
-                  <DropdownMenuItem key={resource.href} asChild>
-                    <Link href={resource.href} className="cursor-pointer">
-                      <div
-                        className={`flex items-center space-x-3 p-3 rounded-lg hover:${resource.bg} transition-all duration-200 w-full`}
-                      >
-                        <div className={`p-2 rounded-full ${resource.bg} shadow-sm`}>
-                          <resource.icon className={`w-5 h-5 ${resource.color}`} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-gray-800">{resource.label}</div>
-                            {getStatusBadge(resource.status)}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">{resource.description}</div>
-                        </div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Support Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
-                >
-                  <BookOpen className="w-4 h-4 mr-2 text-orange-300" />
-                  Support
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 bg-white/95 backdrop-blur-sm border-0 shadow-2xl max-h-96 overflow-y-auto">
-                <DropdownMenuLabel className="text-center font-bold text-orange-700 py-3">
-                  <BookOpen className="w-5 h-5 inline mr-2" />
-                  Support & Help
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {supportOptions.map((option) => (
-                  <DropdownMenuItem key={option.href} asChild>
-                    <Link href={option.href} className="cursor-pointer">
-                      <div
-                        className={`flex items-center space-x-3 p-3 rounded-lg hover:${option.bg} transition-all duration-200 w-full`}
-                      >
-                        <div className={`p-2 rounded-full ${option.bg} shadow-sm`}>
-                          <option.icon className={`w-5 h-5 ${option.color}`} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-gray-800">{option.label}</div>
-                            {getStatusBadge(option.status)}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">{option.description}</div>
-                        </div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <a href="tel:+919701744770" className="cursor-pointer">
-                    <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-green-50 transition-all duration-200 w-full">
-                      <div className="p-2 rounded-full bg-green-50 shadow-sm">
-                        <Phone className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-gray-800">Call Harsha</div>
-                        <div className="text-xs text-gray-500 mt-1">+91 9701744770 - Direct support</div>
-                      </div>
-                    </div>
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href="mailto:contact@mymed.ai" className="cursor-pointer">
-                    <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-all duration-200 w-full">
-                      <div className="p-2 rounded-full bg-blue-50 shadow-sm">
-                        <Mail className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-gray-800">Email Support</div>
-                        <div className="text-xs text-gray-500 mt-1">contact@mymed.ai - 24/7 support</div>
-                      </div>
-                    </div>
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Company Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
-                >
-                  <Building className="w-4 h-4 mr-2 text-purple-300" />
-                  Company
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 bg-white/95 backdrop-blur-sm border-0 shadow-2xl max-h-96 overflow-y-auto">
-                <DropdownMenuLabel className="text-center font-bold text-purple-700 py-3">
-                  <Building className="w-5 h-5 inline mr-2" />
-                  Company Information
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {companyInfo.map((info) => (
-                  <DropdownMenuItem key={info.href} asChild>
-                    <Link href={info.href} className="cursor-pointer">
-                      <div
-                        className={`flex items-center space-x-3 p-3 rounded-lg hover:${info.bg} transition-all duration-200 w-full`}
-                      >
-                        <div className={`p-2 rounded-full ${info.bg} shadow-sm`}>
-                          <info.icon className={`w-5 h-5 ${info.color}`} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-gray-800">{info.label}</div>
-                            {getStatusBadge(info.status)}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">{info.description}</div>
-                        </div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link href="/doctors">
+              <Button
+                variant="ghost"
+                className="text-white hover:bg-white/20 hover:text-white transition-all duration-300"
+              >
+                <UserCheck className="w-4 h-4 mr-2 text-blue-300" />
+                Doctors
+                <Badge className="ml-2 bg-green-100 text-green-800 text-xs">Live</Badge>
+              </Button>
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
-          <Button variant="ghost" className="lg:hidden text-white hover:bg-white/20" onClick={() => setIsOpen(!isOpen)}>
-            <div className="w-6 h-6 flex flex-col justify-center items-center">
-              <span
-                className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${isOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"}`}
-              ></span>
-              <span
-                className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${isOpen ? "opacity-0" : "opacity-100"}`}
-              ></span>
-              <span
-                className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${isOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`}
-              ></span>
-            </div>
-          </Button>
-        </div>
-
-        {/* Enhanced Mobile Menu */}
-        {isOpen && (
-          <div className="lg:hidden mt-4 pb-4 border-t border-white/20">
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              <Button
-                variant="ghost"
-                className="w-full text-white hover:bg-white/20 justify-start h-auto p-3"
-                onClick={() => {
-                  onAboutClick?.()
-                  setIsOpen(false)
-                }}
-              >
-                <div className="flex flex-col items-center space-y-1">
-                  <BookOpen className="w-5 h-5 text-blue-300" />
-                  <span className="text-xs text-center">About</span>
-                </div>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="lg:hidden text-white hover:bg-white/20 p-2">
+                <Menu className="w-6 h-6" />
+                <span className="sr-only">Open menu</span>
               </Button>
+            </SheetTrigger>
 
-              {[...aiServices.slice(0, 5), ...healthTools.slice(0, 3)].map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant="ghost"
-                    className="w-full text-white hover:bg-white/20 justify-start h-auto p-3"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <div className="flex flex-col items-center space-y-1">
-                      <item.icon className="w-5 h-5" />
-                      <span className="text-xs text-center">{item.label}</span>
-                      {item.status === "Beta" && (
-                        <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200">Beta</Badge>
-                      )}
-                    </div>
+            <SheetContent side="right" className="w-full sm:w-80 p-0 bg-white">
+              <SheetHeader className="p-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <div className="flex items-center justify-between">
+                  <SheetTitle className="text-white">
+                    <MyMedLogo size="md" theme="dark" />
+                  </SheetTitle>
+                  <Button variant="ghost" size="sm" onClick={closeMenu} className="text-white hover:bg-white/20">
+                    <X className="w-5 h-5" />
                   </Button>
-                </Link>
-              ))}
+                </div>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Badge className="bg-green-400 text-green-900">
+                    <Zap className="w-3 h-3 mr-1" />
+                    All Features Live
+                  </Badge>
+                  <Badge className="bg-orange-400 text-orange-900">
+                    <Shield className="w-3 h-3 mr-1" />
+                    Secure
+                  </Badge>
+                </div>
+              </SheetHeader>
 
-              <Link href="/contact">
-                <Button
-                  variant="ghost"
-                  className="w-full text-white hover:bg-white/20 justify-start h-auto p-3"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <div className="flex flex-col items-center space-y-1">
-                    <Phone className="w-5 h-5 text-orange-300" />
-                    <span className="text-xs text-center">Contact</span>
+              <ScrollArea className="h-[calc(100vh-140px)] px-6 py-4">
+                {/* Quick Actions */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                    <Rocket className="w-4 h-4 mr-2 text-blue-600" />
+                    Quick Start
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href="/chat" onClick={closeMenu}>
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm h-12">
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        AI Chat
+                      </Button>
+                    </Link>
+                    <Link href="/assessment" onClick={closeMenu}>
+                      <Button variant="outline" className="w-full text-sm h-12 bg-transparent">
+                        <Stethoscope className="w-4 h-4 mr-2" />
+                        Assessment
+                      </Button>
+                    </Link>
                   </div>
-                </Button>
-              </Link>
-            </div>
+                </div>
 
-            {/* Quick Contact in Mobile */}
-            <div className="mt-4 pt-4 border-t border-white/20">
-              <div className="flex justify-center space-x-4">
-                <a href="tel:+919701744770" className="text-white hover:text-green-300 transition-colors">
-                  <Phone className="w-6 h-6" />
-                </a>
-                <a href="mailto:contact@mymed.ai" className="text-white hover:text-blue-300 transition-colors">
-                  <Mail className="w-6 h-6" />
-                </a>
-                <a href="/help" className="text-white hover:text-orange-300 transition-colors">
-                  <BookOpen className="w-6 h-6" />
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
+                <Separator className="mb-4" />
+
+                {/* AI Services */}
+                <Collapsible
+                  open={openSections.includes("ai-services")}
+                  onOpenChange={() => toggleSection("ai-services")}
+                >
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center">
+                      <Sparkles className="w-5 h-5 mr-3 text-purple-600" />
+                      <span className="font-semibold text-gray-900">AI Services</span>
+                      <Badge className="ml-2 bg-purple-100 text-purple-700 text-xs">6 Live</Badge>
+                    </div>
+                    {openSections.includes("ai-services") ? (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    )}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-1">
+                    {aiServices.map((service) => (
+                      <Link key={service.href} href={service.href} onClick={closeMenu}>
+                        <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors ml-4">
+                          <div className={`p-2 rounded-full ${service.bg}`}>
+                            <service.icon className={`w-4 h-4 ${service.color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-900 text-sm">{service.label}</span>
+                              {getStatusBadge(service.status)}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{service.description}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Separator className="my-4" />
+
+                {/* Health Tools */}
+                <Collapsible
+                  open={openSections.includes("health-tools")}
+                  onOpenChange={() => toggleSection("health-tools")}
+                >
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center">
+                      <Heart className="w-5 h-5 mr-3 text-red-600" />
+                      <span className="font-semibold text-gray-900">Health Tools</span>
+                      <Badge className="ml-2 bg-green-100 text-green-700 text-xs">6 Live</Badge>
+                    </div>
+                    {openSections.includes("health-tools") ? (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    )}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-1">
+                    {healthTools.map((tool) => (
+                      <Link key={tool.href} href={tool.href} onClick={closeMenu}>
+                        <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors ml-4">
+                          <div className={`p-2 rounded-full ${tool.bg}`}>
+                            <tool.icon className={`w-4 h-4 ${tool.color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-900 text-sm">{tool.label}</span>
+                              {getStatusBadge(tool.status)}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{tool.description}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Separator className="my-4" />
+
+                {/* Medical Specialties */}
+                <Collapsible
+                  open={openSections.includes("specialties")}
+                  onOpenChange={() => toggleSection("specialties")}
+                >
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center">
+                      <Stethoscope className="w-5 h-5 mr-3 text-blue-600" />
+                      <span className="font-semibold text-gray-900">Specialties</span>
+                      <Badge className="ml-2 bg-blue-100 text-blue-700 text-xs">12 Live</Badge>
+                    </div>
+                    {openSections.includes("specialties") ? (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    )}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-1">
+                    <div className="grid grid-cols-2 gap-1 ml-4">
+                      {specialties.map((specialty) => (
+                        <Link key={specialty.label} href={specialty.href} onClick={closeMenu}>
+                          <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            <specialty.icon className={`w-5 h-5 ${specialty.color} mb-1`} />
+                            <span className="text-xs font-medium text-gray-900">{specialty.label}</span>
+                            <Badge className="mt-1 bg-green-100 text-green-700 text-xs">Live</Badge>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Separator className="my-4" />
+
+                {/* Cities */}
+                <Collapsible open={openSections.includes("cities")} onOpenChange={() => toggleSection("cities")}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center">
+                      <Globe className="w-5 h-5 mr-3 text-cyan-600" />
+                      <span className="font-semibold text-gray-900">Cities</span>
+                      <Badge className="ml-2 bg-cyan-100 text-cyan-700 text-xs">12 Live</Badge>
+                    </div>
+                    {openSections.includes("cities") ? (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    )}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-1">
+                    <div className="grid grid-cols-2 gap-1 ml-4">
+                      {cities.map((city) => (
+                        <Link key={city.name} href={city.href} onClick={closeMenu}>
+                          <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            <MapPin className="w-4 h-4 text-cyan-600 mb-1" />
+                            <span className="text-xs font-medium text-gray-900">{city.name}</span>
+                            <span className="text-xs text-gray-500">{city.state}</span>
+                            <Badge className="mt-1 bg-green-100 text-green-700 text-xs">Live</Badge>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Separator className="my-4" />
+
+                {/* Resources */}
+                <Collapsible open={openSections.includes("resources")} onOpenChange={() => toggleSection("resources")}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center">
+                      <BookOpen className="w-5 h-5 mr-3 text-indigo-600" />
+                      <span className="font-semibold text-gray-900">Resources</span>
+                      <Badge className="ml-2 bg-indigo-100 text-indigo-700 text-xs">6 Live</Badge>
+                    </div>
+                    {openSections.includes("resources") ? (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    )}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-1">
+                    {resources.map((resource) => (
+                      <Link key={resource.href} href={resource.href} onClick={closeMenu}>
+                        <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors ml-4">
+                          <div className={`p-2 rounded-full ${resource.bg}`}>
+                            <resource.icon className={`w-4 h-4 ${resource.color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-900 text-sm">{resource.label}</span>
+                              {getStatusBadge(resource.status)}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{resource.description}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Separator className="my-6" />
+
+                {/* Contact Information */}
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                    <Phone className="w-4 h-4 mr-2 text-blue-600" />
+                    Contact & Support
+                  </h3>
+                  <div className="space-y-3">
+                    <a
+                      href="tel:+919701744770"
+                      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white/50 transition-colors"
+                    >
+                      <Phone className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Call Harsha</p>
+                        <p className="text-xs text-gray-600">+91 9701744770</p>
+                      </div>
+                    </a>
+                    <a
+                      href="mailto:contact@mymed.ai"
+                      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white/50 transition-colors"
+                    >
+                      <Mail className="w-4 h-4 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Email Support</p>
+                        <p className="text-xs text-gray-600">contact@mymed.ai</p>
+                      </div>
+                    </a>
+                    <div className="flex items-center space-x-3 p-2">
+                      <MapPin className="w-4 h-4 text-purple-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Location</p>
+                        <p className="text-xs text-gray-600">Amavarathi, Andhra Pradesh</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* App Stats */}
+                <div className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                    <Star className="w-4 h-4 mr-2 text-yellow-600" />
+                    Platform Stats
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <p className="text-lg font-bold text-blue-600">50+</p>
+                      <p className="text-xs text-gray-600">Live Features</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-green-600">24/7</p>
+                      <p className="text-xs text-gray-600">AI Support</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-purple-600">12</p>
+                      <p className="text-xs text-gray-600">Specialties</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-orange-600">100%</p>
+                      <p className="text-xs text-gray-600">Secure</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   )

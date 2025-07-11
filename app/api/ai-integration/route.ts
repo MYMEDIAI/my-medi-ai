@@ -1,180 +1,81 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { generateText } from "ai"
+import { openai } from "@ai-sdk/openai"
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
-const OPENAI_API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
+export async function POST(request: NextRequest) {
+  try {
+    const { message, type } = await request.json()
 
-function isKeyMissing(key: string | undefined): boolean {
-  return !key || !key.startsWith("sk-") || key.length < 20
-}
+    if (!message) {
+      return NextResponse.json({ error: "Message is required" }, { status: 400 })
+    }
 
-const NO_API_KEY = isKeyMissing(OPENAI_API_KEY)
+    // Enhanced system prompts based on type
+    const systemPrompts = {
+      "health-chat": `You are Dr. MyMedi, an expert AI health assistant specializing in Indian healthcare. 
+      Provide comprehensive, evidence-based medical guidance while emphasizing the importance of professional medical consultation.
+      Always consider Indian healthcare context, common conditions, and accessible treatments.`,
 
-function extractPrompt(body: Record<string, unknown>): {
-  prompt: string
-  mode: "chat" | "assessment" | "report-analysis" | "medicine-identification" | "symptom-analysis"
-} {
-  if (typeof body.prompt === "string" && body.prompt.trim()) {
-    return { prompt: body.prompt.trim(), mode: "chat" }
-  }
+      "vitals-analysis": `You are a medical AI specializing in vital signs analysis and health monitoring.
+      Analyze the provided vital signs data and provide detailed health insights, risk assessments, and recommendations.
+      Consider normal ranges for Indian population and provide actionable health advice.`,
 
-  if (typeof body.message === "string") {
-    let mode: "chat" | "assessment" | "report-analysis" | "medicine-identification" | "symptom-analysis" = "chat"
+      "diet-planning": `You are a certified nutritionist AI specializing in Indian dietary patterns and nutrition.
+      Create personalized, culturally appropriate meal plans considering Indian food preferences, regional availability, and health goals.
+      Include specific Indian foods, cooking methods, and practical meal preparation advice.`,
 
-    if (body.type === "assessment") mode = "assessment"
-    else if (body.type === "report-analysis") mode = "report-analysis"
-    else if (body.type === "medicine-identification") mode = "medicine-identification"
-    else if (body.type === "symptom-analysis") mode = "symptom-analysis"
+      "symptom-analysis": `You are a diagnostic AI assistant specializing in symptom analysis and health assessment.
+      Provide comprehensive symptom evaluation, possible causes, urgency assessment, and clear guidance on when to seek medical care.
+      Consider common conditions in Indian healthcare context.`,
 
-    return { prompt: body.message.trim(), mode }
-  }
+      "report-analysis": `You are a medical report analysis AI specializing in interpreting lab results and diagnostic reports.
+      Provide detailed analysis of medical reports, explain values in simple terms, identify abnormalities, and suggest follow-up actions.
+      Use Indian population reference ranges and consider common health conditions in India.`,
 
-  return { prompt: JSON.stringify(body), mode: "chat" }
-}
+      "medicine-identification": `You are a pharmaceutical AI expert specializing in medicine identification and drug information.
+      Provide comprehensive medicine information including uses, dosage, side effects, interactions, and pricing in Indian market.
+      Emphasize safety, proper usage, and the importance of consulting healthcare providers.`,
 
-async function callOpenAI(
-  prompt: string,
-  mode: "chat" | "assessment" | "report-analysis" | "medicine-identification" | "symptom-analysis",
-) {
-  let systemMessage = ""
+      "pregnancy-care": `You are a maternal health AI specialist providing pregnancy care guidance.
+      Offer week-by-week pregnancy information, symptom management, nutrition advice, and prenatal care recommendations.
+      Consider Indian maternal health practices and accessible prenatal care options.`,
 
-  switch (mode) {
-    case "medicine-identification":
-      systemMessage = `You are an expert AI pharmacist and medicine specialist with comprehensive knowledge of Indian pharmaceutical market. 
+      "health-assessment": `You are a comprehensive health assessment AI providing detailed health evaluations.
+      Analyze health information, assess risk factors, provide health scores, and create personalized health improvement plans.
+      Consider Indian lifestyle factors, common health issues, and preventive care strategies.`,
 
-Your task is to analyze medicine information and provide accurate, detailed, and helpful information about medicines, health conditions, and medical advice. 
+      default: `You are Dr. MyMedi, a helpful AI health assistant. Provide accurate, helpful medical information while always recommending consultation with healthcare professionals for serious concerns.`,
+    }
 
-For medicine identification requests, you MUST provide structured information in the EXACT format requested by the user. Pay special attention to:
+    const systemPrompt = systemPrompts[type as keyof typeof systemPrompts] || systemPrompts.default
 
-1. **Accurate Medicine Names** - Use exact brand and generic names
-2. **Proper Dosage Information** - Include specific mg, IU, or other measurements
-3. **Indian Market Context** - Provide realistic Indian pricing and manufacturer information
-4. **Safety Information** - Include comprehensive side effects, interactions, and precautions
-5. **Practical Guidance** - Offer actionable advice for Indian patients
+    console.log(`🤖 AI Integration - Type: ${type}`)
+    console.log(`📝 Message length: ${message.length} characters`)
 
-Always provide practical, safe, and India-specific pharmaceutical guidance. When analyzing extracted text from medicine images, use that text as the primary source of information.
-
-IMPORTANT: Always follow the exact format requested in the user's prompt for consistency and proper parsing.`
-      break
-
-    case "assessment":
-      systemMessage = `You are a revolutionary AI medical assistant with cutting-edge capabilities. Provide comprehensive health assessments based on user input.`
-      break
-
-    case "report-analysis":
-      systemMessage = `You are an expert AI medical report analyzer. Provide detailed analysis of medical test results and reports.`
-      break
-
-    case "symptom-analysis":
-      systemMessage = `You are an expert AI diagnostic assistant specializing in symptom analysis and clinical assessment.`
-      break
-
-    default:
-      systemMessage = `You are a helpful AI medical assistant. Provide clear, accurate health information with appropriate medical disclaimers.`
-  }
-
-  console.log("🤖 AI API: Calling OpenAI with mode:", mode)
-
-  const response = await fetch(OPENAI_API_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: prompt },
-      ],
+    const { text } = await generateText({
+      model: openai("gpt-4o"),
+      system: systemPrompt,
+      prompt: message,
+      maxTokens: 2000,
       temperature: 0.7,
-      max_tokens: 2000,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error("❌ AI API: OpenAI API error:", errorText)
-    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`)
-  }
-
-  const data = await response.json()
-  const aiResponse = data.choices?.[0]?.message?.content || "No response generated."
-
-  console.log("✅ AI API: Response generated successfully")
-  console.log("📝 AI API: Response length:", aiResponse.length)
-
-  return aiResponse
-}
-
-async function parseBody(req: NextRequest): Promise<Record<string, any>> {
-  const contentType = req.headers.get("content-type") || ""
-
-  if (contentType.includes("application/json")) {
-    try {
-      return await req.json()
-    } catch {
-      return {}
-    }
-  }
-
-  try {
-    const form = await req.formData()
-    const obj: Record<string, any> = {}
-    form.forEach((value, key) => {
-      if (typeof value === "string") obj[key] = value
     })
-    return obj
-  } catch {
-    return {}
-  }
-}
 
-export async function POST(req: NextRequest) {
-  try {
-    console.log("🚀 AI API: Starting request processing...")
-
-    const body = await parseBody(req)
-    const { prompt, mode } = extractPrompt(body)
-
-    console.log("📝 AI API: Extracted prompt length:", prompt.length)
-    console.log("🎯 AI API: Mode:", mode)
-
-    if (!prompt) {
-      console.error("❌ AI API: No prompt provided")
-      return NextResponse.json({ error: "Prompt is required." }, { status: 400 })
-    }
-
-    if (NO_API_KEY) {
-      console.warn("⚠️ AI API: No OpenAI API key found – returning stub data")
-
-      const stub =
-        mode === "medicine-identification"
-          ? "**MEDICINE IDENTIFICATION:**\nBrand Name: Sample Medicine\nGeneric Name: Generic Equivalent\nStrength: 500mg\nManufacturer: Sample Pharma\n\n**MEDICAL USES:**\nSample medical uses for demonstration\n\n**DOSAGE INFORMATION:**\nSample dosage instructions\n\n**SIDE EFFECTS:**\n- Sample side effect 1\n- Sample side effect 2\n\n**DRUG INTERACTIONS:**\n- Sample interaction 1\n- Sample interaction 2\n\n**PRECAUTIONS:**\n- Sample precaution 1\n- Sample precaution 2\n\n**INDIAN MARKET PRICING:**\nBrand Price: ₹30\nGeneric Price: ₹12"
-          : "I'm a medical AI assistant. Please add your OpenAI API key to enable full AI capabilities."
-
-      return NextResponse.json({
-        response: stub,
-        provider: "stub",
-        message: "Using demo data. Add OPENAI_API_KEY for live AI responses.",
-      })
-    }
-
-    const aiResponse = await callOpenAI(prompt, mode)
-
-    console.log("✅ AI API: Request completed successfully")
+    console.log(`✅ AI Response generated successfully`)
+    console.log(`📤 Response length: ${text.length} characters`)
 
     return NextResponse.json({
-      response: aiResponse,
-      type: body.type || "general",
+      response: text,
+      type: type,
       timestamp: new Date().toISOString(),
     })
-  } catch (err) {
-    console.error("❌ AI API: Request failed:", err)
+  } catch (error) {
+    console.error("❌ AI Integration error:", error)
+
     return NextResponse.json(
       {
         error: "AI service temporarily unavailable",
-        provider: "openai",
-        detail: err instanceof Error ? err.message : "Unknown error",
+        details: error instanceof Error ? error.message : "Unknown error",
+        type: "ai-error",
       },
       { status: 500 },
     )
