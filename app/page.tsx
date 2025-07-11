@@ -21,12 +21,9 @@ import {
   ArrowRight,
   CheckCircle,
   Users,
-  Target,
   Search,
   Sparkles,
   Shield,
-  TrendingUp,
-  Clock,
   Rocket,
   Eye,
   AlertTriangle,
@@ -255,15 +252,6 @@ export default function HomePage() {
     },
   ]
 
-  const stats = [
-    { label: "Active Users", value: "500K+", icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
-    { label: "AI Consultations", value: "2M+", icon: MessageCircle, color: "text-purple-600", bg: "bg-purple-100" },
-    { label: "Reports Analyzed", value: "750K+", icon: FileText, color: "text-green-600", bg: "bg-green-100" },
-    { label: "Accuracy Rate", value: "98.5%", icon: Target, color: "text-orange-600", bg: "bg-orange-100" },
-    { label: "Response Time", value: "<2s", icon: Clock, color: "text-red-600", bg: "bg-red-100" },
-    { label: "Uptime", value: "99.9%", icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-100" },
-  ]
-
   const testimonials = [
     {
       name: "Dr. Priya Sharma",
@@ -410,36 +398,6 @@ export default function HomePage() {
                 </Button>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Enhanced Stats Section */}
-      <section className="py-16 bg-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-purple-50/50"></div>
-        <div className="relative container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Trusted by Healthcare Professionals</h2>
-            <p className="text-xl text-gray-600">Real-time platform statistics and user engagement</p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center group">
-                <div className="relative">
-                  <div
-                    className={`w-16 h-16 ${stat.bg} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}
-                  >
-                    <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  </div>
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</div>
-                <div className="text-gray-600 font-medium">{stat.label}</div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
