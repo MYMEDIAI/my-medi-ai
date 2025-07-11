@@ -92,3 +92,33 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body {
+    background-color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .printable-report {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 1rem;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+  }
+  .print-card {
+    border: 1px solid #e5e7eb;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-border-2 {
+    border-width: 2px;
+  }
+}

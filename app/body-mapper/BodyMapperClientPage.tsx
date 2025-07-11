@@ -65,62 +65,30 @@ export default function BodyMapperClientPage() {
 
   const analyzeSymptoms = async () => {
     if (!selectedPart || !symptoms.trim()) return
-
     setIsAnalyzing(true)
 
     try {
       const analysisPrompt = `
-Analyze these symptoms for comprehensive medical assessment:
+Analyze the following symptoms. The output MUST be a valid JSON object that conforms to the SymptomAnalysis interface structure provided below.
 
-**Patient Information:**
-- Body Part Affected: ${selectedPart}
-- Symptom Description: ${symptoms}
+---USER DATA---
+Body Part Affected: ${selectedPart}
+Symptom Description: ${symptoms}
+---END USER DATA---
 
-Please provide a detailed medical analysis including:
-
-1. **Possible Causes:**
-   - Common conditions affecting this body part
-   - Potential underlying causes for described symptoms
-   - Risk factors and contributing conditions
-
-2. **Urgency Assessment:**
-   - Classify as Low, Medium, or High urgency
-   - Immediate concerns or red flags
-   - Timeline for seeking medical care
-
-3. **Recommendations:**
-   - Immediate care steps
-   - Self-care measures that are safe
-   - Lifestyle modifications
-   - Activity restrictions if needed
-
-4. **Home Remedies & Self-Care:**
-   - Safe home treatments
-   - Pain management techniques
-   - When home care is appropriate
-   - What to avoid
-
-5. **Warning Signs:**
-   - Symptoms that require immediate medical attention
-   - Signs of complications
-   - When to call emergency services
-
-6. **When to See a Doctor:**
-   - Specific scenarios requiring medical consultation
-   - Timeline for follow-up
-   - Type of specialist if needed
-
-7. **Follow-up Care:**
-   - Monitoring recommendations
-   - Recovery expectations
-   - Prevention strategies
-
-8. **Indian Healthcare Context:**
-   - Common conditions in Indian population
-   - Accessible treatment options
-   - Cost-effective care approaches
-
-Provide practical, evidence-based medical guidance suitable for Indian patients while emphasizing the importance of professional medical consultation for accurate diagnosis and treatment.
+---JSON STRUCTURE---
+interface SymptomAnalysis {
+  bodyPart: string;
+  symptoms: string;
+  possibleCauses: string[];
+  recommendations: string[];
+  urgencyLevel: "Low" | "Medium" | "High";
+  whenToSeeDoctor: string;
+  homeRemedies: string[];
+  warningSigns: string[];
+  followUpCare: string[];
+}
+---END JSON STRUCTURE---
 `
 
       const response = await fetch("/api/ai-integration", {
@@ -132,142 +100,33 @@ Provide practical, evidence-based medical guidance suitable for Indian patients 
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`)
+      }
+
       const data = await response.json()
 
-      if (data.response) {
-        // Parse AI response into structured format
-        const aiText = data.response
-
-        setAnalysis({
-          bodyPart: selectedPart,
-          symptoms: symptoms,
-          possibleCauses: extractListFromText(aiText, "cause") || [
-            "Multiple factors could contribute to these symptoms",
-            "Proper medical evaluation needed for accurate diagnosis",
-            "Consider recent activities or changes in routine",
-          ],
-          recommendations: extractListFromText(aiText, "recommend") || [
-            "Rest and monitor symptoms closely",
-            "Stay hydrated and maintain good nutrition",
-            "Avoid strenuous activities until symptoms improve",
-          ],
-          urgencyLevel: extractUrgencyLevel(aiText),
-          whenToSeeDoctor:
-            extractSection(aiText, "doctor") ||
-            "Consult a healthcare provider if symptoms persist for more than 2-3 days or worsen",
-          homeRemedies: extractListFromText(aiText, "home") || [
-            "Apply appropriate hot/cold therapy as suitable",
-            "Get adequate rest and sleep",
-            "Maintain proper posture and ergonomics",
-          ],
-          warningSigns: extractListFromText(aiText, "warning") || [
-            "Severe or worsening pain",
-            "Signs of infection (fever, swelling)",
-            "Difficulty with normal activities",
-          ],
-          followUpCare: extractListFromText(aiText, "follow") || [
-            "Monitor symptoms daily",
-            "Keep a symptom diary",
-            "Schedule follow-up if needed",
-          ],
-        })
+      if (data.response && typeof data.response === "object") {
+        setAnalysis(data.response as SymptomAnalysis)
       } else {
-        throw new Error("No analysis received")
+        throw new Error("Invalid response format from AI")
       }
     } catch (error) {
       console.error("Symptom analysis error:", error)
-      // Provide fallback analysis
       setAnalysis({
-        bodyPart: selectedPart,
+        bodyPart: selectedPart!,
         symptoms: symptoms,
-        possibleCauses: [
-          "Various factors could be contributing to your symptoms",
-          "Professional medical evaluation recommended for accurate diagnosis",
-          "Consider recent activities, stress, or changes in routine",
-        ],
-        recommendations: [
-          "Monitor symptoms closely and note any changes",
-          "Rest and avoid activities that worsen symptoms",
-          "Maintain good hydration and nutrition",
-          "Consult healthcare provider for proper evaluation",
-        ],
+        possibleCauses: ["Error communicating with AI. Please try again."],
+        recommendations: ["Consult a healthcare provider for any medical concerns."],
         urgencyLevel: "Medium",
-        whenToSeeDoctor:
-          "Consult a doctor if symptoms persist for more than 2-3 days, worsen, or if you develop additional concerning symptoms",
-        homeRemedies: [
-          "Apply appropriate hot or cold therapy",
-          "Get adequate rest and sleep",
-          "Practice gentle stretching if appropriate",
-          "Stay hydrated and eat nutritious foods",
-        ],
-        warningSigns: [
-          "Severe or rapidly worsening pain",
-          "Signs of infection (fever, redness, swelling)",
-          "Difficulty performing normal daily activities",
-          "New or concerning symptoms develop",
-        ],
-        followUpCare: [
-          "Keep a daily symptom diary",
-          "Monitor for improvement or worsening",
-          "Schedule medical consultation if symptoms persist",
-          "Follow any specific care instructions",
-        ],
+        whenToSeeDoctor: "If symptoms persist or worsen, see a doctor.",
+        homeRemedies: [],
+        warningSigns: ["Severe pain, high fever, difficulty breathing."],
+        followUpCare: [],
       })
     } finally {
       setIsAnalyzing(false)
     }
-  }
-
-  const extractListFromText = (text: string, keyword: string): string[] => {
-    const lines = text.split("\n")
-    const items: string[] = []
-    let capturing = false
-
-    for (const line of lines) {
-      if (line.toLowerCase().includes(keyword)) {
-        capturing = true
-        continue
-      }
-      if (capturing && (line.trim().startsWith("•") || line.trim().startsWith("-") || line.match(/^\d+\./))) {
-        items.push(line.trim().replace(/^[•\-\d.]\s*/, ""))
-      } else if (capturing && line.trim() === "") {
-        break
-      }
-    }
-
-    return items.slice(0, 5) // Limit to 5 items
-  }
-
-  const extractSection = (text: string, keyword: string): string => {
-    const lines = text.split("\n")
-    let section = ""
-    let capturing = false
-
-    for (const line of lines) {
-      if (line.toLowerCase().includes(keyword)) {
-        capturing = true
-        section = line
-        continue
-      }
-      if (capturing) {
-        if (line.trim() === "" || line.match(/^\d+\./)) {
-          if (section.length > 30) break
-        }
-        section += " " + line.trim()
-      }
-    }
-
-    return section.trim()
-  }
-
-  const extractUrgencyLevel = (text: string): "Low" | "Medium" | "High" => {
-    const lowerText = text.toLowerCase()
-    if (lowerText.includes("high") || lowerText.includes("urgent") || lowerText.includes("emergency")) {
-      return "High"
-    } else if (lowerText.includes("medium") || lowerText.includes("moderate")) {
-      return "Medium"
-    }
-    return "Low"
   }
 
   const resetMapper = () => {

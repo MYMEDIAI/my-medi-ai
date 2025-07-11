@@ -63,46 +63,30 @@ export default function PregnancyCareClient() {
     setError("")
 
     try {
-      const week = pregnancyWeek ? Number.parseInt(pregnancyWeek) : calculateWeekFromLMP(lastPeriodDate)
+      const week = pregnancyWeek ? Number.parseInt(pregnancyWeek, 10) : calculateWeekFromLMP(lastPeriodDate)
 
       const analysisPrompt = `
-Provide comprehensive pregnancy care information for week ${week} of pregnancy.
+Provide comprehensive pregnancy care information. The output MUST be a valid JSON object that conforms to the PregnancyData interface structure provided below.
 
-Current symptoms: ${symptoms || "None reported"}
+---USER DATA---
+Pregnancy Week: ${week}
+Reported Symptoms: ${symptoms || "None reported"}
+---END USER DATA---
 
-Please provide detailed information including:
-
-1. **Current Week Development:**
-   - Baby's size and development milestones
-   - Key organ development happening this week
-   - Physical changes in mother
-
-2. **Common Symptoms:**
-   - Expected symptoms for this week
-   - Normal vs concerning symptoms
-   - Management strategies
-
-3. **Nutrition Recommendations:**
-   - Essential nutrients for this stage
-   - Foods to eat and avoid
-   - Supplement recommendations
-
-4. **Exercise & Wellness:**
-   - Safe exercises for this trimester
-   - Activities to avoid
-   - Sleep and rest recommendations
-
-5. **Medical Care:**
-   - Recommended appointments and tests
-   - When to contact healthcare provider
-   - Emergency warning signs
-
-6. **Preparation Tips:**
-   - What to prepare for upcoming weeks
-   - Baby gear and nursery planning
-   - Birth plan considerations
-
-Provide practical, evidence-based guidance suitable for Indian mothers while emphasizing regular prenatal care.
+---JSON STRUCTURE---
+interface PregnancyData {
+  currentWeek: number;
+  dueDate: string;
+  babySize: string;
+  keyDevelopments: string[];
+  symptoms: string[];
+  recommendations: string[];
+  appointments: string[];
+  nutrition: string[];
+  exercises: string[];
+  warnings: string[];
+}
+---END JSON STRUCTURE---
 `
 
       const response = await fetch("/api/ai-integration", {
@@ -114,21 +98,20 @@ Provide practical, evidence-based guidance suitable for Indian mothers while emp
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`)
+      }
+
       const data = await response.json()
 
-      if (data.response) {
-        const structuredData = parsePregnancyResponse(data.response, week)
-        setPregnancyData(structuredData)
+      if (data.response && typeof data.response === "object") {
+        setPregnancyData(data.response as PregnancyData)
       } else {
-        throw new Error("No analysis received")
+        throw new Error("Invalid response format from AI")
       }
     } catch (error) {
       console.error("Pregnancy analysis error:", error)
       setError("Unable to analyze pregnancy data. Please try again.")
-
-      // Provide fallback data
-      const week = pregnancyWeek ? Number.parseInt(pregnancyWeek) : 20
-      setPregnancyData(generateFallbackData(week))
     } finally {
       setIsAnalyzing(false)
     }
@@ -140,72 +123,6 @@ Provide practical, evidence-based guidance suitable for Indian mothers while emp
     const diffTime = Math.abs(today.getTime() - lmp.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     return Math.floor(diffDays / 7)
-  }
-
-  const parsePregnancyResponse = (response: string, week: number): PregnancyData => {
-    const calculateDueDate = (currentWeek: number) => {
-      const today = new Date()
-      const weeksRemaining = 40 - currentWeek
-      const dueDate = new Date(today.getTime() + weeksRemaining * 7 * 24 * 60 * 60 * 1000)
-      return dueDate.toLocaleDateString()
-    }
-
-    const getBabySize = (week: number) => {
-      const sizes = {
-        8: "Raspberry (1.6 cm)",
-        12: "Lime (5.4 cm)",
-        16: "Avocado (11.6 cm)",
-        20: "Banana (16.4 cm)",
-        24: "Ear of corn (21 cm)",
-        28: "Eggplant (25 cm)",
-        32: "Jicama (28 cm)",
-        36: "Romaine lettuce (32.2 cm)",
-        40: "Pumpkin (36.2 cm)",
-      }
-
-      const closestWeek = Object.keys(sizes).reduce((prev, curr) =>
-        Math.abs(Number.parseInt(curr) - week) < Math.abs(Number.parseInt(prev) - week) ? curr : prev,
-      )
-
-      return sizes[closestWeek as keyof typeof sizes] || "Growing baby"
-    }
-
-    return {
-      currentWeek: week,
-      dueDate: calculateDueDate(week),
-      babySize: getBabySize(week),
-      keyDevelopments: [
-        "Brain development accelerating",
-        "Organs continuing to mature",
-        "Movement becoming more coordinated",
-        "Sensory development progressing",
-      ],
-      symptoms: ["Increased appetite", "Growing belly", "Possible back pain", "Frequent urination"],
-      recommendations: [
-        "Take prenatal vitamins daily",
-        "Stay hydrated with 8-10 glasses of water",
-        "Get adequate rest and sleep",
-        "Attend all prenatal appointments",
-      ],
-      appointments: [
-        "Monthly prenatal checkup",
-        "Blood pressure monitoring",
-        "Weight and growth tracking",
-        "Ultrasound if scheduled",
-      ],
-      nutrition: [
-        "Folic acid rich foods (leafy greens)",
-        "Calcium sources (dairy, almonds)",
-        "Iron rich foods (lean meat, beans)",
-        "Omega-3 fatty acids (fish, walnuts)",
-      ],
-      exercises: ["Prenatal yoga", "Walking 30 minutes daily", "Swimming (if comfortable)", "Pelvic floor exercises"],
-      warnings: ["Severe abdominal pain", "Heavy bleeding", "Persistent headaches", "Sudden swelling"],
-    }
-  }
-
-  const generateFallbackData = (week: number): PregnancyData => {
-    return parsePregnancyResponse("", week)
   }
 
   const resetForm = () => {
@@ -604,8 +521,6 @@ Provide practical, evidence-based guidance suitable for Indian mothers while emp
                   <li>• Trimester-specific guidance</li>
                   <li>• Symptom severity assessment</li>
                   <li>• Nutritional requirement calculation</li>
-                  <li>• Exercise safety evaluation</li>
-                  <li>• Emergency situation detection</li>
                 </ul>
               </div>
             </div>
@@ -613,7 +528,12 @@ Provide practical, evidence-based guidance suitable for Indian mothers while emp
         </div>
       </main>
 
-      <PoweredByFooter />
+      {/* Footer */}
+      <footer className="bg-white/95 backdrop-blur-sm border-t border-pink-100 sticky bottom-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-center">
+          <PoweredByFooter />
+        </div>
+      </footer>
     </div>
   )
 }

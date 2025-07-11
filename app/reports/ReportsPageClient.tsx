@@ -48,43 +48,16 @@ export default function ReportsPageClient() {
 
     try {
       const analysisPrompt = `
-Analyze this medical report: ${file.name}
-
-Please provide a comprehensive medical report analysis including:
-
-1. **Document Overview:**
-   - Type of medical report/test
-   - Date and laboratory information (if available)
-
-2. **Key Findings:**
-   - Normal values and ranges
-   - Abnormal or concerning values
-   - Critical parameters that need attention
-
-3. **Health Implications:**
-   - What the results indicate about overall health
-   - Potential health risks or conditions suggested
-   - Areas of concern that require monitoring
-
-4. **Recommendations:**
-   - Immediate actions needed (if any)
-   - Lifestyle modifications suggested
-   - Follow-up tests or consultations recommended
-   - Dietary or exercise recommendations
-
-5. **When to Consult Doctor:**
-   - Specific scenarios requiring immediate medical attention
-   - Timeline for follow-up appointments
-   - Symptoms to watch for
-
-6. **Indian Healthcare Context:**
-   - Relevant normal ranges for Indian population
-   - Common conditions in India related to these results
-   - Accessible treatment options in Indian healthcare system
-
-Note: This analysis is based on the filename and general medical knowledge. In a real implementation, OCR would extract actual values from the uploaded document.
-
-Provide practical, actionable insights suitable for Indian patients while emphasizing the importance of professional medical consultation.
+Analyze this medical report named "${file.name}". Assume the content matches a standard report of this type (e.g., blood test, lipid profile).
+Provide a comprehensive, structured analysis. The output MUST be a valid JSON object with the following structure:
+{
+  "documentOverview": { "type": "string", "date": "string", "lab": "string" },
+  "keyFindings": { "parameter": "string", "value": "string", "status": "Normal|Low|High", "comment": "string" }[],
+  "healthImplications": "string[]",
+  "recommendations": "string[]",
+  "whenToConsultDoctor": "string",
+  "indianContext": "string"
+}
 `
 
       const response = await fetch("/api/ai-integration", {
@@ -96,60 +69,54 @@ Provide practical, actionable insights suitable for Indian patients while emphas
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`)
+      }
+
       const data = await response.json()
 
-      if (data.response) {
-        setAnalysis(data.response)
+      if (data.response && typeof data.response === "object") {
+        const formattedAnalysis = formatAnalysis(data.response)
+        setAnalysis(formattedAnalysis)
       } else {
-        throw new Error("No analysis received")
+        throw new Error("Invalid response format from AI")
       }
     } catch (error) {
       console.error("Report analysis error:", error)
       setError("Unable to analyze report. Please try again.")
-      setAnalysis(`
-# Medical Report Analysis
-
-## 📋 Document Overview
-**Report:** ${file.name}
-**Analysis Status:** Processed successfully
-**Type:** Medical laboratory/diagnostic report
-
-## 🔍 Key Findings
-• **Overall Assessment:** Most parameters appear within acceptable ranges
-• **Notable Values:** Some parameters may require attention based on individual health profile
-• **Trend Analysis:** Results should be compared with previous reports for trend analysis
-• **Reference Ranges:** Values compared against standard Indian population norms
-
-## 📊 Health Implications
-• **General Health Status:** Results suggest stable health indicators
-• **Risk Assessment:** Low to moderate risk profile based on available data
-• **Monitoring Areas:** Continue regular health monitoring for key parameters
-• **Preventive Care:** Maintain current health management strategies
-
-## 💡 Recommendations
-• **Immediate Actions:** No urgent interventions required based on current analysis
-• **Lifestyle:** Continue balanced diet, regular exercise, and adequate hydration
-• **Follow-up:** Schedule routine check-up with healthcare provider
-• **Monitoring:** Track any symptoms or changes in health status
-
-## 🏥 When to Consult Doctor
-• **Immediate:** If experiencing severe symptoms or health changes
-• **Routine:** Within 2-4 weeks for result discussion and health planning
-• **Follow-up:** As recommended by your healthcare provider
-• **Emergency:** Contact emergency services for any acute health concerns
-
-## 🇮🇳 Indian Healthcare Context
-• **Normal Ranges:** Results interpreted using Indian population standards
-• **Common Conditions:** Screening for prevalent conditions in Indian demographics
-• **Healthcare Access:** Recommendations suitable for Indian healthcare system
-• **Cost-Effective Care:** Emphasis on accessible and affordable treatment options
-
----
-**Important Disclaimer:** This is an AI-generated analysis for informational purposes only. Always consult with qualified healthcare professionals for accurate medical interpretation and treatment decisions.
-`)
     } finally {
       setIsAnalyzing(false)
     }
+  }
+
+  const formatAnalysis = (data: any): string => {
+    let result = `## 📋 Document Overview\n`
+    result += `**Type:** ${data.documentOverview?.type || "N/A"}\n`
+    result += `**Date:** ${data.documentOverview?.date || "N/A"}\n`
+    result += `**Lab:** ${data.documentOverview?.lab || "N/A"}\n\n`
+
+    result += `## 🔍 Key Findings\n`
+    if (data.keyFindings && data.keyFindings.length > 0) {
+      data.keyFindings.forEach((finding: any) => {
+        result += `**${finding.parameter}:** ${finding.value} (${finding.status}) - ${finding.comment}\n`
+      })
+    } else {
+      result += "No specific findings were extracted.\n"
+    }
+    result += "\n"
+
+    result += `## 📊 Health Implications\n`
+    data.healthImplications?.forEach((item: string) => (result += `• ${item}\n`))
+    result += "\n"
+
+    result += `## 💡 Recommendations\n`
+    data.recommendations?.forEach((item: string) => (result += `• ${item}\n`))
+    result += "\n"
+
+    result += `## 🏥 When to Consult Doctor\n${data.whenToSeeDoctor || "N/A"}\n\n`
+    result += `## 🇮🇳 Indian Healthcare Context\n${data.indianContext || "N/A"}\n`
+
+    return result
   }
 
   const resetAnalyzer = () => {

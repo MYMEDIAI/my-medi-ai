@@ -75,25 +75,22 @@ export default function DietPage() {
     setIsGenerating(true)
     try {
       const dietPrompt = `
-Create a personalized Indian diet plan for:
-Age: ${formData.age}
-Weight: ${formData.weight}kg
-Height: ${formData.height}cm
-Gender: ${formData.gender}
-Activity Level: ${formData.activityLevel}
-Dietary Restrictions: ${formData.dietaryRestrictions}
-Health Goals: ${formData.healthGoals}
-Medical Conditions: ${formData.medicalConditions}
-Food Preferences: ${formData.foodPreferences}
+Create a personalized Indian diet plan based on the user's profile. The output MUST be a valid JSON object that conforms to the DietPlan interface structure provided below.
 
-Please provide:
-1. Detailed breakfast, lunch, dinner, and snack recommendations
-2. Portion sizes and calorie estimates
-3. Specific Indian foods and recipes
-4. Nutritional tips and guidelines
-5. Daily calorie target
+---USER DATA---
+${JSON.stringify(formData, null, 2)}
+---END USER DATA---
 
-Format as structured meal plan with clear sections.
+---JSON STRUCTURE---
+interface DietPlan {
+  breakfast: string;
+  lunch: string;
+  dinner: string;
+  snacks: string;
+  tips: string;
+  calories: string;
+}
+---END JSON STRUCTURE---
 `
 
       const response = await fetch("/api/ai-integration", {
@@ -105,29 +102,20 @@ Format as structured meal plan with clear sections.
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`)
+      }
+
       const data = await response.json()
 
-      if (data.response) {
-        const aiText = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
-
-        setDietPlan({
-          breakfast:
-            extractSection(aiText, "breakfast") ||
-            "Oats with fruits and nuts, or whole wheat paratha with yogurt and vegetables",
-          lunch:
-            extractSection(aiText, "lunch") ||
-            "Brown rice with dal, mixed vegetables, and a small portion of lean protein",
-          dinner: extractSection(aiText, "dinner") || "Roti with vegetable curry, salad, and a bowl of soup or dal",
-          snacks:
-            extractSection(aiText, "snack") || "Fresh fruits, nuts, or homemade healthy snacks like roasted chana",
-          tips:
-            extractSection(aiText, "tip") ||
-            "Stay hydrated, eat at regular intervals, and include variety in your meals",
-          calories: extractCalories(aiText) || "1800-2000 calories per day (adjust based on your needs)",
-        })
+      if (data.response && typeof data.response === "object") {
+        setDietPlan(data.response as DietPlan)
+      } else {
+        throw new Error("Invalid response format from AI")
       }
     } catch (error) {
       console.error("Diet plan generation error:", error)
+      // Fallback
       setDietPlan({
         breakfast: "Oats with fruits and nuts, or whole wheat paratha with yogurt",
         lunch: "Brown rice with dal, mixed vegetables, and salad",
