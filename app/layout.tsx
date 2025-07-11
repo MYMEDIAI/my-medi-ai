@@ -1,25 +1,33 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { Inter } from "next/font/google"
 import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.dev",
-  contact: {
-    mobile: "+91 9701744770",
-  },
-  location: "Amavarathi, Andhra Pradesh, India",
+  title: "MyMedi.AI - AI-Powered Healthcare Platform",
+  description:
+    "Advanced AI-powered healthcare platform for Indian patients with smart symptom analysis, medication suggestions, and personalized health recommendations.",
+  keywords: "AI healthcare, symptom analyzer, medical AI, Indian healthcare, telemedicine, health assessment",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
