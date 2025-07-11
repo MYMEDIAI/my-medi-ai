@@ -43,6 +43,8 @@ import DietPlanGenerator from "@/components/diet-plan-generator"
 import HealthAssessmentForm from "@/components/health-assessment-form"
 import ContactInfo from "@/components/contact-info"
 import EnhancedNavigation from "@/components/enhanced-navigation"
+import CompetitiveAdvantage from "@/components/competitive-advantage"
+import IndiaFocusFeatures from "@/components/india-focus-features"
 
 export default function HomePage() {
   const [activeDemo, setActiveDemo] = useState<string | null>(null)
@@ -206,7 +208,7 @@ export default function HomePage() {
       title: "AI Dermatology Scanner",
       description: "Skin condition analysis using computer vision",
       icon: Eye,
-      href: "/dermatology",
+      href: "/coming-soon",
       badge: "New",
       color: "from-yellow-500 to-orange-500",
     },
@@ -214,7 +216,7 @@ export default function HomePage() {
       title: "Mental Health Assistant",
       description: "AI-powered mental wellness support and therapy",
       icon: Brain,
-      href: "/mental-health",
+      href: "/coming-soon",
       badge: "New",
       color: "from-purple-500 to-pink-500",
     },
@@ -222,7 +224,7 @@ export default function HomePage() {
       title: "Lab Test Booking",
       description: "Home sample collection and lab test scheduling",
       icon: TestTube,
-      href: "/lab-tests",
+      href: "/coming-soon",
       badge: "New",
       color: "from-cyan-500 to-blue-500",
     },
@@ -230,7 +232,7 @@ export default function HomePage() {
       title: "Pharmacy Network",
       description: "Medicine delivery and pharmacy partnerships",
       icon: Store,
-      href: "/pharmacy",
+      href: "/coming-soon",
       badge: "New",
       color: "from-green-500 to-emerald-500",
     },
@@ -238,7 +240,7 @@ export default function HomePage() {
       title: "Emergency Services",
       description: "24/7 emergency medical assistance and ambulance",
       icon: AlertTriangle,
-      href: "/emergency",
+      href: "/coming-soon",
       badge: "New",
       color: "from-red-500 to-pink-500",
     },
@@ -246,7 +248,7 @@ export default function HomePage() {
       title: "Health Insurance",
       description: "AI-powered health insurance recommendations",
       icon: Shield,
-      href: "/insurance",
+      href: "/coming-soon",
       badge: "New",
       color: "from-indigo-500 to-purple-500",
     },
@@ -257,7 +259,7 @@ export default function HomePage() {
       name: "Dr. Priya Sharma",
       role: "Senior Cardiologist, AIIMS Delhi",
       content:
-        "MyMedi.ai has revolutionized patient care. The AI insights are remarkably accurate and help me provide better preliminary assessments.",
+        "MyMedi.AI has revolutionized patient care. The AI insights are remarkably accurate and the Indian medical database helps me provide better preliminary assessments to patients from different regions.",
       rating: 5,
       avatar: "/placeholder-user.jpg",
       verified: true,
@@ -267,7 +269,7 @@ export default function HomePage() {
       name: "Rajesh Kumar",
       role: "Patient, Mumbai",
       content:
-        "The medicine identifier saved my elderly father from taking wrong medication. The app is incredibly user-friendly and accurate.",
+        "The medicine scanner is incredibly accurate with Indian medicines and the pricing is very affordable for my family. The Hindi support makes it easy for my elderly parents to use.",
       rating: 5,
       avatar: "/placeholder-user.jpg",
       verified: true,
@@ -277,7 +279,7 @@ export default function HomePage() {
       name: "Dr. Amit Patel",
       role: "General Physician, Bangalore",
       content:
-        "The comprehensive health assessments help me monitor patients remotely. It's like having an AI assistant for every consultation.",
+        "The Ayurveda integration is excellent. My patients love the traditional + modern medicine approach. The comprehensive health assessments help me monitor patients remotely.",
       rating: 5,
       avatar: "/placeholder-user.jpg",
       verified: true,
@@ -287,7 +289,7 @@ export default function HomePage() {
       name: "Sneha Reddy",
       role: "Expecting Mother, Hyderabad",
       content:
-        "The pregnancy care module is amazing! Week-by-week tracking with AI insights gives me confidence throughout my pregnancy journey.",
+        "The pregnancy care module is amazing! The Telugu language support and understanding of Indian pregnancy traditions make it perfect for Indian mothers like me.",
       rating: 5,
       avatar: "/placeholder-user.jpg",
       verified: true,
@@ -349,7 +351,8 @@ export default function HomePage() {
               <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-4xl mx-auto leading-relaxed">
                 Experience revolutionary healthcare with AI-powered consultations, instant medicine identification,
                 comprehensive health tracking, and personalized medical insights - trusted by 500,000+ users across
-                India.
+                India. Built specifically for Indian healthcare needs with regional language support and affordable
+                pricing.
               </p>
 
               {/* Live Stats Bar */}
@@ -369,6 +372,24 @@ export default function HomePage() {
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                   <div className="text-2xl font-bold text-pink-300">24/7</div>
                   <div className="text-sm text-blue-100">Available</div>
+                </div>
+              </div>
+
+              {/* Competitive Advantage Banner */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 mb-8 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-lg font-bold text-yellow-300">Most Affordable</div>
+                    <div className="text-sm text-blue-100">Healthcare for Everyone</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-green-300">Indian-First</div>
+                    <div className="text-sm text-blue-100">Built for Indian Healthcare</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-orange-300">15+ Languages</div>
+                    <div className="text-sm text-blue-100">Regional Language Support</div>
+                  </div>
                 </div>
               </div>
 
@@ -547,6 +568,27 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Competitive Advantage Section */}
+      <section className="py-20 bg-gradient-to-br from-orange-50 to-red-50">
+        <div className="container mx-auto px-4">
+          <CompetitiveAdvantage />
+        </div>
+      </section>
+
+      {/* India-Focused Features Section */}
+      <section className="py-20 bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">🇮🇳 Made in India, for India</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Unlike international platforms, MyMedi.AI is built from ground up for Indian healthcare needs, diseases,
+              languages, and cultural preferences with deep understanding of Indian medical practices.
+            </p>
+          </div>
+          <IndiaFocusFeatures />
+        </div>
+      </section>
+
       {/* New Features Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -578,7 +620,7 @@ export default function HomePage() {
                   <p className="text-gray-600 mb-4">{feature.description}</p>
                   <Button variant="outline" size="sm" className="w-full bg-transparent" asChild>
                     <Link href={feature.href}>
-                      Coming Soon
+                      Join Waitlist
                       <Rocket className="w-4 h-4 ml-2" />
                     </Link>
                   </Button>
@@ -715,8 +757,8 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-4xl md:text-6xl font-bold mb-6">Ready to Transform Your Healthcare?</h2>
             <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Join 500,000+ users who trust MyMedi.ai for their health needs. Start your AI-powered health journey today
-              with India's most advanced healthcare platform.
+              Join 500,000+ Indians who trust MyMedi.AI for their healthcare needs. Get advanced AI-powered health
+              insights, Indian-focused healthcare solutions, and affordable pricing. Built by Indians, for Indians.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

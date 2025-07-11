@@ -285,7 +285,7 @@ Please generate a professional medical report with proper formatting, clinical r
 7. Prescription Details
 `
 
-      const response = await fetch("/api/ai-integration", {
+      const response = await fetch("/api/gemini-health", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -294,13 +294,9 @@ Please generate a professional medical report with proper formatting, clinical r
         }),
       })
 
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`)
-      }
-
       const data = await response.json()
 
-      if (data.response && typeof data.response === "string") {
+      if (data.response) {
         setGeneratedReport(data.response)
       } else {
         throw new Error("No response from AI")
