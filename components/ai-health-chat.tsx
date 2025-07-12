@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
 import MyMedLogo from "./mymed-logo"
 import {
   Send,
@@ -448,7 +447,7 @@ Click "Start Comprehensive Assessment" or describe your health concern in detail
         immediate: {
           actions: [
             "Rest and avoid strenuous activities",
-            "Monitor symptoms every 2-4 hours",
+            "Monitor symptoms every 4-6 hours",
             "Maintain adequate hydration (8-10 glasses water daily)",
             "Apply appropriate hot/cold therapy as needed",
           ],
@@ -1474,399 +1473,286 @@ Click "Start Comprehensive Assessment" or describe your health concern in detail
 
   const renderDetailedForm = () => {
     return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center text-blue-900">
-            <User className="w-6 h-6 mr-3" />
-            Comprehensive Health Assessment Form
-          </CardTitle>
-          <p className="text-gray-600">Please provide detailed information for accurate analysis</p>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="personal">Personal</TabsTrigger>
-              <TabsTrigger value="medical">Medical History</TabsTrigger>
-              <TabsTrigger value="medications">Medications</TabsTrigger>
-              <TabsTrigger value="lifestyle">Lifestyle</TabsTrigger>
-              <TabsTrigger value="symptoms">Symptoms</TabsTrigger>
-              <TabsTrigger value="vitals">Vitals</TabsTrigger>
-            </TabsList>
+      <div className="w-full max-w-6xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Comprehensive Health Assessment Form</h2>
+        <Tabs defaultValue="personal">
+          <TabsList className="mb-4">
+            <TabsTrigger value="personal">Personal Info</TabsTrigger>
+            <TabsTrigger value="contact">Contact Info</TabsTrigger>
+            <TabsTrigger value="vitals">Vitals</TabsTrigger>
+            <TabsTrigger value="medical">Medical History</TabsTrigger>
+            <TabsTrigger value="medications">Medications</TabsTrigger>
+            <TabsTrigger value="lifestyle">Lifestyle</TabsTrigger>
+            <TabsTrigger value="symptoms">Symptoms</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="personal" className="space-y-6 mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Full Name *</Label>
-                    <Input
-                      id="name"
-                      value={userProfile.personalInfo.name}
-                      onChange={(e) => updateUserProfile("personalInfo", "name", e.target.value)}
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="age">Age *</Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      value={userProfile.personalInfo.age}
-                      onChange={(e) => updateUserProfile("personalInfo", "age", Number.parseInt(e.target.value))}
-                      placeholder="Enter your age"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="gender">Gender *</Label>
-                    <Select onValueChange={(value) => updateUserProfile("personalInfo", "gender", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                        <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="dob">Date of Birth</Label>
-                    <Input
-                      id="dob"
-                      type="date"
-                      value={userProfile.personalInfo.dateOfBirth}
-                      onChange={(e) => updateUserProfile("personalInfo", "dateOfBirth", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="bloodGroup">Blood Group</Label>
-                    <Select onValueChange={(value) => updateUserProfile("personalInfo", "bloodGroup", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select blood group" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="A+">A+</SelectItem>
-                        <SelectItem value="A-">A-</SelectItem>
-                        <SelectItem value="B+">B+</SelectItem>
-                        <SelectItem value="B-">B-</SelectItem>
-                        <SelectItem value="AB+">AB+</SelectItem>
-                        <SelectItem value="AB-">AB-</SelectItem>
-                        <SelectItem value="O+">O+</SelectItem>
-                        <SelectItem value="O-">O-</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="height">Height (cm) *</Label>
-                    <Input
-                      id="height"
-                      type="number"
-                      value={userProfile.personalInfo.height}
-                      onChange={(e) => updateUserProfile("personalInfo", "height", Number.parseFloat(e.target.value))}
-                      placeholder="Enter height in cm"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="weight">Weight (kg) *</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      value={userProfile.personalInfo.weight}
-                      onChange={(e) => updateUserProfile("personalInfo", "weight", Number.parseFloat(e.target.value))}
-                      placeholder="Enter weight in kg"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="bodyFat">Body Fat % (if known)</Label>
-                    <Input
-                      id="bodyFat"
-                      type="number"
-                      value={userProfile.personalInfo.bodyFat}
-                      onChange={(e) => updateUserProfile("personalInfo", "bodyFat", Number.parseFloat(e.target.value))}
-                      placeholder="Enter body fat percentage"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      value={userProfile.contactInfo.phone}
-                      onChange={(e) => updateUserProfile("contactInfo", "phone", e.target.value)}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={userProfile.contactInfo.email}
-                      onChange={(e) => updateUserProfile("contactInfo", "email", e.target.value)}
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                </div>
+          <TabsContent value="personal" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  type="text"
+                  id="name"
+                  value={userProfile.personalInfo.name}
+                  onChange={(e) => updateUserProfile("personalInfo", "name", e.target.value)}
+                />
               </div>
-
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="address">Complete Address</Label>
-                  <Textarea
-                    id="address"
-                    value={userProfile.contactInfo.address}
-                    onChange={(e) => updateUserProfile("contactInfo", "address", e.target.value)}
-                    placeholder="Enter complete address"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      value={userProfile.contactInfo.city}
-                      onChange={(e) => updateUserProfile("contactInfo", "city", e.target.value)}
-                      placeholder="Enter city"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      value={userProfile.contactInfo.state}
-                      onChange={(e) => updateUserProfile("contactInfo", "state", e.target.value)}
-                      placeholder="Enter state"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="pincode">Pincode</Label>
-                    <Input
-                      id="pincode"
-                      value={userProfile.contactInfo.pincode}
-                      onChange={(e) => updateUserProfile("contactInfo", "pincode", e.target.value)}
-                      placeholder="Enter pincode"
-                    />
-                  </div>
-                </div>
+              <div>
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  type="number"
+                  id="age"
+                  value={userProfile.personalInfo.age}
+                  onChange={(e) => updateUserProfile("personalInfo", "age", Number.parseInt(e.target.value))}
+                />
               </div>
-            </TabsContent>
-
-            <TabsContent value="symptoms" className="space-y-6 mt-6">
-              <div className="space-y-6">
-                <div>
-                  <Label htmlFor="primaryComplaint">Primary Health Concern/Complaint *</Label>
-                  <Textarea
-                    id="primaryComplaint"
-                    value={userProfile.currentSymptoms.primaryComplaint}
-                    onChange={(e) => updateUserProfile("currentSymptoms", "primaryComplaint", e.target.value)}
-                    placeholder="Describe your main health concern in detail"
-                    rows={4}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="character">Character of Symptoms</Label>
-                    <Select
-                      onValueChange={(value) => {
-                        const newDetails = { ...userProfile.currentSymptoms.symptomDetails, character: value }
-                        setUserProfile((prev) => ({
-                          ...prev,
-                          currentSymptoms: { ...prev.currentSymptoms, symptomDetails: newDetails },
-                        }))
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select symptom character" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sharp">Sharp</SelectItem>
-                        <SelectItem value="dull">Dull</SelectItem>
-                        <SelectItem value="throbbing">Throbbing</SelectItem>
-                        <SelectItem value="burning">Burning</SelectItem>
-                        <SelectItem value="cramping">Cramping</SelectItem>
-                        <SelectItem value="stabbing">Stabbing</SelectItem>
-                        <SelectItem value="aching">Aching</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="duration">Duration of Symptoms</Label>
-                    <Select
-                      onValueChange={(value) => {
-                        const newDetails = { ...userProfile.currentSymptoms.symptomDetails, duration: value }
-                        setUserProfile((prev) => ({
-                          ...prev,
-                          currentSymptoms: { ...prev.currentSymptoms, symptomDetails: newDetails },
-                        }))
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="minutes">Minutes</SelectItem>
-                        <SelectItem value="hours">Hours</SelectItem>
-                        <SelectItem value="days">Days</SelectItem>
-                        <SelectItem value="weeks">Weeks</SelectItem>
-                        <SelectItem value="months">Months</SelectItem>
-                        <SelectItem value="years">Years</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="severity">Symptom Severity (1-10 scale)</Label>
-                  <div className="mt-2">
-                    <Slider
-                      value={[userProfile.currentSymptoms.symptomDetails.severity]}
-                      onValueChange={(value) => {
-                        const newDetails = { ...userProfile.currentSymptoms.symptomDetails, severity: value[0] }
-                        setUserProfile((prev) => ({
-                          ...prev,
-                          currentSymptoms: { ...prev.currentSymptoms, symptomDetails: newDetails },
-                        }))
-                      }}
-                      max={10}
-                      min={1}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-sm text-gray-500 mt-1">
-                      <span>1 (Mild)</span>
-                      <span>5 (Moderate)</span>
-                      <span>10 (Severe)</span>
-                    </div>
-                    <div className="text-center mt-2">
-                      <Badge className="bg-blue-100 text-blue-800">
-                        Current: {userProfile.currentSymptoms.symptomDetails.severity}/10
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="timing">When do symptoms occur?</Label>
-                  <Select
-                    onValueChange={(value) => {
-                      const newDetails = { ...userProfile.currentSymptoms.symptomDetails, timing: value }
-                      setUserProfile((prev) => ({
-                        ...prev,
-                        currentSymptoms: { ...prev.currentSymptoms, symptomDetails: newDetails },
-                      }))
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select timing" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="constant">Constant</SelectItem>
-                      <SelectItem value="intermittent">Intermittent</SelectItem>
-                      <SelectItem value="morning">Morning</SelectItem>
-                      <SelectItem value="evening">Evening</SelectItem>
-                      <SelectItem value="night">Night</SelectItem>
-                      <SelectItem value="after-meals">After meals</SelectItem>
-                      <SelectItem value="before-meals">Before meals</SelectItem>
-                      <SelectItem value="with-activity">With activity</SelectItem>
-                      <SelectItem value="at-rest">At rest</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="impactOnLife">Impact on Daily Life (1-10 scale)</Label>
-                  <div className="mt-2">
-                    <Slider
-                      value={[userProfile.currentSymptoms.symptomDetails.impactOnDailyLife]}
-                      onValueChange={(value) => {
-                        const newDetails = {
-                          ...userProfile.currentSymptoms.symptomDetails,
-                          impactOnDailyLife: value[0],
-                        }
-                        setUserProfile((prev) => ({
-                          ...prev,
-                          currentSymptoms: { ...prev.currentSymptoms, symptomDetails: newDetails },
-                        }))
-                      }}
-                      max={10}
-                      min={1}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-sm text-gray-500 mt-1">
-                      <span>1 (No impact)</span>
-                      <span>5 (Moderate impact)</span>
-                      <span>10 (Severe impact)</span>
-                    </div>
-                    <div className="text-center mt-2">
-                      <Badge className="bg-purple-100 text-purple-800">
-                        Impact: {userProfile.currentSymptoms.symptomDetails.impactOnDailyLife}/10
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <Label htmlFor="gender">Gender</Label>
+                <Select onValueChange={(value) => updateUserProfile("personalInfo", "gender", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select gender" defaultValue={userProfile.personalInfo.gender} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </TabsContent>
-
-            {/* Add other tabs content here - medical history, medications, lifestyle, vitals */}
-            <TabsContent value="medical" className="space-y-6 mt-6">
-              <div className="text-center text-gray-500">
-                <p>Medical History section - Add chronic conditions, past surgeries, allergies, family history, etc.</p>
-                <p className="text-sm mt-2">This section would contain detailed medical history forms</p>
+              <div>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  type="date"
+                  id="dateOfBirth"
+                  value={userProfile.personalInfo.dateOfBirth}
+                  onChange={(e) => updateUserProfile("personalInfo", "dateOfBirth", e.target.value)}
+                />
               </div>
-            </TabsContent>
-
-            <TabsContent value="medications" className="space-y-6 mt-6">
-              <div className="text-center text-gray-500">
-                <p>Medications section - Add current prescriptions, OTC medications, supplements</p>
-                <p className="text-sm mt-2">This section would contain detailed medication forms</p>
+              <div>
+                <Label htmlFor="bloodGroup">Blood Group</Label>
+                <Select onValueChange={(value) => updateUserProfile("personalInfo", "bloodGroup", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select blood group" defaultValue={userProfile.personalInfo.bloodGroup} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A+">A+</SelectItem>
+                    <SelectItem value="A-">A-</SelectItem>
+                    <SelectItem value="B+">B+</SelectItem>
+                    <SelectItem value="B-">B-</SelectItem>
+                    <SelectItem value="AB+">AB+</SelectItem>
+                    <SelectItem value="AB-">AB-</SelectItem>
+                    <SelectItem value="O+">O+</SelectItem>
+                    <SelectItem value="O-">O-</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </TabsContent>
-
-            <TabsContent value="lifestyle" className="space-y-6 mt-6">
-              <div className="text-center text-gray-500">
-                <p>Lifestyle section - Add smoking, alcohol, diet, exercise, sleep patterns</p>
-                <p className="text-sm mt-2">This section would contain detailed lifestyle assessment forms</p>
+              <div>
+                <Label htmlFor="height">Height (cm)</Label>
+                <Input
+                  type="number"
+                  id="height"
+                  value={userProfile.personalInfo.height}
+                  onChange={(e) => updateUserProfile("personalInfo", "height", Number.parseFloat(e.target.value))}
+                />
               </div>
-            </TabsContent>
-
-            <TabsContent value="vitals" className="space-y-6 mt-6">
-              <div className="text-center text-gray-500">
-                <p>Vitals section - Add blood pressure, heart rate, temperature, etc.</p>
-                <p className="text-sm mt-2">This section would contain detailed vital signs input forms</p>
+              <div>
+                <Label htmlFor="weight">Weight (kg)</Label>
+                <Input
+                  type="number"
+                  id="weight"
+                  value={userProfile.personalInfo.weight}
+                  onChange={(e) => updateUserProfile("personalInfo", "weight", Number.parseFloat(e.target.value))}
+                />
               </div>
-            </TabsContent>
-          </Tabs>
+              <div>
+                <Label htmlFor="bmi">BMI</Label>
+                <Input
+                  type="number"
+                  id="bmi"
+                  value={userProfile.personalInfo.bmi}
+                  onChange={(e) => updateUserProfile("personalInfo", "bmi", Number.parseFloat(e.target.value))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="bodyFat">Body Fat (%)</Label>
+                <Input
+                  type="number"
+                  id="bodyFat"
+                  value={userProfile.personalInfo.bodyFat}
+                  onChange={(e) => updateUserProfile("personalInfo", "bodyFat", Number.parseFloat(e.target.value))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="muscleMass">Muscle Mass (kg)</Label>
+                <Input
+                  type="number"
+                  id="muscleMass"
+                  value={userProfile.personalInfo.muscleMass}
+                  onChange={(e) => updateUserProfile("personalInfo", "muscleMass", Number.parseFloat(e.target.value))}
+                />
+              </div>
+            </div>
+          </TabsContent>
 
-          <div className="flex justify-between mt-8">
-            <Button variant="outline" onClick={() => setShowDetailedForm(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleComprehensiveAnalysis}
-              disabled={isLoading || !userProfile.personalInfo.name || !userProfile.currentSymptoms.primaryComplaint}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isLoading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Comprehensive Analysis
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          <TabsContent value="contact" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  type="tel"
+                  id="phone"
+                  value={userProfile.contactInfo.phone}
+                  onChange={(e) => updateUserProfile("contactInfo", "phone", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  value={userProfile.contactInfo.email}
+                  onChange={(e) => updateUserProfile("contactInfo", "email", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="emergencyContact">Emergency Contact</Label>
+                <Input
+                  type="text"
+                  id="emergencyContact"
+                  value={userProfile.contactInfo.emergencyContact}
+                  onChange={(e) => updateUserProfile("contactInfo", "emergencyContact", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  type="text"
+                  id="address"
+                  value={userProfile.contactInfo.address}
+                  onChange={(e) => updateUserProfile("contactInfo", "address", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Input
+                  type="text"
+                  id="city"
+                  value={userProfile.contactInfo.city}
+                  onChange={(e) => updateUserProfile("contactInfo", "city", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="state">State</Label>
+                <Input
+                  type="text"
+                  id="state"
+                  value={userProfile.contactInfo.state}
+                  onChange={(e) => updateUserProfile("contactInfo", "state", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="pincode">Pincode</Label>
+                <Input
+                  type="text"
+                  id="pincode"
+                  value={userProfile.contactInfo.pincode}
+                  onChange={(e) => updateUserProfile("contactInfo", "pincode", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="nearestHospital">Nearest Hospital</Label>
+                <Input
+                  type="text"
+                  id="nearestHospital"
+                  value={userProfile.contactInfo.nearestHospital}
+                  onChange={(e) => updateUserProfile("contactInfo", "nearestHospital", e.target.value)}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="vitals" className="space-y-4">
+            <div>
+              <Label>Blood Pressure</Label>
+              {/* Implement blood pressure history input */}
+            </div>
+            <div>
+              <Label>Heart Rate</Label>
+              {/* Implement heart rate history input */}
+            </div>
+            <div>
+              <Label>Temperature</Label>
+              {/* Implement temperature history input */}
+            </div>
+            <div>
+              <Label>Oxygen Saturation</Label>
+              {/* Implement oxygen saturation history input */}
+            </div>
+            <div>
+              <Label>Respiratory Rate</Label>
+              {/* Implement respiratory rate history input */}
+            </div>
+            <div>
+              <Label>Blood Sugar</Label>
+              {/* Implement blood sugar history input */}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="medical" className="space-y-4">
+            <div>
+              <Label htmlFor="chronicConditions">Chronic Conditions</Label>
+              <Textarea
+                id="chronicConditions"
+                value={userProfile.medicalHistory.chronicConditions.join(", ")}
+                onChange={(e) =>
+                  updateUserProfile(
+                    "medicalHistory",
+                    "chronicConditions",
+                    e.target.value.split(",").map((item) => item.trim()),
+                  )
+                }
+              />
+            </div>
+            {/* Implement past surgeries, allergies, family history, immunizations inputs */}
+          </TabsContent>
+
+          <TabsContent value="medications" className="space-y-4">
+            {/* Implement prescription, over the counter, supplements inputs */}
+          </TabsContent>
+
+          <TabsContent value="lifestyle" className="space-y-4">
+            {/* Implement smoking status, alcohol consumption, dietary habits, exercise routine, sleep pattern, stress level, occupational hazards inputs */}
+          </TabsContent>
+
+          <TabsContent value="symptoms" className="space-y-4">
+            <div>
+              <Label htmlFor="primaryComplaint">Primary Complaint</Label>
+              <Textarea
+                id="primaryComplaint"
+                value={userProfile.currentSymptoms.primaryComplaint}
+                onChange={(e) => updateUserProfile("currentSymptoms", "primaryComplaint", e.target.value)}
+              />
+            </div>
+            {/* Implement symptom details and review of systems inputs */}
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-8 flex justify-end">
+          <Button variant="secondary" onClick={() => setShowDetailedForm(false)} className="mr-4">
+            Cancel
+          </Button>
+          <Button onClick={handleComprehensiveAnalysis} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              "Submit for Analysis"
+            )}
+          </Button>
+        </div>
+      </div>
     )
   }
 

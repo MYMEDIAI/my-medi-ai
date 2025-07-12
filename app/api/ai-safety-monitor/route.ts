@@ -250,7 +250,19 @@ function generateSafetyRecommendations(
 export async function POST(request: NextRequest) {
   try {
     const body: SafetyAssessmentRequest = await request.json()
-    const { aiResponse, userInput, context, responseType, userProfile } = body
+
+    // 🔒 Ensure required string fields are present to prevent “undefined is not an object” errors
+    const {
+      aiResponse: rawAiResponse,
+      userInput: rawUserInput,
+      context,
+      responseType = "general",
+      userProfile,
+    } = body as Partial<SafetyAssessmentRequest>
+
+    // Coerce to empty strings if they’re missing or not strings
+    const aiResponse = typeof rawAiResponse === "string" ? rawAiResponse : ""
+    const userInput = typeof rawUserInput === "string" ? rawUserInput : ""
 
     // Calculate confidence score
     const confidenceScore = calculateConfidenceScore(userInput, aiResponse, responseType, userProfile)
