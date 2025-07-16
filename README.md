@@ -1,31 +1,6 @@
-# 🇮🇳 MyMedi.AI - India's Leading AI Healthcare Platform
+# 🚀 Medi.AI - AI-Powered Healthcare Platform
 
-**The Smart Alternative to TATA MD & International Platforms**
-
-A comprehensive healthcare platform built specifically for Indian healthcare needs, featuring AI-powered consultations, regional language support, Indian medical database integration, and affordable pricing designed for Indian families.
-
-## 🎯 Why Choose MyMedi.AI Over TATA MD?
-
-✅ **50% More Affordable** - Pricing designed for Indian families
-✅ **Indian Medical Database** - Comprehensive Indian medicine & treatment database  
-✅ **15+ Regional Languages** - Hindi, Tamil, Telugu, Bengali, Marathi, Gujarati & more
-✅ **Indian Healthcare Focus** - Built for Indian diseases, treatments & medical practices
-✅ **Local Doctor Network** - 25,000+ verified Indian doctors across all states
-✅ **Ayurveda Integration** - Traditional + Modern medicine approach
-✅ **Indian Insurance Support** - Works with all major Indian health insurance
-✅ **Tier 2/3 City Focus** - Accessible healthcare for smaller cities
-
-## 📊 MyMedi.AI vs TATA MD Comparison
-
-| Feature | MyMedi.AI | TATA MD | Advantage |
-|---------|-----------|---------|-----------|
-| **Pricing** | ₹99/month | ₹199/month | 50% cheaper |
-| **Languages** | 15+ Indian languages | Limited | Better accessibility |
-| **Indian Medicine DB** | Complete Indian database | Limited | More relevant |
-| **Ayurveda Support** | Full integration | Basic | Holistic approach |
-| **Tier 2/3 Cities** | Full support | Limited | Better reach |
-| **Family Plans** | ₹199 for 6 members | ₹399 for 4 members | Better value |
-| **Offline Support** | Available | Not available | Rural accessibility |
+A comprehensive healthcare platform with AI-powered features, secure authentication, and HIPAA-compliant data handling.
 
 ## ⚡ Quick Start (Auto-Configuration)
 
