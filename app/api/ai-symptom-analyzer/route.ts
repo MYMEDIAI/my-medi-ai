@@ -114,7 +114,6 @@ export async function POST(request: NextRequest) {
       prompt: userPrompt,
       maxTokens: type === "comprehensive_analysis" ? 3000 : 1000,
       temperature: 0.3, // Lower temperature for more consistent medical advice
-      mode: "json",
     })
 
     console.log(`✅ AI Analysis completed for type: ${type}`)
@@ -125,7 +124,6 @@ export async function POST(request: NextRequest) {
       parsedResponse = JSON.parse(text)
     } catch (e) {
       // If not JSON, return as text
-      console.error("AI_JSONParseError", e)
       parsedResponse = { analysis: text }
     }
 

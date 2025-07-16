@@ -23,7 +23,6 @@
     "@radix-ui/react-dropdown-menu": "latest",
     "@radix-ui/react-form": "^0.1.0",
     "@radix-ui/react-hover-card": "latest",
-    "@radix-ui/react-icons": "latest",
     "@radix-ui/react-input-otp": "^1.1.0",
     "@radix-ui/react-label": "latest",
     "@radix-ui/react-menubar": "latest",

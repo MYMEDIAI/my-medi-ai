@@ -247,27 +247,16 @@ export async function POST(request: NextRequest) {
       prompt: userPrompt,
       maxTokens: type === "medication_recommendations" ? 4000 : 2000,
       temperature: 0.2, // Very low temperature for consistent medical advice
-      mode: "json", // NEW - force the model to return pure JSON
     })
 
     console.log(`✅ AI Medication Analysis completed for type: ${type}`)
 
-    // --- Parse JSON response safely ----------------------------------------
+    // Parse JSON response
     let parsedResponse
     try {
-      let cleaned = text.trim()
-
-      // Remove leading / trailing markdown fences if present
-      if (cleaned.startsWith("```")) {
-        cleaned = cleaned
-          .replace(/^```(?:json)?/i, "") // opening fence (with optional \`\`\`json)
-          .replace(/```$/i, "") // closing fence
-          .trim()
-      }
-
-      parsedResponse = JSON.parse(cleaned)
+      parsedResponse = JSON.parse(text)
     } catch (e) {
-      console.error("Failed to parse AI response as JSON:", e, "\nRaw text:\n", text)
+      console.error("Failed to parse AI response as JSON:", e)
       parsedResponse = { analysis: text, error: "Failed to parse structured response" }
     }
 
