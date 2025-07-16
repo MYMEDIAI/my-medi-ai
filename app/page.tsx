@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
@@ -13,7 +11,6 @@ import {
   Activity,
   Heart,
   Brain,
-  Sparkles,
   CheckCircle,
   Award,
   Clock,
@@ -29,31 +26,43 @@ import {
   Facebook,
   Instagram,
   MapPin,
-  Pill,
-  AlertTriangle,
-  Send,
-  User,
-  Camera,
-  Upload,
-  Utensils,
-  Dumbbell,
-  Loader2,
   Baby,
 } from "lucide-react"
+import HealthAssessmentForm from "@/components/health-assessment-form"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
 
-/* ----------  TYPES  ---------- */
+import { ProductionChatWidget } from "@/components/production-chat-widget"
+import { ProductionReportAnalyzer } from "@/components/production-report-analyzer"
+import { ProductionMedicineIdentifier } from "@/components/production-medicine-identifier"
+import { ProductionBodyMapper } from "@/components/production-body-mapper"
+import { ProductionMealPlanner } from "@/components/production-meal-planner"
+import { ProductionVitalsTracker } from "@/components/production-vitals-tracker"
+
+/**
+ * Safely parse JSON only when the response actually contains JSON.
+ * Returns `null` when the body is not JSON or parsing fails.
+ */
+async function safeJson(res: Response): Promise<any | null> {
+  const contentType = res.headers.get("content-type") || ""
+  if (!contentType.includes("application/json")) {
+    return null
+  }
+  try {
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+/* ----------  TYPES  ---------- */
 interface Message {
   id: string
   type: "user" | "ai"
@@ -93,7 +102,7 @@ interface AIResponse {
   generalAdvice: string
 }
 
-/* ----------  CONSTANTS  ---------- */
+/* ----------  CONSTANTS  ---------- */
 const durationOptions = ["Less than 1 day", "1–3 days", "4–7 days", "1–2 weeks", "More than 2 weeks"]
 const severityOptions = Array.from({ length: 10 }, (_, i) => `${i + 1}`)
 
@@ -110,7 +119,7 @@ const languages = [
   "ਪੰਜਾਬੀ (Punjabi)",
 ]
 
-/* ----------  MAIN COMPONENT  ---------- */
+/* ----------  MAIN COMPONENT  ---------- */
 export default function Home() {
   const [showAssessment, setShowAssessment] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState("English")
@@ -153,7 +162,7 @@ export default function Home() {
     setFloatingIcons(newFloatingIcons)
   }, [])
 
-  /* ----------  HELPERS  ---------- */
+  /* ----------  HELPERS  ---------- */
   const handle = (k: keyof AssessmentData, v: any) => setForm((p) => ({ ...p, [k]: v }))
   const handleVitals = (k: keyof VitalsData, v: string) => setForm((p) => ({ ...p, vitals: { ...p.vitals, [k]: v } }))
 
@@ -200,7 +209,10 @@ Format the response as structured recommendations with clear sections.
         }),
       })
 
-      const data = await response.json()
+      const data = await safeJson(response)
+      if (!response.ok || !data) {
+        throw new Error("AI service returned a non-JSON or error response")
+      }
 
       if (data.response) {
         const aiText = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
@@ -289,7 +301,7 @@ Format the response as structured recommendations with clear sections.
     })
   }
 
-  /* ----------  ASSESSMENT FLOW  ---------- */
+  /* ----------  ASSESSMENT FLOW  ---------- */
   if (showAssessment) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -301,7 +313,6 @@ Format the response as structured recommendations with clear sections.
             </Button>
           </div>
         </header>
-
         <div className="container mx-auto px-4 py-8">
           <HealthAssessmentForm />
         </div>
@@ -310,7 +321,7 @@ Format the response as structured recommendations with clear sections.
     )
   }
 
-  /* ----------  MAIN LANDING PAGE  ---------- */
+  /* ----------  MAIN LANDING PAGE  ---------- */
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -349,7 +360,6 @@ Format the response as structured recommendations with clear sections.
           </nav>
         </div>
       </header>
-
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 py-20 overflow-hidden">
         {/* Floating Medical Icons */}
@@ -369,14 +379,13 @@ Format the response as structured recommendations with clear sections.
             </div>
           ))}
         </div>
-
         <div className="container mx-auto px-4 text-center relative z-10">
           <Badge className="mb-6 bg-white/20 text-white hover:bg-white/30 border-white/30">
             <span className="mr-2">🇮🇳</span>
             Made in India • HIPAA Compliant • AI-Powered
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            AI-Powered Healthcare for{" "}
+            AI-Powered Healthcare for
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">
               Every Indian
             </span>
@@ -417,7 +426,6 @@ Format the response as structured recommendations with clear sections.
           </div>
         </div>
       </section>
-
       {/* Interactive Features Section - Moved to top */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="container mx-auto px-4">
@@ -427,29 +435,22 @@ Format the response as structured recommendations with clear sections.
               Experience the future of healthcare with our interactive AI tools
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {/* AI Health Chat */}
             <ProductionChatWidget />
-
             {/* Report Analyzer */}
             <ProductionReportAnalyzer />
-
             {/* Medicine Identifier */}
             <ProductionMedicineIdentifier />
-
             {/* Body Mapper */}
             <ProductionBodyMapper />
-
             {/* Meal Planner */}
             <ProductionMealPlanner />
-
             {/* Vitals Tracker */}
             <ProductionVitalsTracker />
           </div>
         </div>
       </section>
-
       {/* Stats Bar */}
       <section className="py-12 bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="container mx-auto px-4">
@@ -493,7 +494,6 @@ Format the response as structured recommendations with clear sections.
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -503,7 +503,6 @@ Format the response as structured recommendations with clear sections.
               Comprehensive AI-powered healthcare solutions designed specifically for Indian needs and preferences
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="border-purple-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
               <CardContent className="p-6">
@@ -517,7 +516,6 @@ Format the response as structured recommendations with clear sections.
                 </p>
               </CardContent>
             </Card>
-
             <Card className="border-blue-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
@@ -530,7 +528,6 @@ Format the response as structured recommendations with clear sections.
                 </p>
               </CardContent>
             </Card>
-
             <Card className="border-green-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
@@ -543,7 +540,6 @@ Format the response as structured recommendations with clear sections.
                 </p>
               </CardContent>
             </Card>
-
             <Card className="border-orange-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
@@ -555,7 +551,6 @@ Format the response as structured recommendations with clear sections.
                 </p>
               </CardContent>
             </Card>
-
             <Card className="border-teal-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-200 transition-colors">
@@ -568,7 +563,6 @@ Format the response as structured recommendations with clear sections.
                 </p>
               </CardContent>
             </Card>
-
             <Card className="border-pink-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-pink-200 transition-colors">
@@ -584,7 +578,6 @@ Format the response as structured recommendations with clear sections.
           </div>
         </div>
       </section>
-
       {/* About the Founder Section */}
       <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
         <div className="container mx-auto px-4">
@@ -605,7 +598,6 @@ Format the response as structured recommendations with clear sections.
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Bandarla Harshavardhan</h2>
                 <p className="text-xl text-purple-600 font-semibold mb-4">Founder & CEO, MyMedi.ai</p>
-
                 <div className="flex flex-wrap gap-2 mb-6">
                   <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
                     <Award className="w-3 h-3 mr-1" />
@@ -621,14 +613,12 @@ Format the response as structured recommendations with clear sections.
                   </Badge>
                 </div>
               </div>
-
               <p className="text-gray-700 leading-relaxed text-lg">
                 With over a decade of experience as a Data Architect at leading multinational corporations,
                 Harshavardhan combines technical expertise with human-centered design. As a Stanford d.school University
                 Innovation Fellow and MBA graduate, he founded MyMedi.ai to democratize healthcare access for 1.4
                 billion Indians using AI technology.
               </p>
-
               <div className="flex space-x-4">
                 <a
                   href="https://www.linkedin.com/company/my-medi-ai/"
@@ -674,7 +664,6 @@ Format the response as structured recommendations with clear sections.
           </div>
         </div>
       </section>
-
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700">
         <div className="container mx-auto px-4 text-center">
@@ -682,7 +671,6 @@ Format the response as structured recommendations with clear sections.
           <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
             Join thousands of Indians taking control of their health with AI-powered insights
           </p>
-
           <div className="max-w-md mx-auto mb-8">
             <div className="flex gap-2">
               <Input
@@ -697,7 +685,6 @@ Format the response as structured recommendations with clear sections.
               </Button>
             </div>
           </div>
-
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <Button
               size="lg"
@@ -728,7 +715,6 @@ Format the response as structured recommendations with clear sections.
               </Button>
             </Link>
           </div>
-
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-purple-100">
             <div className="flex items-center">
               <CheckCircle className="w-5 h-5 mr-2" />
@@ -745,7 +731,6 @@ Format the response as structured recommendations with clear sections.
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-16">
         <div className="container mx-auto px-4">
@@ -782,7 +767,6 @@ Format the response as structured recommendations with clear sections.
                 </a>
               </div>
             </div>
-
             <div>
               <h3 className="text-lg font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-300">
@@ -808,7 +792,6 @@ Format the response as structured recommendations with clear sections.
                 </li>
               </ul>
             </div>
-
             <div>
               <h3 className="text-lg font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-300">
@@ -834,7 +817,6 @@ Format the response as structured recommendations with clear sections.
                 </li>
               </ul>
             </div>
-
             <div>
               <h3 className="text-lg font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-300">
@@ -855,901 +837,12 @@ Format the response as structured recommendations with clear sections.
               </ul>
             </div>
           </div>
-
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
             <p>&copy; 2024 MyMedi.ai. All rights reserved. Made with ❤️ in India.</p>
           </div>
         </div>
       </footer>
-
       <PoweredByFooter />
-    </div>
-  )
-}
-
-/* ----------  PRODUCTION COMPONENTS  ---------- */
-function ProductionChatWidget() {
-  const [message, setMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [response, setResponse] = useState("")
-
-  const handleSend = async () => {
-    if (!message.trim()) return
-
-    setIsLoading(true)
-    try {
-      const res = await fetch("/api/ai-integration", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, type: "chat" }),
-      })
-      const data = await res.json()
-      setResponse(data.response || "I'm here to help with your health questions!")
-    } catch (error) {
-      setResponse("I'm here to help! Try asking about symptoms, medications, or general health advice.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  return (
-    <Card className="border-blue-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      <CardHeader>
-        <CardTitle className="flex items-center text-blue-700">
-          <MessageCircle className="w-5 h-5 mr-2" />
-          AI Health Chat
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-blue-50 p-3 rounded-lg min-h-[100px]">
-          {response ? (
-            <p className="text-sm text-blue-800">{response}</p>
-          ) : (
-            <p className="text-sm text-blue-600">Ask me anything about your health...</p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Type your health question..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
-            className="text-sm"
-          />
-          <Button onClick={handleSend} disabled={isLoading} size="sm" className="bg-blue-600 hover:bg-blue-700">
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-          </Button>
-        </div>
-        <Link href="/chat">
-          <Button variant="outline" size="sm" className="w-full bg-transparent">
-            Open Full Chat
-          </Button>
-        </Link>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ProductionReportAnalyzer() {
-  const [file, setFile] = useState<File | null>(null)
-  const [analysis, setAnalysis] = useState("")
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      setFile(selectedFile)
-      analyzeReport(selectedFile)
-    }
-  }
-
-  const analyzeReport = async (file: File) => {
-    setIsAnalyzing(true)
-    try {
-      // Simulate analysis
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      setAnalysis(
-        `Analysis of ${file.name}:\n\n• Key findings identified\n• Normal ranges compared\n• Recommendations provided\n• Follow-up suggestions included`,
-      )
-    } catch (error) {
-      setAnalysis("Analysis complete. Please consult with your doctor for detailed interpretation.")
-    } finally {
-      setIsAnalyzing(false)
-    }
-  }
-
-  return (
-    <Card className="border-green-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      <CardHeader>
-        <CardTitle className="flex items-center text-green-700">
-          <FileText className="w-5 h-5 mr-2" />
-          Report Analyzer
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-green-50 p-3 rounded-lg min-h-[100px]">
-          {isAnalyzing ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-green-600 mr-2" />
-              <span className="text-sm text-green-600">Analyzing report...</span>
-            </div>
-          ) : analysis ? (
-            <p className="text-sm text-green-800 whitespace-pre-line">{analysis}</p>
-          ) : (
-            <p className="text-sm text-green-600">Upload your medical report for AI analysis...</p>
-          )}
-        </div>
-        <div>
-          <Input
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={handleFileUpload}
-            className="text-sm"
-            disabled={isAnalyzing}
-          />
-        </div>
-        <Button variant="outline" size="sm" className="w-full bg-transparent" disabled>
-          <Upload className="w-4 h-4 mr-2" />
-          {file ? `Uploaded: ${file.name.substring(0, 20)}...` : "Upload Medical Report"}
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ProductionMedicineIdentifier() {
-  const [image, setImage] = useState<string | null>(null)
-  const [identification, setIdentification] = useState("")
-  const [isIdentifying, setIsIdentifying] = useState(false)
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const result = e.target?.result as string
-        setImage(result)
-        identifyMedicine(file.name)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const identifyMedicine = async (fileName: string) => {
-    setIsIdentifying(true)
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      setIdentification(
-        `Medicine identified:\n\n• Name: Paracetamol 500mg\n• Type: Pain reliever/Fever reducer\n• Dosage: As prescribed\n• Precautions: Do not exceed 4g/day`,
-      )
-    } catch (error) {
-      setIdentification("Medicine identified. Please verify with a pharmacist or doctor before use.")
-    } finally {
-      setIsIdentifying(false)
-    }
-  }
-
-  return (
-    <Card className="border-purple-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      <CardHeader>
-        <CardTitle className="flex items-center text-purple-700">
-          <Pill className="w-5 h-5 mr-2" />
-          Medicine Identifier
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-purple-50 p-3 rounded-lg min-h-[100px]">
-          {isIdentifying ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-purple-600 mr-2" />
-              <span className="text-sm text-purple-600">Identifying medicine...</span>
-            </div>
-          ) : identification ? (
-            <p className="text-sm text-purple-800 whitespace-pre-line">{identification}</p>
-          ) : image ? (
-            <div className="text-center">
-              <img
-                src={image || "/placeholder.svg"}
-                alt="Medicine"
-                className="max-w-full h-20 object-contain mx-auto rounded"
-              />
-            </div>
-          ) : (
-            <p className="text-sm text-purple-600">Take a photo of your medicine for identification...</p>
-          )}
-        </div>
-        <div>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="text-sm"
-            disabled={isIdentifying}
-          />
-        </div>
-        <Button variant="outline" size="sm" className="w-full bg-transparent" disabled>
-          <Camera className="w-4 h-4 mr-2" />
-          Take Photo
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ProductionBodyMapper() {
-  const [selectedPart, setSelectedPart] = useState("")
-  const [symptoms, setSymptoms] = useState("")
-
-  const bodyParts = ["Head", "Chest", "Abdomen", "Arms", "Legs", "Back"]
-
-  return (
-    <Card className="border-orange-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      <CardHeader>
-        <CardTitle className="flex items-center text-orange-700">
-          <User className="w-5 h-5 mr-2" />
-          Body Symptom Mapper
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-orange-50 p-3 rounded-lg min-h-[100px]">
-          {selectedPart ? (
-            <div className="text-sm text-orange-800">
-              <p>
-                <strong>Selected:</strong> {selectedPart}
-              </p>
-              {symptoms && (
-                <p className="mt-2">
-                  <strong>Symptoms:</strong> {symptoms}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-orange-600">Select a body part and describe your symptoms...</p>
-          )}
-        </div>
-        <Select value={selectedPart} onValueChange={setSelectedPart}>
-          <SelectTrigger className="text-sm">
-            <SelectValue placeholder="Select body part" />
-          </SelectTrigger>
-          <SelectContent>
-            {bodyParts.map((part) => (
-              <SelectItem key={part} value={part}>
-                {part}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Input
-          placeholder="Describe symptoms..."
-          value={symptoms}
-          onChange={(e) => setSymptoms(e.target.value)}
-          className="text-sm"
-        />
-        <Button variant="outline" size="sm" className="w-full bg-transparent">
-          Analyze Symptoms
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ProductionMealPlanner() {
-  const [dietType, setDietType] = useState("")
-  const [mealPlan, setMealPlan] = useState("")
-  const [isGenerating, setIsGenerating] = useState(false)
-
-  const generateMealPlan = async () => {
-    if (!dietType) return
-
-    setIsGenerating(true)
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      setMealPlan(
-        `${dietType} Meal Plan:\n\nBreakfast: Oats with fruits\nLunch: Dal rice with vegetables\nSnack: Nuts and fruits\nDinner: Roti with curry`,
-      )
-    } catch (error) {
-      setMealPlan("Personalized meal plan generated based on your preferences and health goals.")
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  return (
-    <Card className="border-teal-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      <CardHeader>
-        <CardTitle className="flex items-center text-teal-700">
-          <Apple className="w-5 h-5 mr-2" />
-          AI Meal Planner
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-teal-50 p-3 rounded-lg min-h-[100px]">
-          {isGenerating ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-teal-600 mr-2" />
-              <span className="text-sm text-teal-600">Generating meal plan...</span>
-            </div>
-          ) : mealPlan ? (
-            <p className="text-sm text-teal-800 whitespace-pre-line">{mealPlan}</p>
-          ) : (
-            <p className="text-sm text-teal-600">Select your diet preference for a personalized meal plan...</p>
-          )}
-        </div>
-        <Select value={dietType} onValueChange={setDietType}>
-          <SelectTrigger className="text-sm">
-            <SelectValue placeholder="Select diet type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Vegetarian">Vegetarian</SelectItem>
-            <SelectItem value="Non-Vegetarian">Non-Vegetarian</SelectItem>
-            <SelectItem value="Vegan">Vegan</SelectItem>
-            <SelectItem value="Diabetic">Diabetic-Friendly</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button onClick={generateMealPlan} disabled={isGenerating || !dietType} size="sm" className="w-full">
-          Generate Meal Plan
-        </Button>
-        <Link href="/diet">
-          <Button variant="outline" size="sm" className="w-full bg-transparent">
-            Open Diet Planner
-          </Button>
-        </Link>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ProductionVitalsTracker() {
-  const [vitals, setVitals] = useState({
-    bp: "",
-    hr: "",
-    temp: "",
-  })
-
-  const handleVitalChange = (key: string, value: string) => {
-    setVitals((prev) => ({ ...prev, [key]: value }))
-  }
-
-  return (
-    <Card className="border-red-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      <CardHeader>
-        <CardTitle className="flex items-center text-red-700">
-          <Activity className="w-5 h-5 mr-2" />
-          Vitals Tracker
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-red-50 p-3 rounded-lg min-h-[100px]">
-          <div className="text-sm text-red-800 space-y-1">
-            <p>
-              <strong>Blood Pressure:</strong> {vitals.bp || "Not recorded"}
-            </p>
-            <p>
-              <strong>Heart Rate:</strong> {vitals.hr || "Not recorded"}
-            </p>
-            <p>
-              <strong>Temperature:</strong> {vitals.temp || "Not recorded"}
-            </p>
-            {vitals.bp && vitals.hr && vitals.temp && (
-              <p className="text-green-600 mt-2">✓ All vitals within normal range</p>
-            )}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Input
-            placeholder="Blood Pressure (e.g., 120/80)"
-            value={vitals.bp}
-            onChange={(e) => handleVitalChange("bp", e.target.value)}
-            className="text-sm"
-          />
-          <Input
-            placeholder="Heart Rate (bpm)"
-            value={vitals.hr}
-            onChange={(e) => handleVitalChange("hr", e.target.value)}
-            className="text-sm"
-          />
-          <Input
-            placeholder="Temperature (°F)"
-            value={vitals.temp}
-            onChange={(e) => handleVitalChange("temp", e.target.value)}
-            className="text-sm"
-          />
-        </div>
-        <Link href="/vitals">
-          <Button variant="outline" size="sm" className="w-full bg-transparent">
-            Open Vitals Tracker
-          </Button>
-        </Link>
-      </CardContent>
-    </Card>
-  )
-}
-
-/* ----------  HEALTH ASSESSMENT FORM COMPONENT  ---------- */
-function HealthAssessmentForm() {
-  const [form, setForm] = useState<AssessmentData>({
-    name: "",
-    age: "",
-    weight: "",
-    height: "",
-    gender: "",
-    primarySymptom: "",
-    symptomDuration: "",
-    symptomSeverity: "",
-    vitals: {
-      bloodPressureSystolic: "",
-      bloodPressureDiastolic: "",
-      heartRate: "",
-      temperature: "",
-      oxygenSaturation: "",
-      bloodSugar: "",
-    },
-  })
-
-  const [assessmentResults, setAssessmentResults] = useState<AIResponse | null>(null)
-  const [assessmentLoading, setAssessmentLoading] = useState(false)
-
-  /* ----------  HELPERS  ---------- */
-  const handle = (k: keyof AssessmentData, v: any) => setForm((p) => ({ ...p, [k]: v }))
-  const handleVitals = (k: keyof VitalsData, v: string) => setForm((p) => ({ ...p, vitals: { ...p.vitals, [k]: v } }))
-
-  const handleAssessmentSubmit = async () => {
-    setAssessmentLoading(true)
-    try {
-      const assessmentPrompt = `
-Patient Assessment:
-Name: ${form.name}
-Age: ${form.age}
-Gender: ${form.gender}
-Weight: ${form.weight}kg
-Height: ${form.height}cm
-Current Symptoms: ${form.primarySymptom}
-Duration: ${form.symptomDuration}
-Severity: ${form.symptomSeverity}/10
-Vitals: BP ${form.vitals.bloodPressureSystolic}/${form.vitals.bloodPressureDiastolic}, HR ${form.vitals.heartRate}, Temp ${form.vitals.temperature}°F, O2 ${form.vitals.oxygenSaturation}%, Blood Sugar ${form.vitals.bloodSugar}mg/dL
-
-Please provide comprehensive recommendations for:
-1. Medications (over-the-counter suggestions)
-2. Doctors/specialists to consult
-3. Laboratory tests that might be helpful
-4. Pharmacy options
-5. Personalized diet plan
-6. Exercise recommendations
-7. General health advice
-
-Format the response as structured recommendations with clear sections.
-`
-
-      const response = await fetch("/api/ai-integration", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: assessmentPrompt,
-          type: "assessment",
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.response) {
-        const aiText = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
-
-        setAssessmentResults({
-          medications:
-            extractSection(aiText, "medication") ||
-            "Consult with a healthcare provider for appropriate medications based on your symptoms.",
-          doctors:
-            extractSection(aiText, "doctor") ||
-            "Schedule an appointment with your primary care physician for initial evaluation.",
-          labs: extractSection(aiText, "lab") || "Basic blood work and relevant tests as recommended by your doctor.",
-          pharmacy:
-            extractSection(aiText, "pharmacy") ||
-            "Visit your local pharmacy for over-the-counter medications and health consultations.",
-          dietPlan:
-            extractSection(aiText, "diet") ||
-            "Maintain a balanced diet with plenty of fruits, vegetables, and adequate hydration.",
-          exercise:
-            extractSection(aiText, "exercise") ||
-            "Engage in regular moderate exercise as appropriate for your condition.",
-          generalAdvice:
-            extractSection(aiText, "advice") ||
-            "Monitor your symptoms and seek medical attention if they worsen or persist.",
-        })
-      }
-    } catch (error) {
-      console.error("Assessment error:", error)
-      // Provide fallback results
-      setAssessmentResults({
-        medications:
-          "Unable to connect to AI service. Please consult with a healthcare provider for medication recommendations.",
-        doctors: "Schedule an appointment with your primary care physician for proper evaluation.",
-        labs: "Basic health screening tests may be recommended by your doctor.",
-        pharmacy: "Visit your local pharmacy for over-the-counter medications and health consultations.",
-        dietPlan: "Maintain a balanced diet with plenty of fruits, vegetables, and stay hydrated.",
-        exercise: "Engage in regular moderate exercise appropriate for your fitness level.",
-        generalAdvice: "Monitor your symptoms and seek immediate medical attention if they worsen.",
-      })
-    } finally {
-      setAssessmentLoading(false)
-    }
-  }
-
-  const extractSection = (text: string, keyword: string): string => {
-    const lines = text.split("\n")
-    let section = ""
-    let capturing = false
-
-    for (const line of lines) {
-      if (line.toLowerCase().includes(keyword) && (line.includes(":") || line.includes("."))) {
-        capturing = true
-        section = line
-        continue
-      }
-      if (capturing) {
-        if (line.trim() === "" || line.match(/^\d+\./)) {
-          if (section.length > 50) break
-        }
-        section += "\n" + line
-      }
-    }
-
-    return section.trim() || ""
-  }
-
-  const resetAssessment = () => {
-    setAssessmentResults(null)
-    setForm({
-      name: "",
-      age: "",
-      weight: "",
-      height: "",
-      gender: "",
-      primarySymptom: "",
-      symptomDuration: "",
-      symptomSeverity: "",
-      vitals: {
-        bloodPressureSystolic: "",
-        bloodPressureDiastolic: "",
-        heartRate: "",
-        temperature: "",
-        oxygenSaturation: "",
-        bloodSugar: "",
-      },
-    })
-  }
-
-  if (assessmentLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">AI Analysis in Progress</h3>
-            <p className="text-gray-600 text-center">
-              Our advanced AI is analyzing your health information and generating personalized recommendations...
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (assessmentResults) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-        <header className="bg-white/95 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-50 shadow-sm">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <MyMedLogo size="lg" />
-            <Button onClick={() => resetAssessment()} variant="outline">
-              Start New Assessment
-            </Button>
-          </div>
-        </header>
-
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-red-500" />
-                  Your Personalized Health Assessment Results
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm">
-                        <Pill className="h-4 w-4" />
-                        Medication Recommendations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-700 whitespace-pre-line">{assessmentResults.medications}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm">
-                        <User className="h-4 w-4" />
-                        Healthcare Providers
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-700 whitespace-pre-line">{assessmentResults.doctors}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm">
-                        <Activity className="h-4 w-4" />
-                        Recommended Tests
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-700 whitespace-pre-line">{assessmentResults.labs}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm">
-                        <Utensils className="h-4 w-4" />
-                        Diet Plan
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-700 whitespace-pre-line">{assessmentResults.dietPlan}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm">
-                        <Dumbbell className="h-4 w-4" />
-                        Exercise Recommendations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-700 whitespace-pre-line">{assessmentResults.exercise}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm">
-                        <AlertTriangle className="h-4 w-4" />
-                        General Advice
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-700 whitespace-pre-line">{assessmentResults.generalAdvice}</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className="mt-6 flex gap-4">
-                  <Button onClick={() => resetAssessment()} variant="outline">
-                    Start New Assessment
-                  </Button>
-                  <Button onClick={() => window.print()}>Print Results</Button>
-                  <Link href="/chat">
-                    <Button className="bg-purple-600 hover:bg-purple-700">Chat with AI Doctor</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-        <PoweredByFooter />
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="name"
-            value={form.name}
-            onChange={(e) => handle("name", e.target.value)}
-            placeholder="Enter your full name"
-          />
-        </div>
-        <div>
-          <Label htmlFor="age">Age</Label>
-          <Input
-            id="age"
-            type="number"
-            value={form.age}
-            onChange={(e) => handle("age", e.target.value)}
-            placeholder="Enter your age"
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="weight">Weight (kg)</Label>
-          <Input
-            id="weight"
-            type="number"
-            value={form.weight}
-            onChange={(e) => handle("weight", e.target.value)}
-            placeholder="Weight"
-          />
-        </div>
-        <div>
-          <Label htmlFor="height">Height (cm)</Label>
-          <Input
-            id="height"
-            type="number"
-            value={form.height}
-            onChange={(e) => handle("height", e.target.value)}
-            placeholder="Height"
-          />
-        </div>
-        <div>
-          <Label htmlFor="gender">Gender</Label>
-          <Select value={form.gender} onValueChange={(v) => handle("gender", v)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select gender" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="symptom">What is your primary health concern today?</Label>
-        <Textarea
-          id="symptom"
-          value={form.primarySymptom}
-          onChange={(e) => handle("primarySymptom", e.target.value)}
-          placeholder="Describe your main symptom or health concern in detail..."
-          rows={4}
-        />
-      </div>
-      <Alert className="border-blue-200 bg-blue-50">
-        <AlertTriangle className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          Be as specific as possible. Include location, intensity, and any triggers you've noticed.
-        </AlertDescription>
-      </Alert>
-
-      <div>
-        <Label>How long have you been experiencing this symptom?</Label>
-        <Select value={form.symptomDuration} onValueChange={(v) => handle("symptomDuration", v)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select duration" />
-          </SelectTrigger>
-          <SelectContent>
-            {durationOptions.map((duration) => (
-              <SelectItem key={duration} value={duration}>
-                {duration}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Rate the severity of your symptom (1 = mild, 10 = severe)</Label>
-        <Select value={form.symptomSeverity} onValueChange={(v) => handle("symptomSeverity", v)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select severity" />
-          </SelectTrigger>
-          <SelectContent>
-            {severityOptions.map((severity) => (
-              <SelectItem key={severity} value={severity}>
-                {severity} {severity <= 3 ? "(Mild)" : severity <= 6 ? "(Moderate)" : "(Severe)"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <p className="text-gray-600 mb-4">
-        Please provide your current vital signs if available. Leave blank if unknown.
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label>Blood Pressure (Systolic)</Label>
-          <Input
-            type="number"
-            value={form.vitals.bloodPressureSystolic}
-            onChange={(e) => handleVitals("bloodPressureSystolic", e.target.value)}
-            placeholder="e.g., 120"
-          />
-        </div>
-        <div>
-          <Label>Blood Pressure (Diastolic)</Label>
-          <Input
-            type="number"
-            value={form.vitals.bloodPressureDiastolic}
-            onChange={(e) => handleVitals("bloodPressureDiastolic", e.target.value)}
-            placeholder="e.g., 80"
-          />
-        </div>
-        <div>
-          <Label>Heart Rate (bpm)</Label>
-          <Input
-            type="number"
-            value={form.vitals.heartRate}
-            onChange={(e) => handleVitals("heartRate", e.target.value)}
-            placeholder="e.g., 72"
-          />
-        </div>
-        <div>
-          <Label>Temperature (°F)</Label>
-          <Input
-            type="number"
-            step="0.1"
-            value={form.vitals.temperature}
-            onChange={(e) => handleVitals("temperature", e.target.value)}
-            placeholder="e.g., 98.6"
-          />
-        </div>
-        <div>
-          <Label>Oxygen Saturation (%)</Label>
-          <Input
-            type="number"
-            value={form.vitals.oxygenSaturation}
-            onChange={(e) => handleVitals("oxygenSaturation", e.target.value)}
-            placeholder="e.g., 98"
-          />
-        </div>
-        <div>
-          <Label>Blood Sugar (mg/dL)</Label>
-          <Input
-            type="number"
-            value={form.vitals.bloodSugar}
-            onChange={(e) => handleVitals("bloodSugar", e.target.value)}
-            placeholder="e.g., 100"
-          />
-        </div>
-      </div>
-
-      <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">Review Your Information</h3>
-        <p className="text-gray-600 mb-6">Please review your information before submitting for AI analysis.</p>
-      </div>
-
-      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-        <div>
-          <strong>Name:</strong> {form.name}
-        </div>
-        <div>
-          <strong>Age:</strong> {form.age}
-        </div>
-        <div>
-          <strong>Primary Symptom:</strong> {form.primarySymptom}
-        </div>
-        <div>
-          <strong>Duration:</strong> {form.symptomDuration}
-        </div>
-        <div>
-          <strong>Severity:</strong> {form.symptomSeverity}/10
-        </div>
-      </div>
-
-      <Alert className="border-green-200 bg-green-50">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-800">
-          Your information will be analyzed by our AI system to provide personalized health recommendations.
-        </AlertDescription>
-      </Alert>
-
-      <Button onClick={handleAssessmentSubmit} className="bg-green-600 hover:bg-green-700 text-white ml-auto">
-        Generate AI Assessment
-        <Sparkles className="ml-2 w-4 h-4" />
-      </Button>
     </div>
   )
 }

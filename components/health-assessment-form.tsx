@@ -1674,47 +1674,55 @@ Visit: https://mymedi.ai
 
   // Form Display
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <Card className="border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <Heart className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 px-4 py-6">
+      <Card className="w-full max-w-4xl mx-auto border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-4 sm:p-8">
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold">
+                    Comprehensive Health Assessment
+                  </CardTitle>
+                  <p className="text-blue-100 mt-1 sm:mt-2 text-sm sm:text-base">
+                    AI-powered medical analysis by MyMedi.ai
+                  </p>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-3xl font-bold">Comprehensive Health Assessment</CardTitle>
-                <p className="text-blue-100 mt-2">AI-powered medical analysis by MyMedi.ai</p>
+              <div className="flex justify-center sm:justify-end">
+                <MyMedLogo />
               </div>
             </div>
-            <MyMedLogo />
-          </div>
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white bg-opacity-10 rounded-lg p-4 text-center backdrop-blur-sm">
-              <Shield className="w-6 h-6 mx-auto mb-2" />
-              <div className="text-sm">HIPAA Compliant</div>
-            </div>
-            <div className="bg-white bg-opacity-10 rounded-lg p-4 text-center backdrop-blur-sm">
-              <Brain className="w-6 h-6 mx-auto mb-2" />
-              <div className="text-sm">AI-Powered Analysis</div>
-            </div>
-            <div className="bg-white bg-opacity-10 rounded-lg p-4 text-center backdrop-blur-sm">
-              <Award className="w-6 h-6 mx-auto mb-2" />
-              <div className="text-sm">Personalized Results</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="bg-white bg-opacity-10 rounded-lg p-3 sm:p-4 text-center backdrop-blur-sm">
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-2" />
+                <div className="text-xs sm:text-sm">HIPAA Compliant</div>
+              </div>
+              <div className="bg-white bg-opacity-10 rounded-lg p-3 sm:p-4 text-center backdrop-blur-sm">
+                <Brain className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-2" />
+                <div className="text-xs sm:text-sm">AI-Powered Analysis</div>
+              </div>
+              <div className="bg-white bg-opacity-10 rounded-lg p-3 sm:p-4 text-center backdrop-blur-sm">
+                <Award className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-2" />
+                <div className="text-xs sm:text-sm">Personalized Results</div>
+              </div>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <CardContent className="p-4 sm:p-6 lg:p-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Personal Information */}
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg border border-blue-200">
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 sm:p-6 rounded-lg border border-blue-200">
               <h3 className="text-xl font-semibold text-blue-900 mb-6 flex items-center">
                 <User className="w-5 h-5 mr-2" />
                 Personal Information
                 <Badge className="ml-2 bg-blue-100 text-blue-800">Required</Badge>
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div>
                   <Label htmlFor="name" className="text-blue-900 font-medium">
                     Full Name *
@@ -1793,7 +1801,7 @@ Visit: https://mymedi.ai
             </div>
 
             {/* Current Health Concern */}
-            <div className="bg-gradient-to-r from-red-50 to-pink-50 p-6 rounded-lg border border-red-200">
+            <div className="bg-gradient-to-r from-red-50 to-pink-50 p-4 sm:p-6 rounded-lg border border-red-200">
               <h3 className="text-xl font-semibold text-red-900 mb-6 flex items-center">
                 <AlertCircle className="w-5 h-5 mr-2" />
                 Current Health Concern
@@ -1827,7 +1835,7 @@ Visit: https://mymedi.ai
                     placeholder="Please describe your symptoms, when they started, what makes them better or worse..."
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   <div>
                     <Label htmlFor="symptomDuration" className="text-red-900 font-medium">
                       How long have you had these symptoms? *
@@ -1873,7 +1881,7 @@ Visit: https://mymedi.ai
                 </div>
                 <div>
                   <Label className="text-red-900 font-medium mb-3 block">Where is your pain/discomfort located?</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                     {painLocationOptions.map((location) => (
                       <div key={location} className="flex items-center space-x-2">
                         <Checkbox
@@ -1894,7 +1902,7 @@ Visit: https://mymedi.ai
             </div>
 
             {/* Medical History */}
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-lg border border-purple-200">
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 sm:p-6 rounded-lg border border-purple-200">
               <h3 className="text-xl font-semibold text-purple-900 mb-6 flex items-center">
                 <Activity className="w-5 h-5 mr-2" />
                 Medical History
@@ -1903,7 +1911,7 @@ Visit: https://mymedi.ai
               <div className="space-y-6">
                 <div>
                   <Label className="text-purple-900 font-medium mb-3 block">Do you have any chronic conditions?</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {chronicConditionsList.map((condition) => (
                       <div key={condition} className="flex items-center space-x-2">
                         <Checkbox
@@ -1937,7 +1945,7 @@ Visit: https://mymedi.ai
                 </div>
                 <div>
                   <Label className="text-purple-900 font-medium mb-3 block">Do you have any known allergies?</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {commonAllergies.map((allergy) => (
                       <div key={allergy} className="flex items-center space-x-2">
                         <Checkbox
@@ -1967,7 +1975,7 @@ Visit: https://mymedi.ai
                 </div>
                 <div>
                   <Label className="text-purple-900 font-medium mb-3 block">Family Medical History</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {familyHistoryConditions.map((condition) => (
                       <div key={condition} className="flex items-center space-x-2">
                         <Checkbox
@@ -1988,13 +1996,13 @@ Visit: https://mymedi.ai
             </div>
 
             {/* Vital Signs */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 rounded-lg border border-green-200">
               <h3 className="text-xl font-semibold text-green-900 mb-6 flex items-center">
                 <Heart className="w-5 h-5 mr-2" />
                 Vital Signs
                 <Badge className="ml-2 bg-green-100 text-green-800">Optional but Helpful</Badge>
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div>
                   <Label htmlFor="bloodPressure" className="text-green-900 font-medium">
                     Blood Pressure
@@ -2051,13 +2059,13 @@ Visit: https://mymedi.ai
             </div>
 
             {/* Lifestyle Factors */}
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-lg border border-yellow-200">
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 sm:p-6 rounded-lg border border-yellow-200">
               <h3 className="text-xl font-semibold text-yellow-900 mb-6 flex items-center">
                 <Activity className="w-5 h-5 mr-2" />
                 Lifestyle Factors
                 <Badge className="ml-2 bg-yellow-100 text-yellow-800">Affects Treatment</Badge>
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div>
                   <Label htmlFor="smokingStatus" className="text-yellow-900 font-medium">
                     Smoking Status
@@ -2155,7 +2163,7 @@ Visit: https://mymedi.ai
             </div>
 
             {/* Additional Information */}
-            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 rounded-lg border border-teal-200">
+            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-4 sm:p-6 rounded-lg border border-teal-200">
               <h3 className="text-xl font-semibold text-teal-900 mb-6 flex items-center">
                 <Lightbulb className="w-5 h-5 mr-2" />
                 Additional Information
@@ -2166,7 +2174,7 @@ Visit: https://mymedi.ai
                   <Label className="text-teal-900 font-medium mb-3 block">
                     Are you experiencing any of these additional symptoms?
                   </Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {additionalSymptomsList.map((symptom) => (
                       <div key={symptom} className="flex items-center space-x-2">
                         <Checkbox
@@ -2204,7 +2212,7 @@ Visit: https://mymedi.ai
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 hover:from-purple-700 hover:via-blue-700 hover:to-teal-700 text-white px-12 py-4 text-lg font-semibold shadow-xl transform hover:scale-105 transition-all duration-200"
+                className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 hover:from-purple-700 hover:via-blue-700 hover:to-teal-700 text-white px-6 sm:px-12 py-3 sm:py-4 text-base sm:text-lg font-semibold shadow-xl transform hover:scale-105 transition-all duration-200"
               >
                 {isSubmitting ? (
                   <>
@@ -2218,7 +2226,7 @@ Visit: https://mymedi.ai
                   </>
                 )}
               </Button>
-              <p className="text-sm text-gray-600 mt-4 max-w-2xl mx-auto">
+              <p className="text-xs sm:text-sm text-gray-600 mt-4 max-w-2xl mx-auto text-center px-2">
                 Your information is secure and private. This AI assessment provides educational insights and should not
                 replace professional medical advice.
               </p>
