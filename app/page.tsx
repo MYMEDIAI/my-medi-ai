@@ -62,7 +62,7 @@ async function safeJson(res: Response): Promise<any | null> {
   }
 }
 
-/* ----------  TYPES  ---------- */
+/* ----------  TYPES  ---------- */
 interface Message {
   id: string
   type: "user" | "ai"
@@ -102,7 +102,7 @@ interface AIResponse {
   generalAdvice: string
 }
 
-/* ----------  CONSTANTS  ---------- */
+/* ----------  CONSTANTS  ---------- */
 const durationOptions = ["Less than 1 day", "1–3 days", "4–7 days", "1–2 weeks", "More than 2 weeks"]
 const severityOptions = Array.from({ length: 10 }, (_, i) => `${i + 1}`)
 
@@ -119,7 +119,7 @@ const languages = [
   "ਪੰਜਾਬੀ (Punjabi)",
 ]
 
-/* ----------  MAIN COMPONENT  ---------- */
+/* ----------  MAIN COMPONENT  ---------- */
 export default function Home() {
   const [showAssessment, setShowAssessment] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState("English")
@@ -162,7 +162,7 @@ export default function Home() {
     setFloatingIcons(newFloatingIcons)
   }, [])
 
-  /* ----------  HELPERS  ---------- */
+  /* ----------  HELPERS  ---------- */
   const handle = (k: keyof AssessmentData, v: any) => setForm((p) => ({ ...p, [k]: v }))
   const handleVitals = (k: keyof VitalsData, v: string) => setForm((p) => ({ ...p, vitals: { ...p.vitals, [k]: v } }))
 
@@ -301,7 +301,7 @@ Format the response as structured recommendations with clear sections.
     })
   }
 
-  /* ----------  ASSESSMENT FLOW  ---------- */
+  /* ----------  ASSESSMENT FLOW  ---------- */
   if (showAssessment) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -321,7 +321,7 @@ Format the response as structured recommendations with clear sections.
     )
   }
 
-  /* ----------  MAIN LANDING PAGE  ---------- */
+  /* ----------  MAIN LANDING PAGE  ---------- */
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
