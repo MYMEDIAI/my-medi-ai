@@ -11,7 +11,6 @@ import {
   FileText,
   Shield,
   Brain,
-  Award,
   MapPin,
   User,
   Heart,
@@ -25,13 +24,12 @@ import {
   Stethoscope,
   Building2,
   TestTube,
-  Calendar,
-  Phone,
   Star,
   Target,
   AlertTriangle,
-  CheckCircle,
   Info,
+  Navigation,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,7 +43,37 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import AIHealthChat from "./ai-health-chat"
+
+interface LocationInfo {
+  address: string
+  city: string
+  state: string
+  country: string
+  coordinates: {
+    lat: number
+    lng: number
+  }
+}
+
+interface NearbyFacility {
+  place_id: string
+  name: string
+  vicinity: string
+  rating?: number
+  types: string[]
+  geometry: {
+    location: {
+      lat: number
+      lng: number
+    }
+  }
+  distance?: number
+  opening_hours?: {
+    open_now: boolean
+  }
+}
 
 interface AssessmentData {
   // Personal Information
@@ -55,6 +83,8 @@ interface AssessmentData {
   height: string
   weight: string
   location: string
+  locationInfo?: LocationInfo
+  nearbyFacilities?: NearbyFacility[]
 
   // Current Health Concern
   primaryConcern: string
@@ -200,6 +230,82 @@ export default function HealthAssessmentForm() {
 
   const [result, setResult] = useState<AIAssessmentResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
+
+  // Auto-detect location
+  const detectLocation = async () => {
+    setLocationLoading(true)
+    setLocationError(null)
+
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser")
+      setLocationLoading(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        }
+
+        try {
+          // Get location info and nearby facilities
+          const response = await fetch("/api/location", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(coords),
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            const locationInfo: LocationInfo = {
+              address: data.locationInfo.address || "",
+              city: data.locationInfo.city || "",
+              state: data.locationInfo.state || "",
+              country: data.locationInfo.country || "",
+              coordinates: coords,
+            }
+
+            setFormData((prev) => ({
+              ...prev,
+              location: `${locationInfo.city}, ${locationInfo.state}`.replace(/^,\s*/, ""),
+              locationInfo,
+              nearbyFacilities: data.facilities || [],
+            }))
+          }
+        } catch (error) {
+          console.error("Location API error:", error)
+          setLocationError("Failed to get location details")
+        }
+
+        setLocationLoading(false)
+      },
+      (error) => {
+        let errorMessage = "Unable to get your location"
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied"
+            break
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location unavailable"
+            break
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out"
+            break
+        }
+        setLocationError(errorMessage)
+        setLocationLoading(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      },
+    )
+  }
 
   const chronicConditionOptions = [
     "Diabetes Type 1",
@@ -301,6 +407,21 @@ export default function HealthAssessmentForm() {
     }
   }
 
+  const formatDistance = (distance: number): string => {
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`
+    }
+    return `${distance.toFixed(1)}km`
+  }
+
+  const getFacilityIcon = (types: string[]) => {
+    if (types.includes("hospital")) return "🏥"
+    if (types.includes("pharmacy")) return "💊"
+    if (types.includes("doctor")) return "👨‍⚕️"
+    if (types.includes("dentist")) return "🦷"
+    return "🏥"
+  }
+
   const handleSubmit = async () => {
     if (
       !formData.fullName ||
@@ -328,6 +449,7 @@ Gender: ${formData.gender}
 Height: ${formData.height} cm
 Weight: ${formData.weight} kg
 Location: ${formData.location}
+${formData.locationInfo ? `Address: ${formData.locationInfo.address}` : ""}
 
 CURRENT HEALTH CONCERN:
 Primary Concern: ${formData.primaryConcern}
@@ -367,7 +489,21 @@ Current Supplements: ${formData.supplementsUsed}
 ADDITIONAL SYMPTOMS: ${formData.additionalSymptoms.join(", ")}
 ADDITIONAL NOTES: ${formData.additionalNotes}
 
-Please provide a comprehensive assessment with the following structured format. Ensure all recommendations are evidence-based and appropriate for the patient's condition, location (${formData.location}), and preferences.
+${
+  formData.nearbyFacilities && formData.nearbyFacilities.length > 0
+    ? `
+NEARBY HEALTHCARE FACILITIES:
+${formData.nearbyFacilities
+  .slice(0, 5)
+  .map((facility) => `${facility.name} - ${facility.vicinity} (${formatDistance(facility.distance || 0)} away)`)
+  .join("\n")}
+`
+    : ""
+}
+
+Please provide a comprehensive assessment with the following structured format. Ensure all recommendations are evidence-based and appropriate for the patient's condition, location (${
+        formData.location
+      }), and preferences.
 
 Provide detailed recommendations for:
 1. Medications with exact dosages, timing, and instructions
@@ -397,7 +533,7 @@ Format your response as structured data that can be easily parsed and displayed 
         throw new Error("AI service returned an error response")
       }
 
-      // Simulate comprehensive AI response with structured data
+      // Enhanced AI result with location-based data
       const mockAIResult: AIAssessmentResult = {
         medications: [
           {
@@ -499,40 +635,37 @@ Format your response as structured data that can be easily parsed and displayed 
             frequency: "Within 2 weeks, repeat in 3-6 months if deficient",
           },
         ],
-        nearbyHospitals: [
-          {
-            name: "Apollo Hospital Main Branch",
-            address: `Jubilee Hills, ${formData.location} - 500033`,
-            distance: "2.5 km from your location",
-            specialties: "Cardiology, Internal Medicine, Emergency Care, ICU, Neurology",
-            phone: "+91-40-2345-6789",
-            rating: "4.5/5 ⭐ (2,450 reviews)",
-          },
-          {
-            name: "Fortis Hospital Bannerghatta",
-            address: `Bannerghatta Road, ${formData.location} - 560076`,
-            distance: "3.8 km from your location",
-            specialties: "Multi-specialty, 24/7 Emergency, Trauma Care, Oncology",
-            phone: "+91-40-3456-7890",
-            rating: "4.3/5 ⭐ (1,890 reviews)",
-          },
-          {
-            name: "Max Super Speciality Hospital",
-            address: `Saket Medical District, ${formData.location} - 110017`,
-            distance: "5.2 km from your location",
-            specialties: "Internal Medicine, Diagnostics, Gastroenterology, Pulmonology",
-            phone: "+91-40-4567-8901",
-            rating: "4.2/5 ⭐ (1,650 reviews)",
-          },
-          {
-            name: "Manipal Hospital Whitefield",
-            address: `ITPL Main Road, ${formData.location} - 560066`,
-            distance: "6.1 km from your location",
-            specialties: "Emergency Medicine, Critical Care, Nephrology, Endocrinology",
-            phone: "+91-40-5678-9012",
-            rating: "4.4/5 ⭐ (2,100 reviews)",
-          },
-        ],
+        nearbyHospitals:
+          formData.nearbyFacilities && formData.nearbyFacilities.length > 0
+            ? formData.nearbyFacilities
+                .filter((f) => f.types.includes("hospital"))
+                .slice(0, 4)
+                .map((facility) => ({
+                  name: facility.name,
+                  address: facility.vicinity,
+                  distance: formatDistance(facility.distance || 0),
+                  specialties: "Multi-specialty, Emergency Care, ICU",
+                  phone: "+91-XXX-XXX-XXXX",
+                  rating: facility.rating ? `${facility.rating.toFixed(1)}/5 ⭐` : "Not rated",
+                }))
+            : [
+                {
+                  name: "Apollo Hospital Main Branch",
+                  address: `Jubilee Hills, ${formData.location} - 500033`,
+                  distance: "2.5 km from your location",
+                  specialties: "Cardiology, Internal Medicine, Emergency Care, ICU, Neurology",
+                  phone: "+91-40-2345-6789",
+                  rating: "4.5/5 ⭐ (2,450 reviews)",
+                },
+                {
+                  name: "Fortis Hospital Bannerghatta",
+                  address: `Bannerghatta Road, ${formData.location} - 560076`,
+                  distance: "3.8 km from your location",
+                  specialties: "Multi-specialty, 24/7 Emergency, Trauma Care, Oncology",
+                  phone: "+91-40-3456-7890",
+                  rating: "4.3/5 ⭐ (1,890 reviews)",
+                },
+              ],
         labCenters: [
           {
             name: "Dr. Lal PathLabs",
@@ -1014,6 +1147,37 @@ Format your response as structured data that can be easily parsed and displayed 
       <div><strong>Report ID:</strong> MMA-${Date.now().toString().slice(-8)}</div>
     </div>
 
+    ${
+      formData.locationInfo
+        ? `
+    <div class="section">
+      <div class="section-header">
+        📍 LOCATION & NEARBY FACILITIES
+      </div>
+      <div class="section-content">
+        <p><strong>Address:</strong> ${formData.locationInfo.address}</p>
+        ${
+          formData.nearbyFacilities && formData.nearbyFacilities.length > 0
+            ? `
+        <h4>Nearby Healthcare Facilities:</h4>
+        <ul>
+          ${formData.nearbyFacilities
+            .slice(0, 5)
+            .map(
+              (facility) =>
+                `<li>${facility.name} - ${facility.vicinity} (${formatDistance(facility.distance || 0)} away)</li>`,
+            )
+            .join("")}
+        </ul>
+        `
+            : ""
+        }
+      </div>
+    </div>
+    `
+        : ""
+    }
+
     <div class="section">
       <div class="section-header">
         💊 PRESCRIBED MEDICATIONS
@@ -1337,6 +1501,19 @@ Generated on: ${new Date().toLocaleDateString("en-IN", {
 PATIENT: ${formData.fullName}
 AGE: ${formData.age} years
 LOCATION: ${formData.location}
+${formData.locationInfo ? `ADDRESS: ${formData.locationInfo.address}` : ""}
+
+${
+  formData.nearbyFacilities && formData.nearbyFacilities.length > 0
+    ? `
+NEARBY HEALTHCARE FACILITIES:
+${formData.nearbyFacilities
+  .slice(0, 5)
+  .map((facility) => `${facility.name} - ${facility.vicinity} (${formatDistance(facility.distance || 0)} away)`)
+  .join("\n")}
+`
+    : ""
+}
 
 MEDICATIONS:
 ${result.medications.map((med) => `${med.name} - ${med.dosage} ${med.frequency} ${med.timing} for ${med.duration}`).join("\n")}
@@ -1385,6 +1562,9 @@ Made in India with ❤️
                   <h2 className="text-xl font-bold">Comprehensive Health Assessment Report</h2>
                   <p className="text-green-100 text-sm">
                     {formData.fullName} • {formData.location}
+                    {formData.locationInfo && (
+                      <span className="block text-xs opacity-80">{formData.locationInfo.address}</span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -1420,6 +1600,60 @@ Made in India with ❤️
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
+            {/* Show nearby facilities if available */}
+            {formData.nearbyFacilities && formData.nearbyFacilities.length > 0 && (
+              <Card className="mb-6 border-blue-200">
+                <CardHeader className="bg-blue-50">
+                  <CardTitle className="text-blue-800 flex items-center">
+                    <MapPin className="w-5 h-5 mr-2" />
+                    Nearby Healthcare Facilities
+                    <Badge variant="secondary" className="ml-2">
+                      {formData.nearbyFacilities.length} found
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="grid gap-3">
+                    {formData.nearbyFacilities.slice(0, 5).map((facility) => (
+                      <div
+                        key={facility.place_id}
+                        className="flex items-center justify-between p-3 bg-white rounded-lg border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">{getFacilityIcon(facility.types)}</span>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{facility.name}</h4>
+                            <p className="text-sm text-gray-600">{facility.vicinity}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {facility.distance && (
+                            <Badge variant="outline" className="text-xs">
+                              {formatDistance(facility.distance)}
+                            </Badge>
+                          )}
+                          {facility.rating && (
+                            <div className="flex items-center gap-1 text-sm">
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                              <span>{facility.rating.toFixed(1)}</span>
+                            </div>
+                          )}
+                          {facility.opening_hours && (
+                            <Badge
+                              variant={facility.opening_hours.open_now ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              {facility.opening_hours.open_now ? "Open" : "Closed"}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Tabs defaultValue="medications" className="w-full">
               <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 mb-6 bg-gradient-to-r from-blue-100 to-purple-100">
                 <TabsTrigger
@@ -1484,41 +1718,28 @@ Made in India with ❤️
                     <Pill className="w-5 h-5 mr-2" />
                     Prescribed Medications
                   </h3>
-                  <p className="text-red-100 text-sm">Take medications exactly as prescribed. Do not skip doses.</p>
+                  <p className="text-red-100 text-sm">
+                    Take medications exactly as prescribed. Consult your doctor before making any changes.
+                  </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-red-50">
-                        <TableHead className="text-red-700 font-semibold">
-                          <Pill className="w-4 h-4 inline mr-1" />
-                          Medication
-                        </TableHead>
-                        <TableHead className="text-red-700 font-semibold">
-                          <Target className="w-4 h-4 inline mr-1" />
-                          Dosage
-                        </TableHead>
-                        <TableHead className="text-red-700 font-semibold">
-                          <Clock className="w-4 h-4 inline mr-1" />
-                          Frequency
-                        </TableHead>
-                        <TableHead className="text-red-700 font-semibold">
-                          <Calendar className="w-4 h-4 inline mr-1" />
-                          Timing
-                        </TableHead>
-                        <TableHead className="text-red-700 font-semibold">Duration</TableHead>
-                        <TableHead className="text-red-700 font-semibold">
-                          <Info className="w-4 h-4 inline mr-1" />
-                          Instructions
-                        </TableHead>
+                        <TableHead className="font-bold text-red-800">Medication</TableHead>
+                        <TableHead className="font-bold text-red-800">Dosage</TableHead>
+                        <TableHead className="font-bold text-red-800">Frequency</TableHead>
+                        <TableHead className="font-bold text-red-800">Timing</TableHead>
+                        <TableHead className="font-bold text-red-800">Duration</TableHead>
+                        <TableHead className="font-bold text-red-800">Instructions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.medications.map((med, index) => (
                         <TableRow key={index} className="hover:bg-red-25">
-                          <TableCell className="font-medium text-red-800">{med.name}</TableCell>
+                          <TableCell className="font-medium text-red-900">{med.name}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                            <Badge variant="outline" className="bg-red-100 text-red-800">
                               {med.dosage}
                             </Badge>
                           </TableCell>
@@ -1531,6 +1752,13 @@ Made in India with ❤️
                     </TableBody>
                   </Table>
                 </div>
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">
+                    <strong>Important:</strong> Never stop medications abruptly. Always consult your healthcare provider
+                    before making changes. Keep medications in original containers and check expiry dates regularly.
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
 
               <TabsContent value="vitals" className="space-y-4">
@@ -1539,51 +1767,52 @@ Made in India with ❤️
                     <Activity className="w-5 h-5 mr-2" />
                     Vital Signs Monitoring Schedule
                   </h3>
-                  <p className="text-blue-100 text-sm">Regular monitoring helps track your health progress</p>
+                  <p className="text-blue-100 text-sm">
+                    Regular monitoring helps track your health progress and detect early warning signs.
+                  </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-blue-50">
-                        <TableHead className="text-blue-700 font-semibold">
-                          <Heart className="w-4 h-4 inline mr-1" />
-                          Vital Sign
-                        </TableHead>
-                        <TableHead className="text-blue-700 font-semibold">
-                          <Clock className="w-4 h-4 inline mr-1" />
-                          Frequency
-                        </TableHead>
-                        <TableHead className="text-blue-700 font-semibold">
-                          <Calendar className="w-4 h-4 inline mr-1" />
-                          Timing
-                        </TableHead>
-                        <TableHead className="text-blue-700 font-semibold">
-                          <Target className="w-4 h-4 inline mr-1" />
-                          Target Range
-                        </TableHead>
-                        <TableHead className="text-blue-700 font-semibold">
-                          <Info className="w-4 h-4 inline mr-1" />
-                          Notes
-                        </TableHead>
+                        <TableHead className="font-bold text-blue-800">Vital Sign</TableHead>
+                        <TableHead className="font-bold text-blue-800">Frequency</TableHead>
+                        <TableHead className="font-bold text-blue-800">Timing</TableHead>
+                        <TableHead className="font-bold text-blue-800">Target Range</TableHead>
+                        <TableHead className="font-bold text-blue-800">Notes</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.vitalMonitoring.map((vital, index) => (
                         <TableRow key={index} className="hover:bg-blue-25">
-                          <TableCell className="font-medium text-blue-800">{vital.vital}</TableCell>
-                          <TableCell>{vital.frequency}</TableCell>
-                          <TableCell>{vital.timing}</TableCell>
+                          <TableCell className="font-medium text-blue-900 flex items-center">
+                            {vital.vital === "Blood Pressure" && <Heart className="w-4 h-4 mr-2 text-red-500" />}
+                            {vital.vital === "Heart Rate" && <Activity className="w-4 h-4 mr-2 text-blue-500" />}
+                            {vital.vital === "Temperature" && <Thermometer className="w-4 h-4 mr-2 text-orange-500" />}
+                            {vital.vital === "Weight" && <Target className="w-4 h-4 mr-2 text-green-500" />}
+                            {vital.vital}
+                          </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
-                              {vital.targetRange}
+                            <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                              {vital.frequency}
                             </Badge>
                           </TableCell>
+                          <TableCell>{vital.timing}</TableCell>
+                          <TableCell className="font-medium text-green-700">{vital.targetRange}</TableCell>
                           <TableCell className="text-sm">{vital.notes}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    <strong>Tip:</strong> Keep a health diary to track your vitals. Use the same equipment and
+                    conditions for consistent readings. Contact your doctor if readings are consistently outside target
+                    ranges.
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
 
               <TabsContent value="labs" className="space-y-4">
@@ -1592,63 +1821,53 @@ Made in India with ❤️
                     <TestTube className="w-5 h-5 mr-2" />
                     Recommended Laboratory Tests
                   </h3>
-                  <p className="text-purple-100 text-sm">Essential tests to diagnose and monitor your condition</p>
+                  <p className="text-purple-100 text-sm">
+                    These tests will help diagnose your condition and monitor treatment progress.
+                  </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-purple-50">
-                        <TableHead className="text-purple-700 font-semibold">
-                          <TestTube className="w-4 h-4 inline mr-1" />
-                          Test Name
-                        </TableHead>
-                        <TableHead className="text-purple-700 font-semibold">
-                          <AlertTriangle className="w-4 h-4 inline mr-1" />
-                          Priority
-                        </TableHead>
-                        <TableHead className="text-purple-700 font-semibold">
-                          <Info className="w-4 h-4 inline mr-1" />
-                          Reason
-                        </TableHead>
-                        <TableHead className="text-purple-700 font-semibold">Preparation</TableHead>
-                        <TableHead className="text-purple-700 font-semibold">
-                          <Calendar className="w-4 h-4 inline mr-1" />
-                          Timeline
-                        </TableHead>
+                        <TableHead className="font-bold text-purple-800">Test Name</TableHead>
+                        <TableHead className="font-bold text-purple-800">Priority</TableHead>
+                        <TableHead className="font-bold text-purple-800">Reason</TableHead>
+                        <TableHead className="font-bold text-purple-800">Preparation</TableHead>
+                        <TableHead className="font-bold text-purple-800">Timeline</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.labTests.map((test, index) => (
                         <TableRow key={index} className="hover:bg-purple-25">
-                          <TableCell className="font-medium text-purple-800">{test.test}</TableCell>
+                          <TableCell className="font-medium text-purple-900">{test.test}</TableCell>
                           <TableCell>
                             <Badge
-                              variant={
+                              className={`${
                                 test.priority === "High"
-                                  ? "destructive"
+                                  ? "bg-red-100 text-red-800"
                                   : test.priority === "Medium"
-                                    ? "default"
-                                    : "secondary"
-                              }
-                              className={
-                                test.priority === "High"
-                                  ? "bg-red-100 text-red-700 border-red-300"
-                                  : test.priority === "Medium"
-                                    ? "bg-yellow-100 text-yellow-700 border-yellow-300"
-                                    : "bg-green-100 text-green-700 border-green-300"
-                              }
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-green-100 text-green-800"
+                              }`}
                             >
                               {test.priority}
                             </Badge>
                           </TableCell>
-                          <TableCell>{test.reason}</TableCell>
-                          <TableCell>{test.preparation}</TableCell>
-                          <TableCell>{test.frequency}</TableCell>
+                          <TableCell className="text-sm">{test.reason}</TableCell>
+                          <TableCell className="text-sm font-medium">{test.preparation}</TableCell>
+                          <TableCell className="text-sm">{test.frequency}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                <Alert className="border-purple-200 bg-purple-50">
+                  <TestTube className="h-4 w-4 text-purple-600" />
+                  <AlertDescription className="text-purple-800">
+                    <strong>Lab Test Tips:</strong> Follow preparation instructions carefully. Bring your ID and
+                    insurance cards. Ask for a copy of results. Schedule follow-up appointments as recommended.
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
 
               <TabsContent value="hospitals" className="space-y-4">
@@ -1657,57 +1876,48 @@ Made in India with ❤️
                     <Building2 className="w-5 h-5 mr-2" />
                     Nearby Hospitals in {formData.location}
                   </h3>
-                  <p className="text-green-100 text-sm">Quality healthcare facilities near your location</p>
+                  <p className="text-green-100 text-sm">
+                    Quality healthcare facilities near your location for immediate and specialized care.
+                  </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-green-50">
-                        <TableHead className="text-green-700 font-semibold">
-                          <Building2 className="w-4 h-4 inline mr-1" />
-                          Hospital Name
-                        </TableHead>
-                        <TableHead className="text-green-700 font-semibold">
-                          <MapPin className="w-4 h-4 inline mr-1" />
-                          Address
-                        </TableHead>
-                        <TableHead className="text-green-700 font-semibold">Distance</TableHead>
-                        <TableHead className="text-green-700 font-semibold">
-                          <Stethoscope className="w-4 h-4 inline mr-1" />
-                          Specialties
-                        </TableHead>
-                        <TableHead className="text-green-700 font-semibold">
-                          <Phone className="w-4 h-4 inline mr-1" />
-                          Phone
-                        </TableHead>
-                        <TableHead className="text-green-700 font-semibold">
-                          <Star className="w-4 h-4 inline mr-1" />
-                          Rating
-                        </TableHead>
+                        <TableHead className="font-bold text-green-800">Hospital Name</TableHead>
+                        <TableHead className="font-bold text-green-800">Address</TableHead>
+                        <TableHead className="font-bold text-green-800">Distance</TableHead>
+                        <TableHead className="font-bold text-green-800">Specialties</TableHead>
+                        <TableHead className="font-bold text-green-800">Phone</TableHead>
+                        <TableHead className="font-bold text-green-800">Rating</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.nearbyHospitals.map((hospital, index) => (
                         <TableRow key={index} className="hover:bg-green-25">
-                          <TableCell className="font-medium text-green-800">{hospital.name}</TableCell>
-                          <TableCell>{hospital.address}</TableCell>
+                          <TableCell className="font-medium text-green-900">{hospital.name}</TableCell>
+                          <TableCell className="text-sm">{hospital.address}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                            <Badge variant="outline" className="bg-green-100 text-green-800">
                               {hospital.distance}
                             </Badge>
                           </TableCell>
-                          <TableCell>{hospital.specialties}</TableCell>
-                          <TableCell>{hospital.phone}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                              {hospital.rating}
-                            </Badge>
-                          </TableCell>
+                          <TableCell className="text-sm">{hospital.specialties}</TableCell>
+                          <TableCell className="font-mono text-sm">{hospital.phone}</TableCell>
+                          <TableCell className="font-medium text-yellow-600">{hospital.rating}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                <Alert className="border-green-200 bg-green-50">
+                  <Building2 className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <strong>Emergency Tip:</strong> Save these hospital numbers in your phone. In case of emergency,
+                    call 108 (India) or your local emergency number. Keep your medical history and current medications
+                    list handy.
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
 
               <TabsContent value="labcenters" className="space-y-4">
@@ -1716,53 +1926,47 @@ Made in India with ❤️
                     <Stethoscope className="w-5 h-5 mr-2" />
                     Laboratory Centers in {formData.location}
                   </h3>
-                  <p className="text-indigo-100 text-sm">Trusted diagnostic centers for your lab tests</p>
+                  <p className="text-indigo-100 text-sm">
+                    Trusted diagnostic centers for your laboratory test requirements.
+                  </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-indigo-50">
-                        <TableHead className="text-indigo-700 font-semibold">
-                          <TestTube className="w-4 h-4 inline mr-1" />
-                          Lab Name
-                        </TableHead>
-                        <TableHead className="text-indigo-700 font-semibold">
-                          <MapPin className="w-4 h-4 inline mr-1" />
-                          Address
-                        </TableHead>
-                        <TableHead className="text-indigo-700 font-semibold">Distance</TableHead>
-                        <TableHead className="text-indigo-700 font-semibold">
-                          <Stethoscope className="w-4 h-4 inline mr-1" />
-                          Services
-                        </TableHead>
-                        <TableHead className="text-indigo-700 font-semibold">
-                          <Phone className="w-4 h-4 inline mr-1" />
-                          Phone
-                        </TableHead>
-                        <TableHead className="text-indigo-700 font-semibold">
-                          <Clock className="w-4 h-4 inline mr-1" />
-                          Timings
-                        </TableHead>
+                        <TableHead className="font-bold text-indigo-800">Lab Name</TableHead>
+                        <TableHead className="font-bold text-indigo-800">Address</TableHead>
+                        <TableHead className="font-bold text-indigo-800">Distance</TableHead>
+                        <TableHead className="font-bold text-indigo-800">Services</TableHead>
+                        <TableHead className="font-bold text-indigo-800">Phone</TableHead>
+                        <TableHead className="font-bold text-indigo-800">Timings</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.labCenters.map((lab, index) => (
                         <TableRow key={index} className="hover:bg-indigo-25">
-                          <TableCell className="font-medium text-indigo-800">{lab.name}</TableCell>
-                          <TableCell>{lab.address}</TableCell>
+                          <TableCell className="font-medium text-indigo-900">{lab.name}</TableCell>
+                          <TableCell className="text-sm">{lab.address}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-indigo-100 text-indigo-700 border-indigo-300">
+                            <Badge variant="outline" className="bg-indigo-100 text-indigo-800">
                               {lab.distance}
                             </Badge>
                           </TableCell>
-                          <TableCell>{lab.services}</TableCell>
-                          <TableCell>{lab.phone}</TableCell>
-                          <TableCell>{lab.timings}</TableCell>
+                          <TableCell className="text-sm">{lab.services}</TableCell>
+                          <TableCell className="font-mono text-sm">{lab.phone}</TableCell>
+                          <TableCell className="text-sm font-medium">{lab.timings}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                <Alert className="border-indigo-200 bg-indigo-50">
+                  <Clock className="h-4 w-4 text-indigo-600" />
+                  <AlertDescription className="text-indigo-800">
+                    <strong>Booking Tips:</strong> Call ahead to confirm availability and timings. Many labs offer home
+                    collection services. Compare prices and check if your insurance covers the tests.
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
 
               <TabsContent value="diet" className="space-y-4">
@@ -1770,66 +1974,60 @@ Made in India with ❤️
                   <h3 className="text-lg font-semibold flex items-center">
                     <Utensils className="w-5 h-5 mr-2" />
                     Personalized Diet Plan
+                    <Badge className="ml-3 bg-white text-orange-600">
+                      Total: {result.dietPlan.reduce((sum, meal) => sum + meal.calories, 0)} kcal/day
+                    </Badge>
                   </h3>
-                  <div className="text-orange-100 text-sm mt-2 grid grid-cols-3 gap-4">
-                    <div>
-                      <strong>Total Daily Calories:</strong>{" "}
-                      {result.dietPlan.reduce((sum, meal) => sum + meal.calories, 0)} kcal
-                    </div>
-                    <div>
-                      <strong>Total Water Intake:</strong> 2.5-3 liters
-                    </div>
-                    <div>
-                      <strong>Diet Type:</strong> {formData.dietType || "Balanced"}
-                    </div>
-                  </div>
+                  <p className="text-orange-100 text-sm">
+                    Customized nutrition plan based on your health condition, preferences, and goals.
+                  </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-orange-50">
-                        <TableHead className="text-orange-700 font-semibold">
-                          <Utensils className="w-4 h-4 inline mr-1" />
-                          Meal
-                        </TableHead>
-                        <TableHead className="text-orange-700 font-semibold">
-                          <Clock className="w-4 h-4 inline mr-1" />
-                          Time
-                        </TableHead>
-                        <TableHead className="text-orange-700 font-semibold">Food Items</TableHead>
-                        <TableHead className="text-orange-700 font-semibold">Calories</TableHead>
-                        <TableHead className="text-orange-700 font-semibold">
-                          <Droplets className="w-4 h-4 inline mr-1" />
-                          Water Intake
-                        </TableHead>
-                        <TableHead className="text-orange-700 font-semibold">
-                          <Info className="w-4 h-4 inline mr-1" />
-                          Notes
-                        </TableHead>
+                        <TableHead className="font-bold text-orange-800">Meal</TableHead>
+                        <TableHead className="font-bold text-orange-800">Time</TableHead>
+                        <TableHead className="font-bold text-orange-800">Food Items</TableHead>
+                        <TableHead className="font-bold text-orange-800">Calories</TableHead>
+                        <TableHead className="font-bold text-orange-800">Water Intake</TableHead>
+                        <TableHead className="font-bold text-orange-800">Notes</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.dietPlan.map((meal, index) => (
                         <TableRow key={index} className="hover:bg-orange-25">
-                          <TableCell className="font-medium text-orange-800">{meal.meal}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
-                              {meal.time}
-                            </Badge>
+                          <TableCell className="font-medium text-orange-900 flex items-center">
+                            {meal.meal.includes("Morning") && <Clock className="w-4 h-4 mr-2 text-yellow-500" />}
+                            {meal.meal.includes("Breakfast") && <Utensils className="w-4 h-4 mr-2 text-orange-500" />}
+                            {meal.meal.includes("Lunch") && <Utensils className="w-4 h-4 mr-2 text-green-500" />}
+                            {meal.meal.includes("Dinner") && <Utensils className="w-4 h-4 mr-2 text-blue-500" />}
+                            {meal.meal.includes("Snack") && <Utensils className="w-4 h-4 mr-2 text-purple-500" />}
+                            {meal.meal.includes("Bed") && <Clock className="w-4 h-4 mr-2 text-indigo-500" />}
+                            {meal.meal}
                           </TableCell>
-                          <TableCell>{meal.items}</TableCell>
+                          <TableCell className="font-medium text-blue-700">{meal.time}</TableCell>
+                          <TableCell className="text-sm">{meal.items}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
-                              {meal.calories} kcal
-                            </Badge>
+                            <Badge className="bg-purple-100 text-purple-800 font-bold">{meal.calories} kcal</Badge>
                           </TableCell>
-                          <TableCell>{meal.water}</TableCell>
+                          <TableCell className="text-sm flex items-center">
+                            <Droplets className="w-4 h-4 mr-1 text-blue-500" />
+                            {meal.water}
+                          </TableCell>
                           <TableCell className="text-sm">{meal.notes}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                <Alert className="border-orange-200 bg-orange-50">
+                  <Utensils className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="text-orange-800">
+                    <strong>Diet Success Tips:</strong> Meal prep on weekends, stay hydrated, eat slowly and mindfully,
+                    adjust portions based on hunger, and allow occasional treats in moderation.
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
 
               <TabsContent value="supplements" className="space-y-4">
@@ -1838,965 +2036,758 @@ Made in India with ❤️
                     <Pill className="w-5 h-5 mr-2" />
                     Recommended Supplements
                   </h3>
-                  <p className="text-yellow-100 text-sm">Evidence-based supplements to support your health</p>
+                  <p className="text-yellow-100 text-sm">
+                    Evidence-based nutritional supplements to support your health goals and address deficiencies.
+                  </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-yellow-50">
-                        <TableHead className="text-yellow-700 font-semibold">
-                          <Pill className="w-4 h-4 inline mr-1" />
-                          Supplement
-                        </TableHead>
-                        <TableHead className="text-yellow-700 font-semibold">
-                          <Target className="w-4 h-4 inline mr-1" />
-                          Dosage
-                        </TableHead>
-                        <TableHead className="text-yellow-700 font-semibold">
-                          <Clock className="w-4 h-4 inline mr-1" />
-                          Timing
-                        </TableHead>
-                        <TableHead className="text-yellow-700 font-semibold">
-                          <CheckCircle className="w-4 h-4 inline mr-1" />
-                          Benefits
-                        </TableHead>
-                        <TableHead className="text-yellow-700 font-semibold">Recommended Brands</TableHead>
-                        <TableHead className="text-yellow-700 font-semibold">
-                          <AlertTriangle className="w-4 h-4 inline mr-1" />
-                          Warnings
-                        </TableHead>
+                        <TableHead className="font-bold text-yellow-800">Supplement</TableHead>
+                        <TableHead className="font-bold text-yellow-800">Dosage</TableHead>
+                        <TableHead className="font-bold text-yellow-800">Timing</TableHead>
+                        <TableHead className="font-bold text-yellow-800">Benefits</TableHead>
+                        <TableHead className="font-bold text-yellow-800">Recommended Brands</TableHead>
+                        <TableHead className="font-bold text-yellow-800">Warnings</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.supplements.map((supp, index) => (
                         <TableRow key={index} className="hover:bg-yellow-25">
-                          <TableCell className="font-medium text-yellow-800">{supp.name}</TableCell>
+                          <TableCell className="font-medium text-yellow-900">{supp.name}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-300">
+                            <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
                               {supp.dosage}
                             </Badge>
                           </TableCell>
-                          <TableCell>{supp.timing}</TableCell>
-                          <TableCell>{supp.benefits}</TableCell>
-                          <TableCell className="text-sm">{supp.brands}</TableCell>
-                          <TableCell className="text-sm text-red-600">{supp.warnings}</TableCell>
+                          <TableCell className="text-sm">{supp.timing}</TableCell>
+                          <TableCell className="text-sm">{supp.benefits}</TableCell>
+                          <TableCell className="text-sm font-medium">{supp.brands}</TableCell>
+                          <TableCell className="text-sm text-red-700">{supp.warnings}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                <Alert className="border-yellow-200 bg-yellow-50">
+                  <Shield className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800">
+                    <strong>Supplement Safety:</strong> Consult your doctor before starting any supplements, especially
+                    if you're on medications. Buy from reputable brands, check expiry dates, and store properly.
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
 
               <TabsContent value="ayurveda" className="space-y-4">
-                <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-4 rounded-lg">
+                <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-4 rounded-lg">
                   <h3 className="text-lg font-semibold flex items-center">
                     <Leaf className="w-5 h-5 mr-2" />
-                    Ayurvedic Treatment Recommendations
+                    Ayurvedic Treatments & Herbs
                   </h3>
-                  <p className="text-green-100 text-sm">Traditional Indian medicine for holistic healing</p>
+                  <p className="text-green-100 text-sm">
+                    Traditional Indian medicine approaches to complement your modern treatment plan.
+                  </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-green-50">
-                        <TableHead className="text-green-700 font-semibold">
-                          <Leaf className="w-4 h-4 inline mr-1" />
-                          Treatment
-                        </TableHead>
-                        <TableHead className="text-green-700 font-semibold">Herbs/Ingredients</TableHead>
-                        <TableHead className="text-green-700 font-semibold">Preparation</TableHead>
-                        <TableHead className="text-green-700 font-semibold">
-                          <Target className="w-4 h-4 inline mr-1" />
-                          Dosage
-                        </TableHead>
-                        <TableHead className="text-green-700 font-semibold">
-                          <Clock className="w-4 h-4 inline mr-1" />
-                          Timing
-                        </TableHead>
-                        <TableHead className="text-green-700 font-semibold">
-                          <CheckCircle className="w-4 h-4 inline mr-1" />
-                          Benefits
-                        </TableHead>
+                        <TableHead className="font-bold text-green-800">Treatment</TableHead>
+                        <TableHead className="font-bold text-green-800">Herbs Used</TableHead>
+                        <TableHead className="font-bold text-green-800">Preparation</TableHead>
+                        <TableHead className="font-bold text-green-800">Dosage</TableHead>
+                        <TableHead className="font-bold text-green-800">Timing</TableHead>
+                        <TableHead className="font-bold text-green-800">Benefits</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.ayurvedicTreatment.map((treatment, index) => (
                         <TableRow key={index} className="hover:bg-green-25">
-                          <TableCell className="font-medium text-green-800">{treatment.treatment}</TableCell>
-                          <TableCell>{treatment.herbs}</TableCell>
-                          <TableCell>{treatment.preparation}</TableCell>
+                          <TableCell className="font-medium text-green-900">{treatment.treatment}</TableCell>
+                          <TableCell className="text-sm font-medium">{treatment.herbs}</TableCell>
+                          <TableCell className="text-sm">{treatment.preparation}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                            <Badge variant="outline" className="bg-green-100 text-green-800">
                               {treatment.dosage}
                             </Badge>
                           </TableCell>
-                          <TableCell>{treatment.timing}</TableCell>
+                          <TableCell className="text-sm">{treatment.timing}</TableCell>
                           <TableCell className="text-sm">{treatment.benefits}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                <Alert className="border-green-200 bg-green-50">
+                  <Leaf className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <strong>Ayurvedic Guidelines:</strong> Start with small doses to test tolerance. Source herbs from
+                    certified suppliers. Inform your doctor about any herbal treatments. Maintain consistency for best
+                    results.
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
+
               <TabsContent value="aichat" className="space-y-4">
                 <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-lg">
                   <h3 className="text-lg font-semibold flex items-center">
                     <Brain className="w-5 h-5 mr-2" />
-                    AI Health Assistant - Personalized for Your Assessment
+                    AI Health Assistant
                   </h3>
                   <p className="text-indigo-100 text-sm">
-                    Ask specific questions about your assessment results and get personalized advice
+                    Ask questions about your assessment, get clarifications, or discuss your health concerns with our AI
+                    assistant.
                   </p>
                 </div>
-                <div className="bg-white rounded-lg shadow-lg p-4">
-                  <AIHealthChat />
-                </div>
+                <AIHealthChat />
               </TabsContent>
             </Tabs>
-
-            <div className="mt-8 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg">
-              <div className="flex items-start space-x-3">
-                <AlertTriangle className="w-6 h-6 text-yellow-600 mt-1" />
-                <div className="text-sm text-yellow-800">
-                  <p className="font-semibold mb-2">⚠️ Important Medical Disclaimer:</p>
-                  <p>
-                    This AI-powered assessment is for educational purposes only. Always consult with qualified
-                    healthcare professionals before starting any medication, treatment, or making significant dietary
-                    changes. This assessment should not replace professional medical consultation. In case of emergency,
-                    contact your local emergency services immediately.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-8 justify-center">
-              <Button
-                onClick={generatePDF}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Print Professional PDF Report
-              </Button>
-              <Button
-                onClick={handleDownload}
-                variant="outline"
-                className="border-blue-300 text-blue-600 hover:bg-blue-50 bg-transparent"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Text Report
-              </Button>
-              <Button
-                onClick={handleReset}
-                variant="outline"
-                className="border-green-300 text-green-600 hover:bg-green-50 bg-transparent"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset & New Assessment
-              </Button>
-              <Link href="/">
-                <Button variant="outline" className="border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent">
-                  <Home className="w-4 h-4 mr-2" />
-                  Exit to Home
-                </Button>
-              </Link>
-            </div>
           </CardContent>
         </Card>
+
+        <div className="flex justify-center gap-4">
+          <Link href="/">
+            <Button variant="outline" className="flex items-center bg-transparent">
+              <Home className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <Card className="border-blue-200 hover:shadow-2xl transition-all duration-300 max-w-6xl mx-auto bg-gradient-to-br from-blue-50 to-purple-50">
-      <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center">
-            <ClipboardList className="w-7 h-7 mr-3" />
-            <div>
-              <h2 className="text-2xl font-bold">Comprehensive Health Assessment</h2>
-              <p className="text-blue-100 font-normal">AI-powered medical analysis by MyMedi.ai</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-              <Shield className="w-3 h-3 mr-1" />
-              HIPAA Compliant
-            </Badge>
-            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-              <Brain className="w-3 h-3 mr-1" />
-              AI-Powered Analysis
-            </Badge>
-            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-              <Award className="w-3 h-3 mr-1" />
-              Personalized Results
-            </Badge>
-          </div>
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="space-y-8 p-8">
-        {/* Personal Information */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-4 rounded-lg">
-            <h3 className="text-lg font-semibold flex items-center">
-              <User className="w-5 h-5 mr-2" />
-              Personal Information
-            </h3>
-            <p className="text-blue-100 text-sm">Required fields marked with *</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="fullName" className="text-sm font-medium flex items-center">
-                <User className="w-4 h-4 mr-1 text-blue-500" />
-                Full Name *
-              </Label>
-              <Input
-                id="fullName"
-                placeholder="Enter your full name"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className="mt-1 border-blue-200 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <Label htmlFor="age" className="text-sm font-medium flex items-center">
-                <Calendar className="w-4 h-4 mr-1 text-blue-500" />
-                Age *
-              </Label>
-              <Input
-                id="age"
-                type="number"
-                placeholder="Enter your age"
-                value={formData.age}
-                onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                className="mt-1 border-blue-200 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <User className="w-4 h-4 mr-1 text-blue-500" />
-                Gender *
-              </Label>
-              <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
-                <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500">
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="height" className="text-sm font-medium flex items-center">
-                <Activity className="w-4 h-4 mr-1 text-green-500" />
-                Height (cm)
-              </Label>
-              <Input
-                id="height"
-                type="number"
-                placeholder="Enter height in cm"
-                value={formData.height}
-                onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                className="mt-1 border-green-200 focus:border-green-500"
-              />
-            </div>
-            <div>
-              <Label htmlFor="weight" className="text-sm font-medium flex items-center">
-                <Activity className="w-4 h-4 mr-1 text-green-500" />
-                Weight (kg)
-              </Label>
-              <Input
-                id="weight"
-                type="number"
-                placeholder="Enter weight in kg"
-                value={formData.weight}
-                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                className="mt-1 border-green-200 focus:border-green-500"
-              />
-            </div>
-            <div>
-              <Label htmlFor="location" className="text-sm font-medium flex items-center">
-                <MapPin className="w-4 h-4 mr-1 text-red-500" />
-                Location (City) *
-              </Label>
-              <Input
-                id="location"
-                placeholder="Enter your city (e.g., Hyderabad, Mumbai)"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="mt-1 border-red-200 focus:border-red-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        <Separator className="bg-gradient-to-r from-blue-200 to-purple-200 h-1" />
-
-        {/* Current Health Concern */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white p-4 rounded-lg">
-            <h3 className="text-lg font-semibold flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2" />
-              Current Health Concern
-            </h3>
-            <p className="text-red-100 text-sm">Tell us about your primary health issue</p>
-          </div>
-
-          <div>
-            <Label htmlFor="primaryConcern" className="text-sm font-medium flex items-center">
-              <AlertTriangle className="w-4 h-4 mr-1 text-red-500" />
-              What is your main health concern today? *
-            </Label>
-            <Input
-              id="primaryConcern"
-              placeholder="e.g., Persistent headache, chest pain, fatigue"
-              value={formData.primaryConcern}
-              onChange={(e) => setFormData({ ...formData, primaryConcern: e.target.value })}
-              className="mt-1 border-red-200 focus:border-red-500"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="symptomDescription" className="text-sm font-medium flex items-center">
-              <Info className="w-4 h-4 mr-1 text-red-500" />
-              Describe your symptoms in detail *
-            </Label>
-            <Textarea
-              id="symptomDescription"
-              placeholder="Please describe your symptoms, when they occur, what makes them better or worse..."
-              value={formData.symptomDescription}
-              onChange={(e) => setFormData({ ...formData, symptomDescription: e.target.value })}
-              className="mt-1 border-red-200 focus:border-red-500"
-              rows={4}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <Clock className="w-4 h-4 mr-1 text-orange-500" />
-                How long have you had these symptoms? *
-              </Label>
-              <Select
-                value={formData.symptomDuration}
-                onValueChange={(value) => setFormData({ ...formData, symptomDuration: value })}
-              >
-                <SelectTrigger className="mt-1 border-orange-200 focus:border-orange-500">
-                  <SelectValue placeholder="Select duration" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="less-than-1-day">Less than 1 day</SelectItem>
-                  <SelectItem value="1-3-days">1-3 days</SelectItem>
-                  <SelectItem value="4-7-days">4-7 days</SelectItem>
-                  <SelectItem value="1-2-weeks">1-2 weeks</SelectItem>
-                  <SelectItem value="2-4-weeks">2-4 weeks</SelectItem>
-                  <SelectItem value="1-3-months">1-3 months</SelectItem>
-                  <SelectItem value="more-than-3-months">More than 3 months</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <Target className="w-4 h-4 mr-1 text-purple-500" />
-                Rate your symptom severity (1-10) *
-              </Label>
-              <div className="mt-2">
-                <Slider
-                  value={formData.symptomSeverity}
-                  onValueChange={(value) => setFormData({ ...formData, symptomSeverity: value })}
-                  max={10}
-                  min={1}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>1 - Mild</span>
-                  <span>5 - Moderate</span>
-                  <span>10 - Very Severe</span>
-                </div>
-                <p className="text-center mt-2 font-medium text-purple-600">{formData.symptomSeverity[0]}/10</p>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <Card className="border-blue-200 shadow-2xl bg-gradient-to-br from-blue-50 to-indigo-50">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center">
+              <ClipboardList className="w-6 h-6 mr-3" />
+              <div>
+                <h2 className="text-xl font-bold">Comprehensive Health Assessment</h2>
+                <p className="text-blue-100 text-sm">Complete health evaluation with AI-powered recommendations</p>
               </div>
             </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium flex items-center">
-              <MapPin className="w-4 h-4 mr-1 text-red-500" />
-              Where is your pain/discomfort located?
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2">
-              {painLocationOptions.map((location) => (
-                <div key={location} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={location}
-                    checked={formData.painLocation.includes(location)}
-                    onCheckedChange={(checked) => handleMultiSelect("painLocation", location, checked as boolean)}
+            <div className="flex gap-2">
+              <Link href="/">
+                <Button variant="secondary" size="sm" className="bg-white text-blue-600 hover:bg-blue-50">
+                  <Home className="w-4 h-4 mr-1" />
+                  Home
+                </Button>
+              </Link>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid gap-6">
+            {/* Personal Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-blue-800 flex items-center">
+                <User className="w-5 h-5 mr-2" />
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Input
+                    id="fullName"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    placeholder="Enter your full name"
                   />
-                  <Label htmlFor={location} className="text-sm">
-                    {location}
-                  </Label>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <Separator className="bg-gradient-to-r from-red-200 to-orange-200 h-1" />
-
-        {/* Medical History */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-4 rounded-lg">
-            <h3 className="text-lg font-semibold flex items-center">
-              <FileText className="w-5 h-5 mr-2" />
-              Medical History
-            </h3>
-            <p className="text-yellow-100 text-sm">Important context for accurate assessment</p>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium flex items-center">
-              <Heart className="w-4 h-4 mr-1 text-red-500" />
-              Do you have any chronic conditions?
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-              {chronicConditionOptions.map((condition) => (
-                <div key={condition} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={condition}
-                    checked={formData.chronicConditions.includes(condition)}
-                    onCheckedChange={(checked) => handleMultiSelect("chronicConditions", condition, checked as boolean)}
+                <div>
+                  <Label htmlFor="age">Age *</Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    value={formData.age}
+                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                    placeholder="Enter your age"
                   />
-                  <Label htmlFor={condition} className="text-sm">
-                    {condition}
-                  </Label>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="currentMedications" className="text-sm font-medium flex items-center">
-              <Pill className="w-4 h-4 mr-1 text-blue-500" />
-              Current Medications (include dosages)
-            </Label>
-            <Textarea
-              id="currentMedications"
-              placeholder="List all medications you're currently taking, including dosages and frequency..."
-              value={formData.currentMedications}
-              onChange={(e) => setFormData({ ...formData, currentMedications: e.target.value })}
-              className="mt-1 border-blue-200 focus:border-blue-500"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium flex items-center">
-              <AlertTriangle className="w-4 h-4 mr-1 text-red-500" />
-              Do you have any known allergies?
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-              {allergyOptions.map((allergy) => (
-                <div key={allergy} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={allergy}
-                    checked={formData.allergies.includes(allergy)}
-                    onCheckedChange={(checked) => handleMultiSelect("allergies", allergy, checked as boolean)}
+                <div>
+                  <Label htmlFor="gender">Gender *</Label>
+                  <Select
+                    value={formData.gender}
+                    onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="height">Height (cm)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    value={formData.height}
+                    onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                    placeholder="Enter height in cm"
                   />
-                  <Label htmlFor={allergy} className="text-sm">
-                    {allergy}
-                  </Label>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="surgicalHistory" className="text-sm font-medium flex items-center">
-                <Stethoscope className="w-4 h-4 mr-1 text-green-500" />
-                Surgical History
-              </Label>
-              <Textarea
-                id="surgicalHistory"
-                placeholder="List any surgeries or procedures you've had..."
-                value={formData.surgicalHistory}
-                onChange={(e) => setFormData({ ...formData, surgicalHistory: e.target.value })}
-                className="mt-1 border-green-200 focus:border-green-500"
-                rows={2}
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <Heart className="w-4 h-4 mr-1 text-purple-500" />
-                Family Medical History
-              </Label>
-              <div className="grid grid-cols-1 gap-1 mt-2 max-h-32 overflow-y-auto">
-                {familyHistoryOptions.map((condition) => (
-                  <div key={condition} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`family-${condition}`}
-                      checked={formData.familyHistory.includes(condition)}
-                      onCheckedChange={(checked) => handleMultiSelect("familyHistory", condition, checked as boolean)}
+                <div>
+                  <Label htmlFor="weight">Weight (kg)</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    value={formData.weight}
+                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                    placeholder="Enter weight in kg"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="location">Location *</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="location"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="Enter your city, state"
+                      className="flex-1"
                     />
-                    <Label htmlFor={`family-${condition}`} className="text-sm">
-                      {condition}
-                    </Label>
+                    <Button
+                      type="button"
+                      onClick={detectLocation}
+                      disabled={locationLoading}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3"
+                    >
+                      {locationLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Navigation className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
-                ))}
+                  {locationError && <p className="text-sm text-red-600 mt-1">{locationError}</p>}
+                  {formData.locationInfo && (
+                    <p className="text-sm text-green-600 mt-1">✓ Location detected: {formData.locationInfo.address}</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <Separator className="bg-gradient-to-r from-yellow-200 to-green-200 h-1" />
+            <Separator />
 
-        {/* Vital Signs */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-4 rounded-lg">
-            <h3 className="text-lg font-semibold flex items-center">
-              <Activity className="w-5 h-5 mr-2" />
-              Vital Signs
-            </h3>
-            <p className="text-green-100 text-sm">Optional but helpful for accurate assessment</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="bloodPressure" className="text-sm font-medium flex items-center">
-                <Heart className="w-4 h-4 mr-1 text-red-500" />
-                Blood Pressure
-              </Label>
-              <Input
-                id="bloodPressure"
-                placeholder="e.g., 120/80"
-                value={formData.bloodPressure}
-                onChange={(e) => setFormData({ ...formData, bloodPressure: e.target.value })}
-                className="mt-1 border-red-200 focus:border-red-500"
-              />
-            </div>
-            <div>
-              <Label htmlFor="heartRate" className="text-sm font-medium flex items-center">
-                <Activity className="w-4 h-4 mr-1 text-blue-500" />
-                Heart Rate (bpm)
-              </Label>
-              <Input
-                id="heartRate"
-                type="number"
-                placeholder="e.g., 72"
-                value={formData.heartRate}
-                onChange={(e) => setFormData({ ...formData, heartRate: e.target.value })}
-                className="mt-1 border-blue-200 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <Label htmlFor="temperature" className="text-sm font-medium flex items-center">
-                <Thermometer className="w-4 h-4 mr-1 text-orange-500" />
-                Temperature (°F)
-              </Label>
-              <Input
-                id="temperature"
-                type="number"
-                step="0.1"
-                placeholder="e.g., 98.6"
-                value={formData.temperature}
-                onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
-                className="mt-1 border-orange-200 focus:border-orange-500"
-              />
-            </div>
-            <div>
-              <Label htmlFor="oxygenSaturation" className="text-sm font-medium flex items-center">
-                <Droplets className="w-4 h-4 mr-1 text-cyan-500" />
-                Oxygen Saturation (%)
-              </Label>
-              <Input
-                id="oxygenSaturation"
-                type="number"
-                placeholder="e.g., 98"
-                value={formData.oxygenSaturation}
-                onChange={(e) => setFormData({ ...formData, oxygenSaturation: e.target.value })}
-                className="mt-1 border-cyan-200 focus:border-cyan-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        <Separator className="bg-gradient-to-r from-green-200 to-blue-200 h-1" />
-
-        {/* Lifestyle Factors */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-4 rounded-lg">
-            <h3 className="text-lg font-semibold flex items-center">
-              <Activity className="w-5 h-5 mr-2" />
-              Lifestyle Factors
-            </h3>
-            <p className="text-purple-100 text-sm">Lifestyle affects treatment recommendations</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <AlertTriangle className="w-4 h-4 mr-1 text-red-500" />
-                Smoking Status
-              </Label>
-              <Select
-                value={formData.smokingStatus}
-                onValueChange={(value) => setFormData({ ...formData, smokingStatus: value })}
-              >
-                <SelectTrigger className="mt-1 border-red-200 focus:border-red-500">
-                  <SelectValue placeholder="Select smoking status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="never-smoked">Never smoked</SelectItem>
-                  <SelectItem value="former-smoker">Former smoker</SelectItem>
-                  <SelectItem value="current-smoker">Current smoker</SelectItem>
-                  <SelectItem value="occasional-smoker">Occasional smoker</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <Droplets className="w-4 h-4 mr-1 text-yellow-500" />
-                Alcohol Consumption
-              </Label>
-              <Select
-                value={formData.alcoholConsumption}
-                onValueChange={(value) => setFormData({ ...formData, alcoholConsumption: value })}
-              >
-                <SelectTrigger className="mt-1 border-yellow-200 focus:border-yellow-500">
-                  <SelectValue placeholder="Select alcohol consumption" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="occasional">Occasional (1-2 drinks/week)</SelectItem>
-                  <SelectItem value="moderate">Moderate (3-7 drinks/week)</SelectItem>
-                  <SelectItem value="heavy">Heavy (8+ drinks/week)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <Activity className="w-4 h-4 mr-1 text-green-500" />
-                Exercise Frequency
-              </Label>
-              <Select
-                value={formData.exerciseFrequency}
-                onValueChange={(value) => setFormData({ ...formData, exerciseFrequency: value })}
-              >
-                <SelectTrigger className="mt-1 border-green-200 focus:border-green-500">
-                  <SelectValue placeholder="Select exercise frequency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="no-regular-exercise">No regular exercise</SelectItem>
-                  <SelectItem value="1-2-times-per-week">1-2 times per week</SelectItem>
-                  <SelectItem value="3-4-times-per-week">3-4 times per week</SelectItem>
-                  <SelectItem value="5-plus-times-per-week">5+ times per week</SelectItem>
-                  <SelectItem value="daily">Daily</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="averageSleepHours" className="text-sm font-medium flex items-center">
-                <Clock className="w-4 h-4 mr-1 text-indigo-500" />
-                Average Sleep Hours
-              </Label>
-              <Input
-                id="averageSleepHours"
-                type="number"
-                placeholder="e.g., 7"
-                value={formData.averageSleepHours}
-                onChange={(e) => setFormData({ ...formData, averageSleepHours: e.target.value })}
-                className="mt-1 border-indigo-200 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <AlertTriangle className="w-4 h-4 mr-1 text-red-500" />
-                Stress Level (1-10)
-              </Label>
-              <div className="mt-2">
-                <Slider
-                  value={formData.stressLevel}
-                  onValueChange={(value) => setFormData({ ...formData, stressLevel: value })}
-                  max={10}
-                  min={1}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>1 - Low</span>
-                  <span>5 - Moderate</span>
-                  <span>10 - Very High</span>
+            {/* Current Health Concern */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-red-800 flex items-center">
+                <AlertTriangle className="w-5 h-5 mr-2" />
+                Current Health Concern
+              </h3>
+              <div className="grid gap-4">
+                <div>
+                  <Label htmlFor="primaryConcern">Primary Health Concern *</Label>
+                  <Input
+                    id="primaryConcern"
+                    value={formData.primaryConcern}
+                    onChange={(e) => setFormData({ ...formData, primaryConcern: e.target.value })}
+                    placeholder="e.g., Headache, Fever, Chest pain, etc."
+                  />
                 </div>
-                <p className="text-center mt-2 font-medium text-red-600">{formData.stressLevel[0]}/10</p>
+                <div>
+                  <Label htmlFor="symptomDescription">Detailed Symptom Description *</Label>
+                  <Textarea
+                    id="symptomDescription"
+                    value={formData.symptomDescription}
+                    onChange={(e) => setFormData({ ...formData, symptomDescription: e.target.value })}
+                    placeholder="Describe your symptoms in detail..."
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="symptomDuration">How long have you had these symptoms? *</Label>
+                    <Select
+                      value={formData.symptomDuration}
+                      onValueChange={(value) => setFormData({ ...formData, symptomDuration: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="less-than-day">Less than a day</SelectItem>
+                        <SelectItem value="1-3-days">1-3 days</SelectItem>
+                        <SelectItem value="4-7-days">4-7 days</SelectItem>
+                        <SelectItem value="1-2-weeks">1-2 weeks</SelectItem>
+                        <SelectItem value="2-4-weeks">2-4 weeks</SelectItem>
+                        <SelectItem value="1-3-months">1-3 months</SelectItem>
+                        <SelectItem value="more-than-3-months">More than 3 months</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Symptom Severity (1-10 scale)</Label>
+                    <div className="px-3 py-2">
+                      <Slider
+                        value={formData.symptomSeverity}
+                        onValueChange={(value) => setFormData({ ...formData, symptomSeverity: value })}
+                        max={10}
+                        min={1}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-sm text-gray-500 mt-1">
+                        <span>Mild (1)</span>
+                        <span className="font-medium">Current: {formData.symptomSeverity[0]}</span>
+                        <span>Severe (10)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <Label>Pain/Discomfort Location (select all that apply)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 mt-2">
+                    {painLocationOptions.map((location) => (
+                      <div key={location} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`pain-${location}`}
+                          checked={formData.painLocation.includes(location)}
+                          onCheckedChange={(checked) => handleMultiSelect("painLocation", location, checked as boolean)}
+                        />
+                        <Label htmlFor={`pain-${location}`} className="text-sm">
+                          {location}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <Separator className="bg-gradient-to-r from-purple-200 to-pink-200 h-1" />
+            <Separator />
 
-        {/* Diet Preferences */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-lg">
-            <h3 className="text-lg font-semibold flex items-center">
-              <Utensils className="w-5 h-5 mr-2" />
-              Diet Preferences
-            </h3>
-            <p className="text-orange-100 text-sm">For personalized nutrition recommendations</p>
-          </div>
+            {/* Medical History */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-purple-800 flex items-center">
+                <FileText className="w-5 h-5 mr-2" />
+                Medical History
+              </h3>
+              <div className="grid gap-4">
+                <div>
+                  <Label>Chronic Conditions (select all that apply)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                    {chronicConditionOptions.map((condition) => (
+                      <div key={condition} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`chronic-${condition}`}
+                          checked={formData.chronicConditions.includes(condition)}
+                          onCheckedChange={(checked) =>
+                            handleMultiSelect("chronicConditions", condition, checked as boolean)
+                          }
+                        />
+                        <Label htmlFor={`chronic-${condition}`} className="text-sm">
+                          {condition}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="currentMedications">Current Medications</Label>
+                  <Textarea
+                    id="currentMedications"
+                    value={formData.currentMedications}
+                    onChange={(e) => setFormData({ ...formData, currentMedications: e.target.value })}
+                    placeholder="List all medications you're currently taking (include dosage and frequency)..."
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label>Known Allergies (select all that apply)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                    {allergyOptions.map((allergy) => (
+                      <div key={allergy} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`allergy-${allergy}`}
+                          checked={formData.allergies.includes(allergy)}
+                          onCheckedChange={(checked) => handleMultiSelect("allergies", allergy, checked as boolean)}
+                        />
+                        <Label htmlFor={`allergy-${allergy}`} className="text-sm">
+                          {allergy}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="surgicalHistory">Surgical History</Label>
+                  <Textarea
+                    id="surgicalHistory"
+                    value={formData.surgicalHistory}
+                    onChange={(e) => setFormData({ ...formData, surgicalHistory: e.target.value })}
+                    placeholder="List any surgeries or procedures you've had..."
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <Label>Family Medical History (select all that apply)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                    {familyHistoryOptions.map((condition) => (
+                      <div key={condition} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`family-${condition}`}
+                          checked={formData.familyHistory.includes(condition)}
+                          onCheckedChange={(checked) =>
+                            handleMultiSelect("familyHistory", condition, checked as boolean)
+                          }
+                        />
+                        <Label htmlFor={`family-${condition}`} className="text-sm">
+                          {condition}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <Utensils className="w-4 h-4 mr-1 text-green-500" />
-                Diet Type
-              </Label>
-              <Select
-                value={formData.dietType}
-                onValueChange={(value) => setFormData({ ...formData, dietType: value })}
+            <Separator />
+
+            {/* Vital Signs */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-green-800 flex items-center">
+                <Activity className="w-5 h-5 mr-2" />
+                Current Vital Signs
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="bloodPressure">Blood Pressure (mmHg)</Label>
+                  <Input
+                    id="bloodPressure"
+                    value={formData.bloodPressure}
+                    onChange={(e) => setFormData({ ...formData, bloodPressure: e.target.value })}
+                    placeholder="e.g., 120/80"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="heartRate">Heart Rate (bpm)</Label>
+                  <Input
+                    id="heartRate"
+                    type="number"
+                    value={formData.heartRate}
+                    onChange={(e) => setFormData({ ...formData, heartRate: e.target.value })}
+                    placeholder="e.g., 72"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="temperature">Temperature (°F)</Label>
+                  <Input
+                    id="temperature"
+                    type="number"
+                    step="0.1"
+                    value={formData.temperature}
+                    onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
+                    placeholder="e.g., 98.6"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="oxygenSaturation">Oxygen Saturation (%)</Label>
+                  <Input
+                    id="oxygenSaturation"
+                    type="number"
+                    value={formData.oxygenSaturation}
+                    onChange={(e) => setFormData({ ...formData, oxygenSaturation: e.target.value })}
+                    placeholder="e.g., 98"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Lifestyle Factors */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-orange-800 flex items-center">
+                <Heart className="w-5 h-5 mr-2" />
+                Lifestyle Factors
+              </h3>
+              <div className="grid gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <Label htmlFor="smokingStatus">Smoking Status</Label>
+                    <Select
+                      value={formData.smokingStatus}
+                      onValueChange={(value) => setFormData({ ...formData, smokingStatus: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="never">Never smoked</SelectItem>
+                        <SelectItem value="former">Former smoker</SelectItem>
+                        <SelectItem value="current">Current smoker</SelectItem>
+                        <SelectItem value="occasional">Occasional smoker</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="alcoholConsumption">Alcohol Consumption</Label>
+                    <Select
+                      value={formData.alcoholConsumption}
+                      onValueChange={(value) => setFormData({ ...formData, alcoholConsumption: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="never">Never</SelectItem>
+                        <SelectItem value="rarely">Rarely</SelectItem>
+                        <SelectItem value="occasionally">Occasionally</SelectItem>
+                        <SelectItem value="regularly">Regularly</SelectItem>
+                        <SelectItem value="daily">Daily</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="exerciseFrequency">Exercise Frequency</Label>
+                    <Select
+                      value={formData.exerciseFrequency}
+                      onValueChange={(value) => setFormData({ ...formData, exerciseFrequency: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="never">Never</SelectItem>
+                        <SelectItem value="rarely">Rarely (1-2 times/month)</SelectItem>
+                        <SelectItem value="sometimes">Sometimes (1-2 times/week)</SelectItem>
+                        <SelectItem value="regularly">Regularly (3-4 times/week)</SelectItem>
+                        <SelectItem value="daily">Daily</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="averageSleepHours">Average Sleep Hours</Label>
+                    <Select
+                      value={formData.averageSleepHours}
+                      onValueChange={(value) => setFormData({ ...formData, averageSleepHours: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select hours" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="less-than-5">Less than 5 hours</SelectItem>
+                        <SelectItem value="5-6">5-6 hours</SelectItem>
+                        <SelectItem value="6-7">6-7 hours</SelectItem>
+                        <SelectItem value="7-8">7-8 hours</SelectItem>
+                        <SelectItem value="8-9">8-9 hours</SelectItem>
+                        <SelectItem value="more-than-9">More than 9 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label>Current Stress Level (1-10 scale)</Label>
+                  <div className="px-3 py-2">
+                    <Slider
+                      value={formData.stressLevel}
+                      onValueChange={(value) => setFormData({ ...formData, stressLevel: value })}
+                      max={10}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-sm text-gray-500 mt-1">
+                      <span>Low (1)</span>
+                      <span className="font-medium">Current: {formData.stressLevel[0]}</span>
+                      <span>High (10)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Diet Preferences */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-yellow-800 flex items-center">
+                <Utensils className="w-5 h-5 mr-2" />
+                Diet & Nutrition Preferences
+              </h3>
+              <div className="grid gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <Label htmlFor="dietType">Diet Type</Label>
+                    <Select
+                      value={formData.dietType}
+                      onValueChange={(value) => setFormData({ ...formData, dietType: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select diet type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                        <SelectItem value="vegan">Vegan</SelectItem>
+                        <SelectItem value="non-vegetarian">Non-Vegetarian</SelectItem>
+                        <SelectItem value="pescatarian">Pescatarian</SelectItem>
+                        <SelectItem value="keto">Keto</SelectItem>
+                        <SelectItem value="paleo">Paleo</SelectItem>
+                        <SelectItem value="mediterranean">Mediterranean</SelectItem>
+                        <SelectItem value="no-preference">No specific preference</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="mealsPerDay">Meals Per Day</Label>
+                    <Select
+                      value={formData.mealsPerDay}
+                      onValueChange={(value) => setFormData({ ...formData, mealsPerDay: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select meals" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">2 meals</SelectItem>
+                        <SelectItem value="3">3 meals</SelectItem>
+                        <SelectItem value="4">4 meals</SelectItem>
+                        <SelectItem value="5">5 meals</SelectItem>
+                        <SelectItem value="6">6 meals</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="waterIntakeGoal">Daily Water Intake Goal</Label>
+                    <Select
+                      value={formData.waterIntakeGoal}
+                      onValueChange={(value) => setFormData({ ...formData, waterIntakeGoal: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select goal" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-2-liters">1-2 liters</SelectItem>
+                        <SelectItem value="2-3-liters">2-3 liters</SelectItem>
+                        <SelectItem value="3-4-liters">3-4 liters</SelectItem>
+                        <SelectItem value="more-than-4-liters">More than 4 liters</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="supplementsUsed">Current Supplements</Label>
+                    <Input
+                      id="supplementsUsed"
+                      value={formData.supplementsUsed}
+                      onChange={(e) => setFormData({ ...formData, supplementsUsed: e.target.value })}
+                      placeholder="e.g., Vitamin D, Omega-3"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Food Allergies (select all that apply)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                    {foodAllergyOptions.map((allergy) => (
+                      <div key={allergy} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`food-allergy-${allergy}`}
+                          checked={formData.foodAllergies.includes(allergy)}
+                          onCheckedChange={(checked) => handleMultiSelect("foodAllergies", allergy, checked as boolean)}
+                        />
+                        <Label htmlFor={`food-allergy-${allergy}`} className="text-sm">
+                          {allergy}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label>Preferred Cuisine (select all that apply)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 mt-2">
+                    {cuisineOptions.map((cuisine) => (
+                      <div key={cuisine} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`cuisine-${cuisine}`}
+                          checked={formData.preferredCuisine.includes(cuisine)}
+                          onCheckedChange={(checked) =>
+                            handleMultiSelect("preferredCuisine", cuisine, checked as boolean)
+                          }
+                        />
+                        <Label htmlFor={`cuisine-${cuisine}`} className="text-sm">
+                          {cuisine}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Additional Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-indigo-800 flex items-center">
+                <Info className="w-5 h-5 mr-2" />
+                Additional Information
+              </h3>
+              <div className="grid gap-4">
+                <div>
+                  <Label>Additional Symptoms (select all that apply)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                    {additionalSymptomsOptions.map((symptom) => (
+                      <div key={symptom} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`additional-${symptom}`}
+                          checked={formData.additionalSymptoms.includes(symptom)}
+                          onCheckedChange={(checked) =>
+                            handleMultiSelect("additionalSymptoms", symptom, checked as boolean)
+                          }
+                        />
+                        <Label htmlFor={`additional-${symptom}`} className="text-sm">
+                          {symptom}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="additionalNotes">Additional Notes</Label>
+                  <Textarea
+                    id="additionalNotes"
+                    value={formData.additionalNotes}
+                    onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
+                    placeholder="Any other information you'd like to share about your health..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Submit Button */}
+            <div className="flex justify-center pt-6">
+              <Button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 text-lg font-semibold"
               >
-                <SelectTrigger className="mt-1 border-green-200 focus:border-green-500">
-                  <SelectValue placeholder="Select diet type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vegetarian">Vegetarian</SelectItem>
-                  <SelectItem value="vegan">Vegan</SelectItem>
-                  <SelectItem value="non-vegetarian">Non-Vegetarian</SelectItem>
-                  <SelectItem value="pescatarian">Pescatarian</SelectItem>
-                  <SelectItem value="keto">Ketogenic</SelectItem>
-                  <SelectItem value="paleo">Paleo</SelectItem>
-                  <SelectItem value="mediterranean">Mediterranean</SelectItem>
-                  <SelectItem value="balanced">Balanced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium flex items-center">
-                <Clock className="w-4 h-4 mr-1 text-blue-500" />
-                Meals Per Day
-              </Label>
-              <Select
-                value={formData.mealsPerDay}
-                onValueChange={(value) => setFormData({ ...formData, mealsPerDay: value })}
-              >
-                <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500">
-                  <SelectValue placeholder="Select meals per day" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">3 meals</SelectItem>
-                  <SelectItem value="4">4 meals</SelectItem>
-                  <SelectItem value="5">5 meals</SelectItem>
-                  <SelectItem value="6">6 meals</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="waterIntakeGoal" className="text-sm font-medium flex items-center">
-                <Droplets className="w-4 h-4 mr-1 text-cyan-500" />
-                Daily Water Intake Goal (liters)
-              </Label>
-              <Input
-                id="waterIntakeGoal"
-                type="number"
-                step="0.5"
-                placeholder="e.g., 2.5"
-                value={formData.waterIntakeGoal}
-                onChange={(e) => setFormData({ ...formData, waterIntakeGoal: e.target.value })}
-                className="mt-1 border-cyan-200 focus:border-cyan-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium flex items-center">
-              <AlertTriangle className="w-4 h-4 mr-1 text-red-500" />
-              Food Allergies/Intolerances
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-              {foodAllergyOptions.map((allergy) => (
-                <div key={allergy} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`food-${allergy}`}
-                    checked={formData.foodAllergies.includes(allergy)}
-                    onCheckedChange={(checked) => handleMultiSelect("foodAllergies", allergy, checked as boolean)}
-                  />
-                  <Label htmlFor={`food-${allergy}`} className="text-sm">
-                    {allergy}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium flex items-center">
-              <Utensils className="w-4 h-4 mr-1 text-purple-500" />
-              Preferred Cuisine Types
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2">
-              {cuisineOptions.map((cuisine) => (
-                <div key={cuisine} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`cuisine-${cuisine}`}
-                    checked={formData.preferredCuisine.includes(cuisine)}
-                    onCheckedChange={(checked) => handleMultiSelect("preferredCuisine", cuisine, checked as boolean)}
-                  />
-                  <Label htmlFor={`cuisine-${cuisine}`} className="text-sm">
-                    {cuisine}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="supplementsUsed" className="text-sm font-medium flex items-center">
-              <Pill className="w-4 h-4 mr-1 text-yellow-500" />
-              Current Supplements/Vitamins
-            </Label>
-            <Textarea
-              id="supplementsUsed"
-              placeholder="List any supplements, vitamins, or herbal remedies you're currently taking..."
-              value={formData.supplementsUsed}
-              onChange={(e) => setFormData({ ...formData, supplementsUsed: e.target.value })}
-              className="mt-1 border-yellow-200 focus:border-yellow-500"
-              rows={2}
-            />
-          </div>
-        </div>
-
-        <Separator className="bg-gradient-to-r from-orange-200 to-red-200 h-1" />
-
-        {/* Additional Information */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-4 rounded-lg">
-            <h3 className="text-lg font-semibold flex items-center">
-              <Info className="w-5 h-5 mr-2" />
-              Additional Information
-            </h3>
-            <p className="text-indigo-100 text-sm">Complete the picture for better assessment</p>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium flex items-center">
-              <CheckCircle className="w-4 h-4 mr-1 text-green-500" />
-              Are you experiencing any of these additional symptoms?
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2">
-              {additionalSymptomsOptions.map((symptom) => (
-                <div key={symptom} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`additional-${symptom}`}
-                    checked={formData.additionalSymptoms.includes(symptom)}
-                    onCheckedChange={(checked) => handleMultiSelect("additionalSymptoms", symptom, checked as boolean)}
-                  />
-                  <Label htmlFor={`additional-${symptom}`} className="text-sm">
-                    {symptom}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="additionalNotes" className="text-sm font-medium flex items-center">
-              <FileText className="w-4 h-4 mr-1 text-blue-500" />
-              Additional Notes
-            </Label>
-            <Textarea
-              id="additionalNotes"
-              placeholder="Any other information you'd like to share about your health concerns..."
-              value={formData.additionalNotes}
-              onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-              className="mt-1 border-blue-200 focus:border-blue-500"
-              rows={4}
-            />
-          </div>
-        </div>
-
-        <Separator className="bg-gradient-to-r from-indigo-200 to-purple-200 h-1" />
-
-        {/* Privacy Notice */}
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg border-2 border-blue-200">
-          <div className="flex items-start space-x-3">
-            <Shield className="w-6 h-6 text-blue-600 mt-1" />
-            <div className="text-sm text-blue-800">
-              <p className="font-semibold mb-2 flex items-center">
-                <Shield className="w-4 h-4 mr-1" />
-                Privacy & Security
-              </p>
-              <p>
-                Your information is secure and private. This AI assessment provides educational insights and should not
-                replace professional medical advice. All data is encrypted and HIPAA compliant.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center pt-6">
-          <div className="flex gap-3">
-            <Button
-              onClick={handleReset}
-              variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50 bg-transparent"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset Form
-            </Button>
-            <Link href="/">
-              <Button variant="outline" className="border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent">
-                <Home className="w-4 h-4 mr-2" />
-                Exit to Home
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Analyzing Your Health...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5 mr-2" />
+                    Generate Comprehensive Assessment
+                  </>
+                )}
               </Button>
-            </Link>
+            </div>
           </div>
-
-          <Button
-            onClick={handleSubmit}
-            disabled={
-              isLoading ||
-              !formData.fullName ||
-              !formData.age ||
-              !formData.gender ||
-              !formData.primaryConcern ||
-              !formData.symptomDescription ||
-              !formData.symptomDuration ||
-              !formData.location
-            }
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold"
-            size="lg"
-          >
-            {isLoading ? (
-              <div className="flex items-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Analyzing your health data...
-              </div>
-            ) : (
-              <>
-                <Send className="w-5 h-5 mr-2" />
-                Get AI Health Assessment
-              </>
-            )}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

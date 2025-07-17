@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
     let googleStatus = "OK"
 
     try {
-      const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&keyword=hospital clinic pharmacy doctor&key=${encodeURIComponent(apiKey)}`
+      // Search for general healthcare facilities
+      const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&type=health&key=${encodeURIComponent(apiKey)}`
       const placesResponse = await fetch(placesUrl)
       const placesData = await placesResponse.json()
 
@@ -122,6 +123,42 @@ export async function POST(request: NextRequest) {
             distance: calculateDistance(lat, lng, place.geometry.location.lat, place.geometry.location.lng),
           }))
           .sort((a: HealthcareFacility, b: HealthcareFacility) => (a.distance || 0) - (b.distance || 0))
+      }
+
+      // Additional search for specific lab centers and diagnostic centers
+      try {
+        const labSearchTerms = ["pathology lab", "diagnostic center", "medical laboratory", "blood test center"]
+
+        for (const term of labSearchTerms) {
+          const labUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&keyword=${encodeURIComponent(term)}&key=${encodeURIComponent(apiKey)}`
+          const labResponse = await fetch(labUrl)
+          const labData = await labResponse.json()
+
+          if (labData.status === "OK" && labData.results) {
+            const labFacilities = labData.results
+              .filter((place: any) => !facilities.some((existing: any) => existing.place_id === place.place_id))
+              .map((place: any) => ({
+                place_id: place.place_id,
+                name: place.name,
+                vicinity: place.vicinity || "",
+                rating: place.rating,
+                user_ratings_total: place.user_ratings_total,
+                opening_hours: place.opening_hours,
+                types: [...(place.types || []), "laboratory", "medical_lab"],
+                geometry: place.geometry,
+                distance: calculateDistance(lat, lng, place.geometry.location.lat, place.geometry.location.lng),
+              }))
+
+            facilities = [...facilities, ...labFacilities]
+          }
+        }
+
+        // Sort all facilities by distance
+        facilities = facilities.sort(
+          (a: HealthcareFacility, b: HealthcareFacility) => (a.distance || 0) - (b.distance || 0),
+        )
+      } catch (labError) {
+        console.error("Lab search error:", labError)
       }
     } catch (error) {
       console.error("Places API error:", error)
