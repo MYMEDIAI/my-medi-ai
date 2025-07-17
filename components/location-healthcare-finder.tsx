@@ -1,44 +1,46 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   MapPin,
   Navigation,
   Phone,
+  Clock,
+  Star,
   ExternalLink,
-  Loader2,
   AlertTriangle,
-  Hospital,
+  Shield,
+  Loader2,
+  Home,
   TestTube,
   Pill,
+  Building2,
   Stethoscope,
 } from "lucide-react"
-import { calculateDistance, formatDistance } from "@/lib/calculate-distance"
+import Link from "next/link"
+import { calculateDistance } from "@/lib/calculate-distance"
 
 interface LocationInfo {
   address: string
   city: string
   state: string
   country: string
-  coordinates: {
-    lat: number
-    lng: number
-  }
 }
 
-interface NearbyFacility {
+interface HealthFacility {
   place_id: string
   name: string
   vicinity: string
   rating?: number
   user_ratings_total?: number
+  opening_hours?: {
+    open_now: boolean
+  }
   types: string[]
   geometry: {
     location: {
@@ -47,52 +49,29 @@ interface NearbyFacility {
     }
   }
   distance?: number
-  opening_hours?: {
-    open_now: boolean
-    weekday_text?: string[]
-  }
-  formatted_phone_number?: string
-  website?: string
-  price_level?: number
 }
 
-interface CategorizedFacilities {
-  hospitals: NearbyFacility[]
-  labs: NearbyFacility[]
-  pharmacies: NearbyFacility[]
-  doctors: NearbyFacility[]
+interface LocationData {
+  locationInfo: LocationInfo
+  facilities: HealthFacility[]
+  recommendations: string[]
+  googleStatus?: string
 }
-
-const emergencyNumbers = [
-  { service: "Emergency Services", number: "108", description: "Medical Emergency, Fire, Police" },
-  { service: "Police", number: "100", description: "Police Emergency" },
-  { service: "Fire Department", number: "101", description: "Fire Emergency" },
-  { service: "Ambulance", number: "102", description: "Medical Emergency" },
-  { service: "Women Helpline", number: "1091", description: "Women in Distress" },
-  { service: "Child Helpline", number: "1098", description: "Child Emergency" },
-  { service: "Tourist Helpline", number: "1363", description: "Tourist Emergency" },
-  { service: "Railway Enquiry", number: "139", description: "Railway Information" },
-]
 
 export default function LocationHealthcareFinder() {
-  const [locationInfo, setLocationInfo] = useState<LocationInfo | null>(null)
-  const [facilities, setFacilities] = useState<CategorizedFacilities>({
-    hospitals: [],
-    labs: [],
-    pharmacies: [],
-    doctors: [],
-  })
-  const [isLoading, setIsLoading] = useState(false)
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationData, setLocationData] = useState<LocationData | null>(null)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [autoLocationAttempted, setAutoLocationAttempted] = useState(false)
 
-  const detectLocation = async () => {
-    setIsLoading(true)
+  const getCurrentLocation = () => {
+    setLoading(true)
     setError(null)
 
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by this browser")
-      setIsLoading(false)
+      setLoading(false)
       return
     }
 
@@ -102,454 +81,713 @@ export default function LocationHealthcareFinder() {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         }
-        setUserLocation(coords)
-
-        try {
-          const response = await fetch("/api/location", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(coords),
-          })
-
-          if (response.ok) {
-            const data = await response.json()
-
-            const locationInfo: LocationInfo = {
-              address: data.locationInfo?.address || "",
-              city: data.locationInfo?.city || "",
-              state: data.locationInfo?.state || "",
-              country: data.locationInfo?.country || "",
-              coordinates: coords,
-            }
-            setLocationInfo(locationInfo)
-
-            // Categorize facilities
-            const allFacilities = data.facilities || []
-            const categorized: CategorizedFacilities = {
-              hospitals: [],
-              labs: [],
-              pharmacies: [],
-              doctors: [],
-            }
-
-            allFacilities.forEach((facility: NearbyFacility) => {
-              // Calculate distance
-              facility.distance = calculateDistance(
-                coords.lat,
-                coords.lng,
-                facility.geometry.location.lat,
-                facility.geometry.location.lng,
-              )
-
-              // Categorize based on types
-              if (facility.types.some((type) => ["hospital", "medical_center", "emergency_room"].includes(type))) {
-                categorized.hospitals.push(facility)
-              } else if (
-                facility.types.some(
-                  (type) =>
-                    ["medical_lab", "laboratory", "pathology_lab", "diagnostic_center"].includes(type) ||
-                    facility.name.toLowerCase().includes("lab") ||
-                    facility.name.toLowerCase().includes("diagnostic") ||
-                    facility.name.toLowerCase().includes("pathology"),
-                )
-              ) {
-                categorized.labs.push(facility)
-              } else if (facility.types.some((type) => ["pharmacy", "drugstore", "medical_store"].includes(type))) {
-                categorized.pharmacies.push(facility)
-              } else if (
-                facility.types.some((type) => ["doctor", "clinic", "medical_clinic", "dentist"].includes(type))
-              ) {
-                categorized.doctors.push(facility)
-              }
-            })
-
-            // Sort each category by distance
-            Object.keys(categorized).forEach((key) => {
-              categorized[key as keyof CategorizedFacilities].sort((a, b) => (a.distance || 0) - (b.distance || 0))
-            })
-
-            setFacilities(categorized)
-          } else {
-            throw new Error("Failed to get location data")
-          }
-        } catch (error) {
-          console.error("Location API error:", error)
-          setError("Failed to get location details")
-        }
-
-        setIsLoading(false)
+        setLocation(coords)
+        await fetchLocationData(coords)
       },
       (error) => {
         let errorMessage = "Unable to get your location"
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "Location access denied. Please enable location permissions."
+            errorMessage = "Location access denied. Please enable location permissions and try again."
             break
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information unavailable"
+            errorMessage = "Location information unavailable."
             break
           case error.TIMEOUT:
-            errorMessage = "Location request timed out"
+            errorMessage = "Location request timed out."
             break
         }
         setError(errorMessage)
-        setIsLoading(false)
+        setLoading(false)
       },
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 300000,
+        maximumAge: 300000, // 5 minutes
       },
     )
   }
 
+  // Update the fetchLocationData function to search for lab centers specifically
+  const fetchLocationData = async (coords: { lat: number; lng: number }) => {
+    try {
+      const response = await fetch("/api/location", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(coords),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data: LocationData = await response.json()
+      setLocationData(data)
+
+      // Handle different Google API statuses gracefully
+      if (data.googleStatus && data.googleStatus !== "OK") {
+        if (data.googleStatus === "REQUEST_DENIED") {
+          setError("Google Maps API access denied. Please check your API key configuration.")
+        } else if (data.googleStatus === "ZERO_RESULTS") {
+          // This is normal - just means no facilities found
+          setError(null)
+        } else if (data.googleStatus === "API_KEY_MISSING") {
+          setError("Google Maps API key not configured. Please set up your API key.")
+        } else {
+          setError(`Google Maps API issue: ${data.googleStatus}`)
+        }
+      }
+    } catch (error) {
+      setError(`Failed to fetch location data: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Update the getFacilityIcon function to include lab centers
   const getFacilityIcon = (types: string[]) => {
-    if (types.includes("hospital") || types.includes("medical_center")) return "🏥"
-    if (types.includes("pharmacy") || types.includes("drugstore")) return "💊"
-    if (types.includes("doctor") || types.includes("clinic")) return "👨‍⚕️"
+    if (types.includes("hospital")) return "🏥"
+    if (types.includes("pharmacy")) return "💊"
+    if (types.includes("doctor")) return "👨‍⚕️"
     if (types.includes("dentist")) return "🦷"
-    if (types.some((type) => type.includes("lab")) || types.includes("medical_lab")) return "🔬"
+    if (types.includes("laboratory") || types.includes("medical_lab") || types.includes("diagnostic_center"))
+      return "🔬"
+    if (types.includes("physiotherapist")) return "🏃‍♂️"
+    if (types.includes("veterinary_care")) return "🐕"
     return "🏥"
   }
 
-  const openInMaps = (facility: NearbyFacility) => {
-    const { lat, lng } = facility.geometry.location
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${facility.place_id}`
-    window.open(url, "_blank")
+  // Update the getFacilityType function to include lab centers
+  const getFacilityType = (types: string[]) => {
+    if (types.includes("hospital")) return "Hospital"
+    if (types.includes("pharmacy")) return "Pharmacy"
+    if (types.includes("doctor")) return "Doctor"
+    if (types.includes("dentist")) return "Dentist"
+    if (types.includes("laboratory") || types.includes("medical_lab") || types.includes("diagnostic_center"))
+      return "Lab Center"
+    if (types.includes("physiotherapist")) return "Physiotherapy"
+    if (types.includes("veterinary_care")) return "Veterinary"
+    return "Healthcare Facility"
   }
 
-  const callFacility = (phone: string) => {
-    window.open(`tel:${phone}`, "_self")
-  }
-
-  const FacilityCard = ({ facility }: { facility: NearbyFacility }) => (
-    <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-start gap-3 flex-1">
-            <span className="text-2xl">{getFacilityIcon(facility.types)}</span>
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-900 mb-1">{facility.name}</h4>
-              <p className="text-sm text-gray-600 mb-2">{facility.vicinity}</p>
-
-              <div className="flex flex-wrap gap-2 mb-2">
-                {facility.distance && (
-                  <Badge variant="outline" className="text-xs">
-                    📍 {formatDistance(facility.distance)}
-                  </Badge>
-                )}
-                {facility.rating && (
-                  <Badge variant="outline" className="text-xs">
-                    ⭐ {facility.rating.toFixed(1)}
-                    {facility.user_ratings_total && ` (${facility.user_ratings_total})`}
-                  </Badge>
-                )}
-                {facility.opening_hours && (
-                  <Badge variant={facility.opening_hours.open_now ? "default" : "secondary"} className="text-xs">
-                    {facility.opening_hours.open_now ? "🟢 Open" : "🔴 Closed"}
-                  </Badge>
-                )}
-                {facility.price_level && (
-                  <Badge variant="outline" className="text-xs">
-                    💰 {"$".repeat(facility.price_level)}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            onClick={() => openInMaps(facility)}
-            size="sm"
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Navigation className="w-4 h-4 mr-1" />
-            Directions
-          </Button>
-          {facility.formatted_phone_number && (
-            <Button
-              onClick={() => callFacility(facility.formatted_phone_number!)}
-              size="sm"
-              variant="outline"
-              className="bg-transparent"
-            >
-              <Phone className="w-4 h-4 mr-1" />
-              Call
-            </Button>
-          )}
-          {facility.website && (
-            <Button
-              onClick={() => window.open(facility.website, "_blank")}
-              size="sm"
-              variant="outline"
-              className="bg-transparent"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
-
-  const FacilitySection = ({
-    title,
-    icon,
-    facilities,
-    color,
-  }: {
-    title: string
-    icon: React.ReactNode
-    facilities: NearbyFacility[]
-    color: string
-  }) => (
-    <div className="space-y-4">
-      <div className={`bg-gradient-to-r ${color} text-white p-4 rounded-lg`}>
-        <h3 className="text-lg font-semibold flex items-center">
-          {icon}
-          <span className="ml-2">{title}</span>
-          <Badge className="ml-3 bg-white text-gray-800">{facilities.length} found</Badge>
-        </h3>
-        <p className="text-sm opacity-90 mt-1">
-          {facilities.length > 0
-            ? `Found ${facilities.length} ${title.toLowerCase()} near your location`
-            : `No ${title.toLowerCase()} found in your area`}
-        </p>
-      </div>
-
-      {facilities.length > 0 ? (
-        <div className="grid gap-4">
-          {facilities.map((facility) => (
-            <FacilityCard key={facility.place_id} facility={facility} />
-          ))}
-        </div>
-      ) : (
-        <Card className="border-gray-200">
-          <CardContent className="p-6 text-center text-gray-500">
-            <div className="text-4xl mb-2">🔍</div>
-            <p>No {title.toLowerCase()} found in your immediate area.</p>
-            <p className="text-sm mt-1">Try expanding your search radius or check nearby areas.</p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
+  const emergencyNumbers = [
+    { name: "National Emergency", number: "112", description: "All emergencies", color: "bg-red-100 text-red-800" },
+    { name: "Ambulance", number: "108", description: "Medical emergencies", color: "bg-blue-100 text-blue-800" },
+    { name: "Fire", number: "101", description: "Fire emergencies", color: "bg-orange-100 text-orange-800" },
+    { name: "Police", number: "100", description: "Police emergencies", color: "bg-gray-100 text-gray-800" },
+    {
+      name: "Women Helpline",
+      number: "1091",
+      description: "Women in distress",
+      color: "bg-purple-100 text-purple-800",
+    },
+    { name: "Child Helpline", number: "1098", description: "Child protection", color: "bg-green-100 text-green-800" },
+  ]
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <Card className="border-green-200 shadow-xl">
-        <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white">
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center">
-              <MapPin className="w-6 h-6 mr-3" />
-              <div>
-                <h1 className="text-2xl font-bold">Healthcare Finder</h1>
-                <p className="text-green-100 text-sm">Find nearby hospitals, labs, pharmacies & clinics</p>
-              </div>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          {!locationInfo ? (
-            <div className="text-center py-12">
-              {isLoading ? (
-                <div className="space-y-4">
-                  <Loader2 className="w-12 h-12 animate-spin mx-auto text-green-600" />
-                  <div>
-                    <p className="text-lg font-medium text-gray-900">Detecting your location...</p>
-                    <p className="text-sm text-gray-600">Finding nearby healthcare facilities</p>
-                  </div>
+    <div className="w-full">
+      {/* Home Button */}
+      <div className="mb-6">
+        <Link href="/">
+          <Button variant="outline" className="flex items-center gap-2 bg-transparent">
+            <Home className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
+
+      <Tabs defaultValue="finder" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="finder">Healthcare Finder</TabsTrigger>
+          <TabsTrigger value="emergency">Emergency</TabsTrigger>
+        </TabsList>
+
+        {/* Update the TabsContent for finder to show categorized facilities */}
+        <TabsContent value="finder" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Find Healthcare Near You
+              </CardTitle>
+              <CardDescription>
+                {loading && !location
+                  ? "Automatically detecting your location..."
+                  : "Your location is being used to find nearby hospitals, clinics, pharmacies, and lab centers"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Show manual button only if auto-detection failed or user wants to retry */}
+              {(!loading && !location) || error ? (
+                <Button onClick={getCurrentLocation} disabled={loading} className="w-full mb-4">
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Getting Location...
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="mr-2 h-4 w-4" />
+                      {error ? "Retry Location Detection" : "Get Current Location"}
+                    </>
+                  )}
+                </Button>
+              ) : loading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span>Automatically detecting your location...</span>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="text-6xl mb-4">🏥</div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Find Healthcare Near You</h3>
-                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                      Discover hospitals, diagnostic labs, pharmacies, and clinics in your area with ratings,
-                      directions, and contact information.
+              ) : null}
+
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {location && locationData && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Current Location
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {locationData.locationInfo.address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}
                     </p>
+                    {locationData.locationInfo.city && (
+                      <p className="text-sm text-gray-500">
+                        {locationData.locationInfo.city}
+                        {locationData.locationInfo.state && `, ${locationData.locationInfo.state}`}
+                      </p>
+                    )}
                   </div>
-                  <Button
-                    onClick={detectLocation}
-                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
-                  >
-                    <Navigation className="w-5 h-5 mr-2" />
-                    Find Healthcare Nearby
-                  </Button>
-                  {error && (
-                    <Alert className="border-red-200 bg-red-50 max-w-md mx-auto">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-800">{error}</AlertDescription>
-                    </Alert>
+
+                  {locationData.recommendations.length > 0 && (
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        Health Recommendations
+                      </h3>
+                      <ul className="space-y-1">
+                        {locationData.recommendations.map((rec, index) => (
+                          <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                            <span className="text-green-600 mt-1 flex-shrink-0">•</span>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                 </div>
               )}
-            </div>
-          ) : (
+            </CardContent>
+          </Card>
+
+          {locationData && (
             <div className="space-y-6">
-              {/* Location Info */}
-              <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <MapPin className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <p className="font-medium text-blue-900">Your Location</p>
-                        <p className="text-sm text-blue-700">
-                          {locationInfo.city && locationInfo.state
-                            ? `${locationInfo.city}, ${locationInfo.state}`
-                            : locationInfo.address}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={detectLocation}
-                      variant="outline"
-                      size="sm"
-                      className="bg-transparent border-blue-300 text-blue-700 hover:bg-blue-100"
-                    >
-                      <Navigation className="w-4 h-4 mr-1" />
-                      Refresh
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Hospitals Section */}
+              {locationData.facilities.filter((f) => f.types.includes("hospital")).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-red-600">
+                      <Building2 className="h-5 w-5" />
+                      Nearby Hospitals
+                      <Badge variant="secondary" className="bg-red-100 text-red-800">
+                        {locationData.facilities.filter((f) => f.types.includes("hospital")).length} found
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {locationData.facilities
+                        .filter((f) => f.types.includes("hospital"))
+                        .slice(0, 5)
+                        .map((facility) => {
+                          const distance = location
+                            ? calculateDistance(
+                                location.lat,
+                                location.lng,
+                                facility.geometry.location.lat,
+                                facility.geometry.location.lng,
+                              )
+                            : 0
 
-              {/* Facilities Tabs */}
-              <Tabs defaultValue="hospitals" className="w-full">
-                <TabsList className="grid w-full grid-cols-5 bg-gray-100">
-                  <TabsTrigger
-                    value="hospitals"
-                    className="data-[state=active]:bg-red-500 data-[state=active]:text-white"
-                  >
-                    <Hospital className="w-4 h-4 mr-1" />
-                    Hospitals
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="labs"
-                    className="data-[state=active]:bg-purple-500 data-[state=active]:text-white"
-                  >
-                    <TestTube className="w-4 h-4 mr-1" />
-                    Lab Centers
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="pharmacies"
-                    className="data-[state=active]:bg-green-500 data-[state=active]:text-white"
-                  >
-                    <Pill className="w-4 h-4 mr-1" />
-                    Pharmacies
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="doctors"
-                    className="data-[state=active]:bg-blue-500 data-[state=active]:text-white"
-                  >
-                    <Stethoscope className="w-4 h-4 mr-1" />
-                    Doctors
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="emergency"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-                  >
-                    <Phone className="w-4 h-4 mr-1" />
-                    Emergency
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="hospitals" className="mt-6">
-                  <FacilitySection
-                    title="Hospitals & Medical Centers"
-                    icon={<Hospital className="w-5 h-5" />}
-                    facilities={facilities.hospitals}
-                    color="from-red-500 to-red-600"
-                  />
-                </TabsContent>
-
-                <TabsContent value="labs" className="mt-6">
-                  <FacilitySection
-                    title="Laboratory & Diagnostic Centers"
-                    icon={<TestTube className="w-5 h-5" />}
-                    facilities={facilities.labs}
-                    color="from-purple-500 to-purple-600"
-                  />
-                </TabsContent>
-
-                <TabsContent value="pharmacies" className="mt-6">
-                  <FacilitySection
-                    title="Pharmacies & Medical Stores"
-                    icon={<Pill className="w-5 h-5" />}
-                    facilities={facilities.pharmacies}
-                    color="from-green-500 to-green-600"
-                  />
-                </TabsContent>
-
-                <TabsContent value="doctors" className="mt-6">
-                  <FacilitySection
-                    title="Doctors & Clinics"
-                    icon={<Stethoscope className="w-5 h-5" />}
-                    facilities={facilities.doctors}
-                    color="from-blue-500 to-blue-600"
-                  />
-                </TabsContent>
-
-                <TabsContent value="emergency" className="mt-6">
-                  <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold flex items-center">
-                        <Phone className="w-5 h-5 mr-2" />
-                        Emergency Contact Numbers
-                        <Badge className="ml-3 bg-white text-red-600">India</Badge>
-                      </h3>
-                      <p className="text-red-100 text-sm mt-1">Important emergency numbers for immediate assistance</p>
-                    </div>
-
-                    <div className="grid gap-3">
-                      {emergencyNumbers.map((emergency, index) => (
-                        <Card key={index} className="border-red-200 hover:shadow-md transition-shadow">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                                  <Phone className="w-6 h-6 text-red-600" />
+                          return (
+                            <div
+                              key={facility.place_id}
+                              className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-red-50"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-2xl flex-shrink-0">🏥</span>
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="font-semibold truncate text-red-900">{facility.name}</h3>
+                                    <p className="text-sm text-red-700 mb-1">{facility.vicinity}</p>
+                                    <Badge variant="outline" className="text-xs bg-red-100 text-red-800 border-red-300">
+                                      Hospital
+                                    </Badge>
+                                    {distance > 0 && (
+                                      <p className="text-sm text-red-600 mt-1 font-medium">
+                                        {distance.toFixed(1)} km away
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
-                                <div>
-                                  <h4 className="font-semibold text-gray-900">{emergency.service}</h4>
-                                  <p className="text-sm text-gray-600">{emergency.description}</p>
+                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                  {facility.opening_hours && (
+                                    <Badge
+                                      variant={facility.opening_hours.open_now ? "default" : "secondary"}
+                                      className="bg-green-100 text-green-800"
+                                    >
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {facility.opening_hours.open_now ? "Open" : "Closed"}
+                                    </Badge>
+                                  )}
+                                  {facility.rating && (
+                                    <div className="flex items-center gap-1 text-sm">
+                                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                      <span className="font-medium">{facility.rating.toFixed(1)}</span>
+                                      {facility.user_ratings_total && (
+                                        <span className="text-gray-500">({facility.user_ratings_total})</span>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-red-600 mb-1">{emergency.number}</div>
+                              <div className="flex gap-2 mt-3">
                                 <Button
-                                  onClick={() => callFacility(emergency.number)}
                                   size="sm"
-                                  className="bg-red-600 hover:bg-red-700 text-white"
+                                  variant="outline"
+                                  className="bg-red-600 text-white hover:bg-red-700 border-red-600"
+                                  onClick={() => {
+                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${facility.geometry.location.lat},${facility.geometry.location.lng}`
+                                    window.open(url, "_blank")
+                                  }}
                                 >
-                                  <Phone className="w-4 h-4 mr-1" />
-                                  Call Now
+                                  <Navigation className="h-3 w-3 mr-1" />
+                                  Directions
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const url = `https://www.google.com/maps/place/?q=place_id:${facility.place_id}`
+                                    window.open(url, "_blank")
+                                  }}
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  Details
                                 </Button>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                          )
+                        })}
                     </div>
+                  </CardContent>
+                </Card>
+              )}
 
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-800">
-                        <strong>Emergency Tip:</strong> In life-threatening situations, call 108 immediately. Keep your
-                        location and medical information ready when calling emergency services.
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                </TabsContent>
-              </Tabs>
+              {/* Lab Centers Section */}
+              {locationData.facilities.filter((f) =>
+                f.types.some((type) => ["laboratory", "medical_lab", "diagnostic_center"].includes(type)),
+              ).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-purple-600">
+                      <TestTube className="h-5 w-5" />
+                      Nearby Lab Centers
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                        {
+                          locationData.facilities.filter((f) =>
+                            f.types.some((type) => ["laboratory", "medical_lab", "diagnostic_center"].includes(type)),
+                          ).length
+                        }{" "}
+                        found
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {locationData.facilities
+                        .filter((f) =>
+                          f.types.some((type) => ["laboratory", "medical_lab", "diagnostic_center"].includes(type)),
+                        )
+                        .slice(0, 5)
+                        .map((facility) => {
+                          const distance = location
+                            ? calculateDistance(
+                                location.lat,
+                                location.lng,
+                                facility.geometry.location.lat,
+                                facility.geometry.location.lng,
+                              )
+                            : 0
+
+                          return (
+                            <div
+                              key={facility.place_id}
+                              className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-purple-50"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-2xl flex-shrink-0">🔬</span>
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="font-semibold truncate text-purple-900">{facility.name}</h3>
+                                    <p className="text-sm text-purple-700 mb-1">{facility.vicinity}</p>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-purple-100 text-purple-800 border-purple-300"
+                                    >
+                                      Lab Center
+                                    </Badge>
+                                    {distance > 0 && (
+                                      <p className="text-sm text-purple-600 mt-1 font-medium">
+                                        {distance.toFixed(1)} km away
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                  {facility.opening_hours && (
+                                    <Badge
+                                      variant={facility.opening_hours.open_now ? "default" : "secondary"}
+                                      className="bg-green-100 text-green-800"
+                                    >
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {facility.opening_hours.open_now ? "Open" : "Closed"}
+                                    </Badge>
+                                  )}
+                                  {facility.rating && (
+                                    <div className="flex items-center gap-1 text-sm">
+                                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                      <span className="font-medium">{facility.rating.toFixed(1)}</span>
+                                      {facility.user_ratings_total && (
+                                        <span className="text-gray-500">({facility.user_ratings_total})</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
+                                  onClick={() => {
+                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${facility.geometry.location.lat},${facility.geometry.location.lng}`
+                                    window.open(url, "_blank")
+                                  }}
+                                >
+                                  <Navigation className="h-3 w-3 mr-1" />
+                                  Directions
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const url = `https://www.google.com/maps/place/?q=place_id:${facility.place_id}`
+                                    window.open(url, "_blank")
+                                  }}
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  Details
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Pharmacies Section */}
+              {locationData.facilities.filter((f) => f.types.includes("pharmacy")).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-600">
+                      <Pill className="h-5 w-5" />
+                      Nearby Pharmacies
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {locationData.facilities.filter((f) => f.types.includes("pharmacy")).length} found
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {locationData.facilities
+                        .filter((f) => f.types.includes("pharmacy"))
+                        .slice(0, 5)
+                        .map((facility) => {
+                          const distance = location
+                            ? calculateDistance(
+                                location.lat,
+                                location.lng,
+                                facility.geometry.location.lat,
+                                facility.geometry.location.lng,
+                              )
+                            : 0
+
+                          return (
+                            <div
+                              key={facility.place_id}
+                              className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-green-50"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-2xl flex-shrink-0">💊</span>
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="font-semibold truncate text-green-900">{facility.name}</h3>
+                                    <p className="text-sm text-green-700 mb-1">{facility.vicinity}</p>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-green-100 text-green-800 border-green-300"
+                                    >
+                                      Pharmacy
+                                    </Badge>
+                                    {distance > 0 && (
+                                      <p className="text-sm text-green-600 mt-1 font-medium">
+                                        {distance.toFixed(1)} km away
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                  {facility.opening_hours && (
+                                    <Badge
+                                      variant={facility.opening_hours.open_now ? "default" : "secondary"}
+                                      className="bg-blue-100 text-blue-800"
+                                    >
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {facility.opening_hours.open_now ? "Open" : "Closed"}
+                                    </Badge>
+                                  )}
+                                  {facility.rating && (
+                                    <div className="flex items-center gap-1 text-sm">
+                                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                      <span className="font-medium">{facility.rating.toFixed(1)}</span>
+                                      {facility.user_ratings_total && (
+                                        <span className="text-gray-500">({facility.user_ratings_total})</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+                                  onClick={() => {
+                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${facility.geometry.location.lat},${facility.geometry.location.lng}`
+                                    window.open(url, "_blank")
+                                  }}
+                                >
+                                  <Navigation className="h-3 w-3 mr-1" />
+                                  Directions
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const url = `https://www.google.com/maps/place/?q=place_id:${facility.place_id}`
+                                    window.open(url, "_blank")
+                                  }}
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  Details
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Doctors/Clinics Section */}
+              {locationData.facilities.filter((f) => f.types.includes("doctor") || f.types.includes("dentist")).length >
+                0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-blue-600">
+                      <Stethoscope className="h-5 w-5" />
+                      Nearby Doctors & Clinics
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        {
+                          locationData.facilities.filter(
+                            (f) => f.types.includes("doctor") || f.types.includes("dentist"),
+                          ).length
+                        }{" "}
+                        found
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {locationData.facilities
+                        .filter((f) => f.types.includes("doctor") || f.types.includes("dentist"))
+                        .slice(0, 5)
+                        .map((facility) => {
+                          const distance = location
+                            ? calculateDistance(
+                                location.lat,
+                                location.lng,
+                                facility.geometry.location.lat,
+                                facility.geometry.location.lng,
+                              )
+                            : 0
+
+                          return (
+                            <div
+                              key={facility.place_id}
+                              className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-blue-50"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-2xl flex-shrink-0">{getFacilityIcon(facility.types)}</span>
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="font-semibold truncate text-blue-900">{facility.name}</h3>
+                                    <p className="text-sm text-blue-700 mb-1">{facility.vicinity}</p>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-blue-100 text-blue-800 border-blue-300"
+                                    >
+                                      {getFacilityType(facility.types)}
+                                    </Badge>
+                                    {distance > 0 && (
+                                      <p className="text-sm text-blue-600 mt-1 font-medium">
+                                        {distance.toFixed(1)} km away
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                  {facility.opening_hours && (
+                                    <Badge
+                                      variant={facility.opening_hours.open_now ? "default" : "secondary"}
+                                      className="bg-green-100 text-green-800"
+                                    >
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {facility.opening_hours.open_now ? "Open" : "Closed"}
+                                    </Badge>
+                                  )}
+                                  {facility.rating && (
+                                    <div className="flex items-center gap-1 text-sm">
+                                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                      <span className="font-medium">{facility.rating.toFixed(1)}</span>
+                                      {facility.user_ratings_total && (
+                                        <span className="text-gray-500">({facility.user_ratings_total})</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+                                  onClick={() => {
+                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${facility.geometry.location.lat},${facility.geometry.location.lng}`
+                                    window.open(url, "_blank")
+                                  }}
+                                >
+                                  <Navigation className="h-3 w-3 mr-1" />
+                                  Directions
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const url = `https://www.google.com/maps/place/?q=place_id:${facility.place_id}`
+                                    window.open(url, "_blank")
+                                  }}
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  Details
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* No facilities found message */}
+              {locationData.googleStatus &&
+              locationData.googleStatus !== "OK" &&
+              locationData.googleStatus !== "ZERO_RESULTS" ? (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Unable to search for healthcare facilities: {locationData.googleStatus}
+                  </AlertDescription>
+                </Alert>
+              ) : locationData.facilities.length === 0 ? (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    No healthcare facilities found in your immediate area. This could be normal for rural areas. Try
+                    searching for facilities in the nearest town or city.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="emergency" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <Phone className="h-5 w-5" />
+                Emergency Numbers (India)
+              </CardTitle>
+              <CardDescription>Important emergency contact numbers for immediate assistance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                {emergencyNumbers.map((emergency) => (
+                  <div key={emergency.number} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold">{emergency.name}</h3>
+                      <Badge variant="destructive" className="text-lg font-bold">
+                        {emergency.number}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">{emergency.description}</p>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => window.open(`tel:${emergency.number}`, "_self")}
+                      className="w-full"
+                    >
+                      <Phone className="h-3 w-3 mr-1" />
+                      Call {emergency.number}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Alert>
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Privacy Notice:</strong> Location data is only used to find nearby healthcare facilities and
+              provide relevant health recommendations. Your location is not stored or shared.
+            </AlertDescription>
+          </Alert>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
