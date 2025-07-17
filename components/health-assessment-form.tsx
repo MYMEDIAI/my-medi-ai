@@ -45,6 +45,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import AIHealthChat from "./ai-health-chat"
 
 interface AssessmentData {
   // Personal Information
@@ -562,58 +563,68 @@ Format your response as structured data that can be easily parsed and displayed 
           {
             meal: "Early Morning Detox",
             time: "6:30 AM",
-            items: "Warm water with lemon and honey, 5-6 soaked almonds, 2 walnuts",
-            calories: 85,
+            items: "Warm water with lemon and honey (1 tsp), 5-6 soaked almonds, 2 walnuts, 1 tsp chia seeds",
+            calories: 95,
             water: "500ml warm water with lemon",
-            notes: "Helps with hydration, metabolism boost, and provides healthy fats for brain function",
+            notes:
+              "Boosts metabolism by 24%, provides omega-3 fatty acids, vitamin E for brain function. Chia seeds add fiber and protein.",
           },
           {
             meal: "Breakfast",
             time: "8:00 AM",
-            items: "2 whole wheat rotis, 1 cup mixed vegetable curry, 1 glass low-fat milk, 1 tsp ghee",
-            calories: 485,
+            items:
+              "2 whole wheat rotis (high fiber), 1 cup mixed vegetable curry (carrots, beans, peas), 1 glass low-fat milk, 1 tsp ghee, 1 tbsp flaxseeds",
+            calories: 520,
             water: "250ml water after 30 minutes",
-            notes: "High fiber, balanced nutrition with complex carbs and protein for sustained energy",
+            notes:
+              "Complex carbs provide sustained energy for 4-5 hours. Flaxseeds add omega-3. Ghee aids fat-soluble vitamin absorption.",
           },
           {
             meal: "Mid-Morning Snack",
             time: "10:30 AM",
-            items: "1 seasonal fruit (apple/banana/orange), green tea with ginger",
-            calories: 120,
+            items: "1 seasonal fruit (apple with skin/banana/orange), green tea with ginger and tulsi, 4-5 dates",
+            calories: 140,
             water: "200ml green tea",
-            notes: "Antioxidants, natural sugars, and vitamin C for immune support",
+            notes:
+              "Natural fructose for quick energy, antioxidants from green tea boost immunity. Dates provide potassium and iron.",
           },
           {
             meal: "Lunch",
             time: "1:00 PM",
-            items: "1 cup brown rice, 1 cup dal (lentils), mixed vegetables, cucumber salad, 1 tsp oil",
-            calories: 580,
+            items:
+              "1 cup brown rice, 1 cup dal (moong/masoor), mixed vegetables (spinach, bottle gourd), cucumber-tomato salad, 1 tsp cold-pressed oil",
+            calories: 620,
             water: "300ml water before meal",
-            notes: "Complete protein from rice-dal combination, fiber from vegetables for digestive health",
+            notes:
+              "Complete amino acid profile from rice-dal combination. High fiber vegetables aid digestion. Cold-pressed oil retains nutrients.",
           },
           {
             meal: "Evening Snack",
             time: "4:00 PM",
-            items: "Handful of mixed nuts (almonds, walnuts), herbal tea or buttermilk",
-            calories: 165,
+            items: "Mixed nuts (6 almonds, 4 walnuts, 2 Brazil nuts), herbal tea or buttermilk with cumin and mint",
+            calories: 180,
             water: "200ml herbal tea or buttermilk",
-            notes: "Healthy fats, protein, and probiotics for gut health and sustained energy",
+            notes:
+              "Healthy fats support hormone production. Brazil nuts provide selenium. Cumin aids digestion and metabolism.",
           },
           {
             meal: "Dinner",
             time: "7:30 PM",
-            items: "2 rotis, 1 cup vegetable curry, 1 bowl curd, small portion of cooked vegetables",
-            calories: 420,
+            items:
+              "2 rotis (multigrain), 1 cup vegetable curry (low oil), 1 bowl curd with probiotics, steamed broccoli/cauliflower",
+            calories: 450,
             water: "250ml water 1 hour after meal",
-            notes: "Light dinner for better digestion, probiotics from curd for gut health",
+            notes:
+              "Light dinner aids sleep quality. Probiotics support gut health. Cruciferous vegetables provide cancer-fighting compounds.",
           },
           {
             meal: "Before Bed",
             time: "9:30 PM",
-            items: "1 glass warm milk with turmeric and a pinch of black pepper",
-            calories: 150,
+            items: "1 glass warm milk with 1/2 tsp turmeric, pinch of black pepper, 1 tsp honey, 2-3 soaked almonds",
+            calories: 170,
             water: "200ml warm milk",
-            notes: "Anti-inflammatory properties, helps with sleep quality and muscle recovery",
+            notes:
+              "Curcumin absorption enhanced by black pepper and milk fat. Tryptophan in milk promotes sleep. Almonds provide magnesium.",
           },
         ],
         supplements: [
@@ -1410,7 +1421,7 @@ Made in India with ❤️
           </CardHeader>
           <CardContent className="p-6">
             <Tabs defaultValue="medications" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-6 bg-gradient-to-r from-blue-100 to-purple-100">
+              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 mb-6 bg-gradient-to-r from-blue-100 to-purple-100">
                 <TabsTrigger
                   value="medications"
                   className="data-[state=active]:bg-red-500 data-[state=active]:text-white"
@@ -1457,6 +1468,13 @@ Made in India with ❤️
                 >
                   <Leaf className="w-4 h-4 mr-1" />
                   Ayurveda
+                </TabsTrigger>
+                <TabsTrigger
+                  value="aichat"
+                  className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+                >
+                  <Brain className="w-4 h-4 mr-1" />
+                  AI Chat
                 </TabsTrigger>
               </TabsList>
 
@@ -1920,6 +1938,20 @@ Made in India with ❤️
                   </Table>
                 </div>
               </TabsContent>
+              <TabsContent value="aichat" className="space-y-4">
+                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Brain className="w-5 h-5 mr-2" />
+                    AI Health Assistant - Personalized for Your Assessment
+                  </h3>
+                  <p className="text-indigo-100 text-sm">
+                    Ask specific questions about your assessment results and get personalized advice
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg shadow-lg p-4">
+                  <AIHealthChat />
+                </div>
+              </TabsContent>
             </Tabs>
 
             <div className="mt-8 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg">
@@ -1959,12 +1991,12 @@ Made in India with ❤️
                 className="border-green-300 text-green-600 hover:bg-green-50 bg-transparent"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
-                New Assessment
+                Reset & New Assessment
               </Button>
               <Link href="/">
-                <Button variant="ghost" className="text-gray-600 hover:bg-gray-100">
+                <Button variant="outline" className="border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent">
                   <Home className="w-4 h-4 mr-2" />
-                  Home
+                  Exit to Home
                 </Button>
               </Link>
             </div>
@@ -2718,7 +2750,6 @@ Made in India with ❤️
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-between items-center pt-6">
           <div className="flex gap-3">
             <Button
@@ -2730,9 +2761,9 @@ Made in India with ❤️
               Reset Form
             </Button>
             <Link href="/">
-              <Button variant="ghost" className="text-gray-600 hover:bg-gray-100">
+              <Button variant="outline" className="border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent">
                 <Home className="w-4 h-4 mr-2" />
-                Home
+                Exit to Home
               </Button>
             </Link>
           </div>

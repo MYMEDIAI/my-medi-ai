@@ -21,7 +21,10 @@ import {
   Clock,
   Shield,
   Activity,
+  Home,
+  RotateCcw,
 } from "lucide-react"
+import Link from "next/link"
 
 interface Message {
   id: string
@@ -273,6 +276,28 @@ Please feel free to ask a more specific health question, and I'll provide detail
     navigator.clipboard.writeText(content)
   }
 
+  const resetChat = () => {
+    setMessages([
+      {
+        id: "welcome",
+        type: "ai",
+        content: `Hello! I'm your MYMED.AI health assistant. I'm here to help you with:
+
+• Quick health questions and symptom guidance
+• Medication information and interactions
+• General wellness advice
+• When to seek medical care
+
+⚠️ **Important Disclaimer**: I provide general health information only. For medical emergencies, call 911. Always consult healthcare professionals for diagnosis and treatment.
+
+What health question can I help you with today?`,
+        timestamp: new Date(),
+        confidence: 95,
+      },
+    ])
+    setInputMessage("")
+  }
+
   const quickQuestions = [
     "Can I take ibuprofen with antibiotics?",
     "What are the symptoms of low vitamin D?",
@@ -438,9 +463,31 @@ Please feel free to ask a more specific health question, and I'll provide detail
             </Button>
           </div>
 
-          <p className="text-xs text-gray-500 text-center">
-            Powered by MYMED.AI • For emergencies, call 911 • Not a substitute for professional medical advice
-          </p>
+          {/* Action Buttons */}
+          <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+              <Button
+                onClick={resetChat}
+                variant="outline"
+                size="sm"
+                className="border-red-300 text-red-600 hover:bg-red-50 bg-transparent"
+              >
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Reset Chat
+              </Button>
+              <Link href="/">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent"
+                >
+                  <Home className="w-4 h-4 mr-1" />
+                  Home
+                </Button>
+              </Link>
+            </div>
+            <p className="text-xs text-gray-500">Powered by MYMED.AI • For emergencies, call 911</p>
+          </div>
         </div>
       </Card>
     </div>

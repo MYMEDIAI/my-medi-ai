@@ -27,6 +27,9 @@ import {
   Instagram,
   MapPin,
   Baby,
+  Pill,
+  Utensils,
+  User,
 } from "lucide-react"
 import HealthAssessmentForm from "@/components/health-assessment-form"
 
@@ -38,13 +41,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
-
-import { ProductionChatWidget } from "@/components/production-chat-widget"
-import { ProductionReportAnalyzer } from "@/components/production-report-analyzer"
-import { ProductionMedicineIdentifier } from "@/components/production-medicine-identifier"
-import { ProductionBodyMapper } from "@/components/production-body-mapper"
-import { ProductionMealPlanner } from "@/components/production-meal-planner"
-import { ProductionVitalsTracker } from "@/components/production-vitals-tracker"
 
 /**
  * Safely parse JSON only when the response actually contains JSON.
@@ -430,24 +426,125 @@ Format the response as structured recommendations with clear sections.
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Try Our AI-Powered Features</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">AI-Powered Healthcare Features</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Experience the future of healthcare with our interactive AI tools
+              Experience comprehensive healthcare tools designed for Indian families
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {/* AI Health Chat */}
-            <ProductionChatWidget />
-            {/* Report Analyzer */}
-            <ProductionReportAnalyzer />
+            <Link href="/chat">
+              <Card className="border-purple-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
+                    <MessageCircle className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Health Chat</h3>
+                  <p className="text-gray-600 mb-4">
+                    Chat with AI doctor in your language. Get instant health advice and symptom analysis.
+                  </p>
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                    Start Chat
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
             {/* Medicine Identifier */}
-            <ProductionMedicineIdentifier />
-            {/* Body Mapper */}
-            <ProductionBodyMapper />
-            {/* Meal Planner */}
-            <ProductionMealPlanner />
+            <Link href="/medicine">
+              <Card className="border-orange-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
+                    <Pill className="w-8 h-8 text-orange-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Medicine Analyzer</h3>
+                  <p className="text-gray-600 mb-4">
+                    Get detailed medicine information, dosage, interactions, and safety guidelines.
+                  </p>
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                    Analyze Medicine
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Diet Planner */}
+            <Link href="/diet">
+              <Card className="border-green-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
+                    <Utensils className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Diet Planner</h3>
+                  <p className="text-gray-600 mb-4">
+                    Get personalized meal plans based on your health conditions and preferences.
+                  </p>
+                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    Plan Diet
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
             {/* Vitals Tracker */}
-            <ProductionVitalsTracker />
+            <Link href="/vitals">
+              <Card className="border-blue-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
+                    <Activity className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Vitals Tracker</h3>
+                  <p className="text-gray-600 mb-4">
+                    Monitor blood pressure, heart rate, and other vital signs with AI insights.
+                  </p>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                    Track Vitals
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Report Analyzer */}
+            <Link href="/reports">
+              <Card className="border-indigo-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-200 transition-colors">
+                    <FileText className="w-8 h-8 text-indigo-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Report Analyzer</h3>
+                  <p className="text-gray-600 mb-4">
+                    Upload and analyze medical reports with AI-powered insights and recommendations.
+                  </p>
+                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                    Analyze Reports
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Body Mapper */}
+            <Link href="/body-mapper">
+              <Card className="border-red-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition-colors">
+                    <User className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Body Mapper</h3>
+                  <p className="text-gray-600 mb-4">
+                    Interactive body diagram to identify symptoms and get targeted health advice.
+                  </p>
+                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                    Map Symptoms
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </div>
       </section>
