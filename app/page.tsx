@@ -338,6 +338,12 @@ Format the response as structured recommendations with clear sections.
                 ))}
               </SelectContent>
             </Select>
+            <Link href="/location">
+              <Button className="bg-green-600 hover:bg-green-700 text-white">
+                <MapPin className="w-4 h-4 mr-2" />
+                Find Healthcare
+              </Button>
+            </Link>
             <Link href="/chat">
               <Button className="bg-purple-600 hover:bg-purple-700 text-white">
                 <MessageCircle className="w-4 h-4 mr-2" />
@@ -540,6 +546,25 @@ Format the response as structured recommendations with clear sections.
                   </p>
                   <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
                     Map Symptoms
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Location Services */}
+            <Link href="/location">
+              <Card className="border-teal-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-teal-200 transition-colors">
+                    <MapPin className="w-8 h-8 text-teal-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Location Services</h3>
+                  <p className="text-gray-600 mb-4">
+                    Find nearby healthcare facilities, get location-based health recommendations and emergency services.
+                  </p>
+                  <Button className="w-full bg-teal-600 hover:bg-teal-700 text-white">
+                    Find Healthcare
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
