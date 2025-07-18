@@ -1364,22 +1364,22 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
 
           emergencyProtocols: {
             hypoglycemia: {
-              symptoms: parseAdvancedList(aiText, "HYPOGLYCEMIA-SYMPTOMS"),
-              immediateActions: parseAdvancedList(aiText, "HYPOGLYCEMIA-ACTIONS"),
-              medications: parseAdvancedList(aiText, "HYPOGLYCEMIA-MEDS"),
-              whenToCallHelp: parseAdvancedList(aiText, "HYPOGLYCEMIA-HELP"),
+              symptoms: parseAdvancedList(aiText, "HYPOGLYCEMIA-SYMPTOMS") || [],
+              immediateActions: parseAdvancedList(aiText, "HYPOGLYCEMIA-ACTIONS") || [],
+              medications: parseAdvancedList(aiText, "HYPOGLYCEMIA-MEDS") || [],
+              whenToCallHelp: parseAdvancedList(aiText, "HYPOGLYCEMIA-HELP") || [],
             },
             hyperglycemia: {
-              symptoms: parseAdvancedList(aiText, "HYPERGLYCEMIA-SYMPTOMS"),
-              immediateActions: parseAdvancedList(aiText, "HYPERGLYCEMIA-ACTIONS"),
-              medications: parseAdvancedList(aiText, "HYPERGLYCEMIA-MEDS"),
-              whenToCallHelp: parseAdvancedList(aiText, "HYPERGLYCEMIA-HELP"),
+              symptoms: parseAdvancedList(aiText, "HYPERGLYCEMIA-SYMPTOMS") || [],
+              immediateActions: parseAdvancedList(aiText, "HYPERGLYCEMIA-ACTIONS") || [],
+              medications: parseAdvancedList(aiText, "HYPERGLYCEMIA-MEDS") || [],
+              whenToCallHelp: parseAdvancedList(aiText, "HYPERGLYCEMIA-HELP") || [],
             },
             ketoacidosis: {
-              symptoms: parseAdvancedList(aiText, "KETOACIDOSIS-SYMPTOMS"),
-              immediateActions: parseAdvancedList(aiText, "KETOACIDOSIS-ACTIONS"),
-              medications: parseAdvancedList(aiText, "KETOACIDOSIS-MEDS"),
-              whenToCallHelp: parseAdvancedList(aiText, "KETOACIDOSIS-HELP"),
+              symptoms: parseAdvancedList(aiText, "KETOACIDOSIS-SYMPTOMS") || [],
+              immediateActions: parseAdvancedList(aiText, "KETOACIDOSIS-ACTIONS") || [],
+              medications: parseAdvancedList(aiText, "KETOACIDOSIS-MEDS") || [],
+              whenToCallHelp: parseAdvancedList(aiText, "KETOACIDOSIS-HELP") || [],
             },
           },
 
@@ -1777,6 +1777,14 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
     // Calculate personalized water intake (35ml per kg body weight)
     const dailyWaterIntake = formData.weight ? Math.round(Number(formData.weight) * 35) : 2500
 
+    // Helper function to safely join arrays, handling undefined values
+    const safeJoin = (arr: string[] | undefined, separator = ", "): string => {
+      if (!arr) return ""
+      if (typeof arr === "string") return arr
+      if (Array.isArray(arr)) return arr.join(separator)
+      return ""
+    }
+
     // Unique meal combinations for each day
     const uniqueMealPlans = [
       {
@@ -2146,7 +2154,8 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
 
     return days.map((day, index) => {
       const date = new Date(startDate.getTime() + index * 24 * 60 * 60 * 1000)
-      const mealPlan = uniqueMealPlans[index]
+      // Ensure we have a valid meal plan for this day
+      const mealPlan = uniqueMealPlans[index % uniqueMealPlans.length]
 
       const meals = [
         {
@@ -2160,7 +2169,7 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
           fiber: mealPlan.breakfast.fiber,
           glycemicIndex: mealPlan.breakfast.gi,
           preparation: mealPlan.breakfast.preparation,
-          alternatives: mealPlan.breakfast.alternatives.join(" | "),
+          alternatives: safeJoin(mealPlan.breakfast.alternatives, " | "),
           water: mealPlan.breakfast.water,
         },
         {
@@ -2182,14 +2191,14 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
           time: "1:00 PM",
           items: mealPlan.lunch.items,
           calories: mealPlan.lunch.calories,
-          carbs: mealPlan.carbs,
-          protein: mealPlan.protein,
-          fat: mealPlan.fat,
-          fiber: mealPlan.fiber,
-          glycemicIndex: mealPlan.gi,
-          preparation: mealPlan.preparation,
-          alternatives: mealPlan.alternatives.join(" | "),
-          water: mealPlan.water,
+          carbs: mealPlan.lunch.carbs,
+          protein: mealPlan.lunch.protein,
+          fat: mealPlan.lunch.fat,
+          fiber: mealPlan.lunch.fiber,
+          glycemicIndex: mealPlan.lunch.gi,
+          preparation: mealPlan.lunch.preparation,
+          alternatives: safeJoin(mealPlan.lunch.alternatives, " | "),
+          water: mealPlan.lunch.water,
         },
         {
           meal: "Evening",
@@ -2210,20 +2219,20 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
           time: "7:30 PM",
           items: mealPlan.dinner.items,
           calories: mealPlan.dinner.calories,
-          carbs: mealPlan.carbs,
-          protein: mealPlan.protein,
-          fat: mealPlan.fat,
-          fiber: mealPlan.fiber,
-          glycemicIndex: mealPlan.gi,
-          preparation: mealPlan.preparation,
-          alternatives: mealPlan.alternatives.join(" | "),
-          water: mealPlan.water,
+          carbs: mealPlan.dinner.carbs,
+          protein: mealPlan.dinner.protein,
+          fat: mealPlan.dinner.fat,
+          fiber: mealPlan.dinner.fiber,
+          glycemicIndex: mealPlan.dinner.gi,
+          preparation: mealPlan.dinner.preparation,
+          alternatives: safeJoin(mealPlan.dinner.alternatives, " | "),
+          water: mealPlan.dinner.water,
         },
       ]
 
       const totalCalories = meals.reduce((sum, meal) => sum + meal.calories, 0)
-      const totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0)
-      const totalWater = meals.reduce((sum, meal) => sum + meal.water, 0)
+      const totalCarbs = meals.reduce((sum, meal) => sum + (meal.carbs || 0), 0)
+      const totalWater = meals.reduce((sum, meal) => sum + (meal.water || 0), 0)
 
       // Calculate exercise minutes based on week and commitment level
       const baseExerciseMinutes = 45
@@ -2253,12 +2262,14 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
         extractAdvancedValue(text, `${monthPrefix}: Optimization & Acceleration`) ||
         extractAdvancedValue(text, `${monthPrefix}: Reversal Achievement`) ||
         "Month Title Not Found"
-      const goals = parseAdvancedList(text, `${monthPrefix}-GOALS`)
-      const dietFocus = parseAdvancedList(text, `${monthPrefix}-DIET-FOCUS`)
-      const exercisePlan = parseAdvancedList(text, `${monthPrefix}-EXERCISE-PLAN`)
-      const medications = parseAdvancedList(text, `${monthPrefix}-MEDICATIONS`)
-      const monitoring = parseAdvancedList(text, `${monthPrefix}-MONITORING`)
-      const milestones = parseAdvancedList(text, `${monthPrefix}-MILESTONES`)
+
+      // Ensure we always have arrays even if parseAdvancedList returns undefined
+      const goals = parseAdvancedList(text, `${monthPrefix}-GOALS`) || []
+      const dietFocus = parseAdvancedList(text, `${monthPrefix}-DIET-FOCUS`) || []
+      const exercisePlan = parseAdvancedList(text, `${monthPrefix}-EXERCISE-PLAN`) || []
+      const medications = parseAdvancedList(text, `${monthPrefix}-MEDICATIONS`) || []
+      const monitoring = parseAdvancedList(text, `${monthPrefix}-MONITORING`) || []
+      const milestones = parseAdvancedList(text, `${monthPrefix}-MILESTONES`) || []
       const expectedResults = extractAdvancedValue(text, `${monthPrefix}-EXPECTED-RESULTS`)
 
       return {
@@ -2288,6 +2299,8 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
 
   const parseAdvancedList = (text: string, keyword: string): string[] => {
     try {
+      if (!text) return []
+
       const regex = new RegExp(`${keyword}:\\s*([^\n]+)`, "i")
       const match = text.match(regex)
       if (match && match[1]) {
