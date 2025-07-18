@@ -29,6 +29,7 @@ import {
   Loader2,
   Phone,
   Target,
+  Eye,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -1882,6 +1883,14 @@ CRITICAL INSTRUCTIONS:
                   <span className="sm:hidden">Ayur</span>
                 </TabsTrigger>
                 <TabsTrigger
+                  value="diabetes"
+                  className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs p-2 flex flex-col sm:flex-row items-center gap-1"
+                >
+                  <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Diabetes</span>
+                  <span className="sm:hidden">Diab</span>
+                </TabsTrigger>
+                <TabsTrigger
                   value="chat"
                   className="data-[state=active]:bg-teal-500 data-[state=active]:text-white text-xs p-2 flex flex-col sm:flex-row items-center gap-1"
                 >
@@ -2423,6 +2432,433 @@ CRITICAL INSTRUCTIONS:
                         <strong>Ayurvedic Guidance:</strong> These traditional treatments are suggested as complementary
                         options. Please consult with a qualified Ayurvedic practitioner before starting any herbal
                         treatments, especially alongside conventional medications.
+                      </AlertDescription>
+                    </Alert>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="diabetes" className="mt-4 sm:mt-6">
+                <Card>
+                  <CardHeader className="p-3 sm:p-6">
+                    <CardTitle className="flex items-center text-red-600 text-base sm:text-lg">
+                      <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      Diabetes Management Plan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 sm:p-6">
+                    {/* Blood Sugar Monitoring */}
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-red-600 mb-3 text-sm sm:text-base flex items-center">
+                        <Target className="w-4 h-4 mr-2" />
+                        Blood Sugar Monitoring Schedule
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                        <Card className="border-red-200 bg-red-50">
+                          <CardContent className="p-3 text-center">
+                            <div className="text-lg sm:text-xl font-bold text-red-600">80-130</div>
+                            <div className="text-xs sm:text-sm text-red-600">mg/dL</div>
+                            <div className="text-xs text-red-600">Fasting/Pre-meal</div>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-orange-200 bg-orange-50">
+                          <CardContent className="p-3 text-center">
+                            <div className="text-lg sm:text-xl font-bold text-orange-600">{"<180"}</div>
+                            <div className="text-xs sm:text-sm text-orange-600">mg/dL</div>
+                            <div className="text-xs text-orange-600">2hrs Post-meal</div>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-blue-200 bg-blue-50">
+                          <CardContent className="p-3 text-center">
+                            <div className="text-lg sm:text-xl font-bold text-blue-600">{"<7%"}</div>
+                            <div className="text-xs sm:text-sm text-blue-600">HbA1c</div>
+                            <div className="text-xs text-blue-600">3-month average</div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs sm:text-sm">Time</TableHead>
+                              <TableHead className="text-xs sm:text-sm">Frequency</TableHead>
+                              <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Target Range</TableHead>
+                              <TableHead className="text-xs sm:text-sm hidden lg:table-cell">Notes</TableHead>
+                              <TableHead className="text-xs sm:text-sm">Action Required</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell className="font-medium text-xs sm:text-sm">Fasting (Morning)</TableCell>
+                              <TableCell className="text-xs sm:text-sm">Daily</TableCell>
+                              <TableCell className="text-xs sm:text-sm hidden sm:table-cell">80-130 mg/dL</TableCell>
+                              <TableCell className="text-xs sm:text-sm hidden lg:table-cell">
+                                Before breakfast, 8+ hrs fasting
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
+                                  Record daily
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium text-xs sm:text-sm">Pre-meal</TableCell>
+                              <TableCell className="text-xs sm:text-sm">3x daily</TableCell>
+                              <TableCell className="text-xs sm:text-sm hidden sm:table-cell">80-130 mg/dL</TableCell>
+                              <TableCell className="text-xs sm:text-sm hidden lg:table-cell">
+                                Before lunch and dinner
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs">
+                                  Adjust insulin
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium text-xs sm:text-sm">Post-meal (2hrs)</TableCell>
+                              <TableCell className="text-xs sm:text-sm">As needed</TableCell>
+                              <TableCell className="text-xs sm:text-sm hidden sm:table-cell">{"<180 mg/dL"}</TableCell>
+                              <TableCell className="text-xs sm:text-sm hidden lg:table-cell">
+                                2 hours after eating
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs">
+                                  Monitor trends
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium text-xs sm:text-sm">Bedtime</TableCell>
+                              <TableCell className="text-xs sm:text-sm">Daily</TableCell>
+                              <TableCell className="text-xs sm:text-sm hidden sm:table-cell">100-140 mg/dL</TableCell>
+                              <TableCell className="text-xs sm:text-sm hidden lg:table-cell">Before sleep</TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <Badge variant="outline" className="bg-purple-50 text-purple-700 text-xs">
+                                  Prevent lows
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+
+                    {/* Diabetes Medications */}
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-red-600 mb-3 text-sm sm:text-base flex items-center">
+                        <Pill className="w-4 h-4 mr-2" />
+                        Diabetes Medications & Insulin
+                      </h4>
+                      <div className="grid gap-3 sm:gap-4">
+                        <Card className="border-red-200">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                              <div className="flex-1">
+                                <h5 className="font-semibold text-red-700 text-sm sm:text-base">
+                                  Metformin (Glucophage)
+                                </h5>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                  <strong>Dosage:</strong> 500mg twice daily with meals
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  <strong>Purpose:</strong> Reduces glucose production by liver, improves insulin
+                                  sensitivity
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  <strong>Side Effects:</strong> Nausea, diarrhea (usually temporary)
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <Badge variant="outline" className="bg-red-50 text-red-700 text-xs">
+                                  ₹50-80/month
+                                </Badge>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
+                                  First-line treatment
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-blue-200">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                              <div className="flex-1">
+                                <h5 className="font-semibold text-blue-700 text-sm sm:text-base">
+                                  Rapid-Acting Insulin (Humalog/NovoRapid)
+                                </h5>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                  <strong>Dosage:</strong> 1 unit per 15g carbs (adjust based on blood sugar)
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  <strong>Timing:</strong> 15 minutes before meals
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  <strong>Duration:</strong> 3-5 hours
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs">
+                                  ₹800-1200/vial
+                                </Badge>
+                                <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs">
+                                  Mealtime insulin
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-green-200">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                              <div className="flex-1">
+                                <h5 className="font-semibold text-green-700 text-sm sm:text-base">
+                                  Long-Acting Insulin (Lantus/Levemir)
+                                </h5>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                  <strong>Dosage:</strong> 20-40 units once daily (individualized)
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  <strong>Timing:</strong> Same time daily (bedtime or morning)
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  <strong>Duration:</strong> 24 hours
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
+                                  ₹1200-1800/vial
+                                </Badge>
+                                <Badge variant="outline" className="bg-purple-50 text-purple-700 text-xs">
+                                  Basal insulin
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+
+                    {/* Diabetic Diet Plan */}
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-red-600 mb-3 text-sm sm:text-base flex items-center">
+                        <Utensils className="w-4 h-4 mr-2" />
+                        Diabetic Diet Plan
+                      </h4>
+                      <div className="grid gap-3 sm:gap-4">
+                        <Card className="border-green-200 bg-green-50">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <h5 className="font-semibold text-green-700">🌅 Breakfast (7:00 AM)</h5>
+                              <Badge className="bg-green-600 text-white text-xs">300-400 kcal</Badge>
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-700 mb-2">
+                              <strong>Foods:</strong> 1 cup oatmeal + 1 tbsp nuts + 1 small apple + 1 cup low-fat milk
+                            </p>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="bg-white p-2 rounded">
+                                <strong>Carbs:</strong> 45-60g
+                              </div>
+                              <div className="bg-white p-2 rounded">
+                                <strong>Protein:</strong> 15-20g
+                              </div>
+                              <div className="bg-white p-2 rounded">
+                                <strong>Fiber:</strong> 8-10g
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-blue-200 bg-blue-50">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <h5 className="font-semibold text-blue-700">🍽️ Lunch (1:00 PM)</h5>
+                              <Badge className="bg-blue-600 text-white text-xs">400-500 kcal</Badge>
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-700 mb-2">
+                              <strong>Foods:</strong> 1 cup brown rice + 100g grilled chicken + mixed vegetables + 1 tsp
+                              oil
+                            </p>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="bg-white p-2 rounded">
+                                <strong>Carbs:</strong> 45-60g
+                              </div>
+                              <div className="bg-white p-2 rounded">
+                                <strong>Protein:</strong> 25-30g
+                              </div>
+                              <div className="bg-white p-2 rounded">
+                                <strong>Fiber:</strong> 10-12g
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-orange-200 bg-orange-50">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <h5 className="font-semibold text-orange-700">🌆 Dinner (7:00 PM)</h5>
+                              <Badge className="bg-orange-600 text-white text-xs">350-450 kcal</Badge>
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-700 mb-2">
+                              <strong>Foods:</strong> 2 chapati + 100g fish/paneer + dal + salad + 1 tsp ghee
+                            </p>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="bg-white p-2 rounded">
+                                <strong>Carbs:</strong> 40-50g
+                              </div>
+                              <div className="bg-white p-2 rounded">
+                                <strong>Protein:</strong> 20-25g
+                              </div>
+                              <div className="bg-white p-2 rounded">
+                                <strong>Fiber:</strong> 8-10g
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-purple-200 bg-purple-50">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <h5 className="font-semibold text-purple-700">🍎 Snacks (2 times/day)</h5>
+                              <Badge className="bg-purple-600 text-white text-xs">100-150 kcal each</Badge>
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-700 mb-2">
+                              <strong>Options:</strong> 1 small fruit + 10 almonds OR 1 cup buttermilk + 2 biscuits
+                            </p>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="bg-white p-2 rounded">
+                                <strong>Carbs:</strong> 15-20g
+                              </div>
+                              <div className="bg-white p-2 rounded">
+                                <strong>Protein:</strong> 5-8g
+                              </div>
+                              <div className="bg-white p-2 rounded">
+                                <strong>Fiber:</strong> 3-5g
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+
+                    {/* Exercise Plan */}
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-red-600 mb-3 text-sm sm:text-base flex items-center">
+                        <Heart className="w-4 h-4 mr-2" />
+                        Exercise Plan for Diabetes
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <Card className="border-green-200">
+                          <CardContent className="p-3 sm:p-4">
+                            <h5 className="font-semibold text-green-700 mb-2">🚶‍♂️ Aerobic Exercise</h5>
+                            <ul className="text-xs sm:text-sm text-gray-700 space-y-1">
+                              <li>
+                                • <strong>Frequency:</strong> 5 days/week
+                              </li>
+                              <li>
+                                • <strong>Duration:</strong> 30-45 minutes
+                              </li>
+                              <li>
+                                • <strong>Activities:</strong> Brisk walking, cycling, swimming
+                              </li>
+                              <li>
+                                • <strong>Intensity:</strong> Moderate (can talk while exercising)
+                              </li>
+                              <li>
+                                • <strong>Best Time:</strong> 1-2 hours after meals
+                              </li>
+                            </ul>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-blue-200">
+                          <CardContent className="p-3 sm:p-4">
+                            <h5 className="font-semibold text-blue-700 mb-2">💪 Resistance Training</h5>
+                            <ul className="text-xs sm:text-sm text-gray-700 space-y-1">
+                              <li>
+                                • <strong>Frequency:</strong> 2-3 days/week
+                              </li>
+                              <li>
+                                • <strong>Duration:</strong> 20-30 minutes
+                              </li>
+                              <li>
+                                • <strong>Activities:</strong> Weight lifting, resistance bands
+                              </li>
+                              <li>
+                                • <strong>Focus:</strong> Major muscle groups
+                              </li>
+                              <li>
+                                • <strong>Rest:</strong> 48 hours between sessions
+                              </li>
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+
+                    {/* Complications Prevention */}
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-red-600 mb-3 text-sm sm:text-base flex items-center">
+                        <Shield className="w-4 h-4 mr-2" />
+                        Complications Prevention
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                        <Card className="border-red-200">
+                          <CardContent className="p-3 sm:p-4">
+                            <h5 className="font-semibold text-red-700 mb-2 flex items-center">
+                              <Heart className="w-4 h-4 mr-1" />
+                              Heart Health
+                            </h5>
+                            <ul className="text-xs sm:text-sm text-gray-700 space-y-1">
+                              <li>• Monitor blood pressure monthly</li>
+                              <li>• Check cholesterol every 3 months</li>
+                              <li>• Take prescribed statins</li>
+                              <li>• Limit sodium to 2300mg/day</li>
+                            </ul>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-blue-200">
+                          <CardContent className="p-3 sm:p-4">
+                            <h5 className="font-semibold text-blue-700 mb-2 flex items-center">
+                              <Eye className="w-4 h-4 mr-1" />
+                              Eye Care
+                            </h5>
+                            <ul className="text-xs sm:text-sm text-gray-700 space-y-1">
+                              <li>• Annual dilated eye exam</li>
+                              <li>• Report vision changes immediately</li>
+                              <li>• Control blood sugar strictly</li>
+                              <li>• Wear sunglasses outdoors</li>
+                            </ul>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="border-green-200">
+                          <CardContent className="p-3 sm:p-4">
+                            <h5 className="font-semibold text-green-700 mb-2 flex items-center">
+                              <Activity className="w-4 h-4 mr-1" />
+                              Foot Care
+                            </h5>
+                            <ul className="text-xs sm:text-sm text-gray-700 space-y-1">
+                              <li>• Daily foot inspection</li>
+                              <li>• Proper fitting shoes</li>
+                              <li>• Keep feet clean and dry</li>
+                              <li>• Report cuts/sores immediately</li>
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+
+                    {/* Emergency Guidelines */}
+                    <Alert className="border-red-200 bg-red-50">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-red-800 text-xs sm:text-sm">
+                        <strong>Emergency Signs - Seek Immediate Medical Care:</strong>• Blood sugar below 70 mg/dL
+                        (hypoglycemia) with confusion • Blood sugar above 300 mg/dL (hyperglycemia) with vomiting •
+                        Ketones in urine with nausea/vomiting • Chest pain, shortness of breath, or severe headache •
+                        Foot wounds that won't heal or show signs of infection
                       </AlertDescription>
                     </Alert>
                   </CardContent>
