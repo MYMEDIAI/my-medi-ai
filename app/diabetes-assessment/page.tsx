@@ -715,6 +715,29 @@ export default function DiabetesAssessmentPage() {
       margin: 10px 0;
     }
     
+    .critical-emergency {
+      background: #fef2f2;
+      border: 3px solid #dc2626;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+    
+    .emergency-protocol {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .emergency-title {
+      font-weight: bold;
+      color: #dc2626;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+    
     .reversal-timeline {
       background: #ecfdf5;
       border: 2px solid #10b981;
@@ -801,6 +824,7 @@ export default function DiabetesAssessmentPage() {
   </style>
 </head>
 <body>
+  <!-- Page 1: Patient Profile & Overview -->
   <div class="page">
     <div class="header">
       <div class="logo">🏥</div>
@@ -877,7 +901,10 @@ export default function DiabetesAssessmentPage() {
         </div>
       </div>
     </div>
+  </div>
 
+  <!-- Page 2: Medications & Vital Monitoring -->
+  <div class="page">
     <div class="section">
       <div class="section-header">
         💊 DIABETES REVERSAL MEDICATIONS & TAPERING SCHEDULE
@@ -918,6 +945,83 @@ export default function DiabetesAssessmentPage() {
 
     <div class="section">
       <div class="section-header">
+        📊 COMPREHENSIVE VITAL MONITORING & BMI TRACKING
+      </div>
+      <div class="section-content">
+        <table>
+          <thead>
+            <tr>
+              <th>Vital Sign</th>
+              <th>Frequency</th>
+              <th>Timing</th>
+              <th>Target Range</th>
+              <th>Importance</th>
+              <th>Monitoring Device</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${result.vitalMonitoring
+              .map(
+                (vital) => `
+              <tr>
+                <td><strong>${vital.vital}</strong></td>
+                <td>${vital.frequency}</td>
+                <td>${vital.timing}</td>
+                <td>${vital.targetRange}</td>
+                <td>${vital.importance}</td>
+                <td>${vital.devices}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        🔬 ADVANCED LABORATORY TESTS & METABOLIC MONITORING
+      </div>
+      <div class="section-content">
+        <table>
+          <thead>
+            <tr>
+              <th>Test Name</th>
+              <th>Priority</th>
+              <th>Reason</th>
+              <th>Preparation</th>
+              <th>Cost (₹)</th>
+              <th>Normal Range</th>
+              <th>Month</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${result.labTests
+              .map(
+                (lab) => `
+              <tr>
+                <td><strong>${lab.test}</strong></td>
+                <td>${lab.priority}</td>
+                <td>${lab.reason}</td>
+                <td>${lab.preparation}</td>
+                <td>${lab.cost}</td>
+                <td>${lab.normalRange}</td>
+                <td>${lab.month}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page 3: Exercise Plan & Diet Plan -->
+  <div class="page">
+    <div class="section">
+      <div class="section-header">
         🏃‍♂️ PERSONALIZED EXERCISE & FITNESS PLAN
       </div>
       <div class="section-content">
@@ -955,15 +1059,14 @@ export default function DiabetesAssessmentPage() {
         </table>
       </div>
     </div>
-  </div>
 
-  <div class="page">
     <div class="section">
       <div class="section-header">
         🍽️ COMPREHENSIVE WEEK 1 DIET PLAN WITH UNIQUE CHOICES
       </div>
       <div class="section-content">
         ${result.comprehensiveDietPlan.week1
+          .slice(0, 4)
           .map(
             (day) => `
           <div class="meal-card">
@@ -971,28 +1074,24 @@ export default function DiabetesAssessmentPage() {
               <span><strong>${day.day} - ${day.date}</strong></span>
               <div>
                 <span class="meal-calories">${day.totalCalories} kcal</span>
+</cut_off_point>
                 <span class="meal-time">${day.totalWater}ml water</span>
               </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 8px; margin-top: 6px;">
               ${day.meals
+                .slice(0, 3)
                 .map(
                   (meal) => `
                 <div>
                   <strong>${meal.time} - ${meal.meal}:</strong><br>
                   ${meal.items}<br>
-                  <em>Cal: ${meal.calories} | Carbs: ${meal.carbs}g | Protein: ${meal.protein}g | Water: ${meal.water}ml</em><br>
-                  <small style="color: #059669;">Prep: ${meal.preparation}</small><br>
-                  <small style="color: #7c3aed;">Alt: ${meal.alternatives}</small>
+                  <em>Cal: ${meal.calories} | Carbs: ${meal.carbs}g | Protein: ${meal.protein}g</em><br>
+                  <small style="color: #059669;">Prep: ${meal.preparation}</small>
                 </div>
               `,
                 )
                 .join("")}
-            </div>
-            <div style="margin-top: 6px; font-size: 8px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 4px;">
-              <strong>Exercise:</strong> ${day.exerciseMinutes} | 
-              <strong>Supplements:</strong> ${day.supplements}<br>
-              <strong>Notes:</strong> ${day.notes}
             </div>
           </div>
         `,
@@ -1000,27 +1099,67 @@ export default function DiabetesAssessmentPage() {
           .join("")}
       </div>
     </div>
+  </div>
 
-    <div class="emergency-section">
-      <h3 style="color: #92400e; margin-bottom: 8px;">🚨 DIABETES EMERGENCY PROTOCOLS</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 8px;">
-        <div>
-          <strong>HYPOGLYCEMIA (&lt;70 mg/dL)</strong><br>
-          <em>Symptoms:</em> ${result.emergencyProtocols.hypoglycemia.symptoms.slice(0, 2).join(", ")}<br>
-          <em>Actions:</em> ${result.emergencyProtocols.hypoglycemia.immediateActions.slice(0, 2).join(", ")}<br>
-          <em>Emergency:</em> Call 108 if unconscious
+  <!-- Page 4: Enhanced Emergency Protocols -->
+  <div class="page">
+    <div class="critical-emergency">
+      <h3 style="color: #dc2626; margin-bottom: 12px; text-align: center;">🚨 CRITICAL DIABETES EMERGENCY PROTOCOLS</h3>
+      <p style="text-align: center; font-weight: bold; color: #7f1d1d; margin-bottom: 12px;">
+        EMERGENCY CONTACT: 108 (India) | Keep this page accessible at all times
+      </p>
+      
+      <div class="emergency-protocol">
+        <div class="emergency-title">⚠️ HYPOGLYCEMIA (Blood Sugar &lt; 70 mg/dL)</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 8px;">
+          <div>
+            <strong>🔍 SYMPTOMS TO WATCH:</strong><br>
+            ${result.emergencyProtocols.hypoglycemia.symptoms.slice(0, 5).join(" • ")}<br>
+            <strong>⚡ IMMEDIATE ACTIONS:</strong><br>
+            ${result.emergencyProtocols.hypoglycemia.immediateActions.slice(0, 4).join(" • ")}
+          </div>
+          <div>
+            <strong>💊 EMERGENCY TREATMENTS:</strong><br>
+            ${result.emergencyProtocols.hypoglycemia.medications.slice(0, 4).join(" • ")}<br>
+            <strong>📞 CALL 108 IF:</strong><br>
+            ${result.emergencyProtocols.hypoglycemia.whenToCallHelp.slice(0, 4).join(" • ")}
+          </div>
         </div>
-        <div>
-          <strong>HYPERGLYCEMIA (&gt;250 mg/dL)</strong><br>
-          <em>Symptoms:</em> ${result.emergencyProtocols.hyperglycemia.symptoms.slice(0, 2).join(", ")}<br>
-          <em>Actions:</em> ${result.emergencyProtocols.hyperglycemia.immediateActions.slice(0, 2).join(", ")}<br>
-          <em>Emergency:</em> Seek immediate medical care
+      </div>
+
+      <div class="emergency-protocol">
+        <div class="emergency-title">⚠️ HYPERGLYCEMIA (Blood Sugar &gt; 250 mg/dL)</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 8px;">
+          <div>
+            <strong>🔍 SYMPTOMS TO WATCH:</strong><br>
+            ${result.emergencyProtocols.hyperglycemia.symptoms.slice(0, 5).join(" • ")}<br>
+            <strong>⚡ IMMEDIATE ACTIONS:</strong><br>
+            ${result.emergencyProtocols.hyperglycemia.immediateActions.slice(0, 4).join(" • ")}
+          </div>
+          <div>
+            <strong>💊 EMERGENCY TREATMENTS:</strong><br>
+            ${result.emergencyProtocols.hyperglycemia.medications.slice(0, 4).join(" • ")}<br>
+            <strong>📞 CALL 108 IF:</strong><br>
+            ${result.emergencyProtocols.hyperglycemia.whenToCallHelp.slice(0, 4).join(" • ")}
+          </div>
         </div>
-        <div>
-          <strong>KETOACIDOSIS (DKA)</strong><br>
-          <em>Symptoms:</em> ${result.emergencyProtocols.ketoacidosis.symptoms.slice(0, 2).join(", ")}<br>
-          <em>Actions:</em> ${result.emergencyProtocols.ketoacidosis.immediateActions.slice(0, 2).join(", ")}<br>
-          <em>Emergency:</em> Call 108 immediately
+      </div>
+
+      <div class="emergency-protocol" style="border: 2px solid #dc2626;">
+        <div class="emergency-title" style="color: #dc2626;">🚨 DIABETIC KETOACIDOSIS (DKA) - LIFE THREATENING</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 8px;">
+          <div>
+            <strong>🔍 CRITICAL SYMPTOMS:</strong><br>
+            ${result.emergencyProtocols.ketoacidosis.symptoms.slice(0, 5).join(" • ")}<br>
+            <strong>⚡ EMERGENCY ACTIONS:</strong><br>
+            ${result.emergencyProtocols.ketoacidosis.immediateActions.slice(0, 4).join(" • ")}
+          </div>
+          <div>
+            <strong>🏥 HOSPITAL TREATMENT ONLY:</strong><br>
+            ${result.emergencyProtocols.ketoacidosis.medications.slice(0, 4).join(" • ")}<br>
+            <strong>📞 CALL 108 IMMEDIATELY:</strong><br>
+            ${result.emergencyProtocols.ketoacidosis.whenToCallHelp.slice(0, 4).join(" • ")}
+          </div>
         </div>
       </div>
     </div>
@@ -1044,6 +1183,154 @@ export default function DiabetesAssessmentPage() {
           .join("")}
       </div>
     </div>
+  </div>
+
+  <!-- Page 5: Supplements & Ayurvedic Treatment -->
+  <div class="page">
+    <div class="section">
+      <div class="section-header">
+        💊 PERSONALIZED DIABETES REVERSAL SUPPLEMENTS
+      </div>
+      <div class="section-content">
+        <table>
+          <thead>
+            <tr>
+              <th>Supplement Name</th>
+              <th>Dosage</th>
+              <th>Timing</th>
+              <th>Benefits</th>
+              <th>Brand</th>
+              <th>Price (₹)</th>
+              <th>Month</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${result.supplements
+              .map(
+                (supplement) => `
+              <tr>
+                <td><strong>${supplement.name}</strong></td>
+                <td>${supplement.dosage}</td>
+                <td>${supplement.timing}</td>
+                <td>${supplement.benefits}</td>
+                <td>${supplement.brands}</td>
+                <td>${supplement.price}</td>
+                <td>${supplement.month}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        🌿 ADVANCED AYURVEDIC DIABETES REVERSAL
+      </div>
+      <div class="section-content">
+        <table>
+          <thead>
+            <tr>
+              <th>Treatment</th>
+              <th>Herbs</th>
+              <th>Preparation</th>
+              <th>Dosage</th>
+              <th>Timing</th>
+              <th>Benefits</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${result.ayurvedicTreatment
+              .map(
+                (treatment) => `
+              <tr>
+                <td><strong>${treatment.treatment}</strong></td>
+                <td>${treatment.herbs}</td>
+                <td>${treatment.preparation}</td>
+                <td>${treatment.dosage}</td>
+                <td>${treatment.timing}</td>
+                <td>${treatment.benefits}</td>
+                <td>${treatment.duration}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        📅 COMPREHENSIVE DIABETES REVERSAL FOLLOW-UP PLAN
+      </div>
+      <div class="section-content">
+        <div style="margin-bottom: 8px;">
+          <strong>Next Appointment:</strong> ${result.followUpPlan.nextAppointment}
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Monitoring Schedule:</strong> ${result.followUpPlan.monitoringSchedule.join(", ")}
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Lifestyle Changes:</strong> ${result.followUpPlan.lifestyleChanges.join(", ")}
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Expected Improvement:</strong> ${result.followUpPlan.expectedImprovement}
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Reversal Timeline:</strong> ${result.followUpPlan.reversalTimeline}
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Success Metrics:</strong> ${result.followUpPlan.successMetrics.join(", ")}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page 6: 3-Month Reversal Plan -->
+  <div class="page">
+    <div class="section">
+      <div class="section-header">
+        📈 DETAILED 3-MONTH DIABETES REVERSAL PLAN
+      </div>
+      <div class="section-content">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 9px;">
+          <div style="border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px;">
+            <h4 style="color: #dc2626; margin-bottom: 6px;">${result.threeMonthReversalPlan.month1.title}</h4>
+            <div style="margin-bottom: 4px;"><strong>Goals:</strong> ${result.threeMonthReversalPlan.month1.goals.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Diet Focus:</strong> ${result.threeMonthReversalPlan.month1.dietFocus.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Exercise Plan:</strong> ${result.threeMonthReversalPlan.month1.exercisePlan.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Medications:</strong> ${result.threeMonthReversalPlan.month1.medications.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Monitoring:</strong> ${result.threeMonthReversalPlan.month1.monitoring.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Milestones:</strong> ${result.threeMonthReversalPlan.month1.milestones.join(", ")}</div>
+            <div><strong>Expected Results:</strong> ${result.threeMonthReversalPlan.month1.expectedResults}</div>
+          </div>
+          <div style="border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px;">
+            <h4 style="color: #dc2626; margin-bottom: 6px;">${result.threeMonthReversalPlan.month2.title}</h4>
+            <div style="margin-bottom: 4px;"><strong>Goals:</strong> ${result.threeMonthReversalPlan.month2.goals.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Diet Focus:</strong> ${result.threeMonthReversalPlan.month2.dietFocus.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Exercise Plan:</strong> ${result.threeMonthReversalPlan.month2.exercisePlan.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Medications:</strong> ${result.threeMonthReversalPlan.month2.medications.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Monitoring:</strong> ${result.threeMonthReversalPlan.month2.monitoring.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Milestones:</strong> ${result.threeMonthReversalPlan.month2.milestones.join(", ")}</div>
+            <div><strong>Expected Results:</strong> ${result.threeMonthReversalPlan.month2.expectedResults}</div>
+          </div>
+          <div style="border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px;">
+            <h4 style="color: #dc2626; margin-bottom: 6px;">${result.threeMonthReversalPlan.month3.title}</h4>
+            <div style="margin-bottom: 4px;"><strong>Goals:</strong> ${result.threeMonthReversalPlan.month3.goals.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Diet Focus:</strong> ${result.threeMonthReversalPlan.month3.dietFocus.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Exercise Plan:</strong> ${result.threeMonthReversalPlan.month3.exercisePlan.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Medications:</strong> ${result.threeMonthReversalPlan.month3.medications.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Monitoring:</strong> ${result.threeMonthReversalPlan.month3.monitoring.join(", ")}</div>
+            <div style="margin-bottom: 4px;"><strong>Milestones:</strong> ${result.threeMonthReversalPlan.month3.milestones.join(", ")}</div>
+            <div><strong>Expected Results:</strong> ${result.threeMonthReversalPlan.month3.expectedResults}</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="disclaimer">
       <strong>⚠️ ADVANCED DIABETES REVERSAL DISCLAIMER:</strong><br>
@@ -1058,13 +1345,13 @@ export default function DiabetesAssessmentPage() {
       <p style="margin-top: 8px; font-size: 8px; color: #9ca3af;">
         This comprehensive report includes ${result.medications.length} medication recommendations with tapering schedules, 
         ${result.exerciseRecommendations.length} personalized exercise plans, detailed weekly diet plans with ${result.comprehensiveDietPlan.week1.length} days of unique meal combinations, 
-        ${result.supplements.length} supplement recommendations, emergency protocols, and 3-month structured reversal timeline with BMI and exercise targets.
+        ${result.supplements.length} supplement recommendations, enhanced emergency protocols, and 3-month structured reversal timeline with BMI and exercise targets.
       </p>
     </div>
   </div>
 </body>
 </html>
-  `
+`
 
     const printWindow = window.open("", "_blank")
     if (printWindow) {
@@ -1208,11 +1495,6 @@ DAY3: Wednesday | ${new Date(currentDate.getTime() + 2 * 24 * 60 * 60 * 1000).to
 DAY4: Thursday | ${new Date(currentDate.getTime() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString()} | Breakfast: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | Mid-Morning: [Unique Items] [Calories] [Water ml] | Lunch: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | Evening: [Unique Items] [Calories] [Water ml] | Dinner: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | [Total Calories] | [Total Carbs]g | [Total Water ml] | [Supplements] | [Exercise Minutes] | [BMI Progress Notes]
 DAY5: Friday | ${new Date(currentDate.getTime() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString()} | Breakfast: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | Mid-Morning: [Unique Items] [Calories] [Water ml] | Lunch: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | Evening: [Unique Items] [Calories] [Water ml] | Dinner: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | [Total Calories] | [Total Carbs]g | [Total Water ml] | [Supplements] | [Exercise Minutes] | [BMI Progress Notes]
 DAY6: Saturday | ${new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString()} | Breakfast: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | Mid-Morning: [Unique Items] [Calories] [Water ml] | Lunch: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | Evening: [Unique Items] [Calories] [Water ml] | Dinner: [Unique Items] [Calories] [Carbs]g [Protein]g [Fat]g [Fiber]g [GI] [Water ml] | [Preparation] | [3 Alternative Options] | [Total Calories] | [Total Carbs]g | [Total Water ml] | [Supplements] | [Exercise Minutes] | [BMI Progress Notes]
-
-**SECTION 6: DETAILED 3-MONTH DIABETES REVERSAL PLAN WITH BMI TARGETS**
-MONTH1: Stabilization & Foundation | BMI Target: [Current BMI - 1-2 points] | Weight Target: [Target kg] | Exercise Minutes: [Total weekly minutes] | Goals: [Goal1] [Goal2] [Goal3] [Goal4] [Goal5] | Diet Focus: [Focus1] [Focus2] [Focus3] [Focus4] | Exercise Plan: [Exercise1] [Exercise2] [Exercise3] [Exercise4] | Medications: [Med1] [Med2] [Med3] [Med4] | Monitoring: [Monitor1] [Monitor2] [Monitor3] [Monitor4] | Milestones: [Milestone1] [Milestone2] [Milestone3] [Milestone4] | Expected Results: [Detailed results with BMI and HbA1c targets]
-MONTH2: Optimization & Acceleration | BMI Target: [Month 1 BMI - 1-2 points] | Weight Target: [Target kg] | Exercise Minutes: [Total weekly minutes] | Goals: [Goal1] [Goal2] [Goal3] [Goal4] [Goal5] | Diet Focus: [Focus1] [Focus2] [Focus3] [Focus4] | Exercise Plan: [Exercise1] [Exercise2] [Exercise3] [Exercise4] | Medications: [Med1] [Med2] [Med3] [Med4] | Monitoring: [Monitor1] [Monitor2] [Monitor3] [Monitor4] | Milestones: [Milestone1] [Milestone2] [Milestone3] [Milestone4] | Expected Results: [Detailed results with BMI and HbA1c targets]
-MONTH3: Reversal Achievement | BMI Target: [Target BMI 18.5-24.9] | Weight Target: [Final target kg] | Exercise Minutes: [Total weekly minutes] | Goals: [Goal1] [Goal2] [Goal3] [Goal4] [Goal5] | Diet Focus: [Focus1] [Focus2] [Focus3] [Focus4] | Exercise Plan: [Exercise1] [Exercise2] [Exercise3] [Exercise4] | Medications: [Med1] [Med2] [Med3] [Med4] | Monitoring: [Monitor1] [Monitor2] [Monitor3] [Monitor4] | Milestones: [Milestone1] [Milestone2] [Milestone3] [Milestone4] | Expected Results: [Detailed results with BMI and HbA1c targets]
 
 **SECTION 7: COMPREHENSIVE EMERGENCY PROTOCOLS**
 HYPOGLYCEMIA-SYMPTOMS: [Symptom1] | [Symptom2] | [Symptom3] | [Symptom4] | [Symptom5] | [Symptom6]
@@ -1364,22 +1646,130 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
 
           emergencyProtocols: {
             hypoglycemia: {
-              symptoms: parseAdvancedList(aiText, "HYPOGLYCEMIA-SYMPTOMS") || [],
-              immediateActions: parseAdvancedList(aiText, "HYPOGLYCEMIA-ACTIONS") || [],
-              medications: parseAdvancedList(aiText, "HYPOGLYCEMIA-MEDS") || [],
-              whenToCallHelp: parseAdvancedList(aiText, "HYPOGLYCEMIA-HELP") || [],
+              symptoms: parseAdvancedList(aiText, "HYPOGLYCEMIA-SYMPTOMS") || [
+                "Shakiness or trembling",
+                "Sweating profusely",
+                "Rapid heartbeat",
+                "Dizziness or lightheadedness",
+                "Hunger pangs",
+                "Confusion or difficulty concentrating",
+                "Irritability or mood changes",
+                "Weakness or fatigue",
+                "Blurred vision",
+                "Headache",
+              ],
+              immediateActions: parseAdvancedList(aiText, "HYPOGLYCEMIA-ACTIONS") || [
+                "Check blood glucose immediately",
+                "Consume 15g fast-acting carbs (glucose tablets, juice)",
+                "Wait 15 minutes and recheck glucose",
+                "Repeat treatment if still below 70 mg/dL",
+                "Eat a snack with protein once glucose normalizes",
+                "Monitor closely for next 2-4 hours",
+                "Document the episode with time and cause",
+                "Adjust medication timing if needed",
+              ],
+              medications: parseAdvancedList(aiText, "HYPOGLYCEMIA-MEDS") || [
+                "Glucose tablets (4 tablets = 15g)",
+                "Glucagon injection kit (for severe cases)",
+                "Dextrose gel (1 tube = 15g)",
+                "Regular soda (4 oz = 15g carbs)",
+                "Fruit juice (4 oz = 15g carbs)",
+                "Honey (1 tablespoon = 15g carbs)",
+              ],
+              whenToCallHelp: parseAdvancedList(aiText, "HYPOGLYCEMIA-HELP") || [
+                "Patient becomes unconscious",
+                "Unable to swallow safely",
+                "Severe confusion or combativeness",
+                "Repeated episodes in 24 hours",
+                "Blood glucose below 40 mg/dL",
+                "No improvement after 2 treatments",
+                "Seizure or convulsions occur",
+                "Call 108 (India Emergency) immediately",
+              ],
             },
             hyperglycemia: {
-              symptoms: parseAdvancedList(aiText, "HYPERGLYCEMIA-SYMPTOMS") || [],
-              immediateActions: parseAdvancedList(aiText, "HYPERGLYCEMIA-ACTIONS") || [],
-              medications: parseAdvancedList(aiText, "HYPERGLYCEMIA-MEDS") || [],
-              whenToCallHelp: parseAdvancedList(aiText, "HYPERGLYCEMIA-HELP") || [],
+              symptoms: parseAdvancedList(aiText, "HYPERGLYCEMIA-SYMPTOMS") || [
+                "Excessive thirst (polydipsia)",
+                "Frequent urination (polyuria)",
+                "Blurred vision",
+                "Fatigue and weakness",
+                "Headache",
+                "Nausea and vomiting",
+                "Fruity breath odor",
+                "Rapid breathing",
+                "Dry mouth and skin",
+                "Abdominal pain",
+              ],
+              immediateActions: parseAdvancedList(aiText, "HYPERGLYCEMIA-ACTIONS") || [
+                "Check blood glucose level immediately",
+                "Check urine or blood ketones",
+                "Drink water to prevent dehydration",
+                "Take prescribed rapid-acting insulin if advised",
+                "Avoid exercise if glucose >250 mg/dL",
+                "Monitor vital signs closely",
+                "Contact healthcare provider",
+                "Prepare for emergency if ketones present",
+              ],
+              medications: parseAdvancedList(aiText, "HYPERGLYCEMIA-MEDS") || [
+                "Rapid-acting insulin (as prescribed)",
+                "Extra water (8-16 oz per hour)",
+                "Electrolyte replacement if vomiting",
+                "Anti-nausea medication if needed",
+                "Do NOT take additional oral diabetes meds",
+                "Ketone testing strips",
+              ],
+              whenToCallHelp: parseAdvancedList(aiText, "HYPERGLYCEMIA-HELP") || [
+                "Blood glucose >400 mg/dL",
+                "Moderate to large ketones present",
+                "Persistent vomiting",
+                "Signs of dehydration",
+                "Difficulty breathing",
+                "Chest pain or rapid heartbeat",
+                "Altered mental status",
+                "Call 108 immediately for emergency care",
+              ],
             },
             ketoacidosis: {
-              symptoms: parseAdvancedList(aiText, "KETOACIDOSIS-SYMPTOMS") || [],
-              immediateActions: parseAdvancedList(aiText, "KETOACIDOSIS-ACTIONS") || [],
-              medications: parseAdvancedList(aiText, "KETOACIDOSIS-MEDS") || [],
-              whenToCallHelp: parseAdvancedList(aiText, "KETOACIDOSIS-HELP") || [],
+              symptoms: parseAdvancedList(aiText, "KETOACIDOSIS-SYMPTOMS") || [
+                "Blood glucose >250 mg/dL",
+                "Large ketones in urine/blood",
+                "Fruity-smelling breath",
+                "Deep, rapid breathing (Kussmaul)",
+                "Severe nausea and vomiting",
+                "Abdominal pain",
+                "Extreme fatigue",
+                "Confusion or altered consciousness",
+                "Severe dehydration",
+                "Rapid weak pulse",
+              ],
+              immediateActions: parseAdvancedList(aiText, "KETOACIDOSIS-ACTIONS") || [
+                "Call 108 emergency services IMMEDIATELY",
+                "Check blood glucose and ketones",
+                "Do NOT give insulin without medical supervision",
+                "Keep patient conscious and breathing",
+                "Monitor airway and breathing",
+                "Prepare for immediate hospitalization",
+                "Gather all medications and medical records",
+                "Stay with patient until help arrives",
+              ],
+              medications: parseAdvancedList(aiText, "KETOACIDOSIS-MEDS") || [
+                "IV insulin (hospital administration only)",
+                "IV fluids for rehydration",
+                "Electrolyte replacement (K+, Na+, Cl-)",
+                "Bicarbonate (if pH <7.0)",
+                "Do NOT attempt home treatment",
+                "This is a medical emergency requiring ICU care",
+              ],
+              whenToCallHelp: parseAdvancedList(aiText, "KETOACIDOSIS-HELP") || [
+                "ANY suspicion of DKA - call 108 NOW",
+                "Blood glucose >250 + ketones",
+                "Vomiting prevents oral intake",
+                "Rapid breathing or difficulty breathing",
+                "Severe abdominal pain",
+                "Altered mental status",
+                "This is ALWAYS a medical emergency",
+                "Time is critical - do not delay",
+              ],
             },
           },
 
@@ -3052,65 +3442,185 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
                   </TabsContent>
 
                   <TabsContent value="emergencyProtocols">
-                    <h3 className="text-xl font-semibold mb-2">Emergency Protocols</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Hypoglycemia</CardTitle>
+                    <h3 className="text-xl font-semibold mb-4 text-red-600">
+                      🚨 Critical Diabetes Emergency Protocols
+                    </h3>
+                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6">
+                      <p className="text-center font-bold text-red-800 mb-2">
+                        EMERGENCY CONTACT: 108 (India) | Keep this information accessible at all times
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <Card className="border-yellow-300 bg-yellow-50">
+                        <CardHeader className="bg-yellow-100">
+                          <CardTitle className="text-base text-yellow-800 flex items-center">
+                            ⚠️ Hypoglycemia (&lt;70 mg/dL)
+                          </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <p className="text-sm">
-                            Symptoms: {result.emergencyProtocols.hypoglycemia.symptoms.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            Actions: {result.emergencyProtocols.hypoglycemia.immediateActions.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            Medications: {result.emergencyProtocols.hypoglycemia.medications.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            When to call help: {result.emergencyProtocols.hypoglycemia.whenToCallHelp.join(", ")}
-                          </p>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div>
+                              <h5 className="font-semibold text-yellow-800 mb-1">🔍 Symptoms:</h5>
+                              <ul className="text-sm text-yellow-700 list-disc list-inside">
+                                {result.emergencyProtocols.hypoglycemia.symptoms.slice(0, 5).map((symptom, index) => (
+                                  <li key={index}>{symptom}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-semibold text-yellow-800 mb-1">⚡ Immediate Actions:</h5>
+                              <ul className="text-sm text-yellow-700 list-disc list-inside">
+                                {result.emergencyProtocols.hypoglycemia.immediateActions
+                                  .slice(0, 4)
+                                  .map((action, index) => (
+                                    <li key={index}>{action}</li>
+                                  ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-semibold text-yellow-800 mb-1">💊 Emergency Treatments:</h5>
+                              <ul className="text-sm text-yellow-700 list-disc list-inside">
+                                {result.emergencyProtocols.hypoglycemia.medications.slice(0, 3).map((med, index) => (
+                                  <li key={index}>{med}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="bg-red-100 p-2 rounded">
+                              <h5 className="font-semibold text-red-800 mb-1">📞 Call 108 If:</h5>
+                              <ul className="text-sm text-red-700 list-disc list-inside">
+                                {result.emergencyProtocols.hypoglycemia.whenToCallHelp
+                                  .slice(0, 3)
+                                  .map((when, index) => (
+                                    <li key={index}>{when}</li>
+                                  ))}
+                              </ul>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Hyperglycemia</CardTitle>
+
+                      <Card className="border-orange-300 bg-orange-50">
+                        <CardHeader className="bg-orange-100">
+                          <CardTitle className="text-base text-orange-800 flex items-center">
+                            ⚠️ Hyperglycemia (&gt;250 mg/dL)
+                          </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <p className="text-sm">
-                            Symptoms: {result.emergencyProtocols.hyperglycemia.symptoms.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            Actions: {result.emergencyProtocols.hyperglycemia.immediateActions.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            Medications: {result.emergencyProtocols.hyperglycemia.medications.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            When to call help: {result.emergencyProtocols.hyperglycemia.whenToCallHelp.join(", ")}
-                          </p>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div>
+                              <h5 className="font-semibold text-orange-800 mb-1">🔍 Symptoms:</h5>
+                              <ul className="text-sm text-orange-700 list-disc list-inside">
+                                {result.emergencyProtocols.hyperglycemia.symptoms.slice(0, 5).map((symptom, index) => (
+                                  <li key={index}>{symptom}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-semibold text-orange-800 mb-1">⚡ Immediate Actions:</h5>
+                              <ul className="text-sm text-orange-700 list-disc list-inside">
+                                {result.emergencyProtocols.hyperglycemia.immediateActions
+                                  .slice(0, 4)
+                                  .map((action, index) => (
+                                    <li key={index}>{action}</li>
+                                  ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-semibold text-orange-800 mb-1">💊 Emergency Treatments:</h5>
+                              <ul className="text-sm text-orange-700 list-disc list-inside">
+                                {result.emergencyProtocols.hyperglycemia.medications.slice(0, 3).map((med, index) => (
+                                  <li key={index}>{med}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="bg-red-100 p-2 rounded">
+                              <h5 className="font-semibold text-red-800 mb-1">📞 Call 108 If:</h5>
+                              <ul className="text-sm text-red-700 list-disc list-inside">
+                                {result.emergencyProtocols.hyperglycemia.whenToCallHelp
+                                  .slice(0, 3)
+                                  .map((when, index) => (
+                                    <li key={index}>{when}</li>
+                                  ))}
+                              </ul>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Ketoacidosis</CardTitle>
+
+                      <Card className="border-red-400 bg-red-50 border-2">
+                        <CardHeader className="bg-red-200">
+                          <CardTitle className="text-base text-red-900 flex items-center">
+                            🚨 Diabetic Ketoacidosis (DKA) - LIFE THREATENING
+                          </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <p className="text-sm">
-                            Symptoms: {result.emergencyProtocols.ketoacidosis.symptoms.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            Actions: {result.emergencyProtocols.ketoacidosis.immediateActions.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            Medications: {result.emergencyProtocols.ketoacidosis.medications.join(", ")}
-                          </p>
-                          <p className="text-sm">
-                            When to call help: {result.emergencyProtocols.ketoacidosis.whenToCallHelp.join(", ")}
-                          </p>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div>
+                              <h5 className="font-semibold text-red-800 mb-1">🔍 Critical Symptoms:</h5>
+                              <ul className="text-sm text-red-700 list-disc list-inside">
+                                {result.emergencyProtocols.ketoacidosis.symptoms.slice(0, 5).map((symptom, index) => (
+                                  <li key={index}>{symptom}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-semibold text-red-800 mb-1">⚡ Emergency Actions:</h5>
+                              <ul className="text-sm text-red-700 list-disc list-inside">
+                                {result.emergencyProtocols.ketoacidosis.immediateActions
+                                  .slice(0, 4)
+                                  .map((action, index) => (
+                                    <li key={index}>{action}</li>
+                                  ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-semibold text-red-800 mb-1">🏥 Hospital Treatment Only:</h5>
+                              <ul className="text-sm text-red-700 list-disc list-inside">
+                                {result.emergencyProtocols.ketoacidosis.medications.slice(0, 3).map((med, index) => (
+                                  <li key={index}>{med}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="bg-red-200 p-2 rounded border border-red-400">
+                              <h5 className="font-semibold text-red-900 mb-1">📞 CALL 108 IMMEDIATELY:</h5>
+                              <ul className="text-sm text-red-800 list-disc list-inside font-medium">
+                                {result.emergencyProtocols.ketoacidosis.whenToCallHelp
+                                  .slice(0, 3)
+                                  .map((when, index) => (
+                                    <li key={index}>{when}</li>
+                                  ))}
+                              </ul>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
+                    </div>
+
+                    <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">📋 Emergency Preparedness Checklist:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700">
+                        <div>
+                          <h5 className="font-semibold mb-1">Always Keep Ready:</h5>
+                          <ul className="list-disc list-inside">
+                            <li>Glucose tablets or gel</li>
+                            <li>Glucagon emergency kit</li>
+                            <li>Blood glucose meter</li>
+                            <li>Ketone testing strips</li>
+                            <li>Emergency contact numbers</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <h5 className="font-semibold mb-1">Emergency Information:</h5>
+                          <ul className="list-disc list-inside">
+                            <li>Current medications list</li>
+                            <li>Medical ID bracelet/card</li>
+                            <li>Healthcare provider contacts</li>
+                            <li>Insurance information</li>
+                            <li>Recent lab results</li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
 
