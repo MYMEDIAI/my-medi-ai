@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Home, Loader2, Send } from "lucide-react"
+import { Activity, Download, FileText, Heart, Home, Loader2, RotateCcw, Send, Target, User, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,10 +10,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import PoweredByFooter from "@/components/powered-by-footer"
+import { Badge } from "@/components/ui/badge"
 
 interface DiabetesAssessmentData {
   // Personal Information
@@ -340,7 +340,7 @@ export default function DiabetesAssessmentPage() {
   const [result, setResult] = useState<DiabetesReversalResult | null>(null)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [showAdvancedParams, setShowAdvancedParams] = useState(false)
-  const [formData, setFormData] = useState<DiabetesAssessmentData>({
+  const initialFormData: DiabetesAssessmentData = {
     fullName: "",
     age: "",
     gender: "",
@@ -386,7 +386,8 @@ export default function DiabetesAssessmentPage() {
     commitmentLevel: [],
     budgetRange: "",
     additionalNotes: "",
-  })
+  }
+  const [formData, setFormData] = useState<DiabetesAssessmentData>(initialFormData)
 
   // Enhanced options arrays
   const allergyOptions = [
@@ -558,6 +559,522 @@ export default function DiabetesAssessmentPage() {
     if (numValue < 7) return { status: "Diabetic - Good Control", color: "text-yellow-600" }
     if (numValue < 8) return { status: "Diabetic - Fair Control", color: "text-orange-600" }
     return { status: "Diabetic - Poor Control", color: "text-red-600" }
+  }
+
+  const generatePDF = () => {
+    if (!result) return
+
+    const currentDate = new Date().toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    })
+
+    const currentTime = new Date().toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour12: true,
+    })
+
+    const pdfContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MyMedi.ai - Advanced Diabetes Reversal Program Report</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body { 
+      font-family: 'Arial', sans-serif; 
+      font-size: 10px;
+      line-height: 1.3;
+      color: #333;
+      background: white;
+    }
+    
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 12mm;
+      margin: 0 auto;
+      background: white;
+      page-break-after: always;
+    }
+    
+    .page:last-child {
+      page-break-after: avoid;
+    }
+    
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #dc2626;
+      padding-bottom: 12px;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #dc2626;
+    }
+    
+    .header h1 {
+      font-size: 20px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    .patient-info {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+      color: #7f1d1d;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      border: 2px solid #fecaca;
+    }
+    
+    .patient-info h3 {
+      grid-column: 1 / -1;
+      font-size: 12px;
+      margin-bottom: 8px;
+      text-align: center;
+      color: #dc2626;
+    }
+    
+    .section {
+      margin-bottom: 12px;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+    
+    .section-header {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+      padding: 8px 12px;
+      border-bottom: 1px solid #fecaca;
+      font-weight: bold;
+      font-size: 11px;
+      color: #dc2626;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .section-content {
+      padding: 10px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+      margin-bottom: 8px;
+    }
+    
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 4px;
+      text-align: left;
+      vertical-align: top;
+    }
+    
+    th {
+      background: #f3f4f6;
+      font-weight: bold;
+      font-size: 9px;
+    }
+    
+    .emergency-section {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    
+    .reversal-timeline {
+      background: #ecfdf5;
+      border: 2px solid #10b981;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    
+    .meal-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+    }
+    
+    .meal-header {
+      font-weight: bold;
+      color: #1e40af;
+      margin-bottom: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .meal-time {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 8px;
+    }
+    
+    .meal-calories {
+      background: #fef3c7;
+      color: #d97706;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 8px;
+      font-weight: bold;
+    }
+    
+    .disclaimer {
+      background: #fffbeb;
+      border: 2px solid #fbbf24;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 12px;
+      font-size: 9px;
+      color: #92400e;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 15px;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 6px;
+      font-size: 9px;
+      color: #6b7280;
+    }
+    
+    .exercise-card {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+    }
+    
+    .bmi-progress {
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      text-align: center;
+    }
+    
+    @media print {
+      body { margin: 0; }
+      .page { margin: 0; padding: 8mm; }
+      .section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="logo">🏥</div>
+      <h1>MyMedi.ai</h1>
+      <p>Advanced Diabetes Reversal Program</p>
+      <p>Comprehensive 3-Month Personalized Reversal Protocol</p>
+    </div>
+
+    <div class="patient-info">
+      <h3>🔬 DIABETES REVERSAL PATIENT PROFILE</h3>
+      <div><strong>Name:</strong> ${formData.fullName}</div>
+      <div><strong>Age:</strong> ${formData.age} years</div>
+      <div><strong>Gender:</strong> ${formData.gender}</div>
+      <div><strong>Weight:</strong> ${formData.weight} kg</div>
+      <div><strong>Height:</strong> ${formData.height} cm</div>
+      <div><strong>BMI:</strong> ${formData.height && formData.weight ? `${calculateBMI().bmi} (${calculateBMI().category})` : "Not calculated"}</div>
+      <div><strong>Diabetes Type:</strong> ${formData.diabetesType}</div>
+      <div><strong>Diagnosis Date:</strong> ${formData.diagnosisDate}</div>
+      <div><strong>Assessment Date:</strong> ${currentDate}</div>
+      <div><strong>Assessment Time:</strong> ${currentTime}</div>
+      <div><strong>Report ID:</strong> DRV-${Date.now().toString().slice(-8)}</div>
+      <div><strong>HbA1c Level:</strong> ${formData.hba1cLevel}% (${formData.hba1cLevel ? getHbA1cStatus(formData.hba1cLevel).status : "Not provided"})</div>
+    </div>
+
+    <div class="bmi-progress">
+      <h3 style="color: #0369a1; margin-bottom: 8px;">🎯 BMI & WEIGHT LOSS PROGRESSION</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; font-size: 9px;">
+        <div>
+          <strong>Current BMI:</strong><br>
+          ${formData.height && formData.weight ? calculateBMI().bmi : "N/A"}<br>
+          <small>(${formData.height && formData.weight ? calculateBMI().category : "Calculate"})</small>
+        </div>
+        <div>
+          <strong>Target BMI:</strong><br>
+          ${formData.weightTarget && formData.height ? (Number(formData.weightTarget) / Math.pow(Number(formData.height) / 100, 2)).toFixed(1) : "22.0"}<br>
+          <small>(Healthy Range)</small>
+        </div>
+        <div>
+          <strong>Weight Loss Needed:</strong><br>
+          ${formData.weight && formData.weightTarget ? Math.max(Number(formData.weight) - Number(formData.weightTarget), 0) : "8-12"} kg<br>
+          <small>(3-month target)</small>
+        </div>
+        <div>
+          <strong>Daily Water Target:</strong><br>
+          ${formData.weight ? Math.round(Number(formData.weight) * 35) : 2500}ml<br>
+          <small>(35ml per kg body weight)</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="reversal-timeline">
+      <h3 style="color: #065f46; margin-bottom: 8px;">🎯 3-MONTH DIABETES REVERSAL TIMELINE</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 9px;">
+        <div>
+          <strong>Month 1: Stabilization</strong><br>
+          • Blood sugar stabilization<br>
+          • BMI reduction: 1-2 points<br>
+          • Exercise: 150+ min/week<br>
+          • HbA1c target: -0.5-1.0%
+        </div>
+        <div>
+          <strong>Month 2: Optimization</strong><br>
+          • Intensive intervention<br>
+          • BMI reduction: 2-3 points<br>
+          • Exercise: 200+ min/week<br>
+          • HbA1c target: -1.0-1.5%
+        </div>
+        <div>
+          <strong>Month 3: Reversal</strong><br>
+          • Achieve HbA1c &lt;6.0%<br>
+          • Target BMI: 18.5-24.9<br>
+          • Exercise: 250+ min/week<br>
+          • Medication minimization
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        💊 DIABETES REVERSAL MEDICATIONS & TAPERING SCHEDULE
+      </div>
+      <div class="section-content">
+        <table>
+          <thead>
+            <tr>
+              <th>Medication</th>
+              <th>Current Dosage</th>
+              <th>Frequency</th>
+              <th>Timing</th>
+              <th>Category</th>
+              <th>Tapering Schedule</th>
+              <th>Price (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${result.medications
+              .map(
+                (med) => `
+              <tr>
+                <td><strong>${med.name}</strong></td>
+                <td>${med.dosage}</td>
+                <td>${med.frequency}</td>
+                <td>${med.timing}</td>
+                <td>${med.category}</td>
+                <td>${med.tapering}</td>
+                <td>${med.price}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        🏃‍♂️ PERSONALIZED EXERCISE & FITNESS PLAN
+      </div>
+      <div class="section-content">
+        <table>
+          <thead>
+            <tr>
+              <th>Exercise Type</th>
+              <th>Duration</th>
+              <th>Frequency</th>
+              <th>Intensity</th>
+              <th>BMI Impact</th>
+              <th>Glucose Effect</th>
+              <th>Equipment</th>
+              <th>Progression</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${result.exerciseRecommendations
+              .map(
+                (exercise) => `
+              <tr>
+                <td><strong>${exercise.type}</strong></td>
+                <td>${exercise.duration} min</td>
+                <td>${exercise.frequency}</td>
+                <td>${exercise.intensity}</td>
+                <td>${exercise.bmiImpact}</td>
+                <td>${exercise.glucoseEffect}</td>
+                <td>${exercise.equipment}</td>
+                <td>${exercise.progression}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="section">
+      <div class="section-header">
+        🍽️ COMPREHENSIVE WEEK 1 DIET PLAN WITH UNIQUE CHOICES
+      </div>
+      <div class="section-content">
+        ${result.comprehensiveDietPlan.week1
+          .map(
+            (day) => `
+          <div class="meal-card">
+            <div class="meal-header">
+              <span><strong>${day.day} - ${day.date}</strong></span>
+              <div>
+                <span class="meal-calories">${day.totalCalories} kcal</span>
+                <span class="meal-time">${day.totalWater}ml water</span>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 8px; margin-top: 6px;">
+              ${day.meals
+                .map(
+                  (meal) => `
+                <div>
+                  <strong>${meal.time} - ${meal.meal}:</strong><br>
+                  ${meal.items}<br>
+                  <em>Cal: ${meal.calories} | Carbs: ${meal.carbs}g | Protein: ${meal.protein}g | Water: ${meal.water}ml</em><br>
+                  <small style="color: #059669;">Prep: ${meal.preparation}</small><br>
+                  <small style="color: #7c3aed;">Alt: ${meal.alternatives}</small>
+                </div>
+              `,
+                )
+                .join("")}
+            </div>
+            <div style="margin-top: 6px; font-size: 8px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 4px;">
+              <strong>Exercise:</strong> ${day.exerciseMinutes} | 
+              <strong>Supplements:</strong> ${day.supplements}<br>
+              <strong>Notes:</strong> ${day.notes}
+            </div>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    </div>
+
+    <div class="emergency-section">
+      <h3 style="color: #92400e; margin-bottom: 8px;">🚨 DIABETES EMERGENCY PROTOCOLS</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 8px;">
+        <div>
+          <strong>HYPOGLYCEMIA (&lt;70 mg/dL)</strong><br>
+          <em>Symptoms:</em> ${result.emergencyProtocols.hypoglycemia.symptoms.slice(0, 2).join(", ")}<br>
+          <em>Actions:</em> ${result.emergencyProtocols.hypoglycemia.immediateActions.slice(0, 2).join(", ")}<br>
+          <em>Emergency:</em> Call 108 if unconscious
+        </div>
+        <div>
+          <strong>HYPERGLYCEMIA (&gt;250 mg/dL)</strong><br>
+          <em>Symptoms:</em> ${result.emergencyProtocols.hyperglycemia.symptoms.slice(0, 2).join(", ")}<br>
+          <em>Actions:</em> ${result.emergencyProtocols.hyperglycemia.immediateActions.slice(0, 2).join(", ")}<br>
+          <em>Emergency:</em> Seek immediate medical care
+        </div>
+        <div>
+          <strong>KETOACIDOSIS (DKA)</strong><br>
+          <em>Symptoms:</em> ${result.emergencyProtocols.ketoacidosis.symptoms.slice(0, 2).join(", ")}<br>
+          <em>Actions:</em> ${result.emergencyProtocols.ketoacidosis.immediateActions.slice(0, 2).join(", ")}<br>
+          <em>Emergency:</em> Call 108 immediately
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        🏥 LOCATION-BASED DIABETES CARE CENTERS
+      </div>
+      <div class="section-content">
+        ${result.nearbyHospitals
+          .map(
+            (hospital) => `
+          <div style="margin-bottom: 8px; padding: 6px; border: 1px solid #e5e7eb; border-radius: 4px;">
+            <strong style="color: #dc2626;">${hospital.name}</strong> (${hospital.rating})<br>
+            <small>${hospital.address} | Distance: ${hospital.distance}</small><br>
+            <small>Specialties: ${hospital.specialties}</small><br>
+            <small>Phone: ${hospital.phone} | Emergency: ${hospital.emergency}</small>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚠️ ADVANCED DIABETES REVERSAL DISCLAIMER:</strong><br>
+      This AI-generated diabetes reversal program is for informational purposes only and represents an advanced protocol that should only be implemented under strict medical supervision by qualified healthcare providers specializing in diabetes reversal and metabolic medicine. Diabetes reversal requires intensive monitoring, gradual medication adjustments, and personalized protocols that may not be suitable for everyone. Individual results vary significantly, and this report provides general guidelines based on current diabetes reversal research. Always consult with your endocrinologist, diabetes educator, or certified diabetes reversal specialist before making any changes to your diabetes management plan, medications, diet, or exercise routine. Regular monitoring by healthcare professionals is essential for safe and effective diabetes reversal. In case of diabetic emergencies, severe hypoglycemia, diabetic ketoacidosis, or any concerning symptoms, contact emergency services immediately (108 for India). This program requires high commitment levels and may not be appropriate for all diabetes types or stages.
+    </div>
+
+    <div class="footer">
+      <p><strong>MyMedi.ai</strong> - Advanced Diabetes Reversal Program</p>
+      <p>Generated on ${currentDate} at ${currentTime} IST | Report ID: DRV-${Date.now().toString().slice(-8)}</p>
+      <p>🌐 www.mymedi.ai | 📧 support@mymedi.ai | Emergency: 108</p>
+      <p><em>Your journey to diabetes freedom starts today!</em></p>
+      <p style="margin-top: 8px; font-size: 8px; color: #9ca3af;">
+        This comprehensive report includes ${result.medications.length} medication recommendations with tapering schedules, 
+        ${result.exerciseRecommendations.length} personalized exercise plans, detailed weekly diet plans with ${result.comprehensiveDietPlan.week1.length} days of unique meal combinations, 
+        ${result.supplements.length} supplement recommendations, emergency protocols, and 3-month structured reversal timeline with BMI and exercise targets.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `
+
+    const printWindow = window.open("", "_blank")
+    if (printWindow) {
+      printWindow.document.write(pdfContent)
+      printWindow.document.close()
+      printWindow.focus()
+      setTimeout(() => {
+        printWindow.print()
+      }, 1000)
+    }
   }
 
   const handleSubmit = async () => {
@@ -1665,14 +2182,14 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
           time: "1:00 PM",
           items: mealPlan.lunch.items,
           calories: mealPlan.lunch.calories,
-          carbs: mealPlan.lunch.carbs,
-          protein: mealPlan.lunch.protein,
-          fat: mealPlan.lunch.fat,
-          fiber: mealPlan.lunch.fiber,
-          glycemicIndex: mealPlan.lunch.gi,
-          preparation: mealPlan.lunch.preparation,
-          alternatives: mealPlan.lunch.alternatives.join(" | "),
-          water: mealPlan.lunch.water,
+          carbs: mealPlan.carbs,
+          protein: mealPlan.protein,
+          fat: mealPlan.fat,
+          fiber: mealPlan.fiber,
+          glycemicIndex: mealPlan.gi,
+          preparation: mealPlan.preparation,
+          alternatives: mealPlan.alternatives.join(" | "),
+          water: mealPlan.water,
         },
         {
           meal: "Evening",
@@ -1693,14 +2210,14 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
           time: "7:30 PM",
           items: mealPlan.dinner.items,
           calories: mealPlan.dinner.calories,
-          carbs: mealPlan.dinner.carbs,
-          protein: mealPlan.dinner.protein,
-          fat: mealPlan.dinner.fat,
-          fiber: mealPlan.dinner.fiber,
-          glycemicIndex: mealPlan.dinner.gi,
-          preparation: mealPlan.dinner.preparation,
-          alternatives: mealPlan.dinner.alternatives.join(" | "),
-          water: mealPlan.dinner.water,
+          carbs: mealPlan.carbs,
+          protein: mealPlan.protein,
+          fat: mealPlan.fat,
+          fiber: mealPlan.fiber,
+          glycemicIndex: mealPlan.gi,
+          preparation: mealPlan.preparation,
+          alternatives: mealPlan.alternatives.join(" | "),
+          water: mealPlan.water,
         },
       ]
 
@@ -1810,949 +2327,841 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
 
       <main className="flex-grow">
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <Card className="mb-5">
-            <CardHeader>
-              <CardTitle>Patient Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      type="text"
-                      id="fullName"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="age">Age</Label>
-                    <Input
-                      type="number"
-                      id="age"
-                      value={formData.age}
-                      onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="gender">Gender</Label>
-                    <Select onValueChange={(value) => setFormData({ ...formData, gender: value })}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select gender" defaultValue={formData.gender} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="diabetesType">Type of Diabetes</Label>
-                    <Select onValueChange={(value) => setFormData({ ...formData, diabetesType: value })}>
-                      <SelectTrigger className="w-[220px]">
-                        <SelectValue placeholder="Select diabetes type" defaultValue={formData.diabetesType} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Type 1">Type 1</SelectItem>
-                        <SelectItem value="Type 2">Type 2</SelectItem>
-                        <SelectItem value="Gestational">Gestational</SelectItem>
-                        <SelectItem value="LADA">LADA</SelectItem>
-                        <SelectItem value="MODY">MODY</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                      type="number"
-                      id="weight"
-                      value={formData.weight}
-                      onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="height">Height (cm)</Label>
-                    <Input
-                      type="number"
-                      id="height"
-                      value={formData.height}
-                      onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="diagnosisDate">Diagnosis Date</Label>
-                    <Input
-                      type="date"
-                      id="diagnosisDate"
-                      value={formData.diagnosisDate}
-                      onChange={(e) => setFormData({ ...formData, diagnosisDate: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      type="text"
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="emergencyContact">Emergency Contact</Label>
-                  <Input
-                    type="tel"
-                    id="emergencyContact"
-                    value={formData.emergencyContact}
-                    onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="mb-5">
-            <CardHeader>
-              <CardTitle>Medical History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="currentMedications">Current Medications</Label>
-                  <Textarea
-                    id="currentMedications"
-                    value={formData.currentMedications}
-                    onChange={(e) => setFormData({ ...formData, currentMedications: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="hba1cLevel">HbA1c Level (%)</Label>
-                    <Input
-                      type="number"
-                      id="hba1cLevel"
-                      value={formData.hba1cLevel}
-                      onChange={(e) => setFormData({ ...formData, hba1cLevel: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="bloodPressure">Blood Pressure (Systolic/Diastolic)</Label>
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        type="number"
-                        id="bloodPressureSystolic"
-                        placeholder="Systolic"
-                        value={formData.bloodPressureSystolic}
-                        onChange={(e) => setFormData({ ...formData, bloodPressureSystolic: e.target.value })}
-                      />
-                      <span>/</span>
-                      <Input
-                        type="number"
-                        id="bloodPressureDiastolic"
-                        placeholder="Diastolic"
-                        value={formData.bloodPressureDiastolic}
-                        onChange={(e) => setFormData({ ...formData, bloodPressureDiastolic: e.target.value })}
-                      />
-                      <span>mmHg</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Allergies</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {allergyOptions.map((allergy) => (
-                      <div key={allergy} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`allergy-${allergy}`}
-                          checked={formData.allergies.includes(allergy)}
-                          onCheckedChange={(checked) => handleMultiSelect("allergies", allergy, !!checked)}
-                        />
-                        <Label htmlFor={`allergy-${allergy}`}>{allergy}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="lastCheckup">Last Checkup Date</Label>
-                    <Input
-                      type="date"
-                      id="lastCheckup"
-                      value={formData.lastCheckup}
-                      onChange={(e) => setFormData({ ...formData, lastCheckup: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="familyHistory">Family History of Diabetes</Label>
-                    <Textarea
-                      id="familyHistory"
-                      value={formData.familyHistory}
-                      onChange={(e) => setFormData({ ...formData, familyHistory: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Complications</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {complicationOptions.map((complication) => (
-                      <div key={complication} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`complication-${complication}`}
-                          checked={formData.complications.includes(complication)}
-                          onCheckedChange={(checked) => handleMultiSelect("complications", complication, !!checked)}
-                        />
-                        <Label htmlFor={`complication-${complication}`}>{complication}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="mb-5">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Advanced Parameters</CardTitle>
-                <Button variant="outline" size="sm" onClick={() => setShowAdvancedParams(!showAdvancedParams)}>
-                  {showAdvancedParams ? "Hide" : "Show"}
-                </Button>
-              </div>
-            </CardHeader>
-            {showAdvancedParams && (
-              <CardContent>
-                <div className="grid gap-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="w-full max-w-4xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
+            <Card className="border-red-200 shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 sm:p-6">
+                <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center">
+                    <Heart className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
                     <div>
-                      <Label htmlFor="insulinResistance">Insulin Resistance</Label>
-                      <Input
-                        type="text"
-                        id="insulinResistance"
-                        value={formData.insulinResistance}
-                        onChange={(e) => setFormData({ ...formData, insulinResistance: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cPeptideLevel">C-Peptide Level (ng/mL)</Label>
-                      <Input
-                        type="number"
-                        id="cPeptideLevel"
-                        value={formData.cPeptideLevel}
-                        onChange={(e) => setFormData({ ...formData, cPeptideLevel: e.target.value })}
-                      />
+                      <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">
+                        Advanced Diabetes Reversal Assessment
+                      </h1>
+                      <p className="text-red-100 text-xs sm:text-sm">
+                        Comprehensive 3-month diabetes reversal program with detailed protocols
+                      </p>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="microalbuminuria">Microalbuminuria (mg/g)</Label>
-                      <Input
-                        type="text"
-                        id="microalbuminuria"
-                        value={formData.microalbuminuria}
-                        onChange={(e) => setFormData({ ...formData, microalbuminuria: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lipidProfile">Lipid Profile</Label>
-                      <Input
-                        type="text"
-                        id="lipidProfile"
-                        value={formData.lipidProfile}
-                        onChange={(e) => setFormData({ ...formData, lipidProfile: e.target.value })}
-                      />
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-green-500 text-white">
+                      <Star className="w-3 h-3 mr-1" />
+                      Reversal Program
+                    </Badge>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="thyroidFunction">Thyroid Function (mIU/L)</Label>
-                      <Input
-                        type="text"
-                        id="thyroidFunction"
-                        value={formData.thyroidFunction}
-                        onChange={(e) => setFormData({ ...formData, thyroidFunction: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="vitaminD">Vitamin D (ng/mL)</Label>
-                      <Input
-                        type="text"
-                        id="vitaminD"
-                        value={formData.vitaminD}
-                        onChange={(e) => setFormData({ ...formData, vitaminD: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="inflammation">Inflammation Markers (mg/L)</Label>
-                    <Input
-                      type="text"
-                      id="inflammation"
-                      value={formData.inflammation}
-                      onChange={(e) => setFormData({ ...formData, inflammation: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            )}
-          </Card>
-
-          <Card className="mb-5">
-            <CardHeader>
-              <CardTitle>Lifestyle</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="activityLevel">Activity Level</Label>
-                    <Select onValueChange={(value) => setFormData({ ...formData, activityLevel: value })}>
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select activity level" defaultValue={formData.activityLevel} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sedentary">Sedentary</SelectItem>
-                        <SelectItem value="Lightly Active">Lightly Active</SelectItem>
-                        <SelectItem value="Moderately Active">Moderately Active</SelectItem>
-                        <SelectItem value="Very Active">Very Active</SelectItem>
-                        <SelectItem value="Extra Active">Extra Active</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="dietPreferences">Diet Preferences</Label>
-                    <Select onValueChange={(value) => setFormData({ ...formData, dietPreferences: value })}>
-                      <SelectTrigger className="w-[220px]">
-                        <SelectValue placeholder="Select diet preferences" defaultValue={formData.dietPreferences} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {dietPreferenceOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="exerciseFrequency">Exercise Frequency (days/week)</Label>
-                    <Input
-                      type="number"
-                      id="exerciseFrequency"
-                      value={formData.exerciseFrequency}
-                      onChange={(e) => setFormData({ ...formData, exerciseFrequency: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sleepHours">Sleep Hours</Label>
-                    <Input
-                      type="number"
-                      id="sleepHours"
-                      value={formData.sleepHours}
-                      onChange={(e) => setFormData({ ...formData, sleepHours: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="smokingStatus">Smoking Status</Label>
-                    <Select onValueChange={(value) => setFormData({ ...formData, smokingStatus: value })}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select status" defaultValue={formData.smokingStatus} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Never">Never</SelectItem>
-                        <SelectItem value="Former">Former</SelectItem>
-                        <SelectItem value="Current">Current</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="alcoholConsumption">Alcohol Consumption</Label>
-                    <Select onValueChange={(value) => setFormData({ ...formData, alcoholConsumption: value })}>
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select consumption" defaultValue={formData.alcoholConsumption} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Never">Never</SelectItem>
-                        <SelectItem value="Socially">Socially</SelectItem>
-                        <SelectItem value="Regularly">Regularly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Stress Levels</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {stressLevelOptions.map((stress) => (
-                      <div key={stress} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`stress-${stress}`}
-                          checked={formData.stressLevel.includes(stress)}
-                          onCheckedChange={(checked) => handleMultiSelect("stressLevel", stress, !!checked)}
-                        />
-                        <Label htmlFor={`stress-${stress}`}>{stress}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="workSchedule">Work Schedule</Label>
-                  <Textarea
-                    id="workSchedule"
-                    value={formData.workSchedule}
-                    onChange={(e) => setFormData({ ...formData, workSchedule: e.target.value })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="mb-5">
-            <CardHeader>
-              <CardTitle>Current Symptoms</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fastingBloodSugar">Fasting Blood Sugar (mg/dL)</Label>
-                    <Input
-                      type="number"
-                      id="fastingBloodSugar"
-                      value={formData.fastingBloodSugar}
-                      onChange={(e) => setFormData({ ...formData, fastingBloodSugar: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="postMealBloodSugar">Post-Meal Blood Sugar (mg/dL)</Label>
-                    <Input
-                      type="number"
-                      id="postMealBloodSugar"
-                      value={formData.postMealBloodSugar}
-                      onChange={(e) => setFormData({ ...formData, postMealBloodSugar: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Frequent Symptoms</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {symptomOptions.map((symptom) => (
-                      <div key={symptom} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`symptom-${symptom}`}
-                          checked={formData.frequentSymptoms.includes(symptom)}
-                          onCheckedChange={(checked) => handleMultiSelect("frequentSymptoms", symptom, !!checked)}
-                        />
-                        <Label htmlFor={`symptom-${symptom}`}>{symptom}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="emergencyEpisodes">Emergency Episodes</Label>
-                  <Textarea
-                    id="emergencyEpisodes"
-                    value={formData.emergencyEpisodes}
-                    onChange={(e) => setFormData({ ...formData, emergencyEpisodes: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="symptomSeverity">Symptom Severity (1-10)</Label>
-                  <Slider
-                    defaultValue={formData.symptomSeverity}
-                    max={10}
-                    step={1}
-                    onValueChange={(value) => setFormData({ ...formData, symptomSeverity: value })}
-                  />
-                  <div className="text-sm text-gray-500">Severity: {formData.symptomSeverity[0]}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="mb-5">
-            <CardHeader>
-              <CardTitle>Goals & Commitment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="weightTarget">Target Weight (kg)</Label>
-                    <Input
-                      type="number"
-                      id="weightTarget"
-                      value={formData.weightTarget}
-                      onChange={(e) => setFormData({ ...formData, weightTarget: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="hba1cTarget">Target HbA1c (%)</Label>
-                    <Input
-                      type="number"
-                      id="hba1cTarget"
-                      value={formData.hba1cTarget}
-                      onChange={(e) => setFormData({ ...formData, hba1cTarget: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Primary Health Goals</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {healthGoalOptions.map((goal) => (
-                      <div key={goal} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`goal-${goal}`}
-                          checked={formData.primaryGoals.includes(goal)}
-                          onCheckedChange={(checked) => handleMultiSelect("primaryGoals", goal, !!checked)}
-                        />
-                        <Label htmlFor={`goal-${goal}`}>{goal}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="dietaryRestrictions">Dietary Restrictions</Label>
-                    <Textarea
-                      id="dietaryRestrictions"
-                      value={formData.dietaryRestrictions}
-                      onChange={(e) => setFormData({ ...formData, dietaryRestrictions: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="exerciseGoals">Exercise Goals</Label>
-                    <Textarea
-                      id="exerciseGoals"
-                      value={formData.exerciseGoals}
-                      onChange={(e) => setFormData({ ...formData, exerciseGoals: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Commitment Level</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {commitmentLevelOptions.map((commitment) => (
-                      <div key={commitment} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`commitment-${commitment}`}
-                          checked={formData.commitmentLevel.includes(commitment)}
-                          onCheckedChange={(checked) => handleMultiSelect("commitmentLevel", commitment, !!checked)}
-                        />
-                        <Label htmlFor={`commitment-${commitment}`}>{commitment}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="budgetRange">Budget Range</Label>
-                  <Select onValueChange={(value) => setFormData({ ...formData, budgetRange: value })}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select budget" defaultValue={formData.budgetRange} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Basic">Basic</SelectItem>
-                      <SelectItem value="Standard">Standard</SelectItem>
-                      <SelectItem value="Premium">Premium</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="additionalNotes">Additional Notes</Label>
-                  <Textarea
-                    id="additionalNotes"
-                    value={formData.additionalNotes}
-                    onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Please wait
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Get Assessment
-              </>
-            )}
-          </Button>
-
-          {result && (
-            <div className="mt-10">
-              <h2 className="text-2xl font-bold mb-4">Assessment Result</h2>
-
-              <Tabs defaultValue="medications" className="w-full">
-                <TabsList>
-                  <TabsTrigger value="medications">Medications</TabsTrigger>
-                  <TabsTrigger value="vitalMonitoring">Vital Monitoring</TabsTrigger>
-                  <TabsTrigger value="labTests">Lab Tests</TabsTrigger>
-                  <TabsTrigger value="dietPlan">Diet Plan</TabsTrigger>
-                  <TabsTrigger value="exercisePlan">Exercise Plan</TabsTrigger>
-                  <TabsTrigger value="emergencyProtocols">Emergency Protocols</TabsTrigger>
-                  <TabsTrigger value="supplements">Supplements</TabsTrigger>
-                  <TabsTrigger value="ayurvedicTreatment">Ayurvedic Treatment</TabsTrigger>
-                  <TabsTrigger value="followUpPlan">Follow-Up Plan</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="medications">
-                  <h3 className="text-xl font-semibold mb-2">Medications</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Dosage</TableHead>
-                        <TableHead>Frequency</TableHead>
-                        <TableHead>Timing</TableHead>
-                        <TableHead>Tapering</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {result.medications.map((medication, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{medication.name}</TableCell>
-                          <TableCell>{medication.dosage}</TableCell>
-                          <TableCell>{medication.frequency}</TableCell>
-                          <TableCell>{medication.timing}</TableCell>
-                          <TableCell>{medication.tapering}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-
-                <TabsContent value="vitalMonitoring">
-                  <h3 className="text-xl font-semibold mb-2">Vital Monitoring</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Vital</TableHead>
-                        <TableHead>Frequency</TableHead>
-                        <TableHead>Timing</TableHead>
-                        <TableHead>Target Range</TableHead>
-                        <TableHead>Notes</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {result.vitalMonitoring.map((vital, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{vital.vital}</TableCell>
-                          <TableCell>{vital.frequency}</TableCell>
-                          <TableCell>{vital.timing}</TableCell>
-                          <TableCell>{vital.targetRange}</TableCell>
-                          <TableCell>{vital.notes}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-
-                <TabsContent value="labTests">
-                  <h3 className="text-xl font-semibold mb-2">Lab Tests</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Test</TableHead>
-                        <TableHead>Priority</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead>Preparation</TableHead>
-                        <TableHead>Month</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {result.labTests.map((lab, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{lab.test}</TableCell>
-                          <TableCell>{lab.priority}</TableCell>
-                          <TableCell>{lab.reason}</TableCell>
-                          <TableCell>{lab.preparation}</TableCell>
-                          <TableCell>{lab.month}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-
-                <TabsContent value="dietPlan">
-                  <h3 className="text-xl font-semibold mb-2">Diet Plan (Week 1)</h3>
-                  {result.comprehensiveDietPlan.week1.map((dayPlan, dayIndex) => (
-                    <Card key={dayIndex} className="mb-4">
-                      <CardHeader>
-                        <CardTitle>
-                          {dayPlan.day} - {dayPlan.date}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {dayPlan.meals.map((meal, mealIndex) => (
-                          <div key={mealIndex} className="mb-3">
-                            <h4 className="font-semibold">
-                              {meal.meal} ({meal.time})
-                            </h4>
-                            <p>Items: {meal.items}</p>
-                            <p>
-                              Calories: {meal.calories}, Carbs: {meal.carbs}g, Protein: {meal.protein}g, Fat: {meal.fat}
-                              g, Fiber: {meal.fiber}g
-                            </p>
-                            <p>Preparation: {meal.preparation}</p>
-                            <p>Alternatives: {meal.alternatives}</p>
-                          </div>
-                        ))}
-                        <p>
-                          Total Calories: {dayPlan.totalCalories}, Total Carbs: {dayPlan.totalCarbs}g
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 sm:p-4 lg:p-6">
+                {/* Real-time Health Insights */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-red-700 mb-4 flex items-center">
+                    <Activity className="w-5 h-5 mr-2" />
+                    Real-time Health Insights
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="border-blue-200 bg-blue-50">
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-blue-700 text-sm mb-2">BMI Calculator</h4>
+                        <div className="text-2xl font-bold text-blue-600">
+                          {formData.height && formData.weight ? calculateBMI().bmi : "--"}
+                        </div>
+                        <p
+                          className={`text-xs ${
+                            formData.height && formData.weight ? calculateBMI().color : "text-gray-500"
+                          }`}
+                        >
+                          {formData.height && formData.weight ? calculateBMI().category : "Enter height & weight"}
                         </p>
-                        <p>Water Intake: {dayPlan.waterIntake}</p>
-                        <p>Supplements: {dayPlan.supplements}</p>
-                        <p>Exercise: {dayPlan.exerciseMinutes}</p>
-                        <p>Notes: {dayPlan.notes}</p>
                       </CardContent>
                     </Card>
-                  ))}
-                </TabsContent>
 
-                <TabsContent value="exercisePlan">
-                  <h3 className="text-xl font-semibold mb-2">Exercise Plan</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Exercise Type</TableHead>
-                        <TableHead>Duration (minutes)</TableHead>
-                        <TableHead>Frequency</TableHead>
-                        <TableHead>Intensity</TableHead>
-                        <TableHead>BMI Impact</TableHead>
-                        <TableHead>Glucose Effect</TableHead>
-                        <TableHead>Equipment</TableHead>
-                        <TableHead>Progression</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {result.exerciseRecommendations.map((exercise, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{exercise.type}</TableCell>
-                          <TableCell>{exercise.duration}</TableCell>
-                          <TableCell>{exercise.frequency}</TableCell>
-                          <TableCell>{exercise.intensity}</TableCell>
-                          <TableCell>{exercise.bmiImpact}</TableCell>
-                          <TableCell>{exercise.glucoseEffect}</TableCell>
-                          <TableCell>{exercise.equipment}</TableCell>
-                          <TableCell>{exercise.progression}</TableCell>
+                    <Card className="border-green-200 bg-green-50">
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-green-700 text-sm mb-2">Fasting Blood Sugar</h4>
+                        <div className="text-2xl font-bold text-green-600">{formData.fastingBloodSugar || "--"}</div>
+                        <p
+                          className={`text-xs ${
+                            formData.fastingBloodSugar
+                              ? getBloodSugarStatus(formData.fastingBloodSugar, "fasting").color
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {formData.fastingBloodSugar
+                            ? getBloodSugarStatus(formData.fastingBloodSugar, "fasting").status
+                            : "Enter fasting glucose"}
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-yellow-200 bg-yellow-50">
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-yellow-700 text-sm mb-2">Post-meal Blood Sugar</h4>
+                        <div className="text-2xl font-bold text-yellow-600">{formData.postMealBloodSugar || "--"}</div>
+                        <p
+                          className={`text-xs ${
+                            formData.postMealBloodSugar
+                              ? getBloodSugarStatus(formData.postMealBloodSugar, "postMeal").color
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {formData.postMealBloodSugar
+                            ? getBloodSugarStatus(formData.postMealBloodSugar, "postMeal").status
+                            : "Enter post-meal glucose"}
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-red-200 bg-red-50">
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-red-700 text-sm mb-2">HbA1c Assessment</h4>
+                        <div className="text-2xl font-bold text-red-600">
+                          {formData.hba1cLevel ? `${formData.hba1cLevel}%` : "--"}
+                        </div>
+                        <p
+                          className={`text-xs ${
+                            formData.hba1cLevel ? getHbA1cStatus(formData.hba1cLevel).color : "text-gray-500"
+                          }`}
+                        >
+                          {formData.hba1cLevel ? getHbA1cStatus(formData.hba1cLevel).status : "Enter HbA1c level"}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                <form className="space-y-6">
+                  {/* Step 1: Personal Information */}
+                  <Card className="border-red-200">
+                    <CardHeader className="p-4">
+                      <CardTitle className="flex items-center text-red-600 text-base">
+                        <User className="w-5 h-5 mr-2" />
+                        Step 1: Personal Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="fullName" className="text-sm font-medium">
+                            Full Name *
+                          </Label>
+                          <Input
+                            id="fullName"
+                            value={formData.fullName}
+                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                            placeholder="Enter your full name"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="age" className="text-sm font-medium">
+                            Age *
+                          </Label>
+                          <Input
+                            id="age"
+                            type="number"
+                            value={formData.age}
+                            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                            placeholder="Enter your age"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="gender" className="text-sm font-medium">
+                            Gender *
+                          </Label>
+                          <Select
+                            value={formData.gender}
+                            onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Select gender" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="weight" className="text-sm font-medium">
+                            Weight (kg) *
+                          </Label>
+                          <Input
+                            id="weight"
+                            type="number"
+                            value={formData.weight}
+                            onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                            placeholder="Enter weight in kg"
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Tip: Accurate weight helps calculate BMI and daily water intake
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="height" className="text-sm font-medium">
+                            Height (cm) *
+                          </Label>
+                          <Input
+                            id="height"
+                            type="number"
+                            value={formData.height}
+                            onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                            placeholder="Enter height in cm"
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">💡 Tip: Height in centimeters (e.g., 170 cm)</p>
+                        </div>
+                        <div>
+                          <Label htmlFor="diabetesType" className="text-sm font-medium">
+                            Diabetes Type *
+                          </Label>
+                          <Select
+                            value={formData.diabetesType}
+                            onValueChange={(value) => setFormData({ ...formData, diabetesType: value })}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Select diabetes type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="type1">
+                                <div className="flex flex-col">
+                                  <span>Type 1 Diabetes</span>
+                                  <span className="text-xs text-gray-500">Insulin-dependent, autoimmune</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="type2">
+                                <div className="flex flex-col">
+                                  <span>Type 2 Diabetes</span>
+                                  <span className="text-xs text-gray-500">Most common, lifestyle-related</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="gestational">
+                                <div className="flex flex-col">
+                                  <span>Gestational Diabetes</span>
+                                  <span className="text-xs text-gray-500">During pregnancy</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="prediabetes">
+                                <div className="flex flex-col">
+                                  <span>Pre-diabetes</span>
+                                  <span className="text-xs text-gray-500">High blood sugar, not yet diabetic</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="mody">
+                                <div className="flex flex-col">
+                                  <span>MODY</span>
+                                  <span className="text-xs text-gray-500">Maturity Onset Diabetes</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Enhanced Medical History Section */}
+                  <Card className="border-red-200">
+                    <CardHeader className="p-4">
+                      <CardTitle className="flex items-center text-red-600 text-base">
+                        <FileText className="w-5 h-5 mr-2" />
+                        Step 2: Medical History & Current Status
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="hba1cLevel" className="text-sm font-medium">
+                            HbA1c Level (%) *
+                          </Label>
+                          <Input
+                            id="hba1cLevel"
+                            type="number"
+                            step="0.1"
+                            value={formData.hba1cLevel}
+                            onChange={(e) => setFormData({ ...formData, hba1cLevel: e.target.value })}
+                            placeholder="e.g., 7.2"
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Normal: &lt;5.7%, Pre-diabetic: 5.7-6.4%, Diabetic: ≥6.5%
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="fastingBloodSugar" className="text-sm font-medium">
+                            Fasting Blood Sugar (mg/dL)
+                          </Label>
+                          <Input
+                            id="fastingBloodSugar"
+                            type="number"
+                            value={formData.fastingBloodSugar}
+                            onChange={(e) => setFormData({ ...formData, fastingBloodSugar: e.target.value })}
+                            placeholder="e.g., 120"
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Normal: 80-100, Pre-diabetic: 100-125, Diabetic: ≥126
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="postMealBloodSugar" className="text-sm font-medium">
+                            Post-meal Blood Sugar (mg/dL)
+                          </Label>
+                          <Input
+                            id="postMealBloodSugar"
+                            type="number"
+                            value={formData.postMealBloodSugar}
+                            onChange={(e) => setFormData({ ...formData, postMealBloodSugar: e.target.value })}
+                            placeholder="e.g., 180"
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Normal: &lt;140, Pre-diabetic: 140-199, Diabetic: ≥200
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <Label htmlFor="currentMedications" className="text-sm font-medium">
+                          Current Medications
+                        </Label>
+                        <Textarea
+                          id="currentMedications"
+                          value={formData.currentMedications}
+                          onChange={(e) => setFormData({ ...formData, currentMedications: e.target.value })}
+                          placeholder="List all current diabetes medications with dosages (e.g., Metformin 500mg twice daily, Insulin 20 units bedtime)"
+                          className="mt-1"
+                          rows={3}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          💡 Include insulin, oral medications, and any supplements
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Enhanced Goals Section */}
+                  <Card className="border-red-200">
+                    <CardHeader className="p-4">
+                      <CardTitle className="flex items-center text-red-600 text-base">
+                        <Target className="w-5 h-5 mr-2" />
+                        Step 3: Diabetes Reversal Goals & Commitment
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="weightTarget" className="text-sm font-medium">
+                            Target Weight (kg)
+                          </Label>
+                          <Input
+                            id="weightTarget"
+                            type="number"
+                            value={formData.weightTarget}
+                            onChange={(e) => setFormData({ ...formData, weightTarget: e.target.value })}
+                            placeholder="Enter target weight"
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">💡 Healthy BMI range: 18.5-24.9</p>
+                        </div>
+                        <div>
+                          <Label htmlFor="hba1cTarget" className="text-sm font-medium">
+                            Target HbA1c (%)
+                          </Label>
+                          <Input
+                            id="hba1cTarget"
+                            type="number"
+                            step="0.1"
+                            value={formData.hba1cTarget}
+                            onChange={(e) => setFormData({ ...formData, hba1cTarget: e.target.value })}
+                            placeholder="e.g., 5.7 (reversal target)"
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Diabetes reversal: &lt;5.7% without medications
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="budgetRange" className="text-sm font-medium">
+                            Monthly Budget Range (₹)
+                          </Label>
+                          <Select
+                            value={formData.budgetRange}
+                            onValueChange={(value) => setFormData({ ...formData, budgetRange: value })}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Select budget range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5000-10000">
+                                <div className="flex flex-col">
+                                  <span>₹5,000 - ₹10,000</span>
+                                  <span className="text-xs text-gray-500">Basic program with essentials</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="10000-20000">
+                                <div className="flex flex-col">
+                                  <span>₹10,000 - ₹20,000</span>
+                                  <span className="text-xs text-gray-500">Standard program with supplements</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="20000-30000">
+                                <div className="flex flex-col">
+                                  <span>₹20,000 - ₹30,000</span>
+                                  <span className="text-xs text-gray-500">Premium program with advanced testing</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="30000+">
+                                <div className="flex flex-col">
+                                  <span>₹30,000+</span>
+                                  <span className="text-xs text-gray-500">Comprehensive program with all features</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <Label className="text-sm font-medium mb-3 block">Primary Diabetes Reversal Goals</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                          {healthGoalOptions.map((goal) => (
+                            <div key={goal} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`goal-${goal}`}
+                                checked={formData.primaryGoals.includes(goal)}
+                                onCheckedChange={(checked) =>
+                                  handleMultiSelect("primaryGoals", goal, checked as boolean)
+                                }
+                              />
+                              <Label htmlFor={`goal-${goal}`} className="text-xs">
+                                {goal}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4">
+                          <Label className="text-sm font-medium mb-3 block">Commitment Level & Readiness</Label>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                            {commitmentLevelOptions.map((commitment) => (
+                              <div key={commitment} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`commitment-${commitment}`}
+                                  checked={formData.commitmentLevel.includes(commitment)}
+                                  onCheckedChange={(checked) =>
+                                    handleMultiSelect("commitmentLevel", commitment, checked as boolean)
+                                  }
+                                />
+                                <Label htmlFor={`commitment-${commitment}`} className="text-xs">
+                                  {commitment}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                    <Button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={isLoading}
+                      className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white py-3 text-base"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Generating Advanced Diabetes Reversal Plan...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5 mr-2" />
+                          Generate Comprehensive Diabetes Reversal Plan
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setFormData(initialFormData)}
+                      variant="outline"
+                      className="border-red-300 text-red-600 hover:bg-red-50 bg-transparent"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Reset Form
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {result && (
+              <div className="mt-10">
+                <h2 className="text-2xl font-bold mb-4">Assessment Result</h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={generatePDF}
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white text-red-600 hover:bg-red-50 text-xs sm:text-sm"
+                  >
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    Download PDF
+                  </Button>
+                  <Button
+                    onClick={() => window.print()}
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white text-red-600 hover:bg-red-50 text-xs sm:text-sm"
+                  >
+                    <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    Print Report
+                  </Button>
+                  <Button
+                    onClick={() => setFormData(initialFormData)}
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white text-red-600 hover:bg-red-50 text-xs sm:text-sm"
+                  >
+                    <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    New Assessment
+                  </Button>
+                </div>
+
+                <Tabs defaultValue="medications" className="w-full">
+                  <TabsList>
+                    <TabsTrigger value="medications">Medications</TabsTrigger>
+                    <TabsTrigger value="vitalMonitoring">Vital Monitoring</TabsTrigger>
+                    <TabsTrigger value="labTests">Lab Tests</TabsTrigger>
+                    <TabsTrigger value="dietPlan">Diet Plan</TabsTrigger>
+                    <TabsTrigger value="exercisePlan">Exercise Plan</TabsTrigger>
+                    <TabsTrigger value="emergencyProtocols">Emergency Protocols</TabsTrigger>
+                    <TabsTrigger value="supplements">Supplements</TabsTrigger>
+                    <TabsTrigger value="ayurvedicTreatment">Ayurvedic Treatment</TabsTrigger>
+                    <TabsTrigger value="followUpPlan">Follow-Up Plan</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="medications">
+                    <h3 className="text-xl font-semibold mb-2">Medications</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Dosage</TableHead>
+                          <TableHead>Frequency</TableHead>
+                          <TableHead>Timing</TableHead>
+                          <TableHead>Tapering</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div className="mt-6">
-                    <h4 className="text-lg font-semibold mb-2">3-Month Exercise Plan</h4>
+                      </TableHeader>
+                      <TableBody>
+                        {result.medications.map((medication, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{medication.name}</TableCell>
+                            <TableCell>{medication.dosage}</TableCell>
+                            <TableCell>{medication.frequency}</TableCell>
+                            <TableCell>{medication.timing}</TableCell>
+                            <TableCell>{medication.tapering}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+
+                  <TabsContent value="vitalMonitoring">
+                    <h3 className="text-xl font-semibold mb-2">Vital Monitoring</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Vital</TableHead>
+                          <TableHead>Frequency</TableHead>
+                          <TableHead>Timing</TableHead>
+                          <TableHead>Target Range</TableHead>
+                          <TableHead>Notes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {result.vitalMonitoring.map((vital, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{vital.vital}</TableCell>
+                            <TableCell>{vital.frequency}</TableCell>
+                            <TableCell>{vital.timing}</TableCell>
+                            <TableCell>{vital.targetRange}</TableCell>
+                            <TableCell>{vital.notes}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+
+                  <TabsContent value="labTests">
+                    <h3 className="text-xl font-semibold mb-2">Lab Tests</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Test</TableHead>
+                          <TableHead>Priority</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead>Preparation</TableHead>
+                          <TableHead>Month</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {result.labTests.map((lab, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{lab.test}</TableCell>
+                            <TableCell>{lab.priority}</TableCell>
+                            <TableCell>{lab.reason}</TableCell>
+                            <TableCell>{lab.preparation}</TableCell>
+                            <TableCell>{lab.month}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+
+                  <TabsContent value="dietPlan">
+                    <h3 className="text-xl font-semibold mb-2">Diet Plan (Week 1)</h3>
+                    {result.comprehensiveDietPlan.week1.map((dayPlan, dayIndex) => (
+                      <Card key={dayIndex} className="mb-4">
+                        <CardHeader>
+                          <CardTitle>
+                            {dayPlan.day} - {dayPlan.date}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {dayPlan.meals.map((meal, mealIndex) => (
+                            <div key={mealIndex} className="mb-3">
+                              <h4 className="font-semibold">
+                                {meal.meal} ({meal.time})
+                              </h4>
+                              <p>Items: {meal.items}</p>
+                              <p>
+                                Calories: {meal.calories}, Carbs: {meal.carbs}g, Protein: {meal.protein}g, Fat:{" "}
+                                {meal.fat}
+                                g, Fiber: {meal.fiber}g
+                              </p>
+                              <p>Preparation: {meal.preparation}</p>
+                              <p>Alternatives: {meal.alternatives}</p>
+                            </div>
+                          ))}
+                          <p>
+                            Total Calories: {dayPlan.totalCalories}, Total Carbs: {dayPlan.totalCarbs}g
+                          </p>
+                          <p>Water Intake: {dayPlan.waterIntake}</p>
+                          <p>Supplements: {dayPlan.supplements}</p>
+                          <p>Exercise: {dayPlan.exerciseMinutes}</p>
+                          <p>Notes: {dayPlan.notes}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </TabsContent>
+
+                  <TabsContent value="exercisePlan">
+                    <h3 className="text-xl font-semibold mb-2">Exercise Plan</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Exercise Type</TableHead>
+                          <TableHead>Duration (minutes)</TableHead>
+                          <TableHead>Frequency</TableHead>
+                          <TableHead>Intensity</TableHead>
+                          <TableHead>BMI Impact</TableHead>
+                          <TableHead>Glucose Effect</TableHead>
+                          <TableHead>Equipment</TableHead>
+                          <TableHead>Progression</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {result.exerciseRecommendations.map((exercise, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{exercise.type}</TableCell>
+                            <TableCell>{exercise.duration}</TableCell>
+                            <TableCell>{exercise.frequency}</TableCell>
+                            <TableCell>{exercise.intensity}</TableCell>
+                            <TableCell>{exercise.bmiImpact}</TableCell>
+                            <TableCell>{exercise.glucoseEffect}</TableCell>
+                            <TableCell>{exercise.equipment}</TableCell>
+                            <TableCell>{exercise.progression}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <div className="mt-6">
+                      <h4 className="text-lg font-semibold mb-2">3-Month Exercise Plan</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Month 1</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm">Goals: {result.threeMonthReversalPlan.month1.goals.join(", ")}</p>
+                            <p className="text-sm">
+                              Exercise Plan: {result.threeMonthReversalPlan.month1.exercisePlan.join(", ")}
+                            </p>
+                            <p className="text-sm">
+                              Expected Results: {result.threeMonthReversalPlan.month1.expectedResults}
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Month 2</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm">Goals: {result.threeMonthReversalPlan.month2.goals.join(", ")}</p>
+                            <p className="text-sm">
+                              Exercise Plan: {result.threeMonthReversalPlan.month2.exercisePlan.join(", ")}
+                            </p>
+                            <p className="text-sm">
+                              Expected Results: {result.threeMonthReversalPlan.month2.expectedResults}
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Month 3</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm">Goals: {result.threeMonthReversalPlan.month3.goals.join(", ")}</p>
+                            <p className="text-sm">
+                              Exercise Plan: {result.threeMonthReversalPlan.month3.exercisePlan.join(", ")}
+                            </p>
+                            <p className="text-sm">
+                              Expected Results: {result.threeMonthReversalPlan.month3.expectedResults}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="emergencyProtocols">
+                    <h3 className="text-xl font-semibold mb-2">Emergency Protocols</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <Card>
                         <CardHeader>
-                          <CardTitle className="text-base">Month 1</CardTitle>
+                          <CardTitle className="text-base">Hypoglycemia</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-sm">Goals: {result.threeMonthReversalPlan.month1.goals.join(", ")}</p>
                           <p className="text-sm">
-                            Exercise Plan: {result.threeMonthReversalPlan.month1.exercisePlan.join(", ")}
+                            Symptoms: {result.emergencyProtocols.hypoglycemia.symptoms.join(", ")}
                           </p>
                           <p className="text-sm">
-                            Expected Results: {result.threeMonthReversalPlan.month1.expectedResults}
+                            Actions: {result.emergencyProtocols.hypoglycemia.immediateActions.join(", ")}
+                          </p>
+                          <p className="text-sm">
+                            Medications: {result.emergencyProtocols.hypoglycemia.medications.join(", ")}
+                          </p>
+                          <p className="text-sm">
+                            When to call help: {result.emergencyProtocols.hypoglycemia.whenToCallHelp.join(", ")}
                           </p>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardHeader>
-                          <CardTitle className="text-base">Month 2</CardTitle>
+                          <CardTitle className="text-base">Hyperglycemia</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-sm">Goals: {result.threeMonthReversalPlan.month2.goals.join(", ")}</p>
                           <p className="text-sm">
-                            Exercise Plan: {result.threeMonthReversalPlan.month2.exercisePlan.join(", ")}
+                            Symptoms: {result.emergencyProtocols.hyperglycemia.symptoms.join(", ")}
                           </p>
                           <p className="text-sm">
-                            Expected Results: {result.threeMonthReversalPlan.month2.expectedResults}
+                            Actions: {result.emergencyProtocols.hyperglycemia.immediateActions.join(", ")}
+                          </p>
+                          <p className="text-sm">
+                            Medications: {result.emergencyProtocols.hyperglycemia.medications.join(", ")}
+                          </p>
+                          <p className="text-sm">
+                            When to call help: {result.emergencyProtocols.hyperglycemia.whenToCallHelp.join(", ")}
                           </p>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardHeader>
-                          <CardTitle className="text-base">Month 3</CardTitle>
+                          <CardTitle className="text-base">Ketoacidosis</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-sm">Goals: {result.threeMonthReversalPlan.month3.goals.join(", ")}</p>
                           <p className="text-sm">
-                            Exercise Plan: {result.threeMonthReversalPlan.month3.exercisePlan.join(", ")}
+                            Symptoms: {result.emergencyProtocols.ketoacidosis.symptoms.join(", ")}
                           </p>
                           <p className="text-sm">
-                            Expected Results: {result.threeMonthReversalPlan.month3.expectedResults}
+                            Actions: {result.emergencyProtocols.ketoacidosis.immediateActions.join(", ")}
+                          </p>
+                          <p className="text-sm">
+                            Medications: {result.emergencyProtocols.ketoacidosis.medications.join(", ")}
+                          </p>
+                          <p className="text-sm">
+                            When to call help: {result.emergencyProtocols.ketoacidosis.whenToCallHelp.join(", ")}
                           </p>
                         </CardContent>
                       </Card>
                     </div>
-                  </div>
-                </TabsContent>
+                  </TabsContent>
 
-                <TabsContent value="emergencyProtocols">
-                  <h3 className="text-xl font-semibold mb-2">Emergency Protocols</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Hypoglycemia</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm">
-                          Symptoms: {result.emergencyProtocols.hypoglycemia.symptoms.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          Actions: {result.emergencyProtocols.hypoglycemia.immediateActions.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          Medications: {result.emergencyProtocols.hypoglycemia.medications.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          When to call help: {result.emergencyProtocols.hypoglycemia.whenToCallHelp.join(", ")}
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Hyperglycemia</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm">
-                          Symptoms: {result.emergencyProtocols.hyperglycemia.symptoms.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          Actions: {result.emergencyProtocols.hyperglycemia.immediateActions.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          Medications: {result.emergencyProtocols.hyperglycemia.medications.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          When to call help: {result.emergencyProtocols.hyperglycemia.whenToCallHelp.join(", ")}
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Ketoacidosis</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm">
-                          Symptoms: {result.emergencyProtocols.ketoacidosis.symptoms.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          Actions: {result.emergencyProtocols.ketoacidosis.immediateActions.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          Medications: {result.emergencyProtocols.ketoacidosis.medications.join(", ")}
-                        </p>
-                        <p className="text-sm">
-                          When to call help: {result.emergencyProtocols.ketoacidosis.whenToCallHelp.join(", ")}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="supplements">
-                  <h3 className="text-xl font-semibold mb-2">Supplements</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Dosage</TableHead>
-                        <TableHead>Timing</TableHead>
-                        <TableHead>Benefits</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {result.supplements.map((supplement, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{supplement.name}</TableCell>
-                          <TableCell>{supplement.dosage}</TableCell>
-                          <TableCell>{supplement.timing}</TableCell>
-                          <TableCell>{supplement.benefits}</TableCell>
+                  <TabsContent value="supplements">
+                    <h3 className="text-xl font-semibold mb-2">Supplements</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Dosage</TableHead>
+                          <TableHead>Timing</TableHead>
+                          <TableHead>Benefits</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
+                      </TableHeader>
+                      <TableBody>
+                        {result.supplements.map((supplement, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{supplement.name}</TableCell>
+                            <TableCell>{supplement.dosage}</TableCell>
+                            <TableCell>{supplement.timing}</TableCell>
+                            <TableCell>{supplement.benefits}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
 
-                <TabsContent value="ayurvedicTreatment">
-                  <h3 className="text-xl font-semibold mb-2">Ayurvedic Treatment</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Treatment</TableHead>
-                        <TableHead>Herbs</TableHead>
-                        <TableHead>Dosage</TableHead>
-                        <TableHead>Timing</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {result.ayurvedicTreatment.map((treatment, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{treatment.treatment}</TableCell>
-                          <TableCell>{treatment.herbs}</TableCell>
-                          <TableCell>{treatment.dosage}</TableCell>
-                          <TableCell>{treatment.timing}</TableCell>
+                  <TabsContent value="ayurvedicTreatment">
+                    <h3 className="text-xl font-semibold mb-2">Ayurvedic Treatment</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Treatment</TableHead>
+                          <TableHead>Herbs</TableHead>
+                          <TableHead>Dosage</TableHead>
+                          <TableHead>Timing</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
+                      </TableHeader>
+                      <TableBody>
+                        {result.ayurvedicTreatment.map((treatment, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{treatment.treatment}</TableCell>
+                            <TableCell>{treatment.herbs}</TableCell>
+                            <TableCell>{treatment.dosage}</TableCell>
+                            <TableCell>{treatment.timing}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
 
-                <TabsContent value="followUpPlan">
-                  <h3 className="text-xl font-semibold mb-2">Follow-Up Plan</h3>
-                  <p>Next Appointment: {result.followUpPlan.nextAppointment}</p>
-                  <p>Monitoring Schedule: {result.followUpPlan.monitoringSchedule.join(", ")}</p>
-                  <p>Lifestyle Changes: {result.followUpPlan.lifestyleChanges.join(", ")}</p>
-                  <p>Expected Improvement: {result.followUpPlan.expectedImprovement}</p>
-                  <p>Reversal Timeline: {result.followUpPlan.reversalTimeline}</p>
-                  <p>Success Metrics: {result.followUpPlan.successMetrics.join(", ")}</p>
-                </TabsContent>
-              </Tabs>
-            </div>
-          )}
+                  <TabsContent value="followUpPlan">
+                    <h3 className="text-xl font-semibold mb-2">Follow-Up Plan</h3>
+                    <p>Next Appointment: {result.followUpPlan.nextAppointment}</p>
+                    <p>Monitoring Schedule: {result.followUpPlan.monitoringSchedule.join(", ")}</p>
+                    <p>Lifestyle Changes: {result.followUpPlan.lifestyleChanges.join(", ")}</p>
+                    <p>Expected Improvement: {result.followUpPlan.expectedImprovement}</p>
+                    <p>Reversal Timeline: {result.followUpPlan.reversalTimeline}</p>
+                    <p>Success Metrics: {result.followUpPlan.successMetrics.join(", ")}</p>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
