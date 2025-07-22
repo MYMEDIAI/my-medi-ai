@@ -989,11 +989,11 @@ Format the response as structured recommendations with clear sections.
                 </li>
                 <li className="flex items-center">
                   <Phone className="w-4 h-4 mr-2" />
-                  <span>+91 9876543210</span>
+                  <span>+91 9701744770</span>
                 </li>
                 <li className="flex items-center">
                   <MapPin className="w-4 h-4 mr-2" />
-                  <span>Hyderabad, India</span>
+                  <span>Madanapalle, Andhra Pradesh, India</span>
                 </li>
               </ul>
             </div>
