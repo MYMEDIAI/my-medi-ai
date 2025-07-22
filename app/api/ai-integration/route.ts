@@ -271,848 +271,710 @@ async function generateHeartHealthAssessment(formData: any) {
     concerns,
   } = formData
 
-  // Advanced risk calculation using validated clinical algorithms
+  // Calculate dynamic risk score
   let riskScore = 0
   const ageNum = Number(age)
-  const weightNum = Number(weight)
-  const heightNum = Number(height)
 
-  // Framingham Risk Score components
-  // Age risk (evidence-based)
-  if (ageNum >= 75) riskScore += 5
-  else if (ageNum >= 65) riskScore += 4
-  else if (ageNum >= 55) riskScore += 3
-  else if (ageNum >= 45) riskScore += 2
-  else if (ageNum >= 35) riskScore += 1
+  // Age-based risk
+  if (ageNum > 65) riskScore += 3
+  else if (ageNum > 55) riskScore += 2
+  else if (ageNum > 45) riskScore += 1
 
-  // Gender-specific risk (ACC/AHA guidelines)
-  if (gender === "male" && ageNum >= 45) riskScore += 2
-  else if (gender === "male") riskScore += 1
-  else if (gender === "female" && ageNum >= 55) riskScore += 1
+  // Gender risk
+  if (gender === "male") riskScore += 1
 
-  // Calculate BMI and metabolic risk
-  let bmi = null
-  let bmiRisk = 0
-  if (weight && height) {
-    bmi = weightNum / Math.pow(heightNum / 100, 2)
-    if (bmi >= 35) bmiRisk = 3
-    else if (bmi >= 30) bmiRisk = 2
-    else if (bmi >= 25) bmiRisk = 1
-    riskScore += bmiRisk
+  // Symptom-based risk
+  if (chestPain === "frequent") riskScore += 3
+  else if (chestPain === "occasional") riskScore += 1
+
+  if (breathlessness === "severe") riskScore += 3
+  else if (breathlessness === "moderate") riskScore += 2
+  else if (breathlessness === "mild") riskScore += 1
+
+  if (palpitations === "frequent") riskScore += 2
+  if (fatigue === "severe") riskScore += 2
+  if (swelling === "yes") riskScore += 2
+  if (dizziness === "frequent") riskScore += 1
+
+  // Risk factor scoring
+  if (smoking === "current") riskScore += 3
+  else if (smoking === "former") riskScore += 1
+
+  if (familyHistory === "yes") riskScore += 2
+  if (diabetes === "yes") riskScore += 2
+  if (hypertension === "yes") riskScore += 2
+  if (cholesterol === "high") riskScore += 2
+
+  // Lifestyle factors
+  if (exerciseFrequency === "never") riskScore += 2
+  else if (exerciseFrequency === "rarely") riskScore += 1
+
+  if (stressLevel === "high") riskScore += 2
+  else if (stressLevel === "moderate") riskScore += 1
+
+  // Determine risk level
+  let riskLevel, riskCategory
+  if (riskScore <= 5) {
+    riskLevel = "Low"
+    riskCategory = "Good heart health with minimal risk factors"
+  } else if (riskScore <= 10) {
+    riskLevel = "Moderate"
+    riskCategory = "Some cardiovascular risk factors present"
+  } else if (riskScore <= 15) {
+    riskLevel = "High"
+    riskCategory = "Multiple risk factors requiring intervention"
+  } else {
+    riskLevel = "Very High"
+    riskCategory = "Immediate medical attention and aggressive management needed"
   }
 
-  // Symptom-based risk stratification (ESC guidelines)
-  const symptomScore = calculateSymptomRisk(chestPain, breathlessness, palpitations, fatigue, swelling, dizziness)
-  riskScore += symptomScore
+  // Generate personalized recommendations based on user data
+  const isHighRisk = riskScore > 15
+  const isModerateRisk = riskScore > 10
+  const isMale = gender === "male"
+  const hasDiabetes = diabetes === "yes"
+  const hasHypertension = hypertension === "yes"
+  const isSmoker = smoking === "current"
+  const isVegetarian = dietType === "vegetarian"
+  const isOlder = ageNum > 65
+  const hasSymptoms = chestPain !== "none" || breathlessness !== "none" || palpitations !== "none"
 
-  // Major risk factors (ATP IV guidelines)
-  const majorRiskFactors = calculateMajorRiskFactors(smoking, familyHistory, diabetes, hypertension, cholesterol)
-  riskScore += majorRiskFactors
+  // Calculate BMI if available
+  let bmi = null
+  if (weight && height) {
+    bmi = (Number(weight) / Math.pow(Number(height) / 100, 2)).toFixed(1)
+  }
 
-  // Lifestyle risk modifiers
-  const lifestyleRisk = calculateLifestyleRisk(exerciseFrequency, stressLevel, sleepQuality, dietType, alcohol)
-  riskScore += lifestyleRisk
-
-  // Determine risk stratification (ACC/AHA 2019 guidelines)
-  const { riskLevel, riskCategory, tenYearRisk } = determineRiskLevel(riskScore, ageNum, gender, bmi)
-
-  // Generate evidence-based recommendations
   const assessment = {
     riskScore: {
       total: riskScore,
       level: riskLevel,
       category: riskCategory,
-      tenYearRisk: tenYearRisk,
-      framinghamScore: Math.min(riskScore, 30),
     },
-    clinicalAssessment: {
-      primaryDiagnosis: generatePrimaryDiagnosis(riskLevel, symptomScore, majorRiskFactors),
-      riskFactors: identifyRiskFactors(formData),
-      recommendations: generateClinicalRecommendations(riskLevel, ageNum, gender, formData),
-      urgency: determineUrgency(riskLevel, symptomScore),
+    recommendations: {
+      immediate: generateImmediateRecommendations(isHighRisk, isModerateRisk, hasSymptoms, ageNum),
+      lifestyle: generateLifestyleRecommendations(isSmoker, isMale, hasHypertension, hasDiabetes, bmi),
+      dietary: generateDietaryRecommendations(isVegetarian, hasHypertension, hasDiabetes, cholesterol),
+      exercise: generateExerciseRecommendations(ageNum, isHighRisk, exerciseFrequency, hasSymptoms),
+      monitoring: generateMonitoringRecommendations(hasHypertension, hasDiabetes, isHighRisk, medications),
     },
-    diagnosticProtocol: {
-      immediate: generateImmediateDiagnostics(riskLevel, symptomScore, ageNum),
-      followUp: generateFollowUpDiagnostics(riskLevel, ageNum, formData),
-      monitoring: generateMonitoringPlan(riskLevel, formData),
+    tests: {
+      essential: generateEssentialTests(isHighRisk, hasDiabetes, ageNum),
+      additional: generateAdditionalTests(isModerateRisk, isHighRisk, ageNum, hasSymptoms),
     },
-    therapeuticPlan: {
-      pharmacological: generatePharmacologicalPlan(riskLevel, ageNum, gender, formData),
-      nonPharmacological: generateNonPharmacologicalPlan(riskLevel, formData),
-      lifestyle: generateLifestylePrescription(formData),
-    },
-    followUpPlan: {
-      schedule: generateFollowUpSchedule(riskLevel, symptomScore),
-      goals: generateTherapeuticGoals(riskLevel, ageNum, gender, formData),
-      monitoring: generateMonitoringSchedule(riskLevel, formData),
-    },
-    emergencyProtocol: {
-      warningSignals: generateWarningSignals(riskLevel, ageNum),
-      actionPlan: generateEmergencyActionPlan(ageNum, formData),
+    emergencyPlan: {
+      warningSignals: generateWarningSignals(ageNum, hasHypertension),
+      firstAid: generateFirstAidSteps(ageNum),
       contacts: generateEmergencyContacts(),
     },
-    patientEducation: {
-      keyPoints: generatePatientEducation(riskLevel, formData),
-      resources: generateEducationalResources(riskLevel),
-      lifestyle: generateLifestyleEducation(formData),
+    followUp: {
+      schedule: generateFollowUpSchedule(isHighRisk, isModerateRisk),
+      goals: generateHealthGoals(isHighRisk, isMale, ageNum, hasDiabetes, hasHypertension, bmi),
+      tracking: generateTrackingRecommendations(hasHypertension, hasDiabetes, isHighRisk),
     },
-    note: `Professional cardiac risk assessment generated using evidence-based clinical algorithms (ACC/AHA 2019, ESC 2021 guidelines). This assessment incorporates validated risk calculators and current clinical practice standards.`,
+    medications: {
+      current: medications ? medications.split(",").map((med: string) => med.trim()) : [],
+      recommended: generateMedicationRecommendations(isHighRisk, hasHypertension, hasDiabetes, ageNum, isMale),
+    },
+    lifestyle: {
+      diet: generateAdvancedDietPlan(isVegetarian, hasHypertension, hasDiabetes),
+      exercise: generateExercisePlan(ageNum, isHighRisk, exerciseFrequency),
+      stress: generateStressManagement(ageNum, stressLevel),
+    },
+    supplements: generateSupplementRecommendations(ageNum, gender, isVegetarian, hasDiabetes, hasHypertension),
+    note: "AI-Generated Personalized Cardiac Assessment - Based on current medical evidence and guidelines",
   }
 
   return NextResponse.json(assessment)
 }
 
-// Clinical risk calculation functions
-function calculateSymptomRisk(
-  chestPain: string,
-  breathlessness: string,
-  palpitations: string,
-  fatigue: string,
-  swelling: string,
-  dizziness: string,
-): number {
-  let score = 0
-
-  // Chest pain scoring (Diamond-Forrester criteria)
-  if (chestPain === "frequent") score += 4
-  else if (chestPain === "occasional") score += 2
-  else if (chestPain === "rare") score += 1
-
-  // Dyspnea scoring (NYHA functional class equivalent)
-  if (breathlessness === "severe") score += 4
-  else if (breathlessness === "moderate") score += 3
-  else if (breathlessness === "mild") score += 1
-
-  // Palpitations and other symptoms
-  if (palpitations === "frequent") score += 2
-  else if (palpitations === "occasional") score += 1
-
-  if (fatigue === "severe") score += 2
-  else if (fatigue === "moderate") score += 1
-
-  if (swelling === "yes") score += 2
-  if (dizziness === "frequent") score += 2
-  else if (dizziness === "occasional") score += 1
-
-  return Math.min(score, 10) // Cap at 10 points
-}
-
-function calculateMajorRiskFactors(
-  smoking: string,
-  familyHistory: string,
-  diabetes: string,
-  hypertension: string,
-  cholesterol: string,
-): number {
-  let score = 0
-
-  // Smoking (highest risk factor)
-  if (smoking === "current") score += 4
-  else if (smoking === "former") score += 1
-
-  // Family history (genetic predisposition)
-  if (familyHistory === "yes") score += 2
-
-  // Diabetes (equivalent to CAD risk)
-  if (diabetes === "yes") score += 3
-  else if (diabetes === "prediabetes") score += 1
-
-  // Hypertension
-  if (hypertension === "yes") score += 2
-  else if (hypertension === "borderline") score += 1
-
-  // Dyslipidemia
-  if (cholesterol === "high") score += 2
-  else if (cholesterol === "borderline") score += 1
-
-  return score
-}
-
-function calculateLifestyleRisk(
-  exerciseFrequency: string,
-  stressLevel: string,
-  sleepQuality: string,
-  dietType: string,
-  alcohol: string,
-): number {
-  let score = 0
-
-  // Physical inactivity
-  if (exerciseFrequency === "never") score += 3
-  else if (exerciseFrequency === "rarely") score += 2
-  else if (exerciseFrequency === "sometimes") score += 1
-
-  // Stress level
-  if (stressLevel === "very-high") score += 3
-  else if (stressLevel === "high") score += 2
-  else if (stressLevel === "moderate") score += 1
-
-  // Sleep quality
-  if (sleepQuality === "poor") score += 2
-  else if (sleepQuality === "fair") score += 1
-
-  // Diet quality
-  if (dietType === "processed") score += 2
-  else if (dietType === "high-sodium") score += 2
-  else if (dietType === "mediterranean") score -= 1 // Protective
-
-  // Alcohol consumption
-  if (alcohol === "heavy") score += 2
-  else if (alcohol === "moderate") score += 1
-
-  return Math.max(score, 0)
-}
-
-function determineRiskLevel(riskScore: number, age: number, gender: string, bmi: number | null) {
-  let tenYearRisk = 0
-
-  // Simplified 10-year risk calculation
-  if (riskScore <= 5) {
-    tenYearRisk = Math.min(5 + (age - 40) * 0.5, 10)
-  } else if (riskScore <= 10) {
-    tenYearRisk = Math.min(10 + (age - 40) * 0.8, 20)
-  } else if (riskScore <= 15) {
-    tenYearRisk = Math.min(20 + (age - 40) * 1.2, 35)
+// Helper functions for generating personalized recommendations
+function generateImmediateRecommendations(
+  isHighRisk: boolean,
+  isModerateRisk: boolean,
+  hasSymptoms: boolean,
+  age: number,
+) {
+  if (isHighRisk) {
+    return [
+      "URGENT: Schedule cardiology consultation within 24-48 hours for comprehensive evaluation",
+      "Monitor blood pressure 3x daily with automatic cuff, maintain detailed log",
+      "Restrict physical activity to light daily activities until medical clearance obtained",
+      "Keep prescribed emergency medications (nitroglycerin) readily accessible at all times",
+      "Seek immediate emergency care if chest pain persists >15 minutes or worsens",
+      "Arrange urgent diagnostic testing: ECG, echocardiogram, cardiac biomarkers, chest X-ray",
+    ]
+  } else if (isModerateRisk) {
+    return [
+      "Schedule cardiology consultation within 1-2 weeks for risk stratification and management",
+      "Begin daily vital signs monitoring: blood pressure, heart rate, weight at consistent times",
+      "Start medically supervised exercise program or cardiac rehabilitation if available",
+      "Comprehensive medication review with cardiologist or clinical pharmacist",
+      "Implement evidence-based DASH diet with registered dietitian consultation",
+      "Consider stress testing evaluation to assess for exercise-induced ischemia",
+    ]
   } else {
-    tenYearRisk = Math.min(35 + (age - 40) * 1.5, 50)
-  }
-
-  if (riskScore <= 6) {
-    return {
-      riskLevel: "Low",
-      riskCategory: "Low cardiovascular risk - Continue preventive measures",
-      tenYearRisk: Math.round(tenYearRisk),
-    }
-  } else if (riskScore <= 12) {
-    return {
-      riskLevel: "Moderate",
-      riskCategory: "Moderate cardiovascular risk - Lifestyle modification and monitoring required",
-      tenYearRisk: Math.round(tenYearRisk),
-    }
-  } else if (riskScore <= 18) {
-    return {
-      riskLevel: "High",
-      riskCategory: "High cardiovascular risk - Aggressive intervention and specialist care needed",
-      tenYearRisk: Math.round(tenYearRisk),
-    }
-  } else {
-    return {
-      riskLevel: "Very High",
-      riskCategory: "Very high cardiovascular risk - Immediate medical attention and intensive management required",
-      tenYearRisk: Math.round(tenYearRisk),
-    }
+    return [
+      "Continue annual preventive cardiology screening with comprehensive risk assessment",
+      "Maintain current healthy lifestyle habits with periodic medical review",
+      "Monitor for new cardiac symptoms: chest pain, shortness of breath, palpitations",
+      "Annual laboratory screening: lipid panel, glucose, inflammatory markers",
+      "Optimize modifiable cardiovascular risk factors through lifestyle medicine",
+      age > 50
+        ? "Consider coronary calcium scoring for refined risk assessment"
+        : "Focus on primary prevention strategies",
+    ]
   }
 }
 
-function generatePrimaryDiagnosis(riskLevel: string, symptomScore: number, majorRiskFactors: number): string {
-  if (riskLevel === "Very High" && symptomScore >= 6) {
-    return "Suspected acute coronary syndrome or unstable angina - Requires immediate cardiology evaluation"
-  } else if (riskLevel === "High" && symptomScore >= 4) {
-    return "High probability of significant coronary artery disease - Stress testing and cardiology consultation indicated"
-  } else if (riskLevel === "Moderate" && majorRiskFactors >= 4) {
-    return "Multiple cardiovascular risk factors present - Aggressive risk factor modification required"
-  } else if (symptomScore >= 3) {
-    return "Symptomatic cardiovascular disease possible - Further diagnostic evaluation recommended"
-  } else {
-    return "Cardiovascular risk assessment - Preventive care and lifestyle optimization focus"
-  }
-}
-
-function identifyRiskFactors(formData: any): string[] {
-  const riskFactors = []
-
-  if (formData.smoking === "current") riskFactors.push("Active tobacco use (Major modifiable risk factor)")
-  if (formData.diabetes === "yes") riskFactors.push("Diabetes mellitus (CAD equivalent)")
-  if (formData.hypertension === "yes") riskFactors.push("Hypertension (>140/90 mmHg)")
-  if (formData.cholesterol === "high") riskFactors.push("Dyslipidemia (Elevated LDL cholesterol)")
-  if (formData.familyHistory === "yes") riskFactors.push("Family history of premature CAD (Non-modifiable)")
-  if (Number(formData.age) > 65) riskFactors.push("Advanced age (Non-modifiable risk factor)")
-  if (formData.gender === "male") riskFactors.push("Male gender (Higher baseline risk)")
-  if (formData.exerciseFrequency === "never") riskFactors.push("Physical inactivity (Sedentary lifestyle)")
-  if (formData.stressLevel === "high" || formData.stressLevel === "very-high")
-    riskFactors.push("Chronic psychological stress")
-  if (formData.sleepQuality === "poor") riskFactors.push("Sleep disorders/poor sleep quality")
-
-  const weight = Number(formData.weight)
-  const height = Number(formData.height)
-  if (weight && height) {
-    const bmi = weight / Math.pow(height / 100, 2)
-    if (bmi >= 30) riskFactors.push(`Obesity (BMI ${bmi.toFixed(1)} kg/m²)`)
-    else if (bmi >= 25) riskFactors.push(`Overweight (BMI ${bmi.toFixed(1)} kg/m²)`)
-  }
-
-  return riskFactors
-}
-
-function generateClinicalRecommendations(riskLevel: string, age: number, gender: string, formData: any): string[] {
+function generateLifestyleRecommendations(
+  isSmoker: boolean,
+  isMale: boolean,
+  hasHypertension: boolean,
+  hasDiabetes: boolean,
+  bmi: string | null,
+) {
   const recommendations = []
 
-  if (riskLevel === "Very High") {
-    recommendations.push("URGENT: Cardiology consultation within 24-48 hours")
-    recommendations.push("Consider emergency department evaluation if symptoms worsen")
-    recommendations.push("Initiate dual antiplatelet therapy if not contraindicated")
-    recommendations.push("High-intensity statin therapy (Atorvastatin 40-80mg daily)")
-    recommendations.push("ACE inhibitor or ARB therapy")
-    recommendations.push("Beta-blocker therapy if no contraindications")
-  } else if (riskLevel === "High") {
-    recommendations.push("Cardiology consultation within 1-2 weeks")
-    recommendations.push("Stress testing or coronary CT angiography")
-    recommendations.push("Moderate to high-intensity statin therapy")
-    recommendations.push("Aspirin 81mg daily for primary prevention")
-    recommendations.push("Blood pressure target <130/80 mmHg")
-  } else if (riskLevel === "Moderate") {
-    recommendations.push("Primary care follow-up within 2-4 weeks")
-    recommendations.push("Consider statin therapy based on risk-benefit analysis")
-    recommendations.push("Lifestyle modification counseling")
-    recommendations.push("Annual cardiovascular risk reassessment")
+  if (isSmoker) {
+    recommendations.push(
+      "CRITICAL PRIORITY: Complete smoking cessation immediately - reduces cardiovascular risk by 50% within 1 year",
+    )
   } else {
-    recommendations.push("Continue current preventive measures")
-    recommendations.push("Annual health maintenance examination")
-    recommendations.push("Lifestyle optimization focus")
-    recommendations.push("Periodic risk factor screening")
+    recommendations.push("Maintain tobacco-free status - avoid secondhand smoke exposure in all environments")
   }
 
-  // Age-specific recommendations
-  if (age >= 65) {
-    recommendations.push("Consider frailty assessment and functional evaluation")
-    recommendations.push("Medication review for drug interactions and side effects")
+  recommendations.push(
+    `Alcohol moderation: ${isMale ? "≤2 standard drinks/day" : "≤1 standard drink/day"} with 2 alcohol-free days weekly`,
+  )
+
+  if (bmi && Number(bmi) > 25) {
+    recommendations.push(
+      `Weight management: Target BMI 18.5-24.9 kg/m² (current: ${bmi}) - aim for 5-10% weight reduction`,
+    )
+  } else {
+    recommendations.push("Maintain healthy weight within BMI range 18.5-24.9 kg/m²")
   }
 
-  // Gender-specific recommendations
-  if (gender === "female" && age >= 50) {
-    recommendations.push("Post-menopausal cardiovascular risk assessment")
-    recommendations.push("Consider hormone therapy risks and benefits")
-  }
+  recommendations.push(
+    "Sleep optimization: 7-9 hours nightly with consistent sleep-wake cycle, screen sleep apnea if indicated",
+    "Stress management: evidence-based techniques including mindfulness meditation, progressive muscle relaxation",
+    "Optimal hydration: 8-10 glasses water daily, limit caffeine <400mg, avoid energy drinks completely",
+    "Social connections: maintain strong support network, consider joining cardiac support groups",
+    hasHypertension || hasDiabetes
+      ? "Strict medical adherence: consistent follow-up appointments and medication compliance"
+      : "Regular preventive medical care with annual comprehensive examinations",
+  )
 
   return recommendations
 }
 
-function determineUrgency(riskLevel: string, symptomScore: number): string {
-  if (riskLevel === "Very High" && symptomScore >= 6) {
-    return "EMERGENT - Seek immediate medical attention (Emergency Department)"
-  } else if (riskLevel === "High" || symptomScore >= 4) {
-    return "URGENT - Schedule appointment within 24-48 hours"
-  } else if (riskLevel === "Moderate") {
-    return "SEMI-URGENT - Schedule appointment within 1-2 weeks"
-  } else {
-    return "ROUTINE - Schedule appointment within 4-6 weeks"
+function generateDietaryRecommendations(
+  isVegetarian: boolean,
+  hasHypertension: boolean,
+  hasDiabetes: boolean,
+  cholesterol: string,
+) {
+  const recommendations = [
+    `DASH Diet Protocol: <${hasHypertension ? "1500" : "2300"}mg sodium daily, emphasize potassium-rich foods (3500-4700mg daily)`,
+    isVegetarian
+      ? "Plant-based omega-3: algae-based EPA/DHA 1-2g daily, walnuts, flaxseeds, chia seeds"
+      : "Omega-3 fatty acids: 2-3 servings fatty fish weekly (salmon, mackerel, sardines) plus 1g EPA/DHA supplement",
+    "Soluble fiber optimization: 25-35g daily from oats, beans, lentils, vegetables, fruits - reduces LDL 5-10%",
+    "Antioxidant-rich foods: berries, dark leafy greens, nuts, seeds - combat oxidative stress and inflammation",
+    "Healthy fats: limit saturated fat <7% total calories, eliminate trans fats, emphasize monounsaturated fats",
+    "Plant sterols/stanols: 2g daily from fortified foods or supplements - additional 6-15% LDL reduction",
+  ]
+
+  if (hasDiabetes) {
+    recommendations.push("Carbohydrate management: choose low glycemic index foods, pair carbs with protein/fiber")
   }
+
+  if (cholesterol === "high") {
+    recommendations.push("Cholesterol-lowering foods: oats, barley, beans, eggplant, okra, apples, grapes, citrus")
+  }
+
+  recommendations.push(
+    "Potassium-rich foods: bananas, oranges, spinach, potatoes, tomatoes, yogurt - supports healthy blood pressure",
+    "Magnesium sources: nuts, seeds, whole grains, dark chocolate - essential for cardiovascular health",
+    "Minimize processed foods: choose whole, unprocessed foods, read nutrition labels carefully",
+    isVegetarian
+      ? "Plant-based protein optimization: legumes, quinoa, nuts, seeds - ensure complete amino acid profile"
+      : "Mediterranean diet pattern: olive oil as primary fat, moderate fish consumption, abundant vegetables",
+  )
+
+  return recommendations
 }
 
-function generateImmediateDiagnostics(
-  riskLevel: string,
-  symptomScore: number,
+function generateExerciseRecommendations(
   age: number,
-): Array<{ name: string; indication: string; urgency: string; cost: string }> {
-  const diagnostics = []
+  isHighRisk: boolean,
+  exerciseFrequency: string,
+  hasSymptoms: boolean,
+) {
+  const recommendations = []
 
-  if (riskLevel === "Very High" || symptomScore >= 6) {
-    diagnostics.push({
-      name: "12-Lead ECG with interpretation",
-      indication: "Rule out acute coronary syndrome, arrhythmias",
-      urgency: "STAT (within 10 minutes)",
-      cost: "₹300-500",
-    })
-    diagnostics.push({
-      name: "Cardiac biomarkers (Troponin I/T, CK-MB)",
-      indication: "Detect myocardial injury/infarction",
-      urgency: "STAT (within 30 minutes)",
-      cost: "₹800-1,200",
-    })
-    diagnostics.push({
-      name: "Chest X-ray",
-      indication: "Assess for heart failure, pulmonary edema",
-      urgency: "STAT (within 1 hour)",
-      cost: "₹400-600",
-    })
+  if (isHighRisk || hasSymptoms) {
+    recommendations.push("Medical clearance required: obtain physician approval before starting any exercise program")
   }
 
-  if (riskLevel === "High" || riskLevel === "Very High") {
-    diagnostics.push({
-      name: "2D Echocardiogram with Doppler",
-      indication: "Assess LV function, wall motion, valve function",
-      urgency: "Within 24-48 hours",
-      cost: "₹2,500-4,000",
-    })
-    diagnostics.push({
-      name: "Complete lipid profile (fasting)",
-      indication: "Cardiovascular risk stratification",
-      urgency: "Within 48 hours",
+  recommendations.push(
+    `Aerobic exercise: ${age > 65 ? "120-150" : "150-300"} minutes moderate OR ${age > 65 ? "60-75" : "75-150"} minutes vigorous weekly`,
+    "Resistance training: 2-3 sessions weekly, major muscle groups, 8-12 repetitions with progressive overload",
+    "Flexibility training: daily stretching routine, yoga or tai chi 2-3 sessions weekly for mobility",
+    `Target heart rate: ${Math.round((220 - age) * 0.5)}-${Math.round((220 - age) * 0.85)} bpm during moderate exercise`,
+  )
+
+  if (exerciseFrequency === "never" || exerciseFrequency === "rarely") {
+    recommendations.push(
+      `Gradual progression: start with ${age > 60 ? "5-10" : "10-15"} minutes daily, increase duration before intensity`,
+    )
+  }
+
+  recommendations.push(
+    "Low-impact options: swimming, cycling, elliptical, water aerobics - ideal for joint protection",
+    "Exercise monitoring: maintain conversational pace during moderate exercise, use perceived exertion scale",
+    "Recovery protocol: 5-10 minutes cool-down with stretching, adequate rest between training sessions",
+  )
+
+  return recommendations
+}
+
+function generateMonitoringRecommendations(
+  hasHypertension: boolean,
+  hasDiabetes: boolean,
+  isHighRisk: boolean,
+  medications: string,
+) {
+  return [
+    `Blood pressure monitoring: ${hasHypertension ? "daily morning and evening" : "weekly"} home readings with validated device`,
+    "Weight tracking: daily morning measurements after voiding, before eating, track weekly trends",
+    "Resting heart rate: measure upon waking before getting out of bed, note irregularities or changes",
+    "Symptom diary: document chest pain, shortness of breath, fatigue, palpitations with triggers and timing",
+    "Exercise tolerance: monitor distance, duration, perceived exertion, recovery time improvements",
+    "Sleep quality assessment: duration, interruptions, daytime fatigue, snoring patterns, sleep apnea screening",
+    medications
+      ? "Medication adherence: strict timing, side effects monitoring, effectiveness tracking"
+      : "Supplement compliance: timing, interactions, effectiveness monitoring",
+    hasDiabetes
+      ? "Blood glucose monitoring: as prescribed by physician, pre/post meal readings"
+      : "Dietary compliance: sodium intake estimation, portion control, meal timing consistency",
+  ]
+}
+
+function generateEssentialTests(isHighRisk: boolean, hasDiabetes: boolean, age: number) {
+  return [
+    {
+      name: "12-Lead ECG with Computer Interpretation",
+      cost: "₹300-600",
+      description: "Baseline cardiac rhythm, conduction system evaluation, ischemic changes, arrhythmia detection",
+      frequency: isHighRisk ? "Every 6 months" : "Annually or with new symptoms",
+    },
+    {
+      name: "2D Echocardiogram with Doppler Studies",
+      cost: "₹2,500-5,000",
+      description: "Left ventricular function assessment, valve evaluation, wall motion analysis, diastolic function",
+      frequency: isHighRisk ? "Every 12-18 months" : "Every 2-3 years or as clinically indicated",
+    },
+    {
+      name: "Comprehensive Lipid Profile",
+      cost: "₹500-1,000",
+      description: "Total cholesterol, LDL-C, HDL-C, triglycerides, non-HDL cholesterol, calculated ratios",
+      frequency: isHighRisk ? "Every 3-6 months" : "Every 6-12 months with treatment monitoring",
+    },
+    {
+      name: "Glycemic Assessment (HbA1c + Fasting Glucose)",
+      cost: "₹400-700",
+      description: "Diabetes screening, glycemic control evaluation, cardiovascular risk stratification",
+      frequency: hasDiabetes ? "Every 3 months" : "Every 6-12 months for screening",
+    },
+    {
+      name: "High-sensitivity C-Reactive Protein",
+      cost: "₹600-1,000",
+      description: "Inflammatory biomarker for cardiovascular risk assessment, plaque instability evaluation",
+      frequency: "Annually or with cardiovascular risk reassessment",
+    },
+    {
+      name: "Comprehensive Metabolic Panel",
       cost: "₹500-800",
-    })
-  }
-
-  diagnostics.push({
-    name: "Comprehensive metabolic panel",
-    indication: "Baseline kidney function, electrolytes, glucose",
-    urgency: age >= 65 ? "Within 24 hours" : "Within 72 hours",
-    cost: "₹600-900",
-  })
-
-  return diagnostics
+      description:
+        "Kidney function (creatinine, eGFR), electrolyte balance, liver function, medication safety monitoring",
+      frequency: isHighRisk ? "Every 6 months" : "Annually with medication monitoring",
+    },
+  ]
 }
 
-function generateFollowUpDiagnostics(
-  riskLevel: string,
-  age: number,
-  formData: any,
-): Array<{ name: string; indication: string; timing: string; cost: string }> {
-  const diagnostics = []
-
-  if (riskLevel === "High" || riskLevel === "Very High") {
-    diagnostics.push({
-      name: "Exercise stress test or pharmacological stress testing",
-      indication: "Assess for inducible ischemia, functional capacity",
-      timing: "Within 2-4 weeks if stable",
+function generateAdditionalTests(isModerateRisk: boolean, isHighRisk: boolean, age: number, hasSymptoms: boolean) {
+  return [
+    {
+      name: "Exercise Stress Test (Treadmill/Bicycle)",
       cost: "₹3,000-6,000",
-    })
-    diagnostics.push({
-      name: "Coronary CT angiography",
-      indication: "Non-invasive coronary anatomy assessment",
-      timing: "If stress test inconclusive or high pre-test probability",
-      cost: "₹8,000-15,000",
-    })
-  }
-
-  if (age >= 50 || riskLevel !== "Low") {
-    diagnostics.push({
-      name: "Carotid duplex ultrasound",
-      indication: "Assess for carotid stenosis, stroke risk",
-      timing: "Within 3 months",
-      cost: "₹2,000-3,500",
-    })
-  }
-
-  if (formData.palpitations === "frequent" || formData.dizziness === "frequent") {
-    diagnostics.push({
-      name: "24-48 hour Holter monitor",
-      indication: "Detect arrhythmias, correlate symptoms with rhythm",
-      timing: "Within 2 weeks",
-      cost: "₹2,500-4,000",
-    })
-  }
-
-  return diagnostics
+      description:
+        "Exercise-induced ischemia detection, functional capacity assessment, exercise prescription guidance",
+      frequency: isModerateRisk ? "Every 2-3 years" : "If symptomatic or abnormal resting ECG",
+    },
+    {
+      name: "Coronary CT Angiography (CCTA)",
+      cost: "₹10,000-18,000",
+      description: "Non-invasive coronary anatomy visualization, plaque characterization, stenosis quantification",
+      frequency: "Intermediate risk patients or inconclusive stress testing results",
+    },
+    {
+      name: "Invasive Coronary Angiography",
+      cost: "₹25,000-50,000",
+      description: "Gold standard coronary anatomy assessment, hemodynamic evaluation, intervention planning",
+      frequency: "Abnormal non-invasive testing or acute coronary syndrome presentation",
+    },
+    {
+      name: "24-48 Hour Holter Monitoring",
+      cost: "₹2,500-5,000",
+      description: "Continuous cardiac rhythm monitoring, arrhythmia detection, heart rate variability analysis",
+      frequency: hasSymptoms
+        ? "If palpitations or syncope reported"
+        : "If clinically indicated for arrhythmia screening",
+    },
+    {
+      name: "Carotid Duplex Ultrasound",
+      cost: "₹2,000-4,000",
+      description: "Carotid artery stenosis assessment, stroke risk evaluation, peripheral atherosclerosis screening",
+      frequency: age > 65 || isHighRisk ? "Every 2-3 years" : "If multiple cardiovascular risk factors present",
+    },
+    {
+      name: "Coronary Artery Calcium Score",
+      cost: "₹3,000-6,000",
+      description:
+        "Subclinical atherosclerosis quantification, cardiovascular risk reclassification, treatment intensity guidance",
+      frequency: "Once for intermediate-risk patients aged 40-75 for risk stratification",
+    },
+  ]
 }
 
-function generateMonitoringPlan(
-  riskLevel: string,
-  formData: any,
-): Array<{ parameter: string; frequency: string; target: string; method: string }> {
-  const monitoring = []
-
-  monitoring.push({
-    parameter: "Blood Pressure",
-    frequency: formData.hypertension === "yes" ? "Daily (morning and evening)" : "Weekly",
-    target: Number(formData.age) > 65 ? "<140/90 mmHg" : "<130/80 mmHg",
-    method: "Home BP monitor (validated device)",
-  })
-
-  monitoring.push({
-    parameter: "Weight",
-    frequency: "Daily (same time, same conditions)",
-    target: "Stable ±2 lbs, BMI 18.5-24.9 kg/m²",
-    method: "Digital scale, morning after voiding",
-  })
-
-  if (formData.diabetes === "yes") {
-    monitoring.push({
-      parameter: "Blood Glucose",
-      frequency: "As prescribed by physician (typically 2-4x daily)",
-      target: "Pre-meal: 80-130 mg/dL, Post-meal: <180 mg/dL",
-      method: "Home glucometer",
-    })
-  }
-
-  monitoring.push({
-    parameter: "Symptoms",
-    frequency: "Daily symptom diary",
-    target: "Reduction in frequency and severity",
-    method: "Written log: chest pain, dyspnea, palpitations, fatigue",
-  })
-
-  return monitoring
+function generateWarningSignals(age: number, hasHypertension: boolean) {
+  return [
+    "Severe crushing chest pain lasting >20 minutes, not relieved by rest or prescribed nitroglycerin",
+    "Chest pain radiating to jaw, left arm, back, or epigastrium accompanied by diaphoresis",
+    "Severe shortness of breath at rest or with minimal exertion, inability to lie flat (orthopnea)",
+    `Hypertensive crisis: blood pressure >${age > 65 ? "180" : "160"}/${age > 65 ? "110" : "100"} mmHg with neurological symptoms`,
+    "Sudden onset weakness, numbness, speech difficulties, or facial drooping (stroke symptoms)",
+    "Rapid irregular heartbeat >120 bpm at rest with chest discomfort, dizziness, or near-syncope",
+    "Syncope or near-syncope episodes, especially with exertion or sudden position changes",
+    "Severe nausea and vomiting associated with chest discomfort or upper abdominal pain",
+    "Profuse cold sweats (diaphoresis) with chest pain or unexplained severe fatigue",
+    "Sudden onset severe fatigue with multiple associated cardiovascular symptoms",
+  ]
 }
 
-function generatePharmacologicalPlan(
-  riskLevel: string,
+function generateFirstAidSteps(age: number) {
+  return [
+    "Call 108 immediately - do not delay transport, time-sensitive cardiac emergency",
+    "Chew 325mg aspirin if not allergic (contraindications: active bleeding, severe asthma, allergy)",
+    "Position patient upright or semi-upright, loosen restrictive clothing around neck and chest",
+    "Remain calm and still, avoid all physical exertion to minimize cardiac oxygen demand",
+    "If unconscious with no pulse: begin high-quality CPR (30 chest compressions:2 rescue breaths, rate 100-120/min)",
+    "Administer prescribed nitroglycerin if available (0.4mg sublingual, may repeat every 5 minutes x3)",
+    "Document exact time of symptom onset and progression for emergency medical team",
+    "Prepare complete medication list, medical history, emergency contacts, and insurance information",
+    "Ensure clear airway if vomiting occurs, place in recovery position if unconscious but breathing",
+    "Monitor and document vital signs if equipment available, note any changes for medical team",
+  ]
+}
+
+function generateEmergencyContacts() {
+  return [
+    "National Emergency Medical Services: 108 (24/7 ambulance with advanced cardiac life support)",
+    "Nearest Cardiac Emergency Center: [Local hospital with 24/7 catheterization laboratory capabilities]",
+    "Primary Cardiologist: [Your cardiologist's emergency contact number and backup coverage]",
+    "Family Physician: [Your primary care doctor's after-hours emergency consultation line]",
+    "Emergency Contact Person: [Family member with medical knowledge, transportation, and key access]",
+    "24-Hour Cardiac Pharmacy: [For emergency medication refills and cardiac drug interactions]",
+  ]
+}
+
+function generateFollowUpSchedule(isHighRisk: boolean, isModerateRisk: boolean) {
+  if (isHighRisk) {
+    return "Weekly cardiology visits x 4 weeks, then bi-weekly x 8 weeks, then monthly with ongoing specialist care"
+  } else if (isModerateRisk) {
+    return "Bi-weekly physician visits x 6 weeks, then monthly x 6 months, then quarterly with annual specialist review"
+  } else {
+    return "Every 3-6 months for routine cardiovascular risk assessment, annual comprehensive evaluation"
+  }
+}
+
+function generateHealthGoals(
+  isHighRisk: boolean,
+  isMale: boolean,
   age: number,
-  gender: string,
-  formData: any,
-): Array<{ medication: string; indication: string; dosing: string; monitoring: string; cost: string }> {
-  const medications = []
+  hasDiabetes: boolean,
+  hasHypertension: boolean,
+  bmi: string | null,
+) {
+  const goals = [
+    `Blood Pressure Target: <${age > 65 ? "140" : "130"}/${age > 65 ? "90" : "80"} mmHg (individualized based on comorbidities and tolerance)`,
+    `LDL Cholesterol Goal: <${isHighRisk ? "70" : "100"} mg/dL (or achieve 50% reduction from baseline if higher target appropriate)`,
+    `HDL Cholesterol Target: >${isMale ? "40" : "50"} mg/dL, optimize through regular exercise and healthy dietary fats`,
+    "Triglycerides Goal: <150 mg/dL (ideally <100 mg/dL for optimal cardiovascular health)",
+  ]
 
-  if (riskLevel === "High" || riskLevel === "Very High") {
-    medications.push({
-      medication: "Atorvastatin",
-      indication: "High-intensity statin for LDL reduction and plaque stabilization",
-      dosing: riskLevel === "Very High" ? "40-80mg daily at bedtime" : "20-40mg daily at bedtime",
-      monitoring: "Lipid panel in 6-8 weeks, then q3-6 months. LFTs at baseline and PRN",
-      cost: "₹150-600/month",
-    })
+  if (hasDiabetes) {
+    goals.push("HbA1c Target: <7% (individualized 6.5-8% based on age, comorbidities, and hypoglycemia risk)")
+  } else {
+    goals.push("HbA1c Maintenance: <5.7% to prevent progression to diabetes")
+  }
 
+  if (bmi && Number(bmi) > 25) {
+    goals.push(`Weight Management: BMI 18.5-24.9 kg/m² or achieve 5-10% weight reduction from current ${bmi}`)
+  } else {
+    goals.push("Weight Maintenance: BMI 18.5-24.9 kg/m² with stable body composition")
+  }
+
+  goals.push(
+    `Exercise Capacity: ${age > 65 ? "120-150" : "150-300"} minutes moderate aerobic activity weekly with strength training`,
+    "Smoking Status: 100% tobacco-free with ongoing cessation support and relapse prevention",
+    "Medication Adherence: >95% compliance rate with therapeutic drug monitoring and side effect management",
+    "Stress Management: Daily evidence-based relaxation practice with anxiety and depression screening",
+  )
+
+  return goals
+}
+
+function generateTrackingRecommendations(hasHypertension: boolean, hasDiabetes: boolean, isHighRisk: boolean) {
+  return [
+    `Daily Monitoring: Blood pressure ${hasHypertension ? "(morning and evening)" : "(weekly)"}, weight, symptoms, medication adherence`,
+    "Weekly Assessments: Exercise duration and intensity, dietary sodium intake, sleep quality scores, stress levels",
+    "Monthly Evaluations: Physician visits, medication effectiveness and side effects, laboratory result review",
+    "Quarterly Reviews: Comprehensive cardiovascular risk reassessment, treatment goal achievement, therapy modifications",
+    "Annual Evaluations: Complete cardiac evaluation, risk stratification updates, preventive care screening",
+    "Ongoing Documentation: Detailed symptom diary, emergency action plan familiarity, lifestyle modification progress tracking",
+  ]
+}
+
+function generateMedicationRecommendations(
+  isHighRisk: boolean,
+  hasHypertension: boolean,
+  hasDiabetes: boolean,
+  age: number,
+  isMale: boolean,
+) {
+  const medications = [
+    {
+      name: `ACE Inhibitors (${age > 65 ? "Lisinopril 5-20mg" : "Lisinopril 10-40mg"} daily)`,
+      purpose:
+        "Reduce cardiac afterload, prevent ventricular remodeling, provide nephroprotection, proven mortality benefit",
+      cost: "₹60-250/month",
+    },
+    {
+      name: `Beta-blockers (${isMale ? "Metoprolol 50-200mg" : "Metoprolol 25-100mg"} daily, divided doses)`,
+      purpose: "Reduce heart rate and blood pressure, provide anti-ischemic effects, post-MI mortality reduction",
+      cost: "₹50-200/month",
+    },
+    {
+      name: `Statins (${isHighRisk ? "Atorvastatin 40-80mg" : "Atorvastatin 20-40mg"} daily at bedtime)`,
+      purpose:
+        "LDL cholesterol reduction, plaque stabilization, anti-inflammatory effects, cardiovascular event prevention",
+      cost: "₹120-600/month",
+    },
+    {
+      name: `Aspirin (${age > 70 ? "75mg" : "81-100mg"} daily with food)`,
+      purpose:
+        "Primary/secondary prevention antiplatelet therapy, thrombosis prevention, cardiovascular event reduction",
+      cost: "₹25-60/month",
+    },
+  ]
+
+  if (isHighRisk) {
     medications.push({
-      medication: "Aspirin",
-      indication: "Antiplatelet therapy for cardiovascular event prevention",
-      dosing: age > 70 ? "75mg daily with food" : "81-100mg daily with food",
-      monitoring: "CBC annually, assess for GI bleeding symptoms",
-      cost: "₹30-80/month",
+      name: "Clopidogrel (75mg daily)",
+      purpose:
+        "Dual antiplatelet therapy for high-risk patients, P2Y12 receptor inhibition, enhanced thrombosis prevention",
+      cost: "₹180-500/month",
     })
   }
 
-  if (formData.hypertension === "yes" || riskLevel === "Very High") {
+  if (hasHypertension) {
     medications.push({
-      medication: "Lisinopril (ACE inhibitor)",
-      indication: "BP control, cardioprotection, prevent LV remodeling",
-      dosing: age > 65 ? "5-20mg daily" : "10-40mg daily",
-      monitoring: "BP weekly x 4 weeks, then monthly. Creatinine/K+ in 1-2 weeks",
+      name: `Calcium Channel Blockers (Amlodipine ${age > 65 ? "2.5-5mg" : "5-10mg"} daily)`,
+      purpose: "Arterial vasodilation, blood pressure control, anti-anginal effects, stroke prevention",
       cost: "₹80-300/month",
     })
-
-    if (riskLevel === "Very High") {
-      medications.push({
-        medication: "Metoprolol succinate",
-        indication: "Beta-blockade for rate control and cardioprotection",
-        dosing: "25-200mg daily (start low, titrate slowly)",
-        monitoring: "HR, BP weekly during titration. Assess for fatigue, dyspnea",
-        cost: "₹100-400/month",
-      })
-    }
   }
 
-  if (formData.diabetes === "yes") {
+  if (hasDiabetes) {
     medications.push({
-      medication: "Metformin",
-      indication: "First-line diabetes therapy with cardiovascular benefits",
-      dosing: "500-1000mg twice daily with meals",
-      monitoring: "HbA1c q3 months, creatinine q6-12 months, B12 annually",
-      cost: "₹50-200/month",
+      name: "SGLT2 Inhibitors (Empagliflozin 10-25mg daily)",
+      purpose: "Glucose control with cardiovascular benefits, heart failure risk reduction, renal protection",
+      cost: "₹300-800/month",
     })
   }
 
   return medications
 }
 
-function generateNonPharmacologicalPlan(
-  riskLevel: string,
-  formData: any,
-): Array<{ intervention: string; description: string; frequency: string; duration: string }> {
-  const interventions = []
+function generateAdvancedDietPlan(isVegetarian: boolean, hasHypertension: boolean, hasDiabetes: boolean) {
+  const dietPlan = [
+    `${isVegetarian ? "Plant-based Mediterranean" : "Traditional Mediterranean"} diet: olive oil, nuts, legumes, whole grains, abundant vegetables`,
+    `DASH Protocol: <${hasHypertension ? "1500" : "2300"}mg sodium daily, high potassium (3500-4700mg), minimal processed foods`,
+    "Soluble fiber optimization: 25-35g daily (10-25g soluble fiber) - naturally reduces LDL cholesterol 5-10%",
+    isVegetarian
+      ? "Plant-based omega-3: algae-based EPA/DHA 1-2g daily, walnuts, flaxseeds, chia seeds, hemp hearts"
+      : "Marine omega-3: fatty fish 2-3x weekly (salmon, mackerel, sardines) plus 1g EPA/DHA supplement daily",
+    "Plant sterols/stanols: 2g daily from fortified foods or supplements - provides additional 6-15% LDL reduction",
+    "Antioxidant optimization: vitamin C (citrus, berries), vitamin E (nuts, seeds), polyphenols (colorful produce)",
+  ]
 
-  if (riskLevel === "High" || riskLevel === "Very High") {
-    interventions.push({
-      intervention: "Cardiac Rehabilitation Program",
-      description: "Supervised exercise training, education, and counseling",
-      frequency: "3 sessions per week",
-      duration: "12-36 weeks (Phase II and III)",
-    })
+  if (hasDiabetes) {
+    dietPlan.push("Glycemic control: low glycemic index foods, carbohydrate counting, consistent meal timing")
   }
 
-  interventions.push({
-    intervention: "Dietary Consultation",
-    description: "Registered dietitian for DASH diet or Mediterranean diet counseling",
-    frequency: "Initial consultation, then monthly x 3, then quarterly",
-    duration: "Ongoing lifestyle modification",
-  })
+  dietPlan.push(
+    "Refined carbohydrate limitation: <25g added sugars daily, choose complex carbohydrates with fiber",
+    "Portion control strategies: smaller plates, mindful eating practices, hunger and satiety awareness training",
+  )
 
-  if (formData.smoking === "current") {
-    interventions.push({
-      intervention: "Smoking Cessation Program",
-      description: "Behavioral counseling + pharmacotherapy (varenicline, bupropion, NRT)",
-      frequency: "Weekly counseling sessions",
-      duration: "12-24 weeks with long-term follow-up",
-    })
-  }
-
-  if (formData.stressLevel === "high" || formData.stressLevel === "very-high") {
-    interventions.push({
-      intervention: "Stress Management/Cardiac Psychology",
-      description: "Cognitive behavioral therapy, mindfulness-based stress reduction",
-      frequency: "Weekly sessions initially, then bi-weekly",
-      duration: "8-12 weeks initial program",
-    })
-  }
-
-  return interventions
+  return dietPlan
 }
 
-function generateLifestylePrescription(formData: any): {
-  exercise: string[]
-  nutrition: string[]
-  stress: string[]
-  sleep: string[]
-} {
-  const age = Number(formData.age)
-  const isVegetarian = formData.dietType === "vegetarian"
+function generateExercisePlan(age: number, isHighRisk: boolean, exerciseFrequency: string) {
+  const exercisePlan = [
+    `Aerobic foundation: ${age > 65 ? "30-40" : "30-60"} minutes moderate intensity, 5 days weekly (walking, swimming, cycling)`,
+    "Resistance training: 2-3 sessions weekly, 8-12 repetitions, progressive overload principle, all major muscle groups",
+    "Flexibility and mobility: daily 10-15 minute stretching routine, yoga or tai chi 2-3 sessions weekly",
+  ]
 
-  return {
-    exercise: [
-      `Aerobic exercise: ${age > 65 ? "150 minutes moderate" : "150-300 minutes moderate OR 75-150 minutes vigorous"} weekly`,
-      "Resistance training: 2-3 sessions per week, all major muscle groups, 8-12 repetitions",
-      "Flexibility: Daily stretching, yoga or tai chi 2-3x weekly",
-      age > 65
-        ? "Balance training: 3x weekly to prevent falls"
-        : "High-intensity interval training: 1-2x weekly if cleared",
-      "Target heart rate: 50-85% of age-predicted maximum (220-age)",
-      "Gradual progression: Increase duration before intensity, 10% rule weekly",
-    ],
-    nutrition: [
-      `${isVegetarian ? "Plant-based Mediterranean" : "Mediterranean or DASH"} diet pattern`,
-      `Sodium restriction: <${formData.hypertension === "yes" ? "1500" : "2300"}mg daily`,
-      "Omega-3 fatty acids: 2-3 servings fatty fish weekly OR algae-based supplement",
-      "Fiber: 25-35g daily from whole grains, legumes, fruits, vegetables",
-      "Saturated fat: <7% of total calories, eliminate trans fats",
-      "Added sugars: <25g daily (6 teaspoons)",
-      "Alcohol: ≤1 drink/day (women), ≤2 drinks/day (men) with 2 alcohol-free days",
-      "Portion control: Use smaller plates, mindful eating practices",
-    ],
-    stress: [
-      "Mindfulness meditation: 10-20 minutes daily using apps or guided sessions",
-      "Deep breathing exercises: 4-7-8 technique, box breathing for acute stress",
-      "Progressive muscle relaxation: 15-20 minutes before bedtime",
-      "Regular yoga practice: 2-3 sessions weekly, focus on restorative poses",
-      "Social support: Maintain relationships, consider support groups",
-      "Professional counseling: If stress significantly impacts daily functioning",
-      "Time management: Prioritization, delegation, boundary setting",
-      "Enjoyable activities: Hobbies, music, nature exposure, pet therapy",
-    ],
-    sleep: [
-      "Sleep duration: 7-9 hours nightly (7-8 hours if >65 years)",
-      "Consistent sleep schedule: Same bedtime and wake time daily",
-      "Sleep hygiene: Cool, dark, quiet bedroom environment",
-      "Pre-sleep routine: No screens 1 hour before bed, relaxation activities",
-      "Avoid: Caffeine after 2 PM, large meals 3 hours before bed, alcohol before sleep",
-      "Sleep position: Elevate head if heart failure symptoms present",
-      "Sleep study: If snoring, witnessed apneas, or excessive daytime sleepiness",
-      "Limit daytime naps: <30 minutes, before 3 PM if needed",
-    ],
-  }
-}
-
-function generateFollowUpSchedule(riskLevel: string, symptomScore: number): string {
-  if (riskLevel === "Very High") {
-    return "48-72 hours post-discharge, then weekly x 4 weeks, bi-weekly x 8 weeks, then monthly"
-  } else if (riskLevel === "High") {
-    return "1-2 weeks, then monthly x 3 months, then every 3 months"
-  } else if (riskLevel === "Moderate") {
-    return "4-6 weeks, then every 3 months x 1 year, then every 6 months"
+  if (isHighRisk) {
+    exercisePlan.push(
+      "Supervised cardiac rehabilitation: medically monitored exercise program with ECG telemetry if available",
+    )
   } else {
-    return "3-6 months for routine cardiovascular risk assessment, then annually"
+    exercisePlan.push(
+      "High-intensity interval training: 1-2 sessions weekly if medically cleared and exercise-experienced",
+    )
   }
+
+  exercisePlan.push(
+    "Functional activities: gardening, dancing, recreational sports, stair climbing, active household tasks",
+    "Exercise progression: increase duration before intensity, follow 10% weekly increase rule, listen to body signals",
+    "Recovery optimization: 1-2 complete rest days weekly, adequate sleep, proper hydration and nutrition",
+    "Activity monitoring: heart rate zones, perceived exertion scales, symptom awareness during and after exercise",
+  )
+
+  return exercisePlan
 }
 
-function generateTherapeuticGoals(
-  riskLevel: string,
+function generateStressManagement(age: number, stressLevel: string) {
+  const stressManagement = [
+    "Mindfulness meditation: 10-20 minutes daily practice, use apps like Headspace, Calm, or Insight Timer",
+    "Deep breathing techniques: 4-7-8 breathing, box breathing, diaphragmatic breathing for acute stress episodes",
+    "Progressive muscle relaxation: systematic tension-release cycles, guided body scan meditation",
+    `Yoga practice: ${age > 65 ? "gentle hatha, chair yoga, or restorative styles" : "hatha, vinyasa, or power yoga"} 2-3x weekly`,
+  ]
+
+  if (stressLevel === "high" || stressLevel === "very-high") {
+    stressManagement.push(
+      "Professional mental health support: counseling, cognitive behavioral therapy for anxiety and depression",
+    )
+  }
+
+  stressManagement.push(
+    "Social support optimization: maintain relationships, join cardiac support groups, involve family in health journey",
+    "Time management skills: prioritization techniques, delegation strategies, boundary setting, work-life balance",
+    "Enjoyable activities: hobbies, music therapy, reading, nature exposure, laughter therapy, pet companionship",
+  )
+
+  return stressManagement
+}
+
+function generateSupplementRecommendations(
   age: number,
   gender: string,
-  formData: any,
-): Array<{ parameter: string; target: string; timeframe: string; priority: string }> {
-  const goals = []
+  isVegetarian: boolean,
+  hasDiabetes: boolean,
+  hasHypertension: boolean,
+) {
+  const supplements = [
+    {
+      name: "Omega-3 Fatty Acids (EPA/DHA)",
+      dosage: isVegetarian ? "1-2g daily (algae-based)" : "1-2g daily (fish oil)",
+      purpose: "Reduce triglycerides, anti-inflammatory effects, cardiovascular protection",
+      cost: "₹200-600/month",
+    },
+    {
+      name: "Coenzyme Q10 (Ubiquinol preferred)",
+      dosage: "100-200mg daily with meals",
+      purpose: "Mitochondrial support, statin-induced myopathy prevention, heart failure support",
+      cost: "₹300-800/month",
+    },
+    {
+      name: "Magnesium Glycinate",
+      dosage: "400-600mg daily (divided doses)",
+      purpose: "Blood pressure reduction, arrhythmia prevention, muscle relaxation, sleep quality",
+      cost: "₹150-400/month",
+    },
+    {
+      name: "Vitamin D3",
+      dosage: "2000-4000 IU daily (adjust based on blood levels)",
+      purpose: "Cardiovascular protection, immune support, bone health, mood regulation",
+      cost: "₹100-300/month",
+    },
+    {
+      name: "Vitamin K2 (MK-7 form)",
+      dosage: "100-200mcg daily",
+      purpose: "Arterial calcification prevention, bone health, works synergistically with Vitamin D",
+      cost: "₹200-500/month",
+    },
+  ]
 
-  goals.push({
-    parameter: "Blood Pressure",
-    target: age > 65 ? "<140/90 mmHg" : "<130/80 mmHg",
-    timeframe: "Achieve within 3-6 months",
-    priority: "High",
-  })
-
-  goals.push({
-    parameter: "LDL Cholesterol",
-    target: riskLevel === "Very High" ? "<70 mg/dL" : riskLevel === "High" ? "<100 mg/dL" : "<130 mg/dL",
-    timeframe: "Achieve within 6-12 weeks of statin initiation",
-    priority: "High",
-  })
-
-  goals.push({
-    parameter: "HDL Cholesterol",
-    target: gender === "male" ? ">40 mg/dL" : ">50 mg/dL",
-    timeframe: "Improve with exercise and weight loss over 6 months",
-    priority: "Moderate",
-  })
-
-  if (formData.diabetes === "yes") {
-    goals.push({
-      parameter: "HbA1c",
-      target: age > 65 ? "<8%" : "<7%",
-      timeframe: "Achieve within 3-6 months",
-      priority: "High",
+  if (hasDiabetes) {
+    supplements.push({
+      name: "Berberine",
+      dosage: "500mg twice daily with meals",
+      purpose: "Glucose control, lipid management, insulin sensitivity improvement",
+      cost: "₹250-600/month",
     })
   }
 
-  const weight = Number(formData.weight)
-  const height = Number(formData.height)
-  if (weight && height) {
-    const bmi = weight / Math.pow(height / 100, 2)
-    if (bmi >= 25) {
-      goals.push({
-        parameter: "Weight Loss",
-        target: `5-10% reduction (${Math.round(weight * 0.05)}-${Math.round(weight * 0.1)} kg)`,
-        timeframe: "Achieve over 6-12 months (0.5-1 kg/week)",
-        priority: "Moderate",
-      })
-    }
-  }
-
-  if (formData.smoking === "current") {
-    goals.push({
-      parameter: "Smoking Cessation",
-      target: "Complete tobacco abstinence",
-      timeframe: "Quit date within 2 weeks, maintain abstinence",
-      priority: "Critical",
+  if (hasHypertension) {
+    supplements.push({
+      name: "Hawthorn Extract",
+      dosage: "300-600mg daily (standardized extract)",
+      purpose: "Heart failure support, blood pressure reduction, improved circulation",
+      cost: "₹200-500/month",
     })
   }
 
-  return goals
-}
+  supplements.push(
+    {
+      name: "Garlic Extract (Aged)",
+      dosage: "600-1200mg daily (allicin-standardized)",
+      purpose: "Blood pressure reduction, cholesterol management, immune support",
+      cost: "₹150-400/month",
+    },
+    {
+      name: "Taurine",
+      dosage: "1-3g daily (divided doses)",
+      purpose: "Heart rhythm support, blood pressure regulation, exercise performance",
+      cost: "₹200-500/month",
+    },
+  )
 
-function generateMonitoringSchedule(
-  riskLevel: string,
-  formData: any,
-): Array<{ test: string; frequency: string; rationale: string }> {
-  const monitoring = []
-
-  monitoring.push({
-    test: "Lipid Panel",
-    frequency:
-      riskLevel === "High" || riskLevel === "Very High"
-        ? "6-8 weeks after statin initiation, then q3-6 months"
-        : "Annually",
-    rationale: "Monitor LDL goal achievement and statin efficacy",
-  })
-
-  monitoring.push({
-    test: "Comprehensive Metabolic Panel",
-    frequency: riskLevel === "High" || riskLevel === "Very High" ? "Every 6 months" : "Annually",
-    rationale: "Monitor kidney function, electrolytes, medication safety",
-  })
-
-  if (formData.diabetes === "yes") {
-    monitoring.push({
-      test: "HbA1c",
-      frequency: "Every 3 months until goal achieved, then every 6 months",
-      rationale: "Assess glycemic control and cardiovascular risk reduction",
+  if (isVegetarian) {
+    supplements.push({
+      name: "Vitamin B12 (Methylcobalamin)",
+      dosage: "1000mcg daily or 2500mcg weekly",
+      purpose: "Prevent deficiency, support cardiovascular health, neurological function",
+      cost: "₹100-300/month",
     })
   }
 
-  monitoring.push({
-    test: "ECG",
-    frequency: riskLevel === "Very High" ? "Every 6 months" : "Annually or with symptoms",
-    rationale: "Monitor for ischemic changes, arrhythmias, medication effects",
-  })
-
-  if (riskLevel === "High" || riskLevel === "Very High") {
-    monitoring.push({
-      test: "Echocardiogram",
-      frequency: "Every 1-2 years or with clinical change",
-      rationale: "Assess LV function, monitor for heart failure development",
+  if (gender === "female" && age < 50) {
+    supplements.push({
+      name: "Iron (if deficient)",
+      dosage: "18-25mg daily with Vitamin C",
+      purpose: "Prevent iron deficiency anemia, support cardiovascular health",
+      cost: "₹100-250/month",
     })
   }
 
-  return monitoring
-}
-
-function generateWarningSignals(riskLevel: string, age: number): string[] {
-  return [
-    "Severe chest pain lasting >20 minutes, crushing or pressure-like quality",
-    "Chest pain radiating to jaw, neck, left arm, or back with diaphoresis",
-    "Severe shortness of breath at rest or with minimal exertion",
-    `Blood pressure >180/120 mmHg with symptoms (headache, vision changes, chest pain)`,
-    "Sudden weakness, numbness, or speech difficulties (stroke symptoms)",
-    "Rapid heart rate >120 bpm at rest with chest discomfort or dizziness",
-    "Syncope or near-syncope, especially with exertion",
-    "Severe nausea/vomiting with chest discomfort",
-    "Cold sweats with chest pain or severe fatigue",
-    "Sudden severe fatigue with multiple cardiac symptoms",
-  ]
-}
-
-function generateEmergencyActionPlan(age: number, formData: any): string[] {
-  return [
-    "Call 108 immediately - do not delay, time is critical for cardiac emergencies",
-    "Chew 325mg aspirin if available and not allergic (contraindications: active bleeding)",
-    "Sit upright or semi-upright position, loosen tight clothing",
-    "Remain calm and avoid physical exertion to reduce cardiac workload",
-    "If prescribed nitroglycerin available: 0.4mg sublingual, may repeat q5min x3",
-    "If unconscious and no pulse: Begin CPR (30 compressions:2 breaths, 100-120/min)",
-    "Document time of symptom onset for emergency medical team",
-    "Prepare medication list, medical history, and emergency contacts",
-    "Ensure airway clearance if vomiting, recovery position if unconscious",
-    "Stay with patient, monitor vital signs if possible, note changes",
-  ]
-}
-
-function generateEmergencyContacts(): string[] {
-  return [
-    "Emergency Medical Services: 108 (National emergency number)",
-    "Nearest Emergency Department with cardiac catheterization capability",
-    "Primary Cardiologist: [Contact information and after-hours coverage]",
-    "Primary Care Physician: [Emergency contact number]",
-    "Emergency Contact Person: [Family member with medical knowledge]",
-    "24-Hour Pharmacy: [For emergency medication needs]",
-  ]
-}
-
-function generatePatientEducation(riskLevel: string, formData: any): string[] {
-  const education = [
-    "Understand your cardiovascular risk level and what it means for your health",
-    "Learn to recognize cardiac emergency symptoms and when to seek immediate help",
-    "Importance of medication adherence - take prescribed medications as directed",
-    "Lifestyle modifications can significantly reduce cardiovascular risk by 30-50%",
-    "Regular monitoring and follow-up appointments are crucial for optimal outcomes",
-  ]
-
-  if (formData.smoking === "current") {
-    education.push("Smoking cessation is the single most important intervention to reduce cardiac risk")
-  }
-
-  if (formData.diabetes === "yes") {
-    education.push("Diabetes management is essential - it's considered a 'coronary artery disease equivalent'")
-  }
-
-  if (riskLevel === "High" || riskLevel === "Very High") {
-    education.push("You may benefit from cardiac rehabilitation programs - ask your doctor about referral")
-  }
-
-  return education
-}
-
-function generateEducationalResources(riskLevel: string): string[] {
-  return [
-    "American Heart Association: heart.org - Comprehensive cardiovascular health information",
-    "Cardiac rehabilitation programs in your area - ask for referral",
-    "Heart-healthy cooking classes and nutrition counseling",
-    "Smoking cessation programs and support groups",
-    "Stress management and mindfulness programs",
-    "Exercise programs appropriate for cardiac patients",
-    "Support groups for cardiac patients and families",
-    "Mobile apps for medication reminders and symptom tracking",
-  ]
-}
-
-function generateLifestyleEducation(formData: any): string[] {
-  const education = []
-
-  if (formData.dietType !== "mediterranean") {
-    education.push("Learn about heart-healthy eating patterns: Mediterranean or DASH diet")
-  }
-
-  if (formData.exerciseFrequency === "never" || formData.exerciseFrequency === "rarely") {
-    education.push("Start with 10-15 minutes of walking daily, gradually increase duration and intensity")
-  }
-
-  if (formData.stressLevel === "high" || formData.stressLevel === "very-high") {
-    education.push("Stress management techniques: meditation, yoga, deep breathing exercises")
-  }
-
-  if (formData.sleepQuality === "poor" || formData.sleepQuality === "fair") {
-    education.push("Sleep hygiene practices for better cardiovascular health")
-  }
-
-  education.push("Home blood pressure monitoring technique and record keeping")
-  education.push("Understanding medication side effects and when to contact healthcare provider")
-  education.push("Travel considerations for cardiac patients and medication management")
-
-  return education
+  return supplements
 }
 
 function generateWorkoutSchedule(activityLevel: string, age: number): string {
