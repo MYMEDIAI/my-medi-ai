@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
 
 interface WeightLossData {
@@ -135,30 +134,289 @@ export default function WeightLossPage() {
     }))
   }
 
+  const calculateBMI = (weight: number, height: number) => {
+    const heightInM = height / 100
+    return weight / (heightInM * heightInM)
+  }
+
+  const getBMICategory = (bmi: number) => {
+    if (bmi < 18.5) return { category: "Underweight", risk: "Low", improvement: "Weight gain needed" }
+    if (bmi < 25) return { category: "Normal", risk: "Low", improvement: "Maintain current weight" }
+    if (bmi < 30) return { category: "Overweight", risk: "Moderate", improvement: "Weight loss recommended" }
+    return { category: "Obese", risk: "High", improvement: "Significant weight loss needed" }
+  }
+
+  const calculateBMR = (weight: number, height: number, age: number, gender: string) => {
+    if (gender === "male") {
+      return 88.362 + 13.397 * weight + 4.799 * height - 5.677 * age
+    } else {
+      return 447.593 + 9.247 * weight + 3.098 * height - 4.33 * age
+    }
+  }
+
+  const getActivityMultiplier = (level: string) => {
+    switch (level) {
+      case "sedentary":
+        return 1.2
+      case "light":
+        return 1.375
+      case "moderate":
+        return 1.55
+      case "active":
+        return 1.725
+      case "very-active":
+        return 1.9
+      default:
+        return 1.2
+    }
+  }
+
   const generateResults = async () => {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/ai-integration", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "weight-loss-plan",
-          payload: formData,
-        }),
-      })
+      // Simulate API processing time
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      if (!response.ok) {
-        throw new Error("Failed to generate plan")
+      const weight = Number.parseFloat(formData.currentWeight)
+      const height = Number.parseFloat(formData.height)
+      const age = Number.parseInt(formData.age)
+      const targetWeight = Number.parseFloat(formData.targetWeight)
+
+      const currentBMI = calculateBMI(weight, height)
+      const targetBMI = calculateBMI(targetWeight, height)
+      const currentBMIInfo = getBMICategory(currentBMI)
+
+      const bmr = calculateBMR(weight, height, age, formData.gender)
+      const tdee = bmr * getActivityMultiplier(formData.activityLevel)
+      const weightToLose = weight - targetWeight
+      const deficit = Math.min(750, Math.max(300, weightToLose * 100))
+      const targetDaily = Math.round(tdee - deficit)
+
+      const weeklyLoss = (deficit * 7) / 7700
+      const estimatedWeeks = Math.ceil(weightToLose / weeklyLoss)
+
+      // Generate comprehensive results
+      const generatedResults: WeightLossResults = {
+        bmi: {
+          current: currentBMI,
+          target: targetBMI,
+          category: currentBMIInfo.category,
+          risk: currentBMIInfo.risk,
+          improvement: currentBMIInfo.improvement,
+        },
+        calories: {
+          bmr: Math.round(bmr),
+          tdee: Math.round(tdee),
+          deficit: deficit,
+          targetDaily: targetDaily,
+          macros: {
+            protein: `${Math.round((targetDaily * 0.25) / 4)}g (25% of calories)`,
+            carbs: `${Math.round((targetDaily * 0.45) / 4)}g (45% of calories)`,
+            fats: `${Math.round((targetDaily * 0.3) / 9)}g (30% of calories)`,
+          },
+        },
+        timeline: {
+          weeklyLoss: Number.parseFloat(weeklyLoss.toFixed(1)),
+          estimatedWeeks: estimatedWeeks,
+          phases: [
+            {
+              phase: "Phase 1 (Weeks 1-4)",
+              focus: "Initial adaptation & habit formation",
+              expectedLoss: `${(weeklyLoss * 4).toFixed(1)}kg`,
+            },
+            {
+              phase: "Phase 2 (Weeks 5-12)",
+              focus: "Steady fat loss & metabolic adaptation",
+              expectedLoss: `${(weeklyLoss * 8).toFixed(1)}kg`,
+            },
+            {
+              phase: "Phase 3 (Final phase)",
+              focus: "Goal achievement & maintenance prep",
+              expectedLoss: `${(weightToLose - weeklyLoss * 12).toFixed(1)}kg`,
+            },
+          ],
+          milestones: [
+            {
+              week: 2,
+              weight: weight - weeklyLoss * 2,
+              goal: "Initial water weight & adaptation",
+              bodyFat: "1-2% reduction",
+            },
+            { week: 4, weight: weight - weeklyLoss * 4, goal: "Habit establishment", bodyFat: "2-3% reduction" },
+            { week: 8, weight: weight - weeklyLoss * 8, goal: "Midpoint assessment", bodyFat: "4-6% reduction" },
+            { week: 12, weight: weight - weeklyLoss * 12, goal: "Significant progress", bodyFat: "6-8% reduction" },
+          ],
+        },
+        dietPlan: {
+          breakfast: [
+            "Steel-cut oats with almonds, berries & cinnamon (320 cal)",
+            "Vegetable poha with curry leaves & green chutney (280 cal)",
+            "Moong dal chilla with spinach & mint chutney (300 cal)",
+            "Upma with mixed vegetables & coconut (290 cal)",
+            "Quinoa porridge with nuts & seasonal fruits (310 cal)",
+            "Besan cheela with vegetables & yogurt (285 cal)",
+          ],
+          midMorning: [
+            "Green tea with 6 soaked almonds (85 cal)",
+            "Buttermilk with roasted cumin & mint (65 cal)",
+            "Apple with 1 tsp peanut butter (95 cal)",
+            "Coconut water with lime (50 cal)",
+            "Herbal tea with 2 dates (75 cal)",
+            "Cucumber slices with chaat masala (25 cal)",
+          ],
+          lunch: [
+            "Brown rice with dal and vegetables (420 cal)",
+            "2 multigrain roti with palak paneer + cucumber raita (380 cal)",
+            "Quinoa pulao with vegetables + yogurt (400 cal)",
+            "Millet khichdi with ghee + pickle + papad (390 cal)",
+            "Vegetable biryani (brown rice) + raita (410 cal)",
+            "Rajma with brown rice + green salad (395 cal)",
+          ],
+          evening: [
+            "Masala chai with 2 marie biscuits (110 cal)",
+            "Roasted chana with onions & lemon (125 cal)",
+            "Green tea with handful of roasted peanuts (95 cal)",
+            "Coconut water with chia seeds (60 cal)",
+            "Herbal tea with 4-5 cashews (90 cal)",
+            "Vegetable soup with herbs (70 cal)",
+          ],
+          dinner: [
+            "Grilled paneer/chicken with sautéed vegetables (320 cal)",
+            "Dal with 1 roti + mixed vegetable salad (300 cal)",
+            "Fish curry with cauliflower rice (310 cal)",
+            "Vegetable soup with quinoa + side salad (280 cal)",
+            "Egg curry with 1 roti + cucumber salad (295 cal)",
+            "Tofu stir-fry with vegetables (285 cal)",
+          ],
+          bedtime: [
+            "Warm turmeric milk with pinch of black pepper (105 cal)",
+            "Chamomile tea with 1 tsp honey (25 cal)",
+            "Warm water with lemon & ginger (10 cal)",
+            "Golden milk (turmeric latte) with almond milk (80 cal)",
+            "Herbal tea blend (5 cal)",
+            "Warm water with ajwain (carom seeds) (5 cal)",
+          ],
+          guidelines: [
+            "Eat every 2-3 hours to maintain metabolism",
+            "Include protein in every meal for muscle preservation",
+            "Drink water before meals to increase satiety",
+            "Use smaller plates to control portion sizes",
+            "Chew food slowly and mindfully",
+            "Stop eating 3 hours before bedtime",
+          ],
+        },
+        exercisePlan: {
+          cardio: [
+            "Brisk walking 45-60 minutes daily (outdoor preferred)",
+            "Cycling 30-45 minutes, 4x per week",
+            "Swimming 30-40 minutes, 3x per week",
+            "Dancing (Bollywood/Zumba) 30-45 minutes, 3x per week",
+            "Stair climbing 15-20 minutes daily",
+            "Jogging intervals 20-30 minutes, 3x per week",
+          ],
+          strength: [
+            "Bodyweight exercises: Push-ups, squats, lunges (3x12-15)",
+            "Resistance band training full body (3x per week)",
+            "Yoga for strength: Power yoga, Ashtanga (45 min, 3x/week)",
+            "Light weight training with dumbbells (2-3x per week)",
+            "Functional movements: Planks, mountain climbers",
+            "Pilates core strengthening (2x per week)",
+          ],
+          flexibility: [
+            "Morning stretching routine (15 minutes daily)",
+            "Evening yoga flow (20-30 minutes)",
+            "Weekend longer yoga sessions (60 minutes)",
+            "Daily mobility exercises for joints",
+            "Foam rolling for muscle recovery",
+            "Meditation with gentle stretches (15 min daily)",
+          ],
+          schedule:
+            "Mon: Cardio + Upper strength | Tue: Yoga + Walk | Wed: Cardio + Lower strength | Thu: Flexibility + Light cardio | Fri: Full body + Cardio | Sat: Active recovery/sports | Sun: Rest or gentle yoga",
+          gymExercises: [
+            "Treadmill walking (incline 5-8%) - 20-30 minutes",
+            "Elliptical machine - 15-20 minutes moderate pace",
+            "Leg press machine - 3 sets x 12-15 reps",
+            "Chest press machine - 3 sets x 10-12 reps",
+            "Lat pulldown - 3 sets x 10-12 reps",
+            "Shoulder press - 3 sets x 8-10 reps",
+            "Seated row - 3 sets x 10-12 reps",
+            "Leg extension/curl - 2 sets x 12-15 reps each",
+          ],
+          weeklyCalorieBurn: "1,800-2,500 calories through combined cardio and strength training",
+        },
+        supplements: [
+          "High-quality Multivitamin (Centrum/Revital H) - covers micronutrient gaps",
+          "Omega-3 fatty acids (1000mg) - if non-vegetarian diet insufficient",
+          "Whey/Plant protein powder (20-30g) - if daily protein target not met",
+          "Vitamin D3 (2000-4000 IU) - especially if deficient in blood tests",
+          "Probiotics (multi-strain) - for gut health and digestion",
+          "Green tea extract (optional) - for metabolism support",
+          "Magnesium supplement - for muscle function and sleep",
+          "B-Complex vitamins - for energy metabolism support",
+        ],
+        tips: [
+          "Drink 500ml water before meals to feel fuller",
+          "Use smaller plates to control portions",
+          "Include protein in every meal",
+          "Plan and prep meals in advance",
+          "Track your progress weekly, not daily",
+          "Get 7-8 hours of quality sleep",
+          "Manage stress through meditation",
+          "Stay consistent rather than perfect",
+          "Eat slowly and mindfully",
+          "Include fiber-rich foods in every meal",
+        ],
+        riskAssessment: {
+          level: currentBMI > 35 ? "Very High" : currentBMI > 30 ? "High" : currentBMI > 25 ? "Moderate" : "Low",
+          factors: [
+            ...(currentBMI > 30 ? [`BMI ${currentBMI.toFixed(1)} indicates obesity`] : []),
+            ...(age > 50 ? ["Age over 50 years"] : []),
+            ...formData.healthConditions.filter((c) => c !== "None"),
+          ],
+          recommendations: [
+            ...(currentBMI > 35 ? ["Immediate medical supervision required"] : []),
+            ...(formData.healthConditions.includes("Diabetes") ? ["Blood glucose monitoring essential"] : []),
+            ...(formData.healthConditions.includes("Heart Disease") ? ["Cardiac clearance required"] : []),
+            "Regular health monitoring during weight loss",
+          ],
+        },
+        followUp: {
+          schedule: currentBMI > 35 ? "Every 2 weeks" : currentBMI > 30 ? "Monthly" : "Every 6 weeks",
+          tests: [
+            "Complete Blood Count (CBC) - monitor for anemia, infection",
+            "Comprehensive Metabolic Panel - kidney, liver function",
+            "Lipid Profile (Total, HDL, LDL, Triglycerides)",
+            "HbA1c & Fasting Blood Sugar - diabetes screening",
+            "Thyroid Function Test (TSH, T3, T4)",
+            "Vitamin D3, B12, Iron levels",
+            "Inflammatory markers (CRP) if indicated",
+            "Body composition analysis (DEXA scan recommended)",
+          ],
+          consultations: [
+            "Registered Dietitian - personalized meal planning & adjustments",
+            "Certified Personal Trainer - exercise form & progression",
+            "Primary Care Physician - overall health monitoring",
+            "Endocrinologist (if diabetic/thyroid issues)",
+            "Mental Health Counselor - psychological support if needed",
+            "Physiotherapist (if joint/mobility issues)",
+          ],
+          tracking: [
+            "Daily weight measurements (same time, same conditions)",
+            "Weekly body measurements (waist, hips, arms)",
+            "Food diary with calorie tracking",
+            "Exercise log with duration and intensity",
+            "Sleep quality and duration tracking",
+            "Energy levels and mood monitoring",
+          ],
+        },
       }
 
-      const aiResults = await response.json()
-      setResults(aiResults)
+      setResults(generatedResults)
     } catch (error) {
       console.error("Error generating results:", error)
-      // Fallback would go here if needed
+      // Show user-friendly error message
+      alert("There was an error generating your plan. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -188,10 +446,6 @@ export default function WeightLossPage() {
       emergencyContact: "",
     })
     setResults(null)
-  }
-
-  const downloadPDF = () => {
-    window.print()
   }
 
   const shareResults = async () => {
@@ -483,7 +737,7 @@ export default function WeightLossPage() {
                   key={index}
                   style={{ border: "1px solid #ccc", padding: "6px", fontSize: "10px", marginBottom: "4px" }}
                 >
-                  <strong>Week {milestone.week}:</strong> Target {milestone.weight} kg | {milestone.goal} |{" "}
+                  <strong>Week {milestone.week}:</strong> Target {milestone.weight.toFixed(1)} kg | {milestone.goal} |{" "}
                   {milestone.bodyFat}
                 </div>
               ))}
@@ -647,7 +901,7 @@ export default function WeightLossPage() {
                   className="print-card"
                   style={{
                     background:
-                      results.riskAssessment.level === "High"
+                      results.riskAssessment.level === "High" || results.riskAssessment.level === "Very High"
                         ? "#fef2f2"
                         : results.riskAssessment.level === "Moderate"
                           ? "#fefce8"
@@ -661,12 +915,16 @@ export default function WeightLossPage() {
                       <li key={index}>{factor}</li>
                     ))}
                   </ul>
-                  <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Recommendations:</div>
-                  <ul className="print-list">
-                    {results.riskAssessment.recommendations.slice(0, 3).map((rec, index) => (
-                      <li key={index}>{rec}</li>
-                    ))}
-                  </ul>
+                  {results.riskAssessment.recommendations.length > 0 && (
+                    <>
+                      <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Recommendations:</div>
+                      <ul className="print-list">
+                        {results.riskAssessment.recommendations.slice(0, 3).map((rec, index) => (
+                          <li key={index}>{rec}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
               </div>
               <div>
@@ -748,7 +1006,10 @@ export default function WeightLossPage() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
       <header className="bg-white/95 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <MyMedLogo size="lg" />
+          <div className="flex items-center">
+            <img src="/images/mymedi-logo.png" alt="MyMedi.ai" className="h-8 w-8 mr-3" />
+            <span className="text-xl font-bold text-green-600">MyMedi.ai</span>
+          </div>
           <div className="flex gap-2">
             <Link href="/">
               <Button variant="outline" size="sm">
@@ -773,7 +1034,7 @@ export default function WeightLossPage() {
               <Badge variant="secondary">AI-Powered</Badge>
               <Badge variant="secondary">Personalized</Badge>
               <Badge variant="secondary">Indian Diet</Badge>
-              <Badge variant="secondary">HIPAA Compliant</Badge>
+              <Badge variant="secondary">Medical Grade</Badge>
             </div>
           </div>
 

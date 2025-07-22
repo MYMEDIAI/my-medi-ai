@@ -1351,7 +1351,7 @@ CRITICAL INSTRUCTIONS:
 <body>
   <div class="page">
     <div class="header">
-      <div class="logo">🏥</div>
+      <div class="logo">����</div>
       <h1>MyMedi.ai</h1>
       <p>Comprehensive Health Assessment Report</p>
       <p>AI-Powered Medical Analysis & Treatment Plan</p>
