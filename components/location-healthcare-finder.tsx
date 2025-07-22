@@ -19,6 +19,7 @@ import {
   TestTube,
   Pill,
   Stethoscope,
+  RotateCcw,
 } from "lucide-react"
 import { calculateDistance, formatDistance } from "@/lib/calculate-distance"
 
@@ -405,15 +406,36 @@ export default function LocationHealthcareFinder() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      onClick={detectLocation}
-                      variant="outline"
-                      size="sm"
-                      className="bg-transparent border-blue-300 text-blue-700 hover:bg-blue-100"
-                    >
-                      <Navigation className="w-4 h-4 mr-1" />
-                      Refresh
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={detectLocation}
+                        variant="outline"
+                        size="sm"
+                        className="bg-transparent border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        <Navigation className="w-4 h-4 mr-1" />
+                        Refresh
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setLocationInfo(null)
+                          setFacilities({
+                            hospitals: [],
+                            labs: [],
+                            pharmacies: [],
+                            doctors: [],
+                          })
+                          setUserLocation(null)
+                          setError(null)
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="bg-transparent border-red-300 text-red-700 hover:bg-red-100"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Reset
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

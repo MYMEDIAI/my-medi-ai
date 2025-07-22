@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MapPin } from "lucide-react"
 import LocationHealthcareFinder from "@/components/location-healthcare-finder"
 import { Suspense } from "react"
+import { Button } from "@/components/ui/button"
+import { Home, RotateCcw } from "lucide-react"
+import Link from "next/link"
 
 interface LocationInfo {
   address: string
@@ -140,6 +143,19 @@ export default function LocationPage() {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Find nearby hospitals, clinics, pharmacies, and get location-based health recommendations
             </p>
+          </div>
+
+          <div className="flex justify-center gap-4 mb-8">
+            <Link href="/">
+              <Button variant="outline" className="flex items-center gap-2 bg-transparent">
+                <Home className="w-4 h-4" />
+                Home
+              </Button>
+            </Link>
+            <Button variant="outline" onClick={() => window.location.reload()} className="flex items-center gap-2">
+              <RotateCcw className="w-4 h-4" />
+              Reset Location
+            </Button>
           </div>
 
           <Suspense

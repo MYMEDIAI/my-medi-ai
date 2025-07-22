@@ -447,7 +447,7 @@ Format the response as structured recommendations with clear sections.
               Experience comprehensive healthcare tools designed for Indian families
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {/* AI Health Chat */}
             <Link href="/chat">
               <Card className="border-purple-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
@@ -455,13 +455,12 @@ Format the response as structured recommendations with clear sections.
                   <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
                     <MessageCircle className="w-8 h-8 text-purple-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Health Chat</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Health Chat</h3>
+                  <p className="text-gray-600 text-sm mb-4">
                     Chat with AI doctor in your language. Get instant health advice and symptom analysis.
                   </p>
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                  <Button size="sm" className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                     Start Chat
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
@@ -474,13 +473,12 @@ Format the response as structured recommendations with clear sections.
                   <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
                     <Pill className="w-8 h-8 text-orange-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Medicine Analyzer</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Medicine Analyzer</h3>
+                  <p className="text-gray-600 text-sm mb-4">
                     Get detailed medicine information, dosage, interactions, and safety guidelines.
                   </p>
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                  <Button size="sm" className="w-full bg-orange-600 hover:bg-orange-700 text-white">
                     Analyze Medicine
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
@@ -493,13 +491,12 @@ Format the response as structured recommendations with clear sections.
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
                     <Utensils className="w-8 h-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Diet Planner</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Diet Planner</h3>
+                  <p className="text-gray-600 text-sm mb-4">
                     Get personalized meal plans based on your health conditions and preferences.
                   </p>
-                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                  <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white">
                     Plan Diet
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
@@ -512,13 +509,12 @@ Format the response as structured recommendations with clear sections.
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
                     <Activity className="w-8 h-8 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Vitals Tracker</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Vitals Tracker</h3>
+                  <p className="text-gray-600 text-sm mb-4">
                     Monitor blood pressure, heart rate, and other vital signs with AI insights.
                   </p>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                     Track Vitals
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
@@ -531,13 +527,12 @@ Format the response as structured recommendations with clear sections.
                   <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-200 transition-colors">
                     <FileText className="w-8 h-8 text-indigo-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Report Analyzer</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Report Analyzer</h3>
+                  <p className="text-gray-600 text-sm mb-4">
                     Upload and analyze medical reports with AI-powered insights and recommendations.
                   </p>
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                  <Button size="sm" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
                     Analyze Reports
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
@@ -550,13 +545,12 @@ Format the response as structured recommendations with clear sections.
                   <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition-colors">
                     <User className="w-8 h-8 text-red-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Body Mapper</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Body Mapper</h3>
+                  <p className="text-gray-600 text-sm mb-4">
                     Interactive body diagram to identify symptoms and get targeted health advice.
                   </p>
-                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                  <Button size="sm" className="w-full bg-red-600 hover:bg-red-700 text-white">
                     Map Symptoms
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
@@ -569,13 +563,12 @@ Format the response as structured recommendations with clear sections.
                   <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition-colors">
                     <Heart className="w-8 h-8 text-red-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Diabetes Assessment</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Diabetes Assessment</h3>
+                  <p className="text-gray-600 text-sm mb-4">
                     Complete diabetes evaluation with personalized management plan and downloadable PDF report.
                   </p>
-                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                  <Button size="sm" className="w-full bg-red-600 hover:bg-red-700 text-white">
                     Start Assessment
-                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
@@ -588,13 +581,228 @@ Format the response as structured recommendations with clear sections.
                   <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-teal-200 transition-colors">
                     <MapPin className="w-8 h-8 text-teal-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Location Services</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Location Services</h3>
+                  <p className="text-gray-600 text-sm mb-4">
                     Find nearby healthcare facilities, get location-based health recommendations and emergency services.
                   </p>
-                  <Button className="w-full bg-teal-600 hover:bg-teal-700 text-white">
+                  <Button size="sm" className="w-full bg-teal-600 hover:bg-teal-700 text-white">
                     Find Healthcare
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Weight Loss Plan */}
+            <Link href="/weight-loss">
+              <Card className="border-pink-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-pink-200 transition-colors">
+                    <Heart className="w-8 h-8 text-pink-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Weight Loss Plan</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Personalized weight loss plans with Indian diet recommendations and exercise routines.
+                  </p>
+                  <Button size="sm" className="w-full bg-pink-600 hover:bg-pink-700 text-white">
+                    Start Journey
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Heart Health Assessment */}
+            <Link href="/heart-health">
+              <Card className="border-red-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition-colors">
+                    <Heart className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Heart Health</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Comprehensive cardiac assessment with risk evaluation and personalized care plan.
+                  </p>
+                  <Button size="sm" className="w-full bg-red-600 hover:bg-red-700 text-white">
+                    Check Heart Health
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Mental Health Assessment */}
+            <Link href="/mental-health">
+              <Card className="border-purple-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
+                    <Brain className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Mental Health</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Depression, anxiety, and stress assessment with personalized mental wellness plan.
+                  </p>
+                  <Button size="sm" className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                    Mental Wellness
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Women's Health */}
+            <Link href="/womens-health">
+              <Card className="border-pink-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-pink-200 transition-colors">
+                    <User className="w-8 h-8 text-pink-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Women's Health</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Comprehensive women's health assessment including reproductive and hormonal health.
+                  </p>
+                  <Button size="sm" className="w-full bg-pink-600 hover:bg-pink-700 text-white">
+                    Women's Care
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Child Health */}
+            <Link href="/child-health">
+              <Card className="border-yellow-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-yellow-200 transition-colors">
+                    <Baby className="w-8 h-8 text-yellow-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Child Health</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Pediatric health assessment with growth tracking and vaccination schedules.
+                  </p>
+                  <Button size="sm" className="w-full bg-yellow-600 hover:bg-yellow-700 text-white">
+                    Child Care
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Elderly Care */}
+            <Link href="/elderly-care">
+              <Card className="border-gray-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-gray-200 transition-colors">
+                    <User className="w-8 h-8 text-gray-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Elderly Care</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Specialized health assessment for senior citizens with age-specific recommendations.
+                  </p>
+                  <Button size="sm" className="w-full bg-gray-600 hover:bg-gray-700 text-white">
+                    Senior Care
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Emergency Care */}
+            <Link href="/emergency-care">
+              <Card className="border-red-400 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition-colors">
+                    <Shield className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Emergency Care</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Emergency health guidance, first aid instructions, and nearest hospital finder.
+                  </p>
+                  <Button size="sm" className="w-full bg-red-600 hover:bg-red-700 text-white">
+                    Emergency Help
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Fitness Tracker */}
+            <Link href="/fitness-tracker">
+              <Card className="border-green-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
+                    <Activity className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Fitness Tracker</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Track workouts, steps, calories, and get personalized fitness recommendations.
+                  </p>
+                  <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    Track Fitness
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Sleep Analysis */}
+            <Link href="/sleep-analysis">
+              <Card className="border-indigo-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-200 transition-colors">
+                    <Clock className="w-8 h-8 text-indigo-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Sleep Analysis</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Analyze sleep patterns, quality, and get personalized sleep improvement recommendations.
+                  </p>
+                  <Button size="sm" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                    Analyze Sleep
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Nutrition Analysis */}
+            <Link href="/nutrition-analysis">
+              <Card className="border-orange-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
+                    <Apple className="w-8 h-8 text-orange-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Nutrition Analysis</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Analyze your diet, track nutrients, and get personalized nutrition recommendations.
+                  </p>
+                  <Button size="sm" className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                    Analyze Nutrition
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Health Insurance Guide */}
+            <Link href="/insurance-guide">
+              <Card className="border-blue-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
+                    <Shield className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Insurance Guide</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Find the best health insurance plans, compare coverage, and get expert recommendations.
+                  </p>
+                  <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                    Insurance Help
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Telemedicine */}
+            <Link href="/telemedicine">
+              <Card className="border-teal-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-teal-200 transition-colors">
+                    <Stethoscope className="w-8 h-8 text-teal-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Telemedicine</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Connect with certified doctors online for consultations and medical advice.
+                  </p>
+                  <Button size="sm" className="w-full bg-teal-600 hover:bg-teal-700 text-white">
+                    Book Consultation
                   </Button>
                 </CardContent>
               </Card>
