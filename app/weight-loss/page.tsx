@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Scale, TrendingDown, Download, Home, RotateCcw, Printer, Share2 } from "lucide-react"
+import { Scale, TrendingDown, Home, RotateCcw, Printer, Share2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,32 +16,23 @@ import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
 
 interface WeightLossData {
-  // Personal Information
   name: string
   age: string
   gender: string
   height: string
   currentWeight: string
   targetWeight: string
-
-  // Health Information
   healthConditions: string[]
   medications: string
   activityLevel: string
-
-  // Lifestyle
   dietPreference: string
   cuisinePreference: string
   mealsPerDay: string
   waterIntake: string
   sleepHours: string
-
-  // Goals
   timeframe: string
   primaryGoal: string
   motivation: string
-
-  // Contact Information
   phone: string
   email: string
   emergencyContact: string
@@ -53,17 +44,24 @@ interface WeightLossResults {
     target: number
     category: string
     risk: string
+    improvement: string
   }
   calories: {
     bmr: number
     tdee: number
     deficit: number
     targetDaily: number
+    macros: {
+      protein: string
+      carbs: string
+      fats: string
+    }
   }
   timeline: {
     weeklyLoss: number
     estimatedWeeks: number
-    milestones: Array<{ week: number; weight: number; goal: string }>
+    phases: Array<{ phase: string; focus: string; expectedLoss: string }>
+    milestones: Array<{ week: number; weight: number; goal: string; bodyFat: string }>
   }
   dietPlan: {
     breakfast: string[]
@@ -72,6 +70,7 @@ interface WeightLossResults {
     evening: string[]
     dinner: string[]
     bedtime: string[]
+    guidelines: string[]
   }
   exercisePlan: {
     cardio: string[]
@@ -79,6 +78,7 @@ interface WeightLossResults {
     flexibility: string[]
     schedule: string
     gymExercises: string[]
+    weeklyCalorieBurn: string
   }
   supplements: string[]
   tips: string[]
@@ -91,11 +91,11 @@ interface WeightLossResults {
     schedule: string
     tests: string[]
     consultations: string[]
+    tracking: string[]
   }
 }
 
 export default function WeightLossPage() {
-  const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<WeightLossResults | null>(null)
 
@@ -135,48 +135,10 @@ export default function WeightLossPage() {
     }))
   }
 
-  const calculateBMI = (weight: number, height: number) => {
-    const heightInM = height / 100
-    return weight / (heightInM * heightInM)
-  }
-
-  const getBMICategory = (bmi: number) => {
-    if (bmi < 18.5) return { category: "Underweight", risk: "Low" }
-    if (bmi < 25) return { category: "Normal", risk: "Low" }
-    if (bmi < 30) return { category: "Overweight", risk: "Moderate" }
-    return { category: "Obese", risk: "High" }
-  }
-
-  const calculateBMR = (weight: number, height: number, age: number, gender: string) => {
-    if (gender === "male") {
-      return 88.362 + 13.397 * weight + 4.799 * height - 5.677 * age
-    } else {
-      return 447.593 + 9.247 * weight + 3.098 * height - 4.33 * age
-    }
-  }
-
-  const getActivityMultiplier = (level: string) => {
-    switch (level) {
-      case "sedentary":
-        return 1.2
-      case "light":
-        return 1.375
-      case "moderate":
-        return 1.55
-      case "active":
-        return 1.725
-      case "very-active":
-        return 1.9
-      default:
-        return 1.2
-    }
-  }
-
   const generateResults = async () => {
     setIsLoading(true)
 
     try {
-      // Call AI API to generate comprehensive weight loss plan
       const response = await fetch("/api/ai-integration", {
         method: "POST",
         headers: {
@@ -184,7 +146,7 @@ export default function WeightLossPage() {
         },
         body: JSON.stringify({
           type: "weight-loss-plan",
-          data: formData,
+          payload: formData,
         }),
       })
 
@@ -196,305 +158,9 @@ export default function WeightLossPage() {
       setResults(aiResults)
     } catch (error) {
       console.error("Error generating results:", error)
-      // Fallback to local generation if API fails
-      await generateLocalResults()
+      // Fallback would go here if needed
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const generateLocalResults = async () => {
-    // Simulate AI processing delay
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-
-    const weight = Number.parseFloat(formData.currentWeight)
-    const height = Number.parseFloat(formData.height)
-    const age = Number.parseInt(formData.age)
-    const targetWeight = Number.parseFloat(formData.targetWeight)
-
-    const currentBMI = calculateBMI(weight, height)
-    const targetBMI = calculateBMI(targetWeight, height)
-    const currentBMIInfo = getBMICategory(currentBMI)
-
-    const bmr = calculateBMR(weight, height, age, formData.gender)
-    const tdee = bmr * getActivityMultiplier(formData.activityLevel)
-    const weightToLose = weight - targetWeight
-    const deficit = Math.min(500, weightToLose * 100)
-    const targetDaily = tdee - deficit
-
-    const weeklyLoss = (deficit * 7) / 7700
-    const estimatedWeeks = Math.ceil(weightToLose / weeklyLoss)
-
-    // Generate AI-like personalized content
-    const results: WeightLossResults = {
-      bmi: {
-        current: currentBMI,
-        target: targetBMI,
-        category: currentBMIInfo.category,
-        risk: currentBMIInfo.risk,
-      },
-      calories: {
-        bmr,
-        tdee,
-        deficit,
-        targetDaily,
-      },
-      timeline: {
-        weeklyLoss,
-        estimatedWeeks,
-        milestones: generateMilestones(estimatedWeeks, weight, weeklyLoss),
-      },
-      dietPlan: generatePersonalizedDietPlan(formData),
-      exercisePlan: generatePersonalizedExercisePlan(formData),
-      supplements: generatePersonalizedSupplements(formData),
-      tips: generatePersonalizedTips(formData),
-      riskAssessment: generateRiskAssessment(formData, currentBMI),
-      followUp: generateFollowUpPlan(formData),
-    }
-
-    setResults(results)
-  }
-
-  const generateMilestones = (weeks: number, startWeight: number, weeklyLoss: number) => {
-    const milestones = []
-    for (let week = 2; week <= weeks; week += 2) {
-      const currentWeight = startWeight - weeklyLoss * week
-      let goal = ""
-
-      if (week <= 4) goal = "Initial adaptation and habit formation"
-      else if (week <= 8) goal = "Metabolic adjustment and visible changes"
-      else if (week <= 12) goal = "Significant progress and lifestyle integration"
-      else if (week <= 16) goal = "Advanced progress and body composition changes"
-      else goal = "Maintenance preparation and goal achievement"
-
-      milestones.push({
-        week,
-        weight: currentWeight,
-        goal,
-      })
-    }
-    return milestones
-  }
-
-  const generatePersonalizedDietPlan = (data: WeightLossData) => {
-    const isVeg = data.dietPreference === "vegetarian" || data.dietPreference === "vegan"
-    const cuisine = data.cuisinePreference || "north-indian"
-
-    return {
-      breakfast: [
-        `${cuisine === "south-indian" ? "Idli with sambar" : "Oats with fruits"} (280-320 cal)`,
-        `${cuisine === "gujarati" ? "Dhokla with chutney" : "Vegetable poha"} (250-290 cal)`,
-        `${isVeg ? "Moong dal chilla" : "Egg white omelet"} with vegetables (260-300 cal)`,
-        `${cuisine === "south-indian" ? "Upma with vegetables" : "Whole wheat toast"} (240-280 cal)`,
-      ],
-      midMorning: [
-        "Green tea with 6-8 almonds (85 cal)",
-        "Buttermilk with mint and cumin (65 cal)",
-        "Seasonal fruit (apple/guava) (80-90 cal)",
-        "Coconut water with lemon (50 cal)",
-      ],
-      lunch: [
-        `Brown rice with ${isVeg ? "dal and sabzi" : "chicken curry"} (380-420 cal)`,
-        `2 whole wheat roti with ${cuisine === "punjabi" ? "rajma" : "mixed vegetables"} (350-390 cal)`,
-        `Quinoa pulao with ${isVeg ? "paneer" : "lean meat"} and raita (370-410 cal)`,
-        `${cuisine === "south-indian" ? "Brown rice with rasam" : "Khichdi"} with vegetables (340-380 cal)`,
-      ],
-      evening: [
-        "Herbal tea with 2 whole grain biscuits (105 cal)",
-        "Roasted chana (chickpeas) with spices (125 cal)",
-        "Green tea with handful of mixed nuts (95 cal)",
-        "Vegetable soup with 1 slice multigrain bread (110 cal)",
-      ],
-      dinner: [
-        `Grilled ${isVeg ? "paneer" : "chicken"} with steamed vegetables (290-330 cal)`,
-        `Dal with 1 roti and large salad (270-310 cal)`,
-        `${isVeg ? "Tofu curry" : "Fish curry"} with brown rice (310-350 cal)`,
-        `Vegetable soup with ${cuisine === "gujarati" ? "khakhra" : "whole grain bread"} (240-280 cal)`,
-      ],
-      bedtime: [
-        "Warm turmeric milk with honey (105 cal)",
-        "Chamomile tea (5 cal)",
-        "Warm water with lemon and honey (30 cal)",
-        "Herbal tea (fennel/mint) (10 cal)",
-      ],
-    }
-  }
-
-  const generatePersonalizedExercisePlan = (data: WeightLossData) => {
-    const activityLevel = data.activityLevel || "moderate"
-    const age = Number.parseInt(data.age) || 30
-
-    return {
-      cardio: [
-        `${age > 50 ? "25-30 min" : "30-40 min"} brisk walking daily`,
-        `${activityLevel === "sedentary" ? "15-20 min" : "25-30 min"} cycling 3x/week`,
-        "20-25 min dancing/Zumba 2x/week",
-        `Swimming ${age > 45 ? "25-30 min" : "30-35 min"} 2x/week`,
-        "Stair climbing 10-15 min daily",
-      ],
-      strength: [
-        "Bodyweight exercises (push-ups, squats) 3x/week",
-        "Resistance band training 20-25 min",
-        "Yoga for strength building 2x/week",
-        `${activityLevel === "active" ? "Moderate" : "Light"} weight training 2-3x/week`,
-        "Functional training (kettlebells) 2x/week",
-      ],
-      flexibility: [
-        "Morning stretching routine 10-15 min",
-        "Evening yoga session 20-30 min",
-        "Weekend longer yoga class 45-60 min",
-        "Daily mobility exercises 5-10 min",
-        "Foam rolling session 2x/week",
-      ],
-      gymExercises: [
-        "Treadmill: 20-30 min moderate pace",
-        "Elliptical: 15-25 min interval training",
-        "Leg press: 3 sets of 12-15 reps",
-        "Chest press: 3 sets of 10-12 reps",
-        "Lat pulldown: 3 sets of 10-12 reps",
-        "Shoulder press: 3 sets of 8-10 reps",
-        "Leg curls: 3 sets of 12-15 reps",
-        "Planks: 3 sets of 30-60 seconds",
-        "Stationary bike: 15-20 min cool down",
-      ],
-      schedule: generateWorkoutSchedule(activityLevel),
-    }
-  }
-
-  const generateWorkoutSchedule = (activityLevel: string) => {
-    if (activityLevel === "sedentary") {
-      return "Mon/Wed/Fri: Light cardio + flexibility, Tue/Thu: Strength training, Sat: Active recovery walk, Sun: Rest"
-    } else if (activityLevel === "active" || activityLevel === "very-active") {
-      return "Mon/Wed/Fri: Strength + HIIT, Tue/Thu/Sat: Cardio + flexibility, Sun: Active recovery or light yoga"
-    } else {
-      return "Mon/Wed/Fri: Strength + cardio, Tue/Thu: Cardio + flexibility, Sat: Mixed workout, Sun: Rest or light activity"
-    }
-  }
-
-  const generatePersonalizedSupplements = (data: WeightLossData) => {
-    const supplements = ["Multivitamin (Revital H or Centrum)"]
-
-    if (data.dietPreference === "vegetarian" || data.dietPreference === "vegan") {
-      supplements.push("Vitamin B12 supplement")
-      supplements.push("Iron supplement (if deficient)")
-    }
-
-    if (data.healthConditions.includes("Diabetes")) {
-      supplements.push("Chromium supplement (consult doctor)")
-    }
-
-    if (Number.parseInt(data.age) > 40) {
-      supplements.push("Calcium + Vitamin D3")
-      supplements.push("Omega-3 fatty acids")
-    }
-
-    supplements.push(
-      "Protein powder (whey or plant-based)",
-      "Green tea extract (optional)",
-      "Probiotics for digestive health",
-      "Magnesium for muscle recovery",
-    )
-
-    return supplements
-  }
-
-  const generatePersonalizedTips = (data: WeightLossData) => {
-    const tips = [
-      "Drink 500ml water 30 minutes before each meal",
-      "Use smaller plates (8-9 inch) to control portions naturally",
-      "Include protein in every meal to maintain satiety",
-    ]
-
-    if (data.cuisinePreference === "gujarati") {
-      tips.push("Reduce oil in traditional preparations, use steaming/grilling")
-    }
-
-    if (data.healthConditions.includes("Diabetes")) {
-      tips.push("Monitor blood sugar before and after meals")
-    }
-
-    if (Number.parseInt(data.sleepHours) < 7) {
-      tips.push("Prioritize 7-8 hours of sleep for better metabolism")
-    }
-
-    tips.push(
-      "Meal prep on weekends to avoid unhealthy choices",
-      "Track progress weekly, not daily to avoid fluctuations",
-      "Practice mindful eating - chew slowly and avoid distractions",
-      "Include fiber-rich foods to feel fuller longer",
-      "Stay consistent rather than aiming for perfection",
-      "Manage stress through meditation or deep breathing",
-    )
-
-    return tips
-  }
-
-  const generateRiskAssessment = (data: WeightLossData, bmi: number) => {
-    let riskLevel = "Low"
-    const riskFactors = []
-    const recommendations = []
-
-    if (bmi > 30) {
-      riskLevel = "High"
-      riskFactors.push("Obesity (BMI > 30)")
-      recommendations.push("Medical supervision recommended")
-    } else if (bmi > 25) {
-      riskLevel = "Moderate"
-      riskFactors.push("Overweight (BMI 25-30)")
-    }
-
-    if (data.healthConditions.includes("Diabetes")) {
-      riskLevel = "High"
-      riskFactors.push("Diabetes mellitus")
-      recommendations.push("Regular blood glucose monitoring required")
-    }
-
-    if (data.healthConditions.includes("Heart Disease")) {
-      riskLevel = "High"
-      riskFactors.push("Cardiovascular disease")
-      recommendations.push("Cardiac clearance needed before exercise")
-    }
-
-    if (data.healthConditions.includes("Hypertension")) {
-      riskLevel = riskLevel === "Low" ? "Moderate" : "High"
-      riskFactors.push("High blood pressure")
-      recommendations.push("Monitor BP regularly during weight loss")
-    }
-
-    if (Number.parseInt(data.age) > 60) {
-      riskLevel = riskLevel === "Low" ? "Moderate" : riskLevel
-      riskFactors.push("Age over 60")
-      recommendations.push("Gradual exercise progression recommended")
-    }
-
-    return { level: riskLevel, factors: riskFactors, recommendations }
-  }
-
-  const generateFollowUpPlan = (data: WeightLossData) => {
-    const hasHighRisk = data.healthConditions.some((condition) =>
-      ["Diabetes", "Heart Disease", "Hypertension"].includes(condition),
-    )
-
-    return {
-      schedule: hasHighRisk ? "Every 2 weeks" : "Monthly",
-      tests: [
-        "Complete Blood Count (CBC)",
-        "Lipid Profile (Cholesterol, Triglycerides)",
-        "Blood Sugar (Fasting & Post-meal)",
-        "Liver Function Test (LFT)",
-        "Kidney Function Test (KFT)",
-        "Thyroid Function Test (TSH, T3, T4)",
-        "Vitamin D3 and B12 levels",
-        "HbA1c (if diabetic)",
-      ],
-      consultations: [
-        "Registered Dietitian consultation",
-        "Certified fitness trainer guidance",
-        "Regular physician check-ups",
-        "Endocrinologist (if diabetic/thyroid issues)",
-        "Cardiologist (if heart conditions)",
-        "Mental health counselor (if needed)",
-      ],
     }
   }
 
@@ -522,28 +188,9 @@ export default function WeightLossPage() {
       emergencyContact: "",
     })
     setResults(null)
-    setCurrentStep(1)
   }
 
   const downloadPDF = () => {
-    // Add print-specific styles
-    const printStyles = `
-      <style>
-        @media print {
-          body * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; }
-          .print-area { position: absolute; left: 0; top: 0; width: 100%; }
-          .no-print { display: none !important; }
-          .page-break { page-break-before: always; }
-          .print-header { margin-bottom: 20px; }
-          .print-section { margin-bottom: 15px; }
-          .grid { display: block !important; }
-          .grid > div { margin-bottom: 10px; }
-        }
-      </style>
-    `
-
-    document.head.insertAdjacentHTML("beforeend", printStyles)
     window.print()
   }
 
@@ -559,7 +206,6 @@ export default function WeightLossPage() {
         console.log("Error sharing:", error)
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       navigator.clipboard.writeText(window.location.href)
       alert("Link copied to clipboard!")
     }
@@ -567,284 +213,531 @@ export default function WeightLossPage() {
 
   if (results) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen bg-white">
         <style jsx global>{`
+        .print-format {
+          max-width: 8.5in;
+          margin: 0 auto;
+          padding: 0.5in;
+          font-family: 'Times New Roman', serif;
+          font-size: 12px;
+          line-height: 1.4;
+          color: #000;
+          background: white;
+        }
+        .print-header {
+          text-align: center;
+          border-bottom: 2px solid #000;
+          padding-bottom: 10px;
+          margin-bottom: 20px;
+        }
+        .print-section {
+          margin-bottom: 15px;
+          page-break-inside: avoid;
+        }
+        .print-section h2 {
+          font-size: 14px;
+          font-weight: bold;
+          margin: 10px 0 8px 0;
+          color: #000;
+          border-bottom: 1px solid #333;
+          padding-bottom: 2px;
+        }
+        .print-section h3 {
+          font-size: 12px;
+          font-weight: bold;
+          margin: 8px 0 4px 0;
+          color: #333;
+        }
+        .print-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .print-grid-3 {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+        .print-grid-4 {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 1fr;
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+        .print-card {
+          border: 1px solid #333;
+          padding: 8px;
+          background: #f9f9f9;
+        }
+        .print-list {
+          margin: 4px 0;
+          padding-left: 15px;
+        }
+        .print-list li {
+          margin-bottom: 2px;
+          font-size: 11px;
+        }
+        .highlight {
+          background: #e6f3ff;
+          padding: 2px 4px;
+          border-radius: 2px;
+          font-weight: bold;
+        }
+        .patient-info {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 15px;
+          margin-bottom: 15px;
+          font-size: 11px;
+        }
+        .no-print {
+          display: none;
+        }
+        @media screen {
+          .no-print {
+            display: block;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+          }
+        }
         @media print {
-          body * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; }
-          .print-area { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            background: white !important;
-          }
           .no-print { display: none !important; }
-          .page-break { page-break-before: always; }
-          .print-header { 
-            margin-bottom: 20px; 
-            text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-          }
-          .print-section { 
-            margin-bottom: 20px; 
-            page-break-inside: avoid;
-          }
-          .grid { display: block !important; }
-          .grid > div { 
-            margin-bottom: 15px; 
-            border: 1px solid #ddd;
-            padding: 10px;
-          }
-          .tabs-content { display: block !important; }
-          .hidden { display: block !important; }
-          h1, h2, h3 { color: #333 !important; }
-          .bg-gradient-to-br { background: white !important; }
-          .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+          .print-format { margin: 0; padding: 0.3in; }
         }
       `}</style>
 
-        <header className="bg-white/95 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50 shadow-sm no-print">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <MyMedLogo size="lg" />
-            <div className="flex gap-2">
-              <Link href="/">
-                <Button variant="outline" size="sm">
-                  <Home className="w-4 h-4 mr-2" />
-                  Home
-                </Button>
-              </Link>
-              <Button onClick={downloadPDF} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF
+        {/* Action Buttons - Only visible on screen */}
+        <div className="no-print">
+          <div className="flex gap-2 bg-white p-4 rounded-lg shadow-lg">
+            <Link href="/">
+              <Button variant="outline" size="sm">
+                <Home className="w-4 h-4 mr-2" />
+                Home
               </Button>
-              <Button onClick={() => window.print()} variant="outline" size="sm">
-                <Printer className="w-4 h-4 mr-2" />
-                Print
-              </Button>
-              <Button onClick={shareResults} variant="outline" size="sm">
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
-              <Button onClick={resetForm} variant="outline" size="sm">
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset
-              </Button>
+            </Link>
+            <Button onClick={() => window.print()} variant="outline" size="sm">
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+            <Button onClick={shareResults} variant="outline" size="sm">
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+            <Button onClick={resetForm} variant="outline" size="sm">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              New Plan
+            </Button>
+          </div>
+        </div>
+
+        <div className="print-format">
+          {/* Medical Report Header */}
+          <div className="print-header">
+            <h1 style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 5px 0" }}>
+              COMPREHENSIVE WEIGHT LOSS PLAN
+            </h1>
+            <p style={{ fontSize: "12px", margin: "0" }}>Personalized Medical Assessment & Treatment Plan</p>
+            <p style={{ fontSize: "10px", margin: "5px 0 0 0" }}>
+              Generated by MYMED.AI | Date: {new Date().toLocaleDateString()} | Plan ID: WL-
+              {Date.now().toString().slice(-6)}
+            </p>
+          </div>
+
+          {/* Patient Information */}
+          <div className="print-section">
+            <h2>PATIENT INFORMATION</h2>
+            <div className="patient-info">
+              <div>
+                <strong>Name:</strong> {formData.name}
+                <br />
+                <strong>Age:</strong> {formData.age} years
+                <br />
+                <strong>Gender:</strong> {formData.gender}
+                <br />
+                <strong>Height:</strong> {formData.height} cm
+              </div>
+              <div>
+                <strong>Current Weight:</strong> {formData.currentWeight} kg
+                <br />
+                <strong>Target Weight:</strong> {formData.targetWeight} kg
+                <br />
+                <strong>Weight to Lose:</strong>{" "}
+                {(Number(formData.currentWeight) - Number(formData.targetWeight)).toFixed(1)} kg
+                <br />
+                <strong>Activity Level:</strong> {formData.activityLevel}
+              </div>
+              <div>
+                <strong>Diet Preference:</strong> {formData.dietPreference}
+                <br />
+                <strong>Cuisine:</strong> {formData.cuisinePreference}
+                <br />
+                <strong>Health Conditions:</strong> {formData.healthConditions.join(", ") || "None reported"}
+                <br />
+                <strong>Sleep:</strong> {formData.sleepHours} hours/night
+              </div>
             </div>
           </div>
-        </header>
 
-        <div className="print-area">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-6xl mx-auto">
-              {/* Print Header */}
-              <div className="print-header">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Personalized Weight Loss Plan</h1>
-                <p className="text-gray-600">Generated by MYMED.AI for {formData.name}</p>
-                <p className="text-sm text-gray-500">Generated on: {new Date().toLocaleDateString()}</p>
+          {/* Clinical Assessment */}
+          <div className="print-section">
+            <h2>CLINICAL ASSESSMENT & METABOLIC ANALYSIS</h2>
+            <div className="print-grid-4">
+              <div className="print-card">
+                <h3>Current BMI</h3>
+                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#d97706" }}>
+                  {results.bmi.current.toFixed(1)}
+                </div>
+                <div style={{ fontSize: "10px" }}>{results.bmi.category}</div>
+                <div style={{ fontSize: "10px" }}>Risk: {results.bmi.risk}</div>
               </div>
-
-              {/* All Tabs Content for Print */}
-              <div className="print-section">
-                <h2 className="text-2xl font-bold mb-4">Overview & Analysis</h2>
-                {/* BMI and metabolic analysis content */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <div className="border p-4 rounded">
-                    <h3 className="font-semibold">Current BMI</h3>
-                    <p className="text-2xl font-bold text-blue-600">{results.bmi.current.toFixed(1)}</p>
-                    <p className="text-sm">{results.bmi.category}</p>
-                  </div>
-                  <div className="border p-4 rounded">
-                    <h3 className="font-semibold">Target BMI</h3>
-                    <p className="text-2xl font-bold text-green-600">{results.bmi.target.toFixed(1)}</p>
-                    <p className="text-sm">Healthy Range</p>
-                  </div>
-                  <div className="border p-4 rounded">
-                    <h3 className="font-semibold">Daily Calories</h3>
-                    <p className="text-2xl font-bold text-orange-600">{Math.round(results.calories.targetDaily)}</p>
-                    <p className="text-sm">For weight loss</p>
-                  </div>
-                  <div className="border p-4 rounded">
-                    <h3 className="font-semibold">Timeline</h3>
-                    <p className="text-2xl font-bold text-purple-600">{results.timeline.estimatedWeeks}</p>
-                    <p className="text-sm">Weeks to goal</p>
-                  </div>
+              <div className="print-card">
+                <h3>Target BMI</h3>
+                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#059669" }}>
+                  {results.bmi.target.toFixed(1)}
                 </div>
+                <div style={{ fontSize: "10px" }}>Healthy Range</div>
+                <div style={{ fontSize: "10px" }}>{results.bmi.improvement}</div>
               </div>
-
-              <div className="page-break"></div>
-
-              {/* Diet Plan Section */}
-              <div className="print-section">
-                <h2 className="text-2xl font-bold mb-4">7-Meal Indian Diet Plan</h2>
-                {Object.entries(results.dietPlan).map(([meal, options]) => (
-                  <div key={meal} className="mb-4 border-l-4 border-green-500 pl-4">
-                    <h3 className="font-semibold text-lg mb-2 capitalize">{meal.replace(/([A-Z])/g, " $1")}</h3>
-                    <ul className="list-disc list-inside space-y-1">
-                      {options.map((option, index) => (
-                        <li key={index} className="text-gray-700">
-                          {option}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+              <div className="print-card">
+                <h3>Daily Calories</h3>
+                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#dc2626" }}>
+                  {results.calories.targetDaily}
+                </div>
+                <div style={{ fontSize: "10px" }}>For weight loss</div>
+                <div style={{ fontSize: "10px" }}>Deficit: {results.calories.deficit} cal</div>
               </div>
-
-              <div className="page-break"></div>
-
-              {/* Exercise Plan Section */}
-              <div className="print-section">
-                <h2 className="text-2xl font-bold mb-4">Comprehensive Exercise Plan</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <h3 className="font-semibold text-lg mb-3 text-red-600">Cardio Exercises</h3>
-                    <ul className="space-y-2">
-                      {results.exercisePlan.cardio.map((exercise, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="mr-2">•</span>
-                          <span>{exercise}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-lg mb-3 text-blue-600">Strength Training</h3>
-                    <ul className="space-y-2">
-                      {results.exercisePlan.strength.map((exercise, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="mr-2">•</span>
-                          <span>{exercise}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+              <div className="print-card">
+                <h3>Timeline</h3>
+                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#7c3aed" }}>
+                  {results.timeline.estimatedWeeks}w
                 </div>
-
-                {/* Gym Exercises */}
-                <div className="mb-6">
-                  <h3 className="font-semibold text-lg mb-3 text-purple-600">Gym Exercises</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {results.exercisePlan.gymExercises.map((exercise, index) => (
-                      <div key={index} className="border p-3 rounded">
-                        <span className="font-medium">{exercise}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border p-4 rounded bg-gray-50">
-                  <h4 className="font-semibold mb-2">Weekly Schedule:</h4>
-                  <p>{results.exercisePlan.schedule}</p>
-                </div>
-              </div>
-
-              <div className="page-break"></div>
-
-              {/* Timeline & Milestones */}
-              <div className="print-section">
-                <h2 className="text-2xl font-bold mb-4">Timeline & Milestones</h2>
-                <div className="text-center p-4 bg-gray-100 rounded-lg mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    Expected Weekly Loss: {results.timeline.weeklyLoss.toFixed(1)} kg
-                  </h3>
-                  <p className="text-gray-600">Safe and sustainable weight loss rate</p>
-                </div>
-
-                {results.timeline.milestones.map((milestone, index) => (
-                  <div key={index} className="mb-4 p-4 border rounded-lg">
-                    <h4 className="font-semibold">Week {milestone.week}</h4>
-                    <p className="text-gray-600">{milestone.goal}</p>
-                    <p className="text-sm text-gray-500">Target weight: {milestone.weight.toFixed(1)} kg</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="page-break"></div>
-
-              {/* Supplements Section */}
-              <div className="print-section">
-                <h2 className="text-2xl font-bold mb-4">Recommended Supplements</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {results.supplements.map((supplement, index) => (
-                    <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                      <span className="mr-3">•</span>
-                      <span>{supplement}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-4 text-sm italic">
-                  Consult with a healthcare provider before starting any supplements, especially if you have medical
-                  conditions.
-                </p>
-              </div>
-
-              <div className="page-break"></div>
-
-              {/* Follow-up Section */}
-              <div className="print-section">
-                <h2 className="text-2xl font-bold mb-4">Follow-up Schedule & Monitoring</h2>
-                <div className="text-center p-4 bg-gray-100 rounded-lg mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">Recommended Check-ups</h3>
-                  <p className="text-gray-700">{results.followUp.schedule}</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-semibold text-lg mb-3">Required Tests</h4>
-                    <ul className="space-y-2">
-                      {results.followUp.tests.map((test, index) => (
-                        <li key={index} className="flex items-center">
-                          <span className="mr-2">•</span>
-                          <span className="text-sm">{test}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-lg mb-3">Consultations</h4>
-                    <ul className="space-y-2">
-                      {results.followUp.consultations.map((consultation, index) => (
-                        <li key={index} className="flex items-center">
-                          <span className="mr-2">•</span>
-                          <span className="text-sm">{consultation}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="page-break"></div>
-
-              {/* Tips Section */}
-              <div className="print-section">
-                <h2 className="text-2xl font-bold mb-4">Expert Tips for Success</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {results.tips.map((tip, index) => (
-                    <div key={index} className="flex items-start p-4 bg-gray-50 rounded-lg">
-                      <span className="mr-3">•</span>
-                      <span className="text-gray-700">{tip}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Medical Disclaimer */}
-              <div className="print-section">
-                <h2 className="text-2xl font-bold mb-4">Medical Disclaimer</h2>
-                <p className="text-sm italic">
-                  This weight loss plan is for informational purposes only and should not replace professional medical
-                  advice. Consult with a healthcare provider before starting any weight loss program, especially if you
-                  have medical conditions. Individual results may vary. Always seek immediate medical attention if you
-                  experience any adverse symptoms.
-                </p>
+                <div style={{ fontSize: "10px" }}>{results.timeline.weeklyLoss} kg/week</div>
+                <div style={{ fontSize: "10px" }}>Safe rate</div>
               </div>
             </div>
+
+            <div className="print-grid">
+              <div>
+                <h3>Metabolic Parameters</h3>
+                <ul className="print-list">
+                  <li>
+                    <strong>Basal Metabolic Rate (BMR):</strong> {results.calories.bmr} calories/day
+                  </li>
+                  <li>
+                    <strong>Total Daily Energy Expenditure:</strong> {results.calories.tdee} calories/day
+                  </li>
+                  <li>
+                    <strong>Recommended Caloric Deficit:</strong> {results.calories.deficit} calories/day
+                  </li>
+                  <li>
+                    <strong>Weekly Calorie Burn (Exercise):</strong> {results.exercisePlan.weeklyCalorieBurn}
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3>Macronutrient Distribution</h3>
+                <ul className="print-list">
+                  <li>
+                    <strong>Protein:</strong> {results.calories.macros.protein} - Essential for muscle preservation
+                  </li>
+                  <li>
+                    <strong>Carbohydrates:</strong> {results.calories.macros.carbs} - Primary energy source
+                  </li>
+                  <li>
+                    <strong>Healthy Fats:</strong> {results.calories.macros.fats} - Hormone production & satiety
+                  </li>
+                  <li>
+                    <strong>Fiber Target:</strong> 25-30g daily for digestive health
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Timeline */}
+          <div className="print-section">
+            <h2>TREATMENT TIMELINE & EXPECTED OUTCOMES</h2>
+            <div className="print-grid-3">
+              {results.timeline.phases.map((phase, index) => (
+                <div key={index} className="print-card">
+                  <h3>{phase.phase}</h3>
+                  <div style={{ fontSize: "10px", marginBottom: "4px" }}>
+                    <strong>Focus:</strong> {phase.focus}
+                  </div>
+                  <div className="highlight" style={{ fontSize: "10px" }}>
+                    Expected Loss: {phase.expectedLoss}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <h3>Key Milestones & Progress Markers</h3>
+            <div className="print-grid">
+              {results.timeline.milestones.slice(0, 4).map((milestone, index) => (
+                <div
+                  key={index}
+                  style={{ border: "1px solid #ccc", padding: "6px", fontSize: "10px", marginBottom: "4px" }}
+                >
+                  <strong>Week {milestone.week}:</strong> Target {milestone.weight} kg | {milestone.goal} |{" "}
+                  {milestone.bodyFat}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Dietary Prescription */}
+          <div className="print-section">
+            <h2>PERSONALIZED DIETARY PRESCRIPTION</h2>
+
+            <div className="print-grid">
+              <div>
+                <h3>Morning Protocol (6:00 AM - 12:00 PM)</h3>
+                <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>
+                  Breakfast Options (280-320 cal):
+                </div>
+                <ul className="print-list">
+                  {results.dietPlan.breakfast.slice(0, 2).map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+                <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>
+                  Mid-Morning (65-90 cal):
+                </div>
+                <ul className="print-list">
+                  {results.dietPlan.midMorning.slice(0, 2).map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Afternoon Protocol (12:00 PM - 6:00 PM)</h3>
+                <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>
+                  Lunch Options (350-420 cal):
+                </div>
+                <ul className="print-list">
+                  {results.dietPlan.lunch.slice(0, 2).map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+                <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>
+                  Evening Snack (95-125 cal):
+                </div>
+                <ul className="print-list">
+                  {results.dietPlan.evening.slice(0, 2).map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="print-grid">
+              <div>
+                <h3>Evening Protocol (6:00 PM - 10:00 PM)</h3>
+                <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>
+                  Dinner Options (270-350 cal):
+                </div>
+                <ul className="print-list">
+                  {results.dietPlan.dinner.slice(0, 2).map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+                <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Bedtime (5-105 cal):</div>
+                <ul className="print-list">
+                  {results.dietPlan.bedtime.slice(0, 2).map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Dietary Guidelines & Compliance</h3>
+                <ul className="print-list">
+                  {results.dietPlan.guidelines.map((guideline, index) => (
+                    <li key={index}>{guideline}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Exercise Prescription */}
+          <div className="print-section">
+            <h2>EXERCISE PRESCRIPTION & PHYSICAL ACTIVITY PLAN</h2>
+
+            <div className="print-grid-3">
+              <div>
+                <h3>Cardiovascular Training</h3>
+                <ul className="print-list">
+                  {results.exercisePlan.cardio.slice(0, 3).map((exercise, index) => (
+                    <li key={index}>{exercise}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Resistance Training</h3>
+                <ul className="print-list">
+                  {results.exercisePlan.strength.slice(0, 3).map((exercise, index) => (
+                    <li key={index}>{exercise}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Flexibility & Recovery</h3>
+                <ul className="print-list">
+                  {results.exercisePlan.flexibility.slice(0, 3).map((exercise, index) => (
+                    <li key={index}>{exercise}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <h3>Structured Gym Protocol</h3>
+            <div className="print-grid">
+              {results.exercisePlan.gymExercises.slice(0, 8).map((exercise, index) => (
+                <div
+                  key={index}
+                  style={{ border: "1px solid #ddd", padding: "4px", fontSize: "10px", marginBottom: "2px" }}
+                >
+                  {exercise}
+                </div>
+              ))}
+            </div>
+
+            <div className="print-card" style={{ marginTop: "8px" }}>
+              <h3>Weekly Training Schedule</h3>
+              <div style={{ fontSize: "11px" }}>{results.exercisePlan.schedule}</div>
+            </div>
+          </div>
+
+          {/* Supplementation & Monitoring */}
+          <div className="print-section">
+            <h2>SUPPLEMENTATION PROTOCOL & HEALTH MONITORING</h2>
+
+            <div className="print-grid">
+              <div>
+                <h3>Recommended Supplements</h3>
+                <ul className="print-list">
+                  {results.supplements.slice(0, 6).map((supplement, index) => (
+                    <li key={index}>{supplement}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Clinical Success Strategies</h3>
+                <ul className="print-list">
+                  {results.tips.slice(0, 6).map((tip, index) => (
+                    <li key={index}>{tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Risk Assessment & Follow-up */}
+          <div className="print-section">
+            <h2>RISK ASSESSMENT & FOLLOW-UP PROTOCOL</h2>
+
+            <div className="print-grid">
+              <div>
+                <div
+                  className="print-card"
+                  style={{
+                    background:
+                      results.riskAssessment.level === "High"
+                        ? "#fef2f2"
+                        : results.riskAssessment.level === "Moderate"
+                          ? "#fefce8"
+                          : "#f0fdf4",
+                  }}
+                >
+                  <h3>Risk Level: {results.riskAssessment.level}</h3>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Risk Factors:</div>
+                  <ul className="print-list">
+                    {results.riskAssessment.factors.slice(0, 4).map((factor, index) => (
+                      <li key={index}>{factor}</li>
+                    ))}
+                  </ul>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Recommendations:</div>
+                  <ul className="print-list">
+                    {results.riskAssessment.recommendations.slice(0, 3).map((rec, index) => (
+                      <li key={index}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <h3>Follow-up Schedule: {results.followUp.schedule}</h3>
+                <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>
+                  Required Laboratory Tests:
+                </div>
+                <ul className="print-list">
+                  {results.followUp.tests.slice(0, 4).map((test, index) => (
+                    <li key={index}>{test}</li>
+                  ))}
+                </ul>
+                <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Daily Monitoring:</div>
+                <ul className="print-list">
+                  {results.followUp.tracking.slice(0, 4).map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Professional Consultations */}
+          <div className="print-section">
+            <h2>RECOMMENDED PROFESSIONAL CONSULTATIONS</h2>
+            <div className="print-grid">
+              {results.followUp.consultations.slice(0, 6).map((consultation, index) => (
+                <div
+                  key={index}
+                  style={{ border: "1px solid #ddd", padding: "6px", fontSize: "10px", marginBottom: "4px" }}
+                >
+                  <strong>{consultation.split(" - ")[0]}:</strong>{" "}
+                  {consultation.split(" - ")[1] || "As needed based on progress"}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Medical Disclaimer */}
+          <div className="print-section">
+            <div className="print-card" style={{ background: "#fef2f2", border: "2px solid #dc2626" }}>
+              <h3>MEDICAL DISCLAIMER & IMPORTANT SAFETY INFORMATION</h3>
+              <div style={{ fontSize: "10px", lineHeight: "1.3" }}>
+                <strong>IMPORTANT:</strong> This AI-generated weight loss plan is for informational and educational
+                purposes only and does not constitute medical advice. This plan should not replace consultation with
+                qualified healthcare professionals. Individual results may vary significantly based on genetics, medical
+                history, adherence, and other factors. <strong>SEEK IMMEDIATE MEDICAL ATTENTION</strong> if you
+                experience chest pain, severe shortness of breath, dizziness, fainting, or any concerning symptoms
+                during this program. Consult your physician before starting this or any weight loss program, especially
+                if you have pre-existing medical conditions, take medications, or are pregnant/nursing. Regular medical
+                monitoring is recommended throughout your weight loss journey.
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: "10px",
+              marginTop: "20px",
+              borderTop: "1px solid #333",
+              paddingTop: "10px",
+            }}
+          >
+            <strong>MYMED.AI - Advanced Healthcare Technology</strong>
+            <br />
+            Plan Generated: {new Date().toLocaleString()} | Version: 2.1 | For: {formData.name}
+            <br />
+            This document contains {results.timeline.estimatedWeeks} weeks of personalized recommendations based on
+            current health data.
           </div>
         </div>
       </div>

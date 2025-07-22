@@ -2,27 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import {
-  Heart,
-  Activity,
-  AlertTriangle,
-  Shield,
-  Stethoscope,
-  Phone,
-  Download,
-  Home,
-  RotateCcw,
-  CheckCircle,
-  Info,
-  Clock,
-  Target,
-  Zap,
-  Printer,
-  Share2,
-  Calendar,
-  User,
-  FileText,
-} from "lucide-react"
+import { Heart, Home, RotateCcw, Printer, Share2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,9 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import MyMedLogo from "@/components/mymed-logo"
@@ -119,6 +96,7 @@ interface HeartHealthResults {
     exercise: string[]
     stress: string[]
   }
+  supplements?: Array<{ name: string; dosage: string; purpose: string; cost: string }>
 }
 
 export default function HeartHealthPage() {
@@ -161,310 +139,35 @@ export default function HeartHealthPage() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const calculateRiskScore = () => {
-    let score = 0
-
-    // Age factor
-    const age = Number.parseInt(formData.age)
-    if (age > 65) score += 3
-    else if (age > 55) score += 2
-    else if (age > 45) score += 1
-
-    // Gender factor
-    if (formData.gender === "male") score += 1
-
-    // Symptoms
-    if (formData.chestPain === "frequent") score += 3
-    else if (formData.chestPain === "occasional") score += 1
-
-    if (formData.breathlessness === "severe") score += 3
-    else if (formData.breathlessness === "moderate") score += 2
-    else if (formData.breathlessness === "mild") score += 1
-
-    if (formData.palpitations === "frequent") score += 2
-    if (formData.fatigue === "severe") score += 2
-    if (formData.swelling === "yes") score += 2
-    if (formData.dizziness === "frequent") score += 1
-
-    // Risk factors
-    if (formData.smoking === "current") score += 3
-    else if (formData.smoking === "former") score += 1
-
-    if (formData.familyHistory === "yes") score += 2
-    if (formData.diabetes === "yes") score += 2
-    if (formData.hypertension === "yes") score += 2
-    if (formData.cholesterol === "high") score += 2
-
-    // Lifestyle
-    if (formData.exerciseFrequency === "never") score += 2
-    else if (formData.exerciseFrequency === "rarely") score += 1
-
-    if (formData.stressLevel === "high") score += 2
-    else if (formData.stressLevel === "moderate") score += 1
-
-    return score
-  }
-
-  const getRiskLevel = (score: number) => {
-    if (score <= 5) return { level: "Low", category: "Good heart health" }
-    if (score <= 10) return { level: "Moderate", category: "Some risk factors present" }
-    if (score <= 15) return { level: "High", category: "Multiple risk factors" }
-    return { level: "Very High", category: "Immediate attention needed" }
-  }
-
   const generateResults = async () => {
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 3000))
+    try {
+      // Call AI API to generate personalized heart health assessment
+      const response = await fetch("/api/ai-integration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "heart-health-assessment",
+          payload: formData,
+        }),
+      })
 
-    const riskScore = calculateRiskScore()
-    const riskInfo = getRiskLevel(riskScore)
+      if (!response.ok) {
+        throw new Error("Failed to generate assessment")
+      }
 
-    const results: HeartHealthResults = {
-      riskScore: {
-        total: riskScore,
-        level: riskInfo.level,
-        category: riskInfo.category,
-      },
-      recommendations: {
-        immediate:
-          riskScore > 15
-            ? [
-                "Consult a cardiologist within 24-48 hours",
-                "Monitor blood pressure daily",
-                "Avoid strenuous activities until cleared",
-                "Keep emergency medications handy",
-                "Consider emergency room visit if symptoms worsen",
-              ]
-            : riskScore > 10
-              ? [
-                  "Schedule cardiology appointment within 2 weeks",
-                  "Start monitoring vital signs",
-                  "Begin gentle exercise program",
-                  "Review current medications",
-                  "Lifestyle modifications needed",
-                ]
-              : [
-                  "Continue regular health checkups",
-                  "Maintain current healthy habits",
-                  "Annual cardiac screening recommended",
-                  "Stay active and eat well",
-                  "Monitor for any new symptoms",
-                ],
-        lifestyle: [
-          "Quit smoking completely if applicable",
-          "Limit alcohol to 1-2 drinks per day maximum",
-          "Maintain healthy weight (BMI 18.5-24.9)",
-          "Get 7-8 hours of quality sleep",
-          "Practice stress management techniques",
-          "Stay hydrated (8-10 glasses water daily)",
-          "Avoid excessive caffeine",
-          "Regular meditation or yoga",
-        ],
-        dietary: [
-          "Follow DASH diet principles",
-          "Reduce sodium intake (<2300mg/day)",
-          "Include omega-3 rich foods (fish, walnuts)",
-          "Eat 5-7 servings fruits/vegetables daily",
-          "Choose whole grains over refined",
-          "Limit saturated and trans fats",
-          "Include Indian heart-healthy foods: oats, dal, green tea",
-          "Avoid processed and packaged foods",
-          "Use herbs and spices instead of salt",
-          "Include garlic, turmeric, and ginger",
-        ],
-        exercise: [
-          "150 minutes moderate aerobic activity weekly",
-          "Start with 10-15 minutes daily walking",
-          "Include strength training 2x/week",
-          "Practice yoga or meditation",
-          "Avoid sudden intense exercise",
-          "Monitor heart rate during exercise",
-          "Swimming or cycling for low impact",
-          "Gradual increase in intensity",
-        ],
-        monitoring: [
-          "Check blood pressure weekly",
-          "Monitor resting heart rate daily",
-          "Track weight weekly",
-          "Log symptoms in diary",
-          "Regular lipid profile every 6 months",
-          "Annual ECG and echo if recommended",
-          "Blood sugar monitoring if diabetic",
-          "Regular medication compliance check",
-        ],
-      },
-      tests: {
-        essential: [
-          {
-            name: "ECG (Electrocardiogram)",
-            cost: "₹200-500",
-            description: "Checks heart rhythm and electrical activity",
-            frequency: "Annually or as needed",
-          },
-          {
-            name: "Echocardiogram",
-            cost: "₹1,500-3,000",
-            description: "Ultrasound of heart structure and function",
-            frequency: "Every 2 years",
-          },
-          {
-            name: "Lipid Profile",
-            cost: "₹300-800",
-            description: "Cholesterol and triglyceride levels",
-            frequency: "Every 6 months",
-          },
-          {
-            name: "Blood Pressure Monitoring",
-            cost: "₹100-300",
-            description: "24-hour ambulatory BP monitoring",
-            frequency: "As recommended",
-          },
-        ],
-        additional: [
-          {
-            name: "Stress Test (TMT)",
-            cost: "₹2,000-4,000",
-            description: "Heart function during exercise",
-            frequency: "As needed",
-          },
-          {
-            name: "Coronary Angiography",
-            cost: "₹15,000-30,000",
-            description: "Detailed view of coronary arteries",
-            frequency: "If indicated",
-          },
-          {
-            name: "CT Coronary Angiogram",
-            cost: "₹8,000-15,000",
-            description: "Non-invasive coronary imaging",
-            frequency: "If indicated",
-          },
-          {
-            name: "Holter Monitor",
-            cost: "₹2,000-4,000",
-            description: "24-48 hour heart rhythm monitoring",
-            frequency: "If arrhythmia suspected",
-          },
-        ],
-      },
-      emergencyPlan: {
-        warningSignals: [
-          "Severe chest pain or pressure",
-          "Shortness of breath at rest",
-          "Sudden severe headache",
-          "Weakness or numbness in face/arms",
-          "Rapid or irregular heartbeat",
-          "Fainting or near-fainting",
-          "Severe nausea with chest discomfort",
-          "Cold sweats with chest pain",
-        ],
-        firstAid: [
-          "Call 108 (emergency) immediately",
-          "Chew aspirin 325mg if not allergic",
-          "Sit upright, loosen tight clothing",
-          "Stay calm and avoid physical activity",
-          "If unconscious, start CPR if trained",
-          "Keep emergency medications accessible",
-          "Note time of symptom onset",
-          "Prepare medical history for paramedics",
-        ],
-        contacts: [
-          "Emergency Services: 108",
-          "Nearest Hospital Emergency: [Your local hospital]",
-          "Family Doctor: [Your doctor's number]",
-          "Cardiologist: [If you have one]",
-          "Family Emergency Contact: [Family member]",
-        ],
-      },
-      followUp: {
-        schedule:
-          riskScore > 15
-            ? "Every 2-4 weeks initially, then monthly"
-            : riskScore > 10
-              ? "Every 2-3 months"
-              : "Every 6 months",
-        goals: [
-          "Blood pressure <130/80 mmHg",
-          "LDL cholesterol <100 mg/dL",
-          "Regular exercise 5 days/week",
-          "Maintain healthy weight",
-          "Stress management daily",
-          "Medication compliance 100%",
-          "No smoking or tobacco use",
-          "Limit alcohol consumption",
-        ],
-        tracking: [
-          "Daily: Blood pressure, weight, symptoms",
-          "Weekly: Exercise duration and intensity",
-          "Monthly: Medication review",
-          "Quarterly: Lab tests as recommended",
-          "Annually: Comprehensive cardiac evaluation",
-          "Ongoing: Symptom diary maintenance",
-        ],
-      },
-      medications: {
-        current: formData.medications ? formData.medications.split(",").map((med) => med.trim()) : [],
-        recommended: [
-          {
-            name: "ACE Inhibitors (Enalapril/Lisinopril)",
-            purpose: "Lower blood pressure and reduce heart workload",
-            cost: "₹50-200/month",
-          },
-          {
-            name: "Beta Blockers (Metoprolol/Atenolol)",
-            purpose: "Reduce heart rate and blood pressure",
-            cost: "₹30-150/month",
-          },
-          {
-            name: "Statins (Atorvastatin/Rosuvastatin)",
-            purpose: "Lower cholesterol levels",
-            cost: "₹100-500/month",
-          },
-          {
-            name: "Aspirin (Low-dose)",
-            purpose: "Blood thinner to prevent clots",
-            cost: "₹20-50/month",
-          },
-        ],
-      },
-      lifestyle: {
-        diet: [
-          "Mediterranean or DASH diet pattern",
-          "Increase fiber intake (25-35g daily)",
-          "Reduce sodium to <2300mg daily",
-          "Include 2 servings fish per week",
-          "Limit red meat consumption",
-          "Choose healthy cooking oils",
-          "Increase antioxidant-rich foods",
-          "Stay hydrated adequately",
-        ],
-        exercise: [
-          "Brisk walking 30 minutes daily",
-          "Swimming 2-3 times per week",
-          "Yoga or tai chi for flexibility",
-          "Strength training twice weekly",
-          "Avoid isometric exercises initially",
-          "Monitor heart rate during activity",
-          "Cool down properly after exercise",
-          "Listen to your body's signals",
-        ],
-        stress: [
-          "Practice deep breathing exercises",
-          "Regular meditation (10-20 minutes)",
-          "Maintain work-life balance",
-          "Get adequate sleep (7-8 hours)",
-          "Engage in hobbies you enjoy",
-          "Social support and connections",
-          "Professional counseling if needed",
-          "Limit exposure to stressors",
-        ],
-      },
+      const aiResults = await response.json()
+      setResults(aiResults)
+    } catch (error) {
+      console.error("Error generating assessment:", error)
+      // Show error message to user
+      alert("Failed to generate assessment. Please try again.")
+    } finally {
+      setIsLoading(false)
     }
-
-    setResults(results)
-    setIsLoading(false)
   }
 
   const resetForm = () => {
@@ -502,10 +205,6 @@ export default function HeartHealthPage() {
     setResults(null)
   }
 
-  const downloadPDF = () => {
-    window.print()
-  }
-
   const shareResults = async () => {
     if (navigator.share) {
       try {
@@ -540,603 +239,320 @@ export default function HeartHealthPage() {
     }
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50">
-        <header className="bg-white/95 backdrop-blur-sm border-b border-red-100 sticky top-0 z-50 shadow-sm">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="min-h-screen bg-white">
+        <style jsx global>{`
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+          .medical-report {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #1a1a1a;
+          }
+          .medical-report h1 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+          .medical-report h2 { font-size: 14px; font-weight: 600; margin-bottom: 6px; border-bottom: 1px solid #e5e5e5; padding-bottom: 2px; }
+          .medical-report h3 { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+          .medical-report .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+          .medical-report .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+          .medical-report .section { margin-bottom: 16px; padding: 8px; border: 1px solid #e5e5e5; }
+          .medical-report .risk-high { background: #fef2f2; border-left: 4px solid #dc2626; }
+          .medical-report .risk-moderate { background: #fffbeb; border-left: 4px solid #d97706; }
+          .medical-report .risk-low { background: #f0fdf4; border-left: 4px solid #16a34a; }
+          .medical-report ul { margin: 4px 0; padding-left: 16px; }
+          .medical-report li { margin-bottom: 2px; }
+          .medical-report .compact-list { columns: 2; column-gap: 16px; }
+          @media print {
+            .medical-report { font-size: 10px; }
+            .no-print { display: none !important; }
+            .page-break { page-break-before: always; }
+          }
+        `}</style>
+
+        <header className="bg-white border-b-2 border-red-600 p-4 no-print">
+          <div className="flex items-center justify-between max-w-6xl mx-auto">
             <MyMedLogo size="lg" />
             <div className="flex gap-2">
               <Link href="/">
                 <Button variant="outline" size="sm">
-                  <Home className="w-4 h-4 mr-2" />
+                  <Home className="w-4 h-4 mr-1" />
                   Home
                 </Button>
               </Link>
-              <Button onClick={downloadPDF} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF
-              </Button>
-              <Button onClick={() => window.print()} variant="outline" size="sm">
-                <Printer className="w-4 h-4 mr-2" />
+              <Button onClick={() => window.print()} size="sm">
+                <Printer className="w-4 h-4 mr-1" />
                 Print
               </Button>
               <Button onClick={shareResults} variant="outline" size="sm">
-                <Share2 className="w-4 h-4 mr-2" />
+                <Share2 className="w-4 h-4 mr-1" />
                 Share
               </Button>
               <Button onClick={resetForm} variant="outline" size="sm">
-                <RotateCcw className="w-4 h-4 mr-2" />
+                <RotateCcw className="w-4 h-4 mr-1" />
                 Reset
               </Button>
             </div>
           </div>
         </header>
 
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Heart Health Assessment</h1>
-              <p className="text-gray-600">Comprehensive cardiac evaluation for {formData.name}</p>
-              <div className="flex justify-center gap-2 mt-4">
-                <Badge variant="secondary">AI-Powered</Badge>
-                <Badge variant="secondary">Comprehensive</Badge>
-                <Badge variant="secondary">Personalized</Badge>
-                <Badge variant="secondary">HIPAA Compliant</Badge>
+        <div className="medical-report max-w-6xl mx-auto p-6">
+          {/* Header */}
+          <div className="text-center mb-6 border-b-2 border-gray-300 pb-4">
+            <h1 className="text-red-700">COMPREHENSIVE CARDIAC RISK ASSESSMENT</h1>
+            <div className="text-gray-600">
+              MyMedi.ai - Advanced AI Health Analytics | Report ID: CRA-{Date.now().toString().slice(-6)}
+            </div>
+            <div className="text-gray-500">Generated: {new Date().toLocaleDateString()} | Valid for 90 days</div>
+          </div>
+
+          <div className="grid-2">
+            {/* Patient Info */}
+            <div className="section">
+              <h2>Patient Demographics</h2>
+              <div className="grid-2">
+                <div>
+                  <strong>Name:</strong> {formData.name}
+                </div>
+                <div>
+                  <strong>Age:</strong> {formData.age} years
+                </div>
+                <div>
+                  <strong>Gender:</strong> {formData.gender}
+                </div>
+                <div>
+                  <strong>BMI:</strong>{" "}
+                  {formData.weight && formData.height
+                    ? (Number(formData.weight) / Math.pow(Number(formData.height) / 100, 2)).toFixed(1)
+                    : "N/A"}
+                </div>
+                <div>
+                  <strong>Contact:</strong> {formData.phone || "Not provided"}
+                </div>
+                <div>
+                  <strong>Emergency:</strong> {formData.emergencyContact || "Not provided"}
+                </div>
               </div>
             </div>
 
-            <div className="mb-8">
-              <Card className={`border-2 ${getRiskColor(results.riskScore.level)}`}>
-                <CardContent className="p-6 text-center">
-                  <div className="flex items-center justify-center mb-4">
-                    <Heart className="w-12 h-12 text-red-500 mr-4" />
-                    <div>
-                      <h2 className="text-2xl font-bold">Risk Level: {results.riskScore.level}</h2>
-                      <p className="text-gray-600">{results.riskScore.category}</p>
-                      <p className="text-sm text-gray-500">Score: {results.riskScore.total}/20</p>
-                    </div>
+            {/* Risk Assessment */}
+            <div
+              className={`section ${results.riskScore.level === "Very High" ? "risk-high" : results.riskScore.level === "High" ? "risk-high" : results.riskScore.level === "Moderate" ? "risk-moderate" : "risk-low"}`}
+            >
+              <h2>Cardiac Risk Stratification</h2>
+              <div className="text-center mb-2">
+                <div className="text-2xl font-bold">{results.riskScore.level} RISK</div>
+                <div className="text-sm">{results.riskScore.category}</div>
+                <div className="text-xs">Score: {results.riskScore.total}/20</div>
+              </div>
+              <div>
+                <strong>Risk Factors Present:</strong>
+              </div>
+              <ul className="text-xs">
+                {formData.smoking === "current" && <li>Active smoking</li>}
+                {formData.diabetes === "yes" && <li>Diabetes mellitus</li>}
+                {formData.hypertension === "yes" && <li>Hypertension</li>}
+                {formData.familyHistory === "yes" && <li>Family history CAD</li>}
+                {formData.cholesterol === "high" && <li>Dyslipidemia</li>}
+              </ul>
+            </div>
+          </div>
+
+          {/* Clinical Recommendations */}
+          <div className="section">
+            <h2>Clinical Management Protocol</h2>
+            <div className="grid-3">
+              <div>
+                <h3>Immediate Actions</h3>
+                <ul className="text-xs">
+                  {results.recommendations.immediate.slice(0, 4).map((action, i) => (
+                    <li key={i}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Lifestyle Modifications</h3>
+                <ul className="text-xs">
+                  {results.recommendations.lifestyle.slice(0, 4).map((action, i) => (
+                    <li key={i}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Monitoring Protocol</h3>
+                <ul className="text-xs">
+                  {results.recommendations.monitoring.slice(0, 4).map((action, i) => (
+                    <li key={i}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Nutrition & Supplements */}
+          <div className="section">
+            <h2>Advanced Nutritional Therapy & Supplementation</h2>
+            <div className="grid-2">
+              <div>
+                <h3>Cardioprotective Diet Protocol</h3>
+                <ul className="text-xs compact-list">
+                  {results.recommendations.dietary.map((diet, i) => (
+                    <li key={i}>{diet}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Evidence-Based Supplements</h3>
+                <ul className="text-xs">
+                  {results.supplements?.map((supplement, i) => (
+                    <li key={i}>
+                      <strong>{supplement.name}:</strong> {supplement.dosage} - {supplement.purpose}
+                    </li>
+                  )) || [
+                    <li key="omega3">
+                      <strong>Omega-3 (EPA/DHA):</strong> 1-2g daily - reduces triglycerides, anti-inflammatory
+                    </li>,
+                    <li key="coq10">
+                      <strong>Coenzyme Q10:</strong> 100-200mg daily - mitochondrial support, statin myopathy
+                    </li>,
+                    <li key="magnesium">
+                      <strong>Magnesium Glycinate:</strong> 400mg daily - BP reduction, arrhythmia prevention
+                    </li>,
+                    <li key="vitd">
+                      <strong>Vitamin D3:</strong> 2000-4000 IU daily - cardiovascular protection, immune support
+                    </li>,
+                  ]}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Diagnostic Protocol */}
+          <div className="section">
+            <h2>Comprehensive Diagnostic Protocol</h2>
+            <div className="grid-2">
+              <div>
+                <h3>Essential Testing (Priority 1)</h3>
+                {results.tests.essential.map((test, i) => (
+                  <div key={i} className="text-xs mb-1 border-l-2 border-red-500 pl-2">
+                    <strong>{test.name}</strong> - {test.cost}
+                    <br />
+                    <span className="text-gray-600">{test.description}</span>
                   </div>
-                  <Progress value={(results.riskScore.total / 20) * 100} className="w-full max-w-md mx-auto" />
-                </CardContent>
-              </Card>
-            </div>
-
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-                <TabsTrigger value="tests">Tests</TabsTrigger>
-                <TabsTrigger value="emergency">Emergency</TabsTrigger>
-                <TabsTrigger value="medications">Medications</TabsTrigger>
-                <TabsTrigger value="lifestyle">Lifestyle</TabsTrigger>
-                <TabsTrigger value="followup">Follow-up</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-6">
-                {/* Personal Information Summary */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <User className="w-5 h-5 mr-2" />
-                      Personal Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium">Name</Label>
-                        <p className="text-lg">{formData.name}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Age</Label>
-                        <p className="text-lg">{formData.age} years</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Gender</Label>
-                        <p className="text-lg capitalize">{formData.gender}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Weight</Label>
-                        <p className="text-lg">{formData.weight} kg</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Blood Pressure</Label>
-                        <p className="text-lg">{formData.bloodPressure || "Not provided"}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Resting Heart Rate</Label>
-                        <p className="text-lg">
-                          {formData.restingHeartRate ? `${formData.restingHeartRate} bpm` : "Not provided"}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Risk Factors Summary */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <AlertTriangle className="w-5 h-5 mr-2" />
-                      Risk Factors Assessment
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold text-lg mb-3">Current Risk Factors</h4>
-                        <ul className="space-y-2">
-                          {formData.smoking === "current" && (
-                            <li className="flex items-center text-red-600">
-                              <AlertTriangle className="w-4 h-4 mr-2" />
-                              Current smoker
-                            </li>
-                          )}
-                          {formData.diabetes === "yes" && (
-                            <li className="flex items-center text-orange-600">
-                              <AlertTriangle className="w-4 h-4 mr-2" />
-                              Diabetes
-                            </li>
-                          )}
-                          {formData.hypertension === "yes" && (
-                            <li className="flex items-center text-orange-600">
-                              <AlertTriangle className="w-4 h-4 mr-2" />
-                              Hypertension
-                            </li>
-                          )}
-                          {formData.familyHistory === "yes" && (
-                            <li className="flex items-center text-yellow-600">
-                              <AlertTriangle className="w-4 h-4 mr-2" />
-                              Family history
-                            </li>
-                          )}
-                          {formData.exerciseFrequency === "never" && (
-                            <li className="flex items-center text-orange-600">
-                              <AlertTriangle className="w-4 h-4 mr-2" />
-                              Sedentary lifestyle
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-lg mb-3">Symptoms Reported</h4>
-                        <ul className="space-y-2">
-                          {formData.chestPain && formData.chestPain !== "none" && (
-                            <li className="flex items-center">
-                              <Heart className="w-4 h-4 mr-2 text-red-500" />
-                              Chest pain: {formData.chestPain}
-                            </li>
-                          )}
-                          {formData.breathlessness && formData.breathlessness !== "none" && (
-                            <li className="flex items-center">
-                              <Activity className="w-4 h-4 mr-2 text-blue-500" />
-                              Breathlessness: {formData.breathlessness}
-                            </li>
-                          )}
-                          {formData.palpitations && formData.palpitations !== "none" && (
-                            <li className="flex items-center">
-                              <Heart className="w-4 h-4 mr-2 text-purple-500" />
-                              Palpitations: {formData.palpitations}
-                            </li>
-                          )}
-                          {formData.fatigue && formData.fatigue !== "none" && (
-                            <li className="flex items-center">
-                              <Clock className="w-4 h-4 mr-2 text-orange-500" />
-                              Fatigue: {formData.fatigue}
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="recommendations" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-red-600">
-                        <Zap className="w-5 h-5 mr-2" />
-                        Immediate Actions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {results.recommendations.immediate.map((action, index) => (
-                          <li key={index} className="flex items-start">
-                            <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5" />
-                            <span className="text-sm">{action}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-blue-600">
-                        <Activity className="w-5 h-5 mr-2" />
-                        Exercise Plan
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {results.recommendations.exercise.map((exercise, index) => (
-                          <li key={index} className="flex items-start">
-                            <CheckCircle className="w-4 h-4 text-blue-500 mr-2 mt-0.5" />
-                            <span className="text-sm">{exercise}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-green-600">
-                      <Heart className="w-5 h-5 mr-2" />
-                      Heart-Healthy Diet Plan
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {results.recommendations.dietary.map((diet, index) => (
-                        <div key={index} className="flex items-start p-3 bg-green-50 rounded-lg">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5" />
-                          <span className="text-sm">{diet}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-purple-600">
-                      <Target className="w-5 h-5 mr-2" />
-                      Monitoring Guidelines
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {results.recommendations.monitoring.map((monitor, index) => (
-                        <div key={index} className="flex items-start p-3 bg-purple-50 rounded-lg">
-                          <Info className="w-4 h-4 text-purple-500 mr-2 mt-0.5" />
-                          <span className="text-sm">{monitor}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="tests" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-red-600">
-                        <Stethoscope className="w-5 h-5 mr-2" />
-                        Essential Tests
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {results.tests.essential.map((test, index) => (
-                        <div key={index} className="border-l-4 border-red-500 pl-4">
-                          <h4 className="font-semibold">{test.name}</h4>
-                          <p className="text-sm text-gray-600">{test.description}</p>
-                          <div className="flex justify-between items-center mt-1">
-                            <p className="text-sm font-medium text-red-600">Cost: {test.cost}</p>
-                            <p className="text-xs text-gray-500">{test.frequency}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-blue-600">
-                        <Target className="w-5 h-5 mr-2" />
-                        Additional Tests
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {results.tests.additional.map((test, index) => (
-                        <div key={index} className="border-l-4 border-blue-500 pl-4">
-                          <h4 className="font-semibold">{test.name}</h4>
-                          <p className="text-sm text-gray-600">{test.description}</p>
-                          <div className="flex justify-between items-center mt-1">
-                            <p className="text-sm font-medium text-blue-600">Cost: {test.cost}</p>
-                            <p className="text-xs text-gray-500">{test.frequency}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="emergency" className="space-y-6">
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-800">
-                    <strong>Important:</strong> If you experience any warning signals, seek immediate medical attention.
-                  </AlertDescription>
-                </Alert>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-red-600">
-                        <AlertTriangle className="w-5 h-5 mr-2" />
-                        Warning Signals
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {results.emergencyPlan.warningSignals.map((signal, index) => (
-                          <li key={index} className="flex items-start">
-                            <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5" />
-                            <span className="text-sm">{signal}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-green-600">
-                        <Shield className="w-5 h-5 mr-2" />
-                        First Aid Steps
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ol className="space-y-2">
-                        {results.emergencyPlan.firstAid.map((step, index) => (
-                          <li key={index} className="flex items-start">
-                            <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold mr-2 mt-0.5">
-                              {index + 1}
-                            </span>
-                            <span className="text-sm">{step}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-blue-600">
-                      <Phone className="w-5 h-5 mr-2" />
-                      Emergency Contacts
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {results.emergencyPlan.contacts.map((contact, index) => (
-                        <div key={index} className="flex items-center p-3 bg-blue-50 rounded-lg">
-                          <Phone className="w-4 h-4 text-blue-500 mr-2" />
-                          <span className="text-sm">{contact}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Personal Emergency Contacts */}
-                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                      <h4 className="font-semibold mb-3">Your Emergency Contacts</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-sm font-medium">Your Contact</Label>
-                          <p className="text-sm">{formData.phone || "Not provided"}</p>
-                          <p className="text-sm text-gray-600">{formData.email || "Not provided"}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">Emergency Contact</Label>
-                          <p className="text-sm">{formData.emergencyContact || "Not provided"}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="medications" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <FileText className="w-5 h-5 mr-2" />
-                      Current Medications
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {results.medications.current.length > 0 ? (
-                      <ul className="space-y-2">
-                        {results.medications.current.map((medication, index) => (
-                          <li key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                            <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                            <span>{medication}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-gray-600">No current medications reported</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Commonly Recommended Cardiac Medications</CardTitle>
-                    <p className="text-sm text-gray-600">Information only - always follow your doctor's prescription</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {results.medications.recommended.map((medication, index) => (
-                        <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="font-semibold">{medication.name}</div>
-                          <div className="text-sm text-gray-600">{medication.purpose}</div>
-                          <div className="text-xs text-gray-500 mt-1">{medication.cost}</div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <Alert className="mt-4">
-                      <Info className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Important:</strong> Never start, stop, or change medications without consulting your
-                        doctor. Regular monitoring and blood tests may be required.
-                      </AlertDescription>
-                    </Alert>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="lifestyle" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-green-600">
-                        <Heart className="w-5 h-5 mr-2" />
-                        Diet Recommendations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {results.lifestyle.diet.map((diet, index) => (
-                          <li key={index} className="flex items-start">
-                            <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5" />
-                            <span className="text-sm">{diet}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-blue-600">
-                        <Activity className="w-5 h-5 mr-2" />
-                        Exercise Guidelines
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {results.lifestyle.exercise.map((exercise, index) => (
-                          <li key={index} className="flex items-start">
-                            <CheckCircle className="w-4 h-4 text-blue-500 mr-2 mt-0.5" />
-                            <span className="text-sm">{exercise}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-purple-600">
-                        <Shield className="w-5 h-5 mr-2" />
-                        Stress Management
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {results.lifestyle.stress.map((stress, index) => (
-                          <li key={index} className="flex items-start">
-                            <CheckCircle className="w-4 h-4 text-purple-500 mr-2 mt-0.5" />
-                            <span className="text-sm">{stress}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="followup" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Calendar className="w-5 h-5 mr-2" />
-                      Follow-up Schedule
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center p-6 bg-blue-50 rounded-lg mb-6">
-                      <h3 className="text-xl font-bold text-blue-900 mb-2">Recommended Check-ups</h3>
-                      <p className="text-blue-700">{results.followUp.schedule}</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold text-lg mb-3">Health Goals</h4>
-                        <ul className="space-y-2">
-                          {results.followUp.goals.map((goal, index) => (
-                            <li key={index} className="flex items-center">
-                              <Target className="w-4 h-4 text-green-500 mr-2" />
-                              <span className="text-sm">{goal}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold text-lg mb-3">Tracking Schedule</h4>
-                        <ul className="space-y-2">
-                          {results.followUp.tracking.map((track, index) => (
-                            <li key={index} className="flex items-center">
-                              <Clock className="w-4 h-4 text-blue-500 mr-2" />
-                              <span className="text-sm">{track}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <Button onClick={downloadPDF} className="bg-red-600 hover:bg-red-700">
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF Report
-              </Button>
-              <Button onClick={() => window.print()} variant="outline">
-                <Printer className="w-4 h-4 mr-2" />
-                Print Report
-              </Button>
-              <Button onClick={shareResults} variant="outline">
-                <Share2 className="w-4 h-4 mr-2" />
-                Share Assessment
-              </Button>
-              <Button onClick={resetForm} variant="outline">
-                <RotateCcw className="w-4 h-4 mr-2" />
-                New Assessment
-              </Button>
+                ))}
+              </div>
+              <div>
+                <h3>Advanced Testing (If Indicated)</h3>
+                {results.tests.additional.map((test, i) => (
+                  <div key={i} className="text-xs mb-1 border-l-2 border-blue-500 pl-2">
+                    <strong>{test.name}</strong> - {test.cost}
+                    <br />
+                    <span className="text-gray-600">{test.description}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Medical Disclaimer */}
-        <div className="container mx-auto px-4 pb-8">
-          <div className="max-w-6xl mx-auto">
-            <Alert className="border-red-200 bg-red-50">
-              <Shield className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
-                <strong>Medical Disclaimer:</strong> This heart health assessment is for informational purposes only and
-                should not replace professional medical advice. Always consult with a qualified cardiologist or
-                healthcare provider for proper diagnosis and treatment. Seek immediate medical attention for any cardiac
-                emergency symptoms.
-              </AlertDescription>
-            </Alert>
+          {/* Emergency Protocol */}
+          <div className="section risk-high">
+            <h2>Emergency Action Protocol</h2>
+            <div className="grid-3">
+              <div>
+                <h3>Warning Signs</h3>
+                <ul className="text-xs">
+                  {results.emergencyPlan.warningSignals.slice(0, 6).map((signal, i) => (
+                    <li key={i}>{signal}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Immediate Response</h3>
+                <ol className="text-xs">
+                  {results.emergencyPlan.firstAid.slice(0, 6).map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
+                </ol>
+              </div>
+              <div>
+                <h3>Emergency Contacts</h3>
+                <ul className="text-xs">
+                  {results.emergencyPlan.contacts.map((contact, i) => (
+                    <li key={i}>{contact}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Medication Protocol */}
+          <div className="section">
+            <h2>Pharmacological Management</h2>
+            <div className="grid-2">
+              <div>
+                <h3>Current Medications</h3>
+                {results.medications.current.length > 0 ? (
+                  <ul className="text-xs">
+                    {results.medications.current.map((med, i) => (
+                      <li key={i}>{med}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-gray-600">No current medications reported</p>
+                )}
+              </div>
+              <div>
+                <h3>Evidence-Based Recommendations</h3>
+                {results.medications.recommended.slice(0, 4).map((med, i) => (
+                  <div key={i} className="text-xs mb-1">
+                    <strong>{med.name}</strong> - {med.cost}
+                    <br />
+                    <span className="text-gray-600">{med.purpose}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Follow-up & Goals */}
+          <div className="section">
+            <h2>Follow-up Schedule & Treatment Goals</h2>
+            <div className="grid-2">
+              <div>
+                <h3>Monitoring Schedule</h3>
+                <p className="text-xs mb-2">
+                  <strong>Frequency:</strong> {results.followUp.schedule}
+                </p>
+                <ul className="text-xs">
+                  {results.followUp.tracking.map((track, i) => (
+                    <li key={i}>{track}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Target Parameters</h3>
+                <ul className="text-xs">
+                  {results.followUp.goals.map((goal, i) => (
+                    <li key={i}>{goal}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Medical Disclaimer */}
+          <div className="section border-2 border-yellow-500 bg-yellow-50">
+            <h2>Medical Disclaimer & Legal Notice</h2>
+            <p className="text-xs">
+              This assessment is for informational purposes only and does not constitute medical advice, diagnosis, or
+              treatment. Always consult qualified healthcare professionals for medical decisions. This AI-generated
+              report should supplement, not replace, clinical judgment. Emergency symptoms require immediate medical
+              attention (Call 108).
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center text-xs text-gray-500 mt-4 border-t pt-2">
+            MyMedi.ai © 2024 | Advanced AI Health Analytics | Report generated on {new Date().toLocaleString()}
           </div>
         </div>
-
-        <PoweredByFooter />
       </div>
     )
   }
@@ -1407,7 +823,7 @@ export default function HeartHealthPage() {
                         <SelectItem value="none">None</SelectItem>
                         <SelectItem value="occasional">Occasional</SelectItem>
                         <SelectItem value="moderate">Moderate (1-2 drinks/day)</SelectItem>
-                        <SelectItem value="heavy">Heavy (&gt;2 drinks/day)</SelectItem>
+                        <SelectItem value="heavy">&gt;2 drinks/day</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1530,7 +946,7 @@ export default function HeartHealthPage() {
                         <SelectItem value="excellent">Excellent (7-8 hours)</SelectItem>
                         <SelectItem value="good">Good (6-7 hours)</SelectItem>
                         <SelectItem value="fair">Fair (5-6 hours)</SelectItem>
-                        <SelectItem value="poor">Poor (&lt;5 hours)</SelectItem>
+                        <SelectItem value="poor">&lt;5 hours</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -1074,6 +1074,7 @@ export default function DiabetesAssessmentPage() {
               <span><strong>${day.day} - ${day.date}</strong></span>
               <div>
                 <span class="meal-calories">${day.totalCalories} kcal</span>
+</cut_off_point>
                 <span class="meal-time">${day.totalWater}ml water</span>
               </div>
             </div>
@@ -1563,22 +1564,10 @@ CRITICAL INSTRUCTIONS FOR PERSONALIZED RESPONSE:
         }),
       })
 
-      // Safely parse the response ----------------------------------------------
-      let data: any = null
-      const contentType = response.headers.get("content-type") ?? ""
-      if (contentType.includes("application/json")) {
-        // Response is JSON – parse normally
-        data = await response.json()
-      } else {
-        // Non-JSON (most likely an error string from the API route)
-        const text = await response.text()
-        throw new Error(`AI service error (${response.status}): ${text || "Unknown error"}`)
-      }
-      // ------------------------------------------------------------------------
+      const data = await response.json()
 
-      // If the API returned an error object, surface it
       if (!response.ok || !data) {
-        throw new Error(data?.error ?? `AI service returned status ${response.status} without a JSON body`)
+        throw new Error("AI service returned an error response")
       }
 
       if (data.response) {
