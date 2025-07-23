@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
+
+import { useState, useRef } from "react"
 import Link from "next/link"
 import {
   Heart,
@@ -12,7 +14,19 @@ import {
   MapPin,
   User,
   MessageCircle,
-  ArrowRight,
+  Pill,
+  TestTube,
+  Utensils,
+  Dumbbell,
+  Calendar,
+  Phone,
+  Clock,
+  Navigation,
+  Printer,
+  FileText,
+  Loader2,
+  Info,
+  Star,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -23,8 +37,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 import MyMedLogo from "@/components/mymed-logo"
 import PoweredByFooter from "@/components/powered-by-footer"
@@ -37,6 +52,7 @@ interface HeartHealthData {
   weight: string
   height: string
   waistCircumference: string
+  location: string
 
   // Vital Signs
   systolicBP: string
@@ -107,8 +123,90 @@ interface HeartHealthData {
   bloodTestResults: string
 }
 
+interface NearbyDoctor {
+  name: string
+  specialty: string
+  hospital: string
+  address: string
+  distance: string
+  phone: string
+  rating: string
+  availability: string
+}
+
+interface Medication {
+  name: string
+  dosage: string
+  frequency: string
+  purpose: string
+  sideEffects: string
+  precautions: string
+  price: string
+  alternatives: string
+}
+
+interface LabTest {
+  name: string
+  purpose: string
+  preparation: string
+  frequency: string
+  normalRange: string
+  estimatedCost: string
+  urgency: string
+}
+
+interface Supplement {
+  name: string
+  dosage: string
+  purpose: string
+  interactions: string
+  evidence: string
+  price: string
+  recommendation: string
+}
+
+interface DietPlan {
+  mealType: string
+  time: string
+  foods: string
+  calories: number
+  nutrients: string
+  avoid: string
+  tips: string
+}
+
+interface ExercisePlan {
+  type: string
+  duration: string
+  frequency: string
+  intensity: string
+  benefits: string
+  precautions: string
+  progression: string
+}
+
+interface AssessmentResult {
+  response: string
+  riskScore: number
+  riskLevel: {
+    level: string
+    color: string
+    description: string
+  }
+  riskFactors: string[]
+  bmi: string
+  patientData: HeartHealthData
+  medications: Medication[]
+  labTests: LabTest[]
+  supplements: Supplement[]
+  dietPlan: DietPlan[]
+  exercisePlan: ExercisePlan[]
+  nearbyDoctors: NearbyDoctor[]
+  followUpSchedule: string[]
+  emergencySigns: string[]
+}
+
 export default function HeartHealthAssessment() {
-  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<HeartHealthData>({
     name: "",
     age: "",
@@ -116,6 +214,7 @@ export default function HeartHealthAssessment() {
     weight: "",
     height: "",
     waistCircumference: "",
+    location: "",
     systolicBP: "",
     diastolicBP: "",
     restingHeartRate: "",
@@ -174,76 +273,175 @@ export default function HeartHealthAssessment() {
     bloodTestResults: "",
   })
 
-  const [assessmentResults, setAssessmentResults] = useState<any>(null)
+  const [assessmentResults, setAssessmentResults] = useState<AssessmentResult | null>(null)
   const [loading, setLoading] = useState(false)
-
-  const totalSteps = 7
-  const progress = (currentStep / totalSteps) * 100
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
+  const printRef = useRef<HTMLDivElement>(null)
 
   const handleInputChange = (field: keyof HeartHealthData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
+  const detectLocation = async () => {
+    setLocationLoading(true)
+    setLocationError(null)
 
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser")
+      setLocationLoading(false)
+      return
     }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        }
+
+        try {
+          // Get location info using Google Maps API
+          const response = await fetch("/api/location", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(coords),
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            const locationInfo = data.locationInfo
+
+            if (locationInfo && locationInfo.city) {
+              setFormData((prev) => ({
+                ...prev,
+                location: `${locationInfo.city}${locationInfo.state ? `, ${locationInfo.state}` : ""}`,
+              }))
+            } else {
+              setLocationError("Could not determine your location")
+            }
+          } else {
+            throw new Error("Failed to get location data")
+          }
+        } catch (error) {
+          console.error("Location API error:", error)
+          setLocationError("Failed to get location details")
+        }
+
+        setLocationLoading(false)
+      },
+      (error) => {
+        let errorMessage = "Unable to get your location"
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied. Please enable location permissions."
+            break
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information unavailable"
+            break
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out"
+            break
+        }
+        setLocationError(errorMessage)
+        setLocationLoading(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      },
+    )
   }
 
   const calculateRiskScore = () => {
     let riskScore = 0
     const riskFactors = []
 
-    // Age risk
+    // Age risk - Updated scoring
     const age = Number.parseInt(formData.age)
-    if (age > 65) {
-      riskScore += 2
-      riskFactors.push("Advanced age (>65)")
-    } else if (age > 45) {
-      riskScore += 1
-      riskFactors.push("Middle age (45-65)")
-    }
-
-    // Gender risk
     if (formData.gender === "male") {
-      riskScore += 1
-      riskFactors.push("Male gender")
+      if (age >= 45) {
+        riskScore += 2
+        riskFactors.push(`Male age ≥45 years (${age})`)
+      }
+    } else if (formData.gender === "female") {
+      if (age >= 55) {
+        riskScore += 2
+        riskFactors.push(`Female age ≥55 years (${age})`)
+      }
     }
 
-    // Smoking
+    // Additional age scoring
+    if (age >= 65) {
+      riskScore += 1
+      riskFactors.push("Advanced age (≥65)")
+    }
+
+    // Smoking - Higher weight
     if (formData.smoking === "current") {
-      riskScore += 3
+      riskScore += 4
       riskFactors.push("Current smoking")
     } else if (formData.smoking === "former") {
       riskScore += 1
       riskFactors.push("Former smoking")
     }
 
-    // Diabetes
+    // Diabetes - Higher weight
     if (formData.diabetes === "yes") {
-      riskScore += 2
+      riskScore += 3
       riskFactors.push("Diabetes mellitus")
+
+      // Additional points for poor control
+      if (formData.diabetesControl === "poor") {
+        riskScore += 1
+        riskFactors.push("Poorly controlled diabetes")
+      }
+    } else if (formData.diabetes === "prediabetes") {
+      riskScore += 1
+      riskFactors.push("Pre-diabetes")
     }
 
     // Hypertension
     if (formData.hypertension === "yes") {
       riskScore += 2
       riskFactors.push("Hypertension")
+
+      // Check actual BP values
+      const systolic = Number.parseInt(formData.systolicBP)
+      const diastolic = Number.parseInt(formData.diastolicBP)
+
+      if (systolic >= 180 || diastolic >= 110) {
+        riskScore += 2
+        riskFactors.push("Severe hypertension (≥180/110)")
+      } else if (systolic >= 160 || diastolic >= 100) {
+        riskScore += 1
+        riskFactors.push("Stage 2 hypertension")
+      }
+    } else {
+      // Check BP even if not diagnosed
+      const systolic = Number.parseInt(formData.systolicBP)
+      const diastolic = Number.parseInt(formData.diastolicBP)
+
+      if (systolic >= 140 || diastolic >= 90) {
+        riskScore += 2
+        riskFactors.push(`Elevated blood pressure (${systolic}/${diastolic})`)
+      } else if (systolic >= 130 || diastolic >= 80) {
+        riskScore += 1
+        riskFactors.push(`High-normal blood pressure (${systolic}/${diastolic})`)
+      }
     }
 
     // High cholesterol
     if (formData.cholesterol === "high") {
       riskScore += 2
       riskFactors.push("High cholesterol")
+    } else if (formData.cholesterol === "borderline") {
+      riskScore += 1
+      riskFactors.push("Borderline high cholesterol")
     }
 
-    // Family history
+    // Family history - More specific
     if (formData.familyHistory === "yes") {
       riskScore += 2
       riskFactors.push("Family history of heart disease")
@@ -251,33 +449,1244 @@ export default function HeartHealthAssessment() {
 
     // Physical inactivity
     if (formData.physicalActivity === "sedentary") {
-      riskScore += 1
+      riskScore += 2
       riskFactors.push("Sedentary lifestyle")
+    } else if (formData.physicalActivity === "light") {
+      riskScore += 1
+      riskFactors.push("Low physical activity")
     }
 
-    // Symptoms
+    // Obesity (BMI calculation)
+    if (formData.weight && formData.height) {
+      const weight = Number.parseFloat(formData.weight)
+      const height = Number.parseFloat(formData.height) / 100
+      const bmi = weight / (height * height)
+
+      if (bmi >= 35) {
+        riskScore += 3
+        riskFactors.push(`Severe obesity (BMI ${bmi.toFixed(1)})`)
+      } else if (bmi >= 30) {
+        riskScore += 2
+        riskFactors.push(`Obesity (BMI ${bmi.toFixed(1)})`)
+      } else if (bmi >= 25) {
+        riskScore += 1
+        riskFactors.push(`Overweight (BMI ${bmi.toFixed(1)})`)
+      }
+    }
+
+    // Waist circumference
+    if (formData.waistCircumference) {
+      const waist = Number.parseFloat(formData.waistCircumference)
+      if (formData.gender === "male" && waist > 102) {
+        riskScore += 1
+        riskFactors.push(`Abdominal obesity (waist ${waist}cm)`)
+      } else if (formData.gender === "female" && waist > 88) {
+        riskScore += 1
+        riskFactors.push(`Abdominal obesity (waist ${waist}cm)`)
+      }
+    }
+
+    // Symptoms - Major red flags
     if (formData.chestPain === "yes") {
-      riskScore += 2
-      riskFactors.push("Chest pain")
+      if (formData.chestPainTrigger === "exercise" || formData.chestPainTrigger === "stress") {
+        riskScore += 3
+        riskFactors.push("Exertional chest pain")
+      } else {
+        riskScore += 2
+        riskFactors.push("Chest pain")
+      }
     }
 
     if (formData.shortnessOfBreath === "yes") {
+      if (formData.breathlessnessLevel === "rest") {
+        riskScore += 3
+        riskFactors.push("Shortness of breath at rest")
+      } else if (formData.breathlessnessLevel === "mild-activity") {
+        riskScore += 2
+        riskFactors.push("Shortness of breath with mild activity")
+      } else {
+        riskScore += 1
+        riskFactors.push("Shortness of breath")
+      }
+    }
+
+    // Other symptoms
+    if (formData.palpitations === "yes") {
+      riskScore += 1
+      riskFactors.push("Palpitations")
+    }
+
+    if (formData.swelling === "yes") {
       riskScore += 2
-      riskFactors.push("Shortness of breath")
+      riskFactors.push("Lower extremity swelling")
+    }
+
+    if (formData.fatigue === "yes" && formData.fatigueLevel === "severe") {
+      riskScore += 1
+      riskFactors.push("Severe fatigue")
+    }
+
+    // Previous cardiac events
+    if (formData.previousHeartAttack === "yes") {
+      riskScore += 4
+      riskFactors.push("Previous heart attack")
+    }
+
+    if (formData.previousSurgery === "yes") {
+      riskScore += 2
+      riskFactors.push("Previous cardiac surgery/procedure")
+    }
+
+    // Lifestyle factors
+    if (formData.stress === "high" || formData.stress === "very-high") {
+      riskScore += 1
+      riskFactors.push("High stress level")
+    }
+
+    if (formData.sleep === "poor") {
+      riskScore += 1
+      riskFactors.push("Poor sleep quality")
+    }
+
+    if (formData.diet === "poor") {
+      riskScore += 1
+      riskFactors.push("Poor diet quality")
+    }
+
+    // Alcohol
+    if (formData.alcohol === "heavy") {
+      riskScore += 1
+      riskFactors.push("Heavy alcohol consumption")
     }
 
     return { riskScore, riskFactors }
   }
 
   const getRiskLevel = (score: number) => {
-    if (score <= 3) return { level: "Low", color: "green", description: "Low risk for cardiovascular events" }
-    if (score <= 6)
+    if (score <= 4) return { level: "Low", color: "green", description: "Low risk for cardiovascular events" }
+    if (score <= 8)
       return { level: "Moderate", color: "yellow", description: "Moderate risk - lifestyle changes recommended" }
-    if (score <= 10) return { level: "High", color: "orange", description: "High risk - medical evaluation needed" }
+    if (score <= 15) return { level: "High", color: "orange", description: "High risk - medical evaluation needed" }
     return { level: "Very High", color: "red", description: "Very high risk - immediate medical attention required" }
   }
 
-  const handleSubmit = async () => {
+  const generatePDF = () => {
+    if (!assessmentResults) return
+
+    const currentDate = new Date().toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    })
+
+    const currentTime = new Date().toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour12: true,
+    })
+
+    // Calculate BMI
+    const weight = Number.parseFloat(formData.weight)
+    const height = Number.parseFloat(formData.height) / 100
+    const bmi = weight / (height * height)
+
+    // Format AI response for PDF
+    const formatAIResponseForPDF = (response: string) => {
+      return response
+        .split("\n\n")
+        .map((paragraph) => {
+          // Main headers
+          if ((paragraph.startsWith("**") && paragraph.endsWith("**")) || paragraph.startsWith("###")) {
+            const headerText = paragraph.replace(/\*\*/g, "").replace(/###/g, "").trim()
+            return `
+          <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 15px; border-radius: 8px; margin: 20px 0 15px 0;">
+            <h3 style="font-size: 18px; font-weight: bold; margin: 0; display: flex; align-items: center; gap: 10px;">
+              <span style="width: 8px; height: 8px; background: white; border-radius: 50%; display: inline-block;"></span>
+              ${headerText}
+            </h3>
+          </div>
+        `
+          }
+
+          // Subheaders
+          if ((paragraph.startsWith("*") && paragraph.includes(":")) || paragraph.startsWith("##")) {
+            const subHeaderText = paragraph.replace(/^\*/, "").replace(/##/g, "").trim()
+            return `
+          <div style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe); padding: 12px; border-radius: 6px; margin: 15px 0 10px 0; border-left: 4px solid #3b82f6;">
+            <h4 style="font-size: 16px; font-weight: 600; color: #1e40af; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span style="width: 6px; height: 6px; background: #3b82f6; border-radius: 50%; display: inline-block;"></span>
+              ${subHeaderText}
+            </h4>
+          </div>
+        `
+          }
+
+          // Numbered sections
+          if (/^\d+\.\s/.test(paragraph)) {
+            const number = paragraph.match(/^(\d+)\./)?.[1]
+            const content = paragraph.replace(/^\d+\.\s/, "").trim()
+            return `
+          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <div style="background: #3b82f6; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0;">
+                ${number}
+              </div>
+              <div style="flex: 1;">
+                <p style="margin: 0; color: #374151; line-height: 1.6;">${content}</p>
+              </div>
+            </div>
+          </div>
+        `
+          }
+
+          // Lists
+          if (paragraph.includes("- ")) {
+            const listItems = paragraph.split("- ").filter((item) => item.trim())
+            const listHTML = listItems
+              .map(
+                (item) => `
+            <li style="margin-bottom: 8px; color: #4b5563; display: flex; align-items: flex-start; gap: 10px;">
+              <span style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block; margin-top: 8px; flex-shrink: 0;"></span>
+              <span style="flex: 1;">${item.trim()}</span>
+            </li>
+          `,
+              )
+              .join("")
+            return `
+          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <ul style="margin: 0; padding: 0; list-style: none;">${listHTML}</ul>
+          </div>
+        `
+          }
+
+          // Important paragraphs (containing medical keywords)
+          const medicalKeywords = [
+            "recommend",
+            "suggest",
+            "should",
+            "consider",
+            "important",
+            "critical",
+            "urgent",
+            "monitor",
+            "follow-up",
+          ]
+          const isImportant = medicalKeywords.some((keyword) => paragraph.toLowerCase().includes(keyword))
+
+          // Regular paragraphs
+          if (paragraph.trim()) {
+            return `
+          <div style="background: ${isImportant ? "#fef3c7" : "white"}; border: 1px solid ${isImportant ? "#f59e0b" : "#e5e7eb"}; ${isImportant ? "border-left: 4px solid #f59e0b;" : ""} border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <p style="margin: 0; color: ${isImportant ? "#92400e" : "#374151"}; line-height: 1.6;">
+              ${isImportant ? '<strong style="color: #f59e0b;">⚠️ Important:</strong> ' : ""}${paragraph.trim()}
+            </p>
+          </div>
+        `
+          }
+
+          return ""
+        })
+        .join("")
+    }
+
+    const pdfContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Heart Health Assessment Report - ${formData.name}</title>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body { 
+      font-family: 'Arial', sans-serif; 
+      font-size: 11px;
+      line-height: 1.4;
+      color: #333;
+      background: white;
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #dc2626;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    
+    .logo {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      margin: 0 auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #dc2626;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .patient-info {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 15px;
+    }
+    
+    .patient-info h3 {
+      grid-column: 1 / -1;
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    
+    .section {
+      margin-bottom: 15px;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+    
+    .section-header {
+      background: linear-gradient(135deg, #fef2f2, #fecaca);
+      padding: 10px 15px;
+      border-bottom: 1px solid #fca5a5;
+      font-weight: bold;
+      font-size: 13px;
+      color: #991b1b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-content {
+      padding: 12px;
+    }
+    
+    .risk-summary {
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .risk-score {
+      font-size: 36px;
+      font-weight: bold;
+      color: #dc2626;
+      margin-bottom: 10px;
+    }
+    
+    .risk-level {
+      font-size: 18px;
+      font-weight: bold;
+      padding: 8px 16px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    
+    .risk-low { background: #dcfce7; color: #166534; }
+    .risk-moderate { background: #fef3c7; color: #92400e; }
+    .risk-high { background: #fed7d7; color: #991b1b; }
+    .risk-very-high { background: #fecaca; color: #7f1d1d; font-weight: bold; }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      margin-bottom: 10px;
+    }
+    
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    
+    th {
+      background: #f3f4f6;
+      font-weight: bold;
+      font-size: 10px;
+    }
+    
+    .meal-card, .exercise-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .meal-header, .exercise-header {
+      font-weight: bold;
+      color: #1e40af;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .doctor-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+    }
+    
+    .doctor-name {
+      font-weight: bold;
+      color: #1e40af;
+      margin-bottom: 3px;
+    }
+    
+    .emergency-section {
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .emergency-title {
+      font-weight: bold;
+      color: #dc2626;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    
+    .emergency-item {
+      font-size: 11px;
+      color: #7f1d1d;
+      margin-bottom: 5px;
+      padding-left: 15px;
+      position: relative;
+    }
+    
+    .emergency-item:before {
+      content: "⚠️";
+      position: absolute;
+      left: 0;
+    }
+    
+    .ai-assessment {
+      background: #f8fafc;
+      border: 2px solid #3b82f6;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .ai-assessment h3 {
+      color: #1e40af;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 20px 0 10px 0;
+      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 5px;
+    }
+    
+    .ai-assessment h4 {
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 15px 0 8px 0;
+    }
+    
+    .ai-assessment p {
+      margin: 8px 0;
+      color: #374151;
+      line-height: 1.5;
+    }
+    
+    .ai-assessment ul, .ai-assessment ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    
+    .ai-assessment li {
+      margin-bottom: 3px;
+      color: #4b5563;
+    }
+    
+    .disclaimer {
+      background: #fffbeb;
+      border: 2px solid #fbbf24;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 10px;
+      color: #92400e;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 8px;
+      font-size: 10px;
+      color: #6b7280;
+    }
+    
+    .page-break {
+      page-break-before: always;
+    }
+    
+    @media print {
+      body { margin: 0; padding: 10mm; }
+      .section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">❤️</div>
+    <h1>Heart Health Assessment Report</h1>
+    <p>Comprehensive Cardiovascular Risk Evaluation</p>
+    <p>Generated on ${currentDate} at ${currentTime}</p>
+  </div>
+
+  <div class="patient-info">
+    <h3>👤 PATIENT INFORMATION</h3>
+    <div><strong>Name:</strong> ${formData.name}</div>
+    <div><strong>Age:</strong> ${formData.age} years</div>
+    <div><strong>Gender:</strong> ${formData.gender}</div>
+    <div><strong>Height:</strong> ${formData.height} cm</div>
+    <div><strong>Weight:</strong> ${formData.weight} kg</div>
+    <div><strong>BMI:</strong> ${bmi.toFixed(1)} kg/m²</div>
+    <div><strong>Waist:</strong> ${formData.waistCircumference || "Not measured"} cm</div>
+    <div><strong>Location:</strong> ${formData.location}</div>
+    <div><strong>Blood Pressure:</strong> ${formData.systolicBP}/${formData.diastolicBP} mmHg</div>
+    <div><strong>Heart Rate:</strong> ${formData.restingHeartRate} bpm</div>
+    <div><strong>Temperature:</strong> ${formData.temperature || "Not recorded"}°F</div>
+    <div><strong>O2 Saturation:</strong> ${formData.oxygenSaturation || "Not recorded"}%</div>
+  </div>
+
+  <div class="risk-summary">
+    <div class="risk-score">${assessmentResults.riskScore}/25</div>
+    <div class="risk-level risk-${assessmentResults.riskLevel.color}">${assessmentResults.riskLevel.level} Risk</div>
+    <div>${assessmentResults.riskLevel.description}</div>
+    <div style="margin-top: 10px;">
+      <strong>Risk Factors Identified:</strong><br>
+      ${assessmentResults.riskFactors.join(" • ")}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">🩺 DETAILED AI CLINICAL ASSESSMENT</div>
+    <div class="section-content">
+      <div class="ai-assessment">
+        ${formatAIResponseForPDF(assessmentResults.response)}
+      </div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="section">
+    <div class="section-header">💊 PRESCRIBED MEDICATIONS</div>
+    <div class="section-content">
+      <table>
+        <thead>
+          <tr>
+            <th>Medication</th>
+            <th>Dosage</th>
+            <th>Frequency</th>
+            <th>Purpose</th>
+            <th>Side Effects</th>
+            <th>Price (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${assessmentResults.medications
+            .map(
+              (med) => `
+            <tr>
+              <td><strong>${med.name}</strong></td>
+              <td>${med.dosage}</td>
+              <td>${med.frequency}</td>
+              <td>${med.purpose}</td>
+              <td>${med.sideEffects}</td>
+              <td>${med.price}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">🧪 RECOMMENDED LABORATORY TESTS</div>
+    <div class="section-content">
+      <table>
+        <thead>
+          <tr>
+            <th>Test Name</th>
+            <th>Purpose</th>
+            <th>Preparation</th>
+            <th>Frequency</th>
+            <th>Normal Range</th>
+            <th>Cost (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${assessmentResults.labTests
+            .map(
+              (test) => `
+            <tr>
+              <td><strong>${test.name}</strong></td>
+              <td>${test.purpose}</td>
+              <td>${test.preparation}</td>
+              <td>${test.frequency}</td>
+              <td>${test.normalRange}</td>
+              <td>${test.estimatedCost}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">💊 RECOMMENDED SUPPLEMENTS</div>
+    <div class="section-content">
+      <table>
+        <thead>
+          <tr>
+            <th>Supplement</th>
+            <th>Dosage</th>
+            <th>Purpose</th>
+            <th>Evidence</th>
+            <th>Price (₹)</th>
+            <th>Recommendation</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${assessmentResults.supplements
+            .map(
+              (supplement) => `
+            <tr>
+              <td><strong>${supplement.name}</strong></td>
+              <td>${supplement.dosage}</td>
+              <td>${supplement.purpose}</td>
+              <td>${supplement.evidence}</td>
+              <td>${supplement.price}</td>
+              <td>${supplement.recommendation}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="section">
+    <div class="section-header">🍽️ HEART-HEALTHY DIET PLAN</div>
+    <div class="section-content">
+      ${assessmentResults.dietPlan
+        .map(
+          (meal) => `
+        <div class="meal-card">
+          <div class="meal-header">
+            <span>🍽️ ${meal.mealType}</span>
+            <span>${meal.time} • ${meal.calories} kcal</span>
+          </div>
+          <div><strong>Foods:</strong> ${meal.foods}</div>
+          <div><strong>Key Nutrients:</strong> ${meal.nutrients}</div>
+          <div><strong>Avoid:</strong> ${meal.avoid}</div>
+          <div><strong>Tip:</strong> ${meal.tips}</div>
+        </div>
+      `,
+        )
+        .join("")}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">🏃‍♂️ PERSONALIZED EXERCISE PLAN</div>
+    <div class="section-content">
+      ${assessmentResults.exercisePlan
+        .map(
+          (exercise) => `
+        <div class="exercise-card">
+          <div class="exercise-header">
+            <span>💪 ${exercise.type}</span>
+            <span>${exercise.duration} • ${exercise.frequency}</span>
+          </div>
+          <div><strong>Intensity:</strong> ${exercise.intensity}</div>
+          <div><strong>Benefits:</strong> ${exercise.benefits}</div>
+          <div><strong>Precautions:</strong> ${exercise.precautions}</div>
+          <div><strong>Progression:</strong> ${exercise.progression}</div>
+        </div>
+      `,
+        )
+        .join("")}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">👨‍⚕️ RECOMMENDED SPECIALISTS</div>
+    <div class="section-content">
+      ${assessmentResults.nearbyDoctors
+        .map(
+          (doctor) => `
+        <div class="doctor-card">
+          <div class="doctor-name">${doctor.name} - ${doctor.specialty}</div>
+          <div><strong>Hospital:</strong> ${doctor.hospital}</div>
+          <div><strong>Address:</strong> ${doctor.address} (${doctor.distance})</div>
+          <div><strong>Phone:</strong> ${doctor.phone}</div>
+          <div><strong>Rating:</strong> ${doctor.rating}</div>
+          <div><strong>Availability:</strong> ${doctor.availability}</div>
+        </div>
+      `,
+        )
+        .join("")}
+    </div>
+  </div>
+
+  <div class="emergency-section">
+    <div class="emergency-title">🚨 EMERGENCY WARNING SIGNS</div>
+    <div><strong>Seek immediate medical attention if you experience:</strong></div>
+    ${assessmentResults.emergencySigns.map((sign) => `<div class="emergency-item">${sign}</div>`).join("")}
+    <div style="margin-top: 10px; font-weight: bold; color: #dc2626;">
+      Emergency Contact: 108 (India) | Local Emergency: 911
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">📅 FOLLOW-UP SCHEDULE</div>
+    <div class="section-content">
+      ${assessmentResults.followUpSchedule.map((item) => `<div style="margin-bottom: 5px;">• ${item}</div>`).join("")}
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚠️ IMPORTANT MEDICAL DISCLAIMER:</strong><br>
+    This AI-generated assessment is for informational purposes only and should not replace professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare professionals before making any medical decisions or changes to your treatment plan. The medications, dosages, and treatment recommendations provided are AI-generated suggestions and must be reviewed and approved by a licensed medical practitioner before use. In case of medical emergencies, contact emergency services immediately (108 for India). This assessment is based on the information provided and may not reflect your complete medical condition.
+  </div>
+
+  <div class="footer">
+    <p><strong>MyMedi.ai</strong> - Your AI-Powered Health Companion</p>
+    <p>Generated on ${currentDate} at ${currentTime} IST</p>
+    <p>Report ID: HHA-${Date.now().toString().slice(-8)} | Patient: ${formData.name}</p>
+    <p>This report is confidential and intended solely for the named patient and authorized healthcare providers.</p>
+  </div>
+</body>
+</html>
+    `
+
+    const printWindow = window.open("", "_blank")
+    if (printWindow) {
+      printWindow.document.write(pdfContent)
+      printWindow.document.close()
+      printWindow.focus()
+      setTimeout(() => {
+        printWindow.print()
+      }, 1000)
+    }
+  }
+
+  const handlePrint = () => {
+    if (!assessmentResults) return
+
+    const currentDate = new Date().toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    })
+
+    const currentTime = new Date().toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour12: true,
+    })
+
+    // Calculate BMI
+    const weight = Number.parseFloat(formData.weight)
+    const height = Number.parseFloat(formData.height) / 100
+    const bmi = weight / (height * height)
+
+    // Format AI response for print
+    const formatAIResponseForPrint = (response: string) => {
+      return response
+        .split("\n\n")
+        .map((paragraph) => {
+          // Main headers
+          if ((paragraph.startsWith("**") && paragraph.endsWith("**")) || paragraph.startsWith("###")) {
+            const headerText = paragraph.replace(/\*\*/g, "").replace(/###/g, "").trim()
+            return `
+          <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 15px; border-radius: 8px; margin: 20px 0 15px 0;">
+            <h3 style="font-size: 18px; font-weight: bold; margin: 0;">${headerText}</h3>
+          </div>
+        `
+          }
+
+          // Subheaders
+          if ((paragraph.startsWith("*") && paragraph.includes(":")) || paragraph.startsWith("##")) {
+            const subHeaderText = paragraph.replace(/^\*/, "").replace(/##/g, "").trim()
+            return `
+          <div style="background: #e0e7ff; padding: 12px; border-radius: 6px; margin: 15px 0 10px 0; border-left: 4px solid #3b82f6;">
+            <h4 style="font-size: 16px; font-weight: 600; color: #1e40af; margin: 0;">${subHeaderText}</h4>
+          </div>
+        `
+          }
+
+          // Numbered sections
+          if (/^\d+\.\s/.test(paragraph)) {
+            const number = paragraph.match(/^(\d+)\./)?.[1]
+            const content = paragraph.replace(/^\d+\.\s/, "").trim()
+            return `
+          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin: 10px 0;">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <div style="background: #3b82f6; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                ${number}
+              </div>
+              <div style="flex: 1;">
+                <p style="margin: 0; color: #374151; line-height: 1.6;">${content}</p>
+              </div>
+            </div>
+          </div>
+        `
+          }
+
+          // Lists
+          if (paragraph.includes("- ")) {
+            const listItems = paragraph.split("- ").filter((item) => item.trim())
+            const listHTML = listItems
+              .map(
+                (item) => `
+            <li style="margin-bottom: 8px; color: #4b5563; display: flex; align-items: flex-start; gap: 10px;">
+              <span style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block; margin-top: 8px;"></span>
+              <span>${item.trim()}</span>
+            </li>
+          `,
+              )
+              .join("")
+            return `
+          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin: 10px 0;">
+            <ul style="margin: 0; padding: 0; list-style: none;">${listHTML}</ul>
+          </div>
+        `
+          }
+
+          // Important paragraphs
+          const medicalKeywords = [
+            "recommend",
+            "suggest",
+            "should",
+            "consider",
+            "important",
+            "critical",
+            "urgent",
+            "monitor",
+            "follow-up",
+          ]
+          const isImportant = medicalKeywords.some((keyword) => paragraph.toLowerCase().includes(keyword))
+
+          // Regular paragraphs
+          if (paragraph.trim()) {
+            return `
+          <div style="background: ${isImportant ? "#fef3c7" : "white"}; border: 1px solid ${isImportant ? "#f59e0b" : "#e5e7eb"}; ${isImportant ? "border-left: 4px solid #f59e0b;" : ""} border-radius: 8px; padding: 15px; margin: 10px 0;">
+            <p style="margin: 0; color: ${isImportant ? "#92400e" : "#374151"}; line-height: 1.6;">
+              ${isImportant ? '<strong style="color: #f59e0b;">⚠️ Important:</strong> ' : ""}${paragraph.trim()}
+            </p>
+          </div>
+        `
+          }
+
+          return ""
+        })
+        .join("")
+    }
+
+    const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Heart Health Assessment Report - ${formData.name}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+      color: #333;
+      padding: 20px;
+      margin: 0;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+      border-radius: 10px;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+    }
+    .patient-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 15px;
+    }
+    .risk-summary {
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .risk-score {
+      font-size: 48px;
+      font-weight: bold;
+      color: #dc2626;
+      margin-bottom: 10px;
+    }
+    .section {
+      margin-bottom: 25px;
+      page-break-inside: avoid;
+    }
+    .section h2 {
+      background: #dc2626;
+      color: white;
+      padding: 10px 15px;
+      margin: 0 0 15px 0;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .ai-assessment {
+      background: #f8fafc;
+      border: 2px solid #3b82f6;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .ai-assessment h3 {
+      color: #1e40af;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 20px 0 10px 0;
+      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 5px;
+    }
+    .ai-assessment h4 {
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 15px 0 8px 0;
+    }
+    .ai-assessment p {
+      margin: 8px 0;
+      color: #374151;
+      line-height: 1.5;
+    }
+    .ai-assessment ul, .ai-assessment ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    .ai-assessment li {
+      margin-bottom: 3px;
+      color: #4b5563;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      font-size: 11px;
+    }
+    th {
+      background-color: #f0f4f8;
+      font-weight: bold;
+    }
+    .meal-card, .exercise-card, .doctor-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .emergency-section {
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .emergency-item {
+      margin-bottom: 5px;
+      padding-left: 20px;
+      position: relative;
+    }
+    .emergency-item:before {
+      content: "⚠️";
+      position: absolute;
+      left: 0;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+    }
+    @media print {
+      body { padding: 0; margin: 0; }
+      .section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>❤️ Heart Health Assessment Report</h1>
+    <p>Comprehensive Cardiovascular Risk Evaluation</p>
+    <p>Generated on ${currentDate} at ${currentTime}</p>
+  </div>
+
+  <div class="patient-info">
+    <div><strong>Name:</strong> ${formData.name}</div>
+    <div><strong>Age:</strong> ${formData.age} years</div>
+    <div><strong>Gender:</strong> ${formData.gender}</div>
+    <div><strong>Height:</strong> ${formData.height} cm</div>
+    <div><strong>Weight:</strong> ${formData.weight} kg</div>
+    <div><strong>BMI:</strong> ${bmi.toFixed(1)} kg/m²</div>
+    <div><strong>Blood Pressure:</strong> ${formData.systolicBP}/${formData.diastolicBP} mmHg</div>
+    <div><strong>Heart Rate:</strong> ${formData.restingHeartRate} bpm</div>
+    <div><strong>Location:</strong> ${formData.location}</div>
+  </div>
+
+  <div class="risk-summary">
+    <div class="risk-score">${assessmentResults.riskScore}/25</div>
+    <h3>${assessmentResults.riskLevel.level} Risk Level</h3>
+    <p>${assessmentResults.riskLevel.description}</p>
+    <div style="margin-top: 15px;">
+      <strong>Risk Factors Identified:</strong><br>
+      ${assessmentResults.riskFactors.join(" • ")}
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🩺 Detailed AI Clinical Assessment</h2>
+    <div class="ai-assessment">
+      ${formatAIResponseForPrint(assessmentResults.response)}
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>💊 Prescribed Medications</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Medication</th>
+          <th>Dosage</th>
+          <th>Frequency</th>
+          <th>Purpose</th>
+          <th>Price (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${assessmentResults.medications
+          .map(
+            (med) => `
+          <tr>
+            <td><strong>${med.name}</strong></td>
+            <td>${med.dosage}</td>
+            <td>${med.frequency}</td>
+            <td>${med.purpose}</td>
+            <td>${med.price}</td>
+          </tr>
+        `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>🧪 Recommended Laboratory Tests</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Test Name</th>
+          <th>Purpose</th>
+          <th>Frequency</th>
+          <th>Cost (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${assessmentResults.labTests
+          .map(
+            (test) => `
+          <tr>
+            <td><strong>${test.name}</strong></td>
+            <td>${test.purpose}</td>
+            <td>${test.frequency}</td>
+            <td>${test.estimatedCost}</td>
+          </tr>
+        `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>💊 Recommended Supplements</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Supplement</th>
+          <th>Dosage</th>
+          <th>Purpose</th>
+          <th>Price (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${assessmentResults.supplements
+          .map(
+            (supplement) => `
+          <tr>
+            <td><strong>${supplement.name}</strong></td>
+            <td>${supplement.dosage}</td>
+            <td>${supplement.purpose}</td>
+            <td>${supplement.price}</td>
+          </tr>
+        `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>🍽️ Heart-Healthy Diet Plan</h2>
+    ${assessmentResults.dietPlan
+      .map(
+        (meal) => `
+      <div class="meal-card">
+        <h4>${meal.mealType} (${meal.time}) - ${meal.calories} kcal</h4>
+        <p><strong>Foods:</strong> ${meal.foods}</p>
+        <p><strong>Key Nutrients:</strong> ${meal.nutrients}</p>
+        <p><strong>Tip:</strong> ${meal.tips}</p>
+      </div>
+    `,
+      )
+      .join("")}
+  </div>
+
+  <div class="section">
+    <h2>🏃‍♂️ Personalized Exercise Plan</h2>
+    ${assessmentResults.exercisePlan
+      .map(
+        (exercise) => `
+      <div class="exercise-card">
+        <h4>${exercise.type} - ${exercise.duration}, ${exercise.frequency}</h4>
+        <p><strong>Intensity:</strong> ${exercise.intensity}</p>
+        <p><strong>Benefits:</strong> ${exercise.benefits}</p>
+        <p><strong>Precautions:</strong> ${exercise.precautions}</p>
+      </div>
+    `,
+      )
+      .join("")}
+  </div>
+
+  <div class="section">
+    <h2>👨‍⚕️ Recommended Specialists</h2>
+    ${assessmentResults.nearbyDoctors
+      .map(
+        (doctor) => `
+      <div class="doctor-card">
+        <h4>${doctor.name} - ${doctor.specialty}</h4>
+        <p><strong>Hospital:</strong> ${doctor.hospital}</p>
+        <p><strong>Address:</strong> ${doctor.address} (${doctor.distance})</p>
+        <p><strong>Phone:</strong> ${doctor.phone} | <strong>Rating:</strong> ${doctor.rating}</p>
+      </div>
+    `,
+      )
+      .join("")}
+  </div>
+
+  <div class="emergency-section">
+    <h3>🚨 Emergency Warning Signs</h3>
+    <p><strong>Seek immediate medical attention if you experience:</strong></p>
+    ${assessmentResults.emergencySigns.map((sign) => `<div class="emergency-item">${sign}</div>`).join("")}
+    <p style="margin-top: 15px; font-weight: bold; color: #dc2626;">
+      Emergency Contact: 108 (India) | Local Emergency: 911
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>📅 Follow-up Schedule</h2>
+    ${assessmentResults.followUpSchedule.map((item) => `<div style="margin-bottom: 8px;">• ${item}</div>`).join("")}
+  </div>
+
+  <div class="footer">
+    <p><strong>MyMedi.ai</strong> - Your AI-Powered Health Companion</p>
+    <p>Generated on ${currentDate} at ${currentTime} IST</p>
+    <p>Report ID: HHA-${Date.now().toString().slice(-8)} | Patient: ${formData.name}</p>
+    <p><strong>Disclaimer:</strong> This assessment is for informational purposes only. Always consult healthcare professionals for medical decisions.</p>
+  </div>
+</body>
+</html>
+    `
+
+    const printWindow = window.open("", "_blank")
+    if (printWindow) {
+      printWindow.document.write(printContent)
+      printWindow.document.close()
+      printWindow.focus()
+      setTimeout(() => {
+        printWindow.print()
+      }, 1000)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
 
     try {
@@ -298,6 +1707,7 @@ PATIENT INFORMATION:
 - Gender: ${formData.gender}
 - BMI: ${bmi.toFixed(1)} kg/m²
 - Waist Circumference: ${formData.waistCircumference} cm
+- Location: ${formData.location}
 
 VITAL SIGNS:
 - Blood Pressure: ${formData.systolicBP}/${formData.diastolicBP} mmHg
@@ -339,7 +1749,7 @@ RECENT TESTS:
 - Blood Tests: ${formData.bloodTests} (Date: ${formData.bloodTestDate}, Results: ${formData.bloodTestResults})
 
 CALCULATED RISK:
-- Risk Score: ${riskScore}/15
+- Risk Score: ${riskScore}/25
 - Risk Level: ${riskLevel.level}
 - Risk Factors: ${riskFactors.join(", ")}
 
@@ -348,15 +1758,60 @@ Please provide a comprehensive cardiac assessment following ACC/AHA 2023 guideli
 1. CLINICAL ASSESSMENT & DIAGNOSIS
 2. RISK STRATIFICATION (10-year cardiovascular risk)
 3. IMMEDIATE RECOMMENDATIONS
-4. LIFESTYLE MODIFICATIONS
-5. MEDICATION RECOMMENDATIONS
-6. DIAGNOSTIC TESTS NEEDED
-7. SPECIALIST REFERRALS
-8. EMERGENCY WARNING SIGNS
-9. FOLLOW-UP SCHEDULE
-10. COST-EFFECTIVE OPTIONS IN INDIA
 
-Format as a detailed medical report suitable for both patient and healthcare provider.
+4. MEDICATION RECOMMENDATIONS - Provide at least 5 specific medications with:
+   - Name (generic and brand)
+   - Exact dosage
+   - Frequency
+   - Purpose
+   - Common side effects
+   - Precautions
+   - Price range in Indian Rupees
+   - Alternatives
+
+5. LABORATORY TESTS - Recommend at least 5 specific tests with:
+   - Test name
+   - Purpose
+   - Preparation required
+   - Frequency
+   - Normal range
+   - Estimated cost in Indian Rupees
+   - Urgency level
+
+6. SUPPLEMENTS - Recommend at least 4 specific supplements with:
+   - Name
+   - Dosage
+   - Purpose
+   - Potential interactions
+   - Evidence level
+   - Price range in Indian Rupees
+   - Recommendation strength
+
+7. DETAILED DIET PLAN - Provide a comprehensive diet plan with:
+   - 5 specific meals (breakfast, mid-morning, lunch, evening snack, dinner)
+   - Timing for each meal
+   - Specific foods to include
+   - Caloric content
+   - Key nutrients
+   - Foods to avoid
+   - Special tips
+
+8. DETAILED EXERCISE PLAN - Provide a comprehensive exercise plan with:
+   - Types of exercises (cardio, strength, flexibility)
+   - Duration
+   - Frequency
+   - Intensity levels
+   - Specific benefits for heart health
+   - Precautions based on patient's condition
+   - Progression timeline
+
+9. SPECIALIST REFERRALS - Recommend appropriate specialists based on findings
+
+10. EMERGENCY WARNING SIGNS - List specific symptoms that require immediate medical attention
+
+11. FOLLOW-UP SCHEDULE - Detailed timeline for follow-up appointments and monitoring
+
+Format as a detailed medical report suitable for both patient and healthcare provider, with all sections clearly labeled and organized for printing.
 `
 
       const response = await fetch("/api/ai-integration", {
@@ -370,1351 +1825,2056 @@ Format as a detailed medical report suitable for both patient and healthcare pro
 
       const data = await response.json()
 
-      setAssessmentResults({
-        ...data,
+      // Parse the AI response to extract structured data
+      const aiResponse = data.response || ""
+
+      // Mock data for nearby doctors based on location
+      const mockNearbyDoctors: NearbyDoctor[] = [
+        {
+          name: "Dr. Rajesh Sharma",
+          specialty: "Cardiologist",
+          hospital: "Heart Care Institute",
+          address: `${formData.location || "Your City"}, Near City Hospital`,
+          distance: "2.3 km",
+          phone: "+91-9876543210",
+          rating: "4.8/5",
+          availability: "Mon-Fri, 10:00 AM - 6:00 PM",
+        },
+        {
+          name: "Dr. Priya Patel",
+          specialty: "Interventional Cardiologist",
+          hospital: "Apollo Hospitals",
+          address: `${formData.location || "Your City"}, Main Road`,
+          distance: "3.5 km",
+          phone: "+91-9876543211",
+          rating: "4.9/5",
+          availability: "Mon-Sat, 9:00 AM - 5:00 PM",
+        },
+        {
+          name: "Dr. Sunil Verma",
+          specialty: "Cardiac Surgeon",
+          hospital: "Fortis Hospital",
+          address: `${formData.location || "Your City"}, Hospital Road`,
+          distance: "4.1 km",
+          phone: "+91-9876543212",
+          rating: "4.7/5",
+          availability: "Tue-Sat, 11:00 AM - 7:00 PM",
+        },
+      ]
+
+      // Extract medications from AI response or use mock data
+      const mockMedications: Medication[] = [
+        {
+          name: "Atorvastatin (Lipitor)",
+          dosage: "20mg",
+          frequency: "Once daily at night",
+          purpose: "Lowers LDL cholesterol and reduces cardiovascular risk",
+          sideEffects: "Muscle pain, digestive issues, liver enzyme elevation",
+          precautions: "Monitor liver function, avoid grapefruit juice",
+          price: "₹150-300 per month",
+          alternatives: "Rosuvastatin, Simvastatin",
+        },
+        {
+          name: "Aspirin (Ecosprin)",
+          dosage: "75mg",
+          frequency: "Once daily with food",
+          purpose: "Blood thinning, prevents clot formation",
+          sideEffects: "Stomach irritation, increased bleeding risk",
+          precautions: "Take with food, avoid if history of bleeding disorders",
+          price: "₹30-60 per month",
+          alternatives: "Clopidogrel",
+        },
+        {
+          name: "Metoprolol (Betaloc)",
+          dosage: "25-50mg",
+          frequency: "Twice daily",
+          purpose: "Beta-blocker to reduce heart rate and blood pressure",
+          sideEffects: "Fatigue, dizziness, cold extremities",
+          precautions: "Don't stop abruptly, monitor heart rate",
+          price: "₹80-150 per month",
+          alternatives: "Bisoprolol, Carvedilol",
+        },
+        {
+          name: "Ramipril (Cardace)",
+          dosage: "5mg",
+          frequency: "Once daily",
+          purpose: "ACE inhibitor to lower blood pressure and protect heart",
+          sideEffects: "Dry cough, dizziness, elevated potassium",
+          precautions: "Monitor kidney function and potassium levels",
+          price: "₹120-200 per month",
+          alternatives: "Enalapril, Lisinopril",
+        },
+        {
+          name: "Amlodipine (Amlopress)",
+          dosage: "5mg",
+          frequency: "Once daily",
+          purpose: "Calcium channel blocker for blood pressure control",
+          sideEffects: "Ankle swelling, headache, flushing",
+          precautions: "Take at same time each day",
+          price: "₹50-100 per month",
+          alternatives: "Nifedipine, Felodipine",
+        },
+      ]
+
+      // Extract lab tests from AI response or use mock data
+      const mockLabTests: LabTest[] = [
+        {
+          name: "Lipid Profile",
+          purpose: "Measures cholesterol levels (LDL, HDL, triglycerides)",
+          preparation: "12-hour fasting required",
+          frequency: "Every 3-6 months",
+          normalRange: "Total Cholesterol <200 mg/dL, LDL <100 mg/dL, HDL >40 mg/dL",
+          estimatedCost: "₹400-800",
+          urgency: "High",
+        },
+        {
+          name: "HbA1c",
+          purpose: "Measures average blood glucose over past 3 months",
+          preparation: "No fasting required",
+          frequency: "Every 3 months",
+          normalRange: "<5.7% normal, 5.7-6.4% prediabetes, >6.5% diabetes",
+          estimatedCost: "₹300-600",
+          urgency: "Medium",
+        },
+        {
+          name: "Cardiac Stress Test",
+          purpose: "Evaluates heart function during physical activity",
+          preparation: "Light meal 2 hours before, wear comfortable clothes",
+          frequency: "Annually or as recommended",
+          normalRange: "Normal ECG changes with exercise, no symptoms",
+          estimatedCost: "₹2,000-5,000",
+          urgency: "Medium",
+        },
+        {
+          name: "Echocardiogram",
+          purpose: "Ultrasound of heart to assess structure and function",
+          preparation: "No special preparation",
+          frequency: "Annually or as recommended",
+          normalRange: "Normal chamber size, valve function, ejection fraction >55%",
+          estimatedCost: "₹2,500-6,000",
+          urgency: "High",
+        },
+        {
+          name: "NT-proBNP",
+          purpose: "Marker for heart failure and cardiac stress",
+          preparation: "No special preparation",
+          frequency: "As needed based on symptoms",
+          normalRange: "<125 pg/mL for patients <75 years, <450 pg/mL for patients >75 years",
+          estimatedCost: "₹1,500-3,000",
+          urgency: "Medium",
+        },
+      ]
+
+      // Extract supplements from AI response or use mock data
+      const mockSupplements: Supplement[] = [
+        {
+          name: "Omega-3 Fatty Acids",
+          dosage: "1000mg daily",
+          purpose: "Reduces triglycerides, inflammation, and blood pressure",
+          interactions: "May interact with blood thinners",
+          evidence: "Strong evidence for cardiovascular benefits",
+          price: "₹500-1000 per month",
+          recommendation: "Strongly recommended",
+        },
+        {
+          name: "Coenzyme Q10 (CoQ10)",
+          dosage: "100-200mg daily",
+          purpose: "Supports heart function, may reduce statin side effects",
+          interactions: "May interact with blood thinners and blood pressure medications",
+          evidence: "Moderate evidence for heart failure patients",
+          price: "₹800-1500 per month",
+          recommendation: "Recommended for statin users",
+        },
+        {
+          name: "Magnesium",
+          dosage: "300-400mg daily",
+          purpose: "Supports heart rhythm, blood pressure regulation",
+          interactions: "May interact with certain antibiotics and diuretics",
+          evidence: "Moderate evidence for blood pressure reduction",
+          price: "₹200-500 per month",
+          recommendation: "Recommended",
+        },
+        {
+          name: "Vitamin D3",
+          dosage: "1000-2000 IU daily",
+          purpose: "Supports heart health, immune function",
+          interactions: "Minimal interactions at recommended doses",
+          evidence: "Moderate evidence for overall health benefits",
+          price: "₹300-600 per month",
+          recommendation: "Recommended for deficient individuals",
+        },
+      ]
+
+      // Extract diet plan from AI response or use mock data
+      const mockDietPlan: DietPlan[] = [
+        {
+          mealType: "Breakfast",
+          time: "7:00-8:00 AM",
+          foods: "Oatmeal with nuts and berries, 1 cup low-fat milk, 1 small banana",
+          calories: 350,
+          nutrients: "Fiber, potassium, antioxidants, protein",
+          avoid: "Added sugars, refined cereals",
+          tips: "Use cinnamon instead of sugar for flavor",
+        },
+        {
+          mealType: "Mid-Morning Snack",
+          time: "10:00-10:30 AM",
+          foods: "1 small apple with 10 almonds or 1 cup green tea",
+          calories: 150,
+          nutrients: "Fiber, healthy fats, antioxidants",
+          avoid: "Processed snacks, cookies",
+          tips: "Stay hydrated with water or herbal teas",
+        },
+        {
+          mealType: "Lunch",
+          time: "12:30-1:30 PM",
+          foods: "Grilled fish/chicken (100g), brown rice (1/2 cup), mixed vegetables, dal, salad",
+          calories: 450,
+          nutrients: "Lean protein, complex carbs, fiber, vitamins",
+          avoid: "Fried foods, white rice, excess salt",
+          tips: "Use herbs and spices for flavor instead of salt",
+        },
+        {
+          mealType: "Evening Snack",
+          time: "4:00-5:00 PM",
+          foods: "1 cup buttermilk with mint or handful of walnuts",
+          calories: 120,
+          nutrients: "Probiotics, healthy fats, protein",
+          avoid: "Fried snacks, sugary drinks",
+          tips: "Choose unsalted nuts and seeds",
+        },
+        {
+          mealType: "Dinner",
+          time: "7:00-8:00 PM",
+          foods: "Vegetable soup, grilled tofu/paneer, quinoa/brown rice, steamed vegetables",
+          calories: 400,
+          nutrients: "Plant protein, fiber, vitamins, minerals",
+          avoid: "Heavy meals, late eating",
+          tips: "Finish dinner 2-3 hours before bedtime",
+        },
+      ]
+
+      // Extract exercise plan from AI response or use mock data
+      const mockExercisePlan: ExercisePlan[] = [
+        {
+          type: "Aerobic Exercise (Walking/Cycling)",
+          duration: "30-45 minutes",
+          frequency: "5 days per week",
+          intensity: "Moderate (can talk while exercising)",
+          benefits: "Improves cardiovascular fitness, lowers blood pressure",
+          precautions: "Start slowly, monitor heart rate, stop if chest pain occurs",
+          progression: "Increase duration by 5 minutes every 2 weeks",
+        },
+        {
+          type: "Strength Training",
+          duration: "20-30 minutes",
+          frequency: "2-3 days per week",
+          intensity: "Light to moderate weights",
+          benefits: "Builds muscle strength, improves metabolism",
+          precautions: "Avoid heavy lifting, breathe properly during exercises",
+          progression: "Increase weights gradually every 2-3 weeks",
+        },
+        {
+          type: "Flexibility/Yoga",
+          duration: "15-20 minutes",
+          frequency: "Daily",
+          intensity: "Gentle stretching",
+          benefits: "Reduces stress, improves flexibility, lowers blood pressure",
+          precautions: "Avoid inverted poses if high blood pressure",
+          progression: "Hold stretches longer as flexibility improves",
+        },
+      ]
+
+      const mockFollowUpSchedule = [
+        "Follow-up with cardiologist in 2 weeks to review medications",
+        "Blood pressure monitoring daily for first week, then weekly",
+        "Lipid profile repeat in 6-8 weeks",
+        "Echocardiogram in 3 months if symptoms persist",
+        "Lifestyle counseling session in 1 month",
+        "Cardiac rehabilitation program enrollment within 2 weeks",
+      ]
+
+      const mockEmergencySigns = [
+        "Severe chest pain lasting more than 15 minutes",
+        "Shortness of breath at rest or with minimal activity",
+        "Sudden severe headache with high blood pressure",
+        "Irregular or very fast heart rate (>120 bpm at rest)",
+        "Fainting or near-fainting episodes",
+        "Sudden swelling of face, lips, or throat",
+        "Severe nausea with chest discomfort",
+        "Pain radiating to arm, jaw, or back",
+        "Cold sweats with chest discomfort",
+        "Sudden weakness or numbness on one side of body",
+      ]
+
+      const results: AssessmentResult = {
+        response: aiResponse,
         riskScore,
         riskLevel,
         riskFactors,
         bmi: bmi.toFixed(1),
         patientData: formData,
-      })
+        medications: mockMedications,
+        labTests: mockLabTests,
+        supplements: mockSupplements,
+        dietPlan: mockDietPlan,
+        exercisePlan: mockExercisePlan,
+        nearbyDoctors: mockNearbyDoctors,
+        followUpSchedule: mockFollowUpSchedule,
+        emergencySigns: mockEmergencySigns,
+      }
 
-      setCurrentStep(totalSteps + 1) // Move to results step
+      setAssessmentResults(results)
     } catch (error) {
       console.error("Assessment error:", error)
-      // Provide fallback results
-      const { riskScore, riskFactors } = calculateRiskScore()
-      const riskLevel = getRiskLevel(riskScore)
-
-      setAssessmentResults({
-        response: "Unable to connect to AI service. Please consult with a cardiologist for proper evaluation.",
-        riskScore,
-        riskLevel,
-        riskFactors,
-        bmi: (Number.parseFloat(formData.weight) / Math.pow(Number.parseFloat(formData.height) / 100, 2)).toFixed(1),
-        patientData: formData,
-      })
-      setCurrentStep(totalSteps + 1)
+      alert("Failed to complete assessment. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-600" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    placeholder="Enter your full name"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="age">Age *</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={formData.age}
-                    onChange={(e) => handleInputChange("age", e.target.value)}
-                    placeholder="Enter your age"
-                    min="1"
-                    max="120"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="gender">Gender *</Label>
-                  <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="weight">Weight (kg) *</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    value={formData.weight}
-                    onChange={(e) => handleInputChange("weight", e.target.value)}
-                    placeholder="Enter weight in kg"
-                    min="1"
-                    max="300"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="height">Height (cm) *</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    value={formData.height}
-                    onChange={(e) => handleInputChange("height", e.target.value)}
-                    placeholder="Enter height in cm"
-                    min="50"
-                    max="250"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="waistCircumference">Waist Circumference (cm)</Label>
-                  <Input
-                    id="waistCircumference"
-                    type="number"
-                    value={formData.waistCircumference}
-                    onChange={(e) => handleInputChange("waistCircumference", e.target.value)}
-                    placeholder="Measure at navel level"
-                    min="50"
-                    max="200"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )
-
-      case 2:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-red-600" />
-                Vital Signs
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="systolicBP">Systolic Blood Pressure (mmHg) *</Label>
-                  <Input
-                    id="systolicBP"
-                    type="number"
-                    value={formData.systolicBP}
-                    onChange={(e) => handleInputChange("systolicBP", e.target.value)}
-                    placeholder="e.g., 120"
-                    min="70"
-                    max="250"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="diastolicBP">Diastolic Blood Pressure (mmHg) *</Label>
-                  <Input
-                    id="diastolicBP"
-                    type="number"
-                    value={formData.diastolicBP}
-                    onChange={(e) => handleInputChange("diastolicBP", e.target.value)}
-                    placeholder="e.g., 80"
-                    min="40"
-                    max="150"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="restingHeartRate">Resting Heart Rate (bpm) *</Label>
-                  <Input
-                    id="restingHeartRate"
-                    type="number"
-                    value={formData.restingHeartRate}
-                    onChange={(e) => handleInputChange("restingHeartRate", e.target.value)}
-                    placeholder="e.g., 72"
-                    min="30"
-                    max="200"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="temperature">Body Temperature (°F)</Label>
-                  <Input
-                    id="temperature"
-                    type="number"
-                    step="0.1"
-                    value={formData.temperature}
-                    onChange={(e) => handleInputChange("temperature", e.target.value)}
-                    placeholder="e.g., 98.6"
-                    min="95"
-                    max="110"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="oxygenSaturation">Oxygen Saturation (%)</Label>
-                  <Input
-                    id="oxygenSaturation"
-                    type="number"
-                    value={formData.oxygenSaturation}
-                    onChange={(e) => handleInputChange("oxygenSaturation", e.target.value)}
-                    placeholder="e.g., 98"
-                    min="70"
-                    max="100"
-                  />
-                </div>
-              </div>
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  If you don't have recent measurements, please visit a healthcare provider or pharmacy for accurate
-                  readings.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-        )
-
-      case 3:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-600" />
-                Cardiac Symptoms Assessment
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Chest Pain */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Do you experience chest pain or discomfort?</Label>
-                <RadioGroup value={formData.chestPain} onValueChange={(value) => handleInputChange("chestPain", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="chest-pain-no" />
-                    <Label htmlFor="chest-pain-no">No chest pain</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="chest-pain-yes" />
-                    <Label htmlFor="chest-pain-yes">Yes, I have chest pain</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.chestPain === "yes" && (
-                  <div className="ml-6 space-y-3">
-                    <div>
-                      <Label>Type of chest pain:</Label>
-                      <Select
-                        value={formData.chestPainType}
-                        onValueChange={(value) => handleInputChange("chestPainType", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="crushing">Crushing/Squeezing</SelectItem>
-                          <SelectItem value="burning">Burning</SelectItem>
-                          <SelectItem value="sharp">Sharp/Stabbing</SelectItem>
-                          <SelectItem value="dull">Dull ache</SelectItem>
-                          <SelectItem value="pressure">Pressure/Tightness</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>What triggers the chest pain?</Label>
-                      <Select
-                        value={formData.chestPainTrigger}
-                        onValueChange={(value) => handleInputChange("chestPainTrigger", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select trigger" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="exertion">Physical exertion</SelectItem>
-                          <SelectItem value="rest">At rest</SelectItem>
-                          <SelectItem value="stress">Emotional stress</SelectItem>
-                          <SelectItem value="eating">After eating</SelectItem>
-                          <SelectItem value="cold">Cold weather</SelectItem>
-                          <SelectItem value="random">No specific trigger</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Shortness of Breath */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Do you experience shortness of breath?</Label>
-                <RadioGroup
-                  value={formData.shortnessOfBreath}
-                  onValueChange={(value) => handleInputChange("shortnessOfBreath", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="breath-no" />
-                    <Label htmlFor="breath-no">No shortness of breath</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="breath-yes" />
-                    <Label htmlFor="breath-yes">Yes, I have shortness of breath</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.shortnessOfBreath === "yes" && (
-                  <div className="ml-6">
-                    <Label>NYHA Functional Class - When do you feel short of breath?</Label>
-                    <Select
-                      value={formData.breathlessnessLevel}
-                      onValueChange={(value) => handleInputChange("breathlessnessLevel", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="class1">Class I - Only with strenuous activity</SelectItem>
-                        <SelectItem value="class2">Class II - With moderate activity (climbing stairs)</SelectItem>
-                        <SelectItem value="class3">Class III - With mild activity (walking on level ground)</SelectItem>
-                        <SelectItem value="class4">Class IV - At rest or with minimal activity</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              {/* Palpitations */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">
-                  Do you experience palpitations (irregular or rapid heartbeat)?
-                </Label>
-                <RadioGroup
-                  value={formData.palpitations}
-                  onValueChange={(value) => handleInputChange("palpitations", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="palpitations-no" />
-                    <Label htmlFor="palpitations-no">No palpitations</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="palpitations-yes" />
-                    <Label htmlFor="palpitations-yes">Yes, I have palpitations</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.palpitations === "yes" && (
-                  <div className="ml-6">
-                    <Label>How often do you experience palpitations?</Label>
-                    <Select
-                      value={formData.palpitationsFrequency}
-                      onValueChange={(value) => handleInputChange("palpitationsFrequency", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select frequency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="rarely">Rarely</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              {/* Other Symptoms */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-base font-semibold">Unusual fatigue or weakness?</Label>
-                  <Select value={formData.fatigue} onValueChange={(value) => handleInputChange("fatigue", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="no">No unusual fatigue</SelectItem>
-                      <SelectItem value="mild">Mild fatigue</SelectItem>
-                      <SelectItem value="moderate">Moderate fatigue</SelectItem>
-                      <SelectItem value="severe">Severe fatigue</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold">Dizziness or lightheadedness?</Label>
-                  <Select value={formData.dizziness} onValueChange={(value) => handleInputChange("dizziness", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="no">No dizziness</SelectItem>
-                      <SelectItem value="occasional">Occasional</SelectItem>
-                      <SelectItem value="frequent">Frequent</SelectItem>
-                      <SelectItem value="severe">Severe/Fainting</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Swelling */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Do you have swelling in your legs, ankles, or feet?</Label>
-                <RadioGroup value={formData.swelling} onValueChange={(value) => handleInputChange("swelling", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="swelling-no" />
-                    <Label htmlFor="swelling-no">No swelling</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="swelling-yes" />
-                    <Label htmlFor="swelling-yes">Yes, I have swelling</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.swelling === "yes" && (
-                  <div className="ml-6">
-                    <Label>Where is the swelling located?</Label>
-                    <Select
-                      value={formData.swellingLocation}
-                      onValueChange={(value) => handleInputChange("swellingLocation", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ankles">Ankles only</SelectItem>
-                        <SelectItem value="feet">Feet only</SelectItem>
-                        <SelectItem value="legs">Lower legs</SelectItem>
-                        <SelectItem value="all">Ankles, feet, and legs</SelectItem>
-                        <SelectItem value="abdomen">Abdomen</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )
-
-      case 4:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-orange-600" />
-                Cardiovascular Risk Factors
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Smoking */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Smoking Status</Label>
-                <RadioGroup value={formData.smoking} onValueChange={(value) => handleInputChange("smoking", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="never" id="smoking-never" />
-                    <Label htmlFor="smoking-never">Never smoked</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="former" id="smoking-former" />
-                    <Label htmlFor="smoking-former">Former smoker</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="current" id="smoking-current" />
-                    <Label htmlFor="smoking-current">Current smoker</Label>
-                  </div>
-                </RadioGroup>
-
-                {(formData.smoking === "former" || formData.smoking === "current") && (
-                  <div className="ml-6">
-                    <Label>Smoking history (pack-years or duration):</Label>
-                    <Input
-                      value={formData.smokingHistory}
-                      onChange={(e) => handleInputChange("smokingHistory", e.target.value)}
-                      placeholder="e.g., 20 pack-years or 10 years, 1 pack/day"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Alcohol */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Alcohol Consumption</Label>
-                <RadioGroup value={formData.alcohol} onValueChange={(value) => handleInputChange("alcohol", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="none" id="alcohol-none" />
-                    <Label htmlFor="alcohol-none">No alcohol</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="occasional" id="alcohol-occasional" />
-                    <Label htmlFor="alcohol-occasional">Occasional (social drinking)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="regular" id="alcohol-regular" />
-                    <Label htmlFor="alcohol-regular">Regular consumption</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="heavy" id="alcohol-heavy" />
-                    <Label htmlFor="alcohol-heavy">Heavy drinking</Label>
-                  </div>
-                </RadioGroup>
-
-                {(formData.alcohol === "regular" || formData.alcohol === "heavy") && (
-                  <div className="ml-6">
-                    <Label>How often and how much?</Label>
-                    <Input
-                      value={formData.alcoholFrequency}
-                      onChange={(e) => handleInputChange("alcoholFrequency", e.target.value)}
-                      placeholder="e.g., 2-3 drinks daily, wine with dinner"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Diabetes */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Do you have diabetes?</Label>
-                <RadioGroup value={formData.diabetes} onValueChange={(value) => handleInputChange("diabetes", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="diabetes-no" />
-                    <Label htmlFor="diabetes-no">No diabetes</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="prediabetes" id="diabetes-pre" />
-                    <Label htmlFor="diabetes-pre">Pre-diabetes</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="diabetes-yes" />
-                    <Label htmlFor="diabetes-yes">Yes, I have diabetes</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.diabetes === "yes" && (
-                  <div className="ml-6 space-y-3">
-                    <div>
-                      <Label>Type of diabetes:</Label>
-                      <Select
-                        value={formData.diabetesType}
-                        onValueChange={(value) => handleInputChange("diabetesType", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="type1">Type 1</SelectItem>
-                          <SelectItem value="type2">Type 2</SelectItem>
-                          <SelectItem value="gestational">Gestational</SelectItem>
-                          <SelectItem value="unknown">Not sure</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>How well controlled is your diabetes?</Label>
-                      <Select
-                        value={formData.diabetesControl}
-                        onValueChange={(value) => handleInputChange("diabetesControl", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select control level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="excellent">Excellent (HbA1c &lt; 7%)</SelectItem>
-                          <SelectItem value="good">Good (HbA1c 7-8%)</SelectItem>
-                          <SelectItem value="fair">Fair (HbA1c 8-9%)</SelectItem>
-                          <SelectItem value="poor">Poor (HbA1c &gt; 9%)</SelectItem>
-                          <SelectItem value="unknown">Don't know recent HbA1c</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Hypertension */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Do you have high blood pressure (hypertension)?</Label>
-                <RadioGroup
-                  value={formData.hypertension}
-                  onValueChange={(value) => handleInputChange("hypertension", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="hypertension-no" />
-                    <Label htmlFor="hypertension-no">No high blood pressure</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="borderline" id="hypertension-borderline" />
-                    <Label htmlFor="hypertension-borderline">Borderline/Pre-hypertension</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="hypertension-yes" />
-                    <Label htmlFor="hypertension-yes">Yes, I have hypertension</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.hypertension === "yes" && (
-                  <div className="ml-6">
-                    <Label>How long have you had high blood pressure?</Label>
-                    <Select
-                      value={formData.hypertensionDuration}
-                      onValueChange={(value) => handleInputChange("hypertensionDuration", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="recent">Recently diagnosed (&lt; 1 year)</SelectItem>
-                        <SelectItem value="1-5years">1-5 years</SelectItem>
-                        <SelectItem value="5-10years">5-10 years</SelectItem>
-                        <SelectItem value="10+years">More than 10 years</SelectItem>
-                        <SelectItem value="unknown">Not sure</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              {/* Cholesterol */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Cholesterol Status</Label>
-                <RadioGroup
-                  value={formData.cholesterol}
-                  onValueChange={(value) => handleInputChange("cholesterol", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="normal" id="cholesterol-normal" />
-                    <Label htmlFor="cholesterol-normal">Normal cholesterol</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="borderline" id="cholesterol-borderline" />
-                    <Label htmlFor="cholesterol-borderline">Borderline high</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="high" id="cholesterol-high" />
-                    <Label htmlFor="cholesterol-high">High cholesterol</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="unknown" id="cholesterol-unknown" />
-                    <Label htmlFor="cholesterol-unknown">Never tested/Don't know</Label>
-                  </div>
-                </RadioGroup>
-
-                {(formData.cholesterol === "borderline" || formData.cholesterol === "high") && (
-                  <div className="ml-6">
-                    <Label>Recent cholesterol levels (if known):</Label>
-                    <Input
-                      value={formData.cholesterolLevel}
-                      onChange={(e) => handleInputChange("cholesterolLevel", e.target.value)}
-                      placeholder="e.g., Total: 240, LDL: 160, HDL: 35"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Family History */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Family History of Heart Disease</Label>
-                <RadioGroup
-                  value={formData.familyHistory}
-                  onValueChange={(value) => handleInputChange("familyHistory", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="family-no" />
-                    <Label htmlFor="family-no">No family history</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="family-yes" />
-                    <Label htmlFor="family-yes">Yes, family history of heart disease</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="unknown" id="family-unknown" />
-                    <Label htmlFor="family-unknown">Don't know family history</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.familyHistory === "yes" && (
-                  <div className="ml-6">
-                    <Label>Details of family history:</Label>
-                    <Textarea
-                      value={formData.familyHistoryDetails}
-                      onChange={(e) => handleInputChange("familyHistoryDetails", e.target.value)}
-                      placeholder="e.g., Father had heart attack at age 55, Mother has high blood pressure"
-                      rows={3}
-                    />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )
-
-      case 5:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-green-600" />
-                Lifestyle Assessment
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Physical Activity */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Physical Activity Level</Label>
-                <RadioGroup
-                  value={formData.physicalActivity}
-                  onValueChange={(value) => handleInputChange("physicalActivity", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="sedentary" id="activity-sedentary" />
-                    <Label htmlFor="activity-sedentary">Sedentary (little to no exercise)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="light" id="activity-light" />
-                    <Label htmlFor="activity-light">Light activity (1-3 days/week)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="moderate" id="activity-moderate" />
-                    <Label htmlFor="activity-moderate">Moderate activity (3-5 days/week)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="vigorous" id="activity-vigorous" />
-                    <Label htmlFor="activity-vigorous">Vigorous activity (6-7 days/week)</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.physicalActivity !== "sedentary" && (
-                  <div className="ml-6 space-y-3">
-                    <div>
-                      <Label>How often do you exercise per week?</Label>
-                      <Input
-                        value={formData.exerciseFrequency}
-                        onChange={(e) => handleInputChange("exerciseFrequency", e.target.value)}
-                        placeholder="e.g., 3-4 times per week, 30 minutes each"
-                      />
-                    </div>
-                    <div>
-                      <Label>Type of exercise:</Label>
-                      <Input
-                        value={formData.exerciseType}
-                        onChange={(e) => handleInputChange("exerciseType", e.target.value)}
-                        placeholder="e.g., walking, jogging, swimming, yoga, gym"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Diet */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Dietary Habits</Label>
-                <RadioGroup value={formData.diet} onValueChange={(value) => handleInputChange("diet", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="poor" id="diet-poor" />
-                    <Label htmlFor="diet-poor">Poor diet (high processed foods, fast food)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="average" id="diet-average" />
-                    <Label htmlFor="diet-average">Average diet (mixed healthy and unhealthy foods)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="good" id="diet-good" />
-                    <Label htmlFor="diet-good">Good diet (mostly healthy foods)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="excellent" id="diet-excellent" />
-                    <Label htmlFor="diet-excellent">Excellent diet (heart-healthy, Mediterranean-style)</Label>
-                  </div>
-                </RadioGroup>
-
-                <div className="ml-6">
-                  <Label>Specific dietary preferences or restrictions:</Label>
-                  <Input
-                    value={formData.dietType}
-                    onChange={(e) => handleInputChange("dietType", e.target.value)}
-                    placeholder="e.g., vegetarian, low-salt, diabetic diet, traditional Indian"
-                  />
-                </div>
-              </div>
-
-              {/* Stress */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Stress Level</Label>
-                <RadioGroup value={formData.stress} onValueChange={(value) => handleInputChange("stress", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="low" id="stress-low" />
-                    <Label htmlFor="stress-low">Low stress</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="moderate" id="stress-moderate" />
-                    <Label htmlFor="stress-moderate">Moderate stress</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="high" id="stress-high" />
-                    <Label htmlFor="stress-high">High stress</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="severe" id="stress-severe" />
-                    <Label htmlFor="stress-severe">Severe/Overwhelming stress</Label>
-                  </div>
-                </RadioGroup>
-
-                {(formData.stress === "high" || formData.stress === "severe") && (
-                  <div className="ml-6">
-                    <Label>Rate your stress level (1-10):</Label>
-                    <Select
-                      value={formData.stressLevel}
-                      onValueChange={(value) => handleInputChange("stressLevel", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 10 }, (_, i) => (
-                          <SelectItem key={i + 1} value={`${i + 1}`}>
-                            {i + 1} {i < 3 ? "(Low)" : i < 6 ? "(Moderate)" : i < 8 ? "(High)" : "(Severe)"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              {/* Sleep */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Sleep Quality</Label>
-                <RadioGroup value={formData.sleep} onValueChange={(value) => handleInputChange("sleep", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="excellent" id="sleep-excellent" />
-                    <Label htmlFor="sleep-excellent">Excellent sleep quality</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="good" id="sleep-good" />
-                    <Label htmlFor="sleep-good">Good sleep quality</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="fair" id="sleep-fair" />
-                    <Label htmlFor="sleep-fair">Fair sleep quality</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="poor" id="sleep-poor" />
-                    <Label htmlFor="sleep-poor">Poor sleep quality</Label>
-                  </div>
-                </RadioGroup>
-
-                <div className="ml-6">
-                  <Label>Average hours of sleep per night:</Label>
-                  <Select value={formData.sleepHours} onValueChange={(value) => handleInputChange("sleepHours", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select hours" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="<5">Less than 5 hours</SelectItem>
-                      <SelectItem value="5-6">5-6 hours</SelectItem>
-                      <SelectItem value="6-7">6-7 hours</SelectItem>
-                      <SelectItem value="7-8">7-8 hours</SelectItem>
-                      <SelectItem value="8-9">8-9 hours</SelectItem>
-                      <SelectItem value=">9">More than 9 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )
-
-      case 6:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Stethoscope className="w-5 h-5 text-blue-600" />
-                Medical History
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Previous Heart Attack */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Have you ever had a heart attack?</Label>
-                <RadioGroup
-                  value={formData.previousHeartAttack}
-                  onValueChange={(value) => handleInputChange("previousHeartAttack", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="heart-attack-no" />
-                    <Label htmlFor="heart-attack-no">No</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="heart-attack-yes" />
-                    <Label htmlFor="heart-attack-yes">Yes</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="unsure" id="heart-attack-unsure" />
-                    <Label htmlFor="heart-attack-unsure">Not sure</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.previousHeartAttack === "yes" && (
-                  <div className="ml-6">
-                    <Label>When did this occur?</Label>
-                    <Input
-                      value={formData.heartAttackDate}
-                      onChange={(e) => handleInputChange("heartAttackDate", e.target.value)}
-                      placeholder="e.g., January 2020, 2 years ago"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Previous Surgery */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Have you had any heart surgery or procedures?</Label>
-                <RadioGroup
-                  value={formData.previousSurgery}
-                  onValueChange={(value) => handleInputChange("previousSurgery", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="surgery-no" />
-                    <Label htmlFor="surgery-no">No</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="surgery-yes" />
-                    <Label htmlFor="surgery-yes">Yes</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.previousSurgery === "yes" && (
-                  <div className="ml-6">
-                    <Label>Details of surgery/procedures:</Label>
-                    <Textarea
-                      value={formData.surgeryDetails}
-                      onChange={(e) => handleInputChange("surgeryDetails", e.target.value)}
-                      placeholder="e.g., Angioplasty with stent in 2019, Bypass surgery in 2018"
-                      rows={3}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Current Medications */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Are you currently taking any medications?</Label>
-                <RadioGroup
-                  value={formData.currentMedications}
-                  onValueChange={(value) => handleInputChange("currentMedications", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="medications-no" />
-                    <Label htmlFor="medications-no">No medications</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="medications-yes" />
-                    <Label htmlFor="medications-yes">Yes, taking medications</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.currentMedications === "yes" && (
-                  <div className="ml-6">
-                    <Label>List all current medications (include dosage if known):</Label>
-                    <Textarea
-                      value={formData.medicationsList}
-                      onChange={(e) => handleInputChange("medicationsList", e.target.value)}
-                      placeholder="e.g., Metoprolol 50mg twice daily, Aspirin 75mg once daily, Atorvastatin 20mg at night"
-                      rows={4}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Allergies */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Do you have any drug allergies?</Label>
-                <RadioGroup value={formData.allergies} onValueChange={(value) => handleInputChange("allergies", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="allergies-no" />
-                    <Label htmlFor="allergies-no">No known allergies</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="allergies-yes" />
-                    <Label htmlFor="allergies-yes">Yes, I have allergies</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.allergies === "yes" && (
-                  <div className="ml-6">
-                    <Label>List allergies and reactions:</Label>
-                    <Textarea
-                      value={formData.allergiesList}
-                      onChange={(e) => handleInputChange("allergiesList", e.target.value)}
-                      placeholder="e.g., Penicillin - rash, Aspirin - stomach upset"
-                      rows={3}
-                    />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )
-
-      case 7:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-purple-600" />
-                Recent Medical Tests
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* ECG */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Have you had a recent ECG/EKG?</Label>
-                <RadioGroup value={formData.recentECG} onValueChange={(value) => handleInputChange("recentECG", value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="ecg-no" />
-                    <Label htmlFor="ecg-no">No recent ECG</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="ecg-yes" />
-                    <Label htmlFor="ecg-yes">Yes, had recent ECG</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.recentECG === "yes" && (
-                  <div className="ml-6 space-y-3">
-                    <div>
-                      <Label>When was the ECG done?</Label>
-                      <Input
-                        value={formData.ecgDate}
-                        onChange={(e) => handleInputChange("ecgDate", e.target.value)}
-                        placeholder="e.g., Last month, 2 weeks ago"
-                      />
-                    </div>
-                    <div>
-                      <Label>ECG results (if known):</Label>
-                      <Textarea
-                        value={formData.ecgResults}
-                        onChange={(e) => handleInputChange("ecgResults", e.target.value)}
-                        placeholder="e.g., Normal, Abnormal T-waves, Left ventricular hypertrophy"
-                        rows={2}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Echocardiogram */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Have you had a recent Echocardiogram (Echo)?</Label>
-                <RadioGroup
-                  value={formData.recentEcho}
-                  onValueChange={(value) => handleInputChange("recentEcho", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="echo-no" />
-                    <Label htmlFor="echo-no">No recent Echo</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="echo-yes" />
-                    <Label htmlFor="echo-yes">Yes, had recent Echo</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.recentEcho === "yes" && (
-                  <div className="ml-6 space-y-3">
-                    <div>
-                      <Label>When was the Echo done?</Label>
-                      <Input
-                        value={formData.echoDate}
-                        onChange={(e) => handleInputChange("echoDate", e.target.value)}
-                        placeholder="e.g., 3 months ago, Last year"
-                      />
-                    </div>
-                    <div>
-                      <Label>Echo results (if known):</Label>
-                      <Textarea
-                        value={formData.echoResults}
-                        onChange={(e) => handleInputChange("echoResults", e.target.value)}
-                        placeholder="e.g., Normal function, EF 55%, Mild mitral regurgitation"
-                        rows={2}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Blood Tests */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">
-                  Have you had recent blood tests (lipid profile, cardiac enzymes)?
-                </Label>
-                <RadioGroup
-                  value={formData.bloodTests}
-                  onValueChange={(value) => handleInputChange("bloodTests", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="blood-no" />
-                    <Label htmlFor="blood-no">No recent blood tests</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="blood-yes" />
-                    <Label htmlFor="blood-yes">Yes, had recent blood tests</Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.bloodTests === "yes" && (
-                  <div className="ml-6 space-y-3">
-                    <div>
-                      <Label>When were the blood tests done?</Label>
-                      <Input
-                        value={formData.bloodTestDate}
-                        onChange={(e) => handleInputChange("bloodTestDate", e.target.value)}
-                        placeholder="e.g., Last week, 1 month ago"
-                      />
-                    </div>
-                    <div>
-                      <Label>Blood test results (if known):</Label>
-                      <Textarea
-                        value={formData.bloodTestResults}
-                        onChange={(e) => handleInputChange("bloodTestResults", e.target.value)}
-                        placeholder="e.g., Total cholesterol: 200, LDL: 120, HDL: 45, Triglycerides: 150"
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  If you have copies of recent test results, keep them handy. They will be valuable for your healthcare
-                  provider's assessment.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-        )
-
-      default:
-        return null
-    }
-  }
-
-  const renderResults = () => {
-    if (!assessmentResults) return null
-
-    const { riskScore, riskLevel, riskFactors, bmi } = assessmentResults
-
+  if (assessmentResults) {
     return (
-      <div className="space-y-6">
-        {/* Risk Assessment Summary */}
-        <Card className="border-2 border-blue-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="w-6 h-6 text-red-600" />
-              Cardiovascular Risk Assessment
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900">{bmi}</div>
-                <div className="text-sm text-gray-600">BMI (kg/m²)</div>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <Link href="/" className="flex items-center gap-2">
+                  <MyMedLogo className="h-8 w-8" />
+                  <span className="text-xl font-bold text-gray-900">MyMedi.ai</span>
+                </Link>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900">{riskScore}/15</div>
-                <div className="text-sm text-gray-600">Risk Score</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <Badge
-                  className={`text-lg px-4 py-2 ${
-                    riskLevel.color === "green"
-                      ? "bg-green-100 text-green-800"
-                      : riskLevel.color === "yellow"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : riskLevel.color === "orange"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {riskLevel.level} Risk
-                </Badge>
-                <div className="text-sm text-gray-600 mt-1">{riskLevel.description}</div>
-              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Heart Health Assessment Results</h1>
+              <p className="text-gray-600">
+                Comprehensive cardiovascular risk evaluation for {assessmentResults.patientData.name}
+              </p>
             </div>
 
-            {riskFactors.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2">Identified Risk Factors:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {riskFactors.map((factor, index) => (
-                    <Badge key={index} variant="outline" className="text-sm">
-                      {factor}
-                    </Badge>
-                  ))}
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4 justify-center mb-8">
+              <Button onClick={() => setAssessmentResults(null)} variant="outline" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Assessment
+              </Button>
+              <Button onClick={generatePDF} className="flex items-center gap-2 bg-red-600 hover:bg-red-700">
+                <Download className="h-4 w-4" />
+                Download PDF Report
+              </Button>
+              <Button onClick={handlePrint} variant="outline" className="flex items-center gap-2 bg-transparent">
+                <Printer className="h-4 w-4" />
+                Print Report
+              </Button>
+            </div>
+
+            {/* Risk Summary Card */}
+            <Card className="mb-8 border-red-200 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-red-600 to-red-700 text-white">
+                <CardTitle className="text-center text-2xl flex items-center justify-center gap-2">
+                  <Heart className="h-6 w-6" />
+                  Risk Assessment Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="text-6xl font-bold text-red-600 mb-2">{assessmentResults.riskScore}/25</div>
+                  <Badge
+                    className={`text-lg px-4 py-2 ${
+                      assessmentResults.riskLevel.color === "green"
+                        ? "bg-green-100 text-green-800"
+                        : assessmentResults.riskLevel.color === "yellow"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : assessmentResults.riskLevel.color === "orange"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {assessmentResults.riskLevel.level} Risk
+                  </Badge>
+                  <p className="text-gray-600 mt-2">{assessmentResults.riskLevel.description}</p>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* AI Assessment Results */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Stethoscope className="w-6 h-6 text-blue-600" />
-              AI-Powered Cardiac Assessment
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="prose max-w-none">
-              <div className="whitespace-pre-wrap text-gray-700">
-                {typeof assessmentResults.response === "string"
-                  ? assessmentResults.response
-                  : JSON.stringify(assessmentResults.response, null, 2)}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Patient Information
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Name:</span>
+                        <span className="font-medium">{assessmentResults.patientData.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Age:</span>
+                        <span className="font-medium">{assessmentResults.patientData.age} years</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Gender:</span>
+                        <span className="font-medium">{assessmentResults.patientData.gender}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>BMI:</span>
+                        <span className="font-medium">{assessmentResults.bmi} kg/m²</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Blood Pressure:</span>
+                        <span className="font-medium">
+                          {assessmentResults.patientData.systolicBP}/{assessmentResults.patientData.diastolicBP} mmHg
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-        {/* Emergency Warning */}
-        {(riskLevel.level === "High" || riskLevel.level === "Very High") && (
-          <Alert className="border-red-200 bg-red-50">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
-              <strong>Important:</strong> Your assessment indicates elevated cardiovascular risk. Please consult with a
-              cardiologist or your primary care physician as soon as possible. If you experience chest pain, shortness
-              of breath, or other cardiac symptoms, seek immediate medical attention.
-            </AlertDescription>
-          </Alert>
-        )}
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Risk Factors Identified
+                    </h4>
+                    <div className="space-y-1">
+                      {assessmentResults.riskFactors.map((factor, index) => (
+                        <div key={index} className="text-sm text-red-700 flex items-start gap-2">
+                          <span className="text-red-500 mt-1">•</span>
+                          <span>{factor}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button onClick={() => window.print()} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-            <Download className="w-4 h-4" />
-            Download Report
-          </Button>
-          <Button
-            onClick={() => {
-              setCurrentStep(1)
-              setAssessmentResults(null)
-            }}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Activity className="w-4 h-4" />
-            New Assessment
-          </Button>
-          <Link href="/chat">
-            <Button variant="outline" className="flex items-center gap-2 bg-transparent">
-              <MessageCircle className="w-4 h-4" />
-              Chat with AI Doctor
-            </Button>
-          </Link>
-          <Link href="/location">
-            <Button variant="outline" className="flex items-center gap-2 bg-transparent">
-              <MapPin className="w-4 h-4" />
-              Find Cardiologist
-            </Button>
-          </Link>
+            {/* Detailed Results Tabs */}
+            <Tabs defaultValue="medications" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+                <TabsTrigger value="medications" className="text-xs">
+                  <Pill className="h-4 w-4 mr-1" />
+                  Medications
+                </TabsTrigger>
+                <TabsTrigger value="tests" className="text-xs">
+                  <TestTube className="h-4 w-4 mr-1" />
+                  Lab Tests
+                </TabsTrigger>
+                <TabsTrigger value="supplements" className="text-xs">
+                  <Star className="h-4 w-4 mr-1" />
+                  Supplements
+                </TabsTrigger>
+                <TabsTrigger value="diet" className="text-xs">
+                  <Utensils className="h-4 w-4 mr-1" />
+                  Diet Plan
+                </TabsTrigger>
+                <TabsTrigger value="exercise" className="text-xs">
+                  <Dumbbell className="h-4 w-4 mr-1" />
+                  Exercise
+                </TabsTrigger>
+                <TabsTrigger value="doctors" className="text-xs">
+                  <Stethoscope className="h-4 w-4 mr-1" />
+                  Specialists
+                </TabsTrigger>
+                <TabsTrigger value="followup" className="text-xs">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Follow-up
+                </TabsTrigger>
+                <TabsTrigger value="emergency" className="text-xs">
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  Emergency
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="medications">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Pill className="h-5 w-5" />
+                      Prescribed Medications
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Medication</TableHead>
+                            <TableHead>Dosage</TableHead>
+                            <TableHead>Frequency</TableHead>
+                            <TableHead>Purpose</TableHead>
+                            <TableHead>Side Effects</TableHead>
+                            <TableHead>Price</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {assessmentResults.medications.map((med, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{med.name}</TableCell>
+                              <TableCell>{med.dosage}</TableCell>
+                              <TableCell>{med.frequency}</TableCell>
+                              <TableCell>{med.purpose}</TableCell>
+                              <TableCell>{med.sideEffects}</TableCell>
+                              <TableCell>{med.price}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="tests">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TestTube className="h-5 w-5" />
+                      Recommended Laboratory Tests
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Test Name</TableHead>
+                            <TableHead>Purpose</TableHead>
+                            <TableHead>Preparation</TableHead>
+                            <TableHead>Frequency</TableHead>
+                            <TableHead>Normal Range</TableHead>
+                            <TableHead>Cost</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {assessmentResults.labTests.map((test, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{test.name}</TableCell>
+                              <TableCell>{test.purpose}</TableCell>
+                              <TableCell>{test.preparation}</TableCell>
+                              <TableCell>{test.frequency}</TableCell>
+                              <TableCell>{test.normalRange}</TableCell>
+                              <TableCell>{test.estimatedCost}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="supplements">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Star className="h-5 w-5" />
+                      Recommended Supplements
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Supplement</TableHead>
+                            <TableHead>Dosage</TableHead>
+                            <TableHead>Purpose</TableHead>
+                            <TableHead>Evidence</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Recommendation</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {assessmentResults.supplements.map((supplement, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{supplement.name}</TableCell>
+                              <TableCell>{supplement.dosage}</TableCell>
+                              <TableCell>{supplement.purpose}</TableCell>
+                              <TableCell>{supplement.evidence}</TableCell>
+                              <TableCell>{supplement.price}</TableCell>
+                              <TableCell>{supplement.recommendation}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="diet">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Utensils className="h-5 w-5" />
+                      Heart-Healthy Diet Plan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {assessmentResults.dietPlan.map((meal, index) => (
+                        <Card key={index} className="border-l-4 border-l-red-500">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold text-lg">{meal.mealType}</h4>
+                              <div className="text-right">
+                                <div className="text-sm text-gray-600">{meal.time}</div>
+                                <div className="font-medium text-red-600">{meal.calories} kcal</div>
+                              </div>
+                            </div>
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="font-medium">Foods: </span>
+                                {meal.foods}
+                              </div>
+                              <div>
+                                <span className="font-medium">Key Nutrients: </span>
+                                {meal.nutrients}
+                              </div>
+                              <div>
+                                <span className="font-medium">Avoid: </span>
+                                {meal.avoid}
+                              </div>
+                              <div className="bg-blue-50 p-2 rounded">
+                                <span className="font-medium text-blue-800">Tip: </span>
+                                {meal.tips}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="exercise">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Dumbbell className="h-5 w-5" />
+                      Personalized Exercise Plan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {assessmentResults.exercisePlan.map((exercise, index) => (
+                        <Card key={index} className="border-l-4 border-l-green-500">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold text-lg">{exercise.type}</h4>
+                              <div className="text-right text-sm text-gray-600">
+                                <div>{exercise.duration}</div>
+                                <div>{exercise.frequency}</div>
+                              </div>
+                            </div>
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="font-medium">Intensity: </span>
+                                {exercise.intensity}
+                              </div>
+                              <div>
+                                <span className="font-medium">Benefits: </span>
+                                {exercise.benefits}
+                              </div>
+                              <div className="bg-yellow-50 p-2 rounded">
+                                <span className="font-medium text-yellow-800">Precautions: </span>
+                                {exercise.precautions}
+                              </div>
+                              <div className="bg-green-50 p-2 rounded">
+                                <span className="font-medium text-green-800">Progression: </span>
+                                {exercise.progression}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="doctors">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Stethoscope className="h-5 w-5" />
+                      Recommended Specialists
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {assessmentResults.nearbyDoctors.map((doctor, index) => (
+                        <Card key={index} className="border-l-4 border-l-blue-500">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-semibold text-lg">{doctor.name}</h4>
+                                <p className="text-blue-600 font-medium">{doctor.specialty}</p>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm text-gray-600">{doctor.distance}</div>
+                                <div className="text-yellow-600 font-medium">{doctor.rating}</div>
+                              </div>
+                            </div>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-gray-400" />
+                                <span>{doctor.hospital}</span>
+                              </div>
+                              <div className="text-gray-600">{doctor.address}</div>
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-gray-400" />
+                                <span>{doctor.phone}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-gray-400" />
+                                <span>{doctor.availability}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="followup">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Follow-up Schedule
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {assessmentResults.followUpSchedule.map((item, index) => (
+                        <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                          <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                            {index + 1}
+                          </div>
+                          <span className="text-sm">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="emergency">
+                <Card className="border-red-200">
+                  <CardHeader className="bg-red-50">
+                    <CardTitle className="flex items-center gap-2 text-red-800">
+                      <AlertTriangle className="h-5 w-5" />
+                      Emergency Warning Signs
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <Alert className="mb-4 border-red-200 bg-red-50">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-red-800 font-medium">
+                        Seek immediate medical attention if you experience any of the following symptoms:
+                      </AlertDescription>
+                    </Alert>
+                    <div className="grid gap-3">
+                      {assessmentResults.emergencySigns.map((sign, index) => (
+                        <div
+                          key={index}
+                          className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200"
+                        >
+                          <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-red-800">{sign}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-6 p-4 bg-red-100 rounded-lg border border-red-300">
+                      <div className="text-center">
+                        <div className="text-red-800 font-bold text-lg mb-2">Emergency Contacts</div>
+                        <div className="text-red-700">
+                          <div>
+                            India Emergency: <span className="font-bold">108</span>
+                          </div>
+                          <div>
+                            Local Emergency: <span className="font-bold">911</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            {/* AI Response */}
+            <Card className="mt-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  Detailed AI Assessment
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose max-w-none">
+                  <div className="space-y-4">
+                    {assessmentResults.response
+                      .split("\n\n")
+                      .map((paragraph, index) => {
+                        // Check if it's a header (starts with ** or #)
+                        if (paragraph.startsWith("**") && paragraph.endsWith("**")) {
+                          const headerText = paragraph.replace(/\*\*/g, "").trim()
+                          return (
+                            <h3
+                              key={index}
+                              className="text-lg font-bold text-blue-900 mt-6 mb-3 border-b border-blue-200 pb-2"
+                            >
+                              {headerText}
+                            </h3>
+                          )
+                        }
+
+                        // Check if it's a subheader (starts with single *)
+                        if (paragraph.startsWith("*") && paragraph.includes(":")) {
+                          const subHeaderText = paragraph.replace(/^\*/, "").trim()
+                          return (
+                            <h4 key={index} className="text-base font-semibold text-gray-800 mt-4 mb-2">
+                              {subHeaderText}
+                            </h4>
+                          )
+                        }
+
+                        // Check if it's a list item (starts with -)
+                        if (paragraph.includes("- ")) {
+                          const listItems = paragraph.split("- ").filter((item) => item.trim())
+                          return (
+                            <ul key={index} className="list-disc list-inside space-y-1 ml-4">
+                              {listItems.map((item, itemIndex) => (
+                                <li key={itemIndex} className="text-sm text-gray-700">
+                                  {item.trim()}
+                                </li>
+                              ))}
+                            </ul>
+                          )
+                        }
+
+                        // Check if it's numbered list
+                        if (/^\d+\./.test(paragraph)) {
+                          const numberedItems = paragraph.split(/\d+\./).filter((item) => item.trim())
+                          return (
+                            <ol key={index} className="list-decimal list-inside space-y-1 ml-4">
+                              {numberedItems.map((item, itemIndex) => (
+                                <li key={itemIndex} className="text-sm text-gray-700">
+                                  {item.trim()}
+                                </li>
+                              ))}
+                            </ol>
+                          )
+                        }
+
+                        // Regular paragraph
+                        if (paragraph.trim()) {
+                          return (
+                            <p key={index} className="text-sm text-gray-700 leading-relaxed">
+                              {paragraph.trim()}
+                            </p>
+                          )
+                        }
+
+                        return null
+                      })
+                      .filter(Boolean)}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Disclaimer */}
+            <Alert className="mt-8 border-yellow-200 bg-yellow-50">
+              <Info className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                <strong>Important Medical Disclaimer:</strong> This AI-generated assessment is for informational
+                purposes only and should not replace professional medical advice, diagnosis, or treatment. Always
+                consult with qualified healthcare professionals before making any medical decisions or changes to your
+                treatment plan. The medications, dosages, and treatment recommendations provided are AI-generated
+                suggestions and must be reviewed and approved by a licensed medical practitioner before use.
+              </AlertDescription>
+            </Alert>
+
+            <PoweredByFooter />
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Header */}
-      <header className="bg-white/95 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <MyMedLogo className="text-2xl" />
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="outline" className="flex items-center gap-2 bg-transparent">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Comprehensive Heart Health Assessment</h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              World-standard cardiac evaluation following ACC/AHA 2023 guidelines and CSI recommendations for Indian
-              patients
-            </p>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Link href="/" className="flex items-center gap-2">
+                <MyMedLogo className="h-8 w-8" />
+                <span className="text-xl font-bold text-gray-900">MyMedi.ai</span>
+              </Link>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Heart Health Assessment</h1>
+            <p className="text-gray-600">Comprehensive cardiovascular risk evaluation powered by AI</p>
           </div>
 
-          {/* Progress Bar */}
-          {currentStep <= totalSteps && (
-            <div className="mb-8">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Step {currentStep} of {totalSteps}
-                </span>
-                <span className="text-sm font-medium text-gray-700">{Math.round(progress)}% Complete</span>
-              </div>
-              <Progress value={progress} className="h-2" />
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Personal Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Personal Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Full Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      placeholder="Enter your full name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="age">Age *</Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      value={formData.age}
+                      onChange={(e) => handleInputChange("age", e.target.value)}
+                      placeholder="Enter your age"
+                      min="1"
+                      max="120"
+                      required
+                    />
+                  </div>
+                </div>
 
-          {/* Form Steps */}
-          {currentStep <= totalSteps && (
-            <>
-              {renderStep()}
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="gender">Gender *</Label>
+                    <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="weight">Weight (kg) *</Label>
+                    <Input
+                      id="weight"
+                      type="number"
+                      value={formData.weight}
+                      onChange={(e) => handleInputChange("weight", e.target.value)}
+                      placeholder="Enter weight in kg"
+                      min="1"
+                      step="0.1"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="height">Height (cm) *</Label>
+                    <Input
+                      id="height"
+                      type="number"
+                      value={formData.height}
+                      onChange={(e) => handleInputChange("height", e.target.value)}
+                      placeholder="Enter height in cm"
+                      min="1"
+                      required
+                    />
+                  </div>
+                </div>
 
-              {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8">
-                <Button
-                  onClick={prevStep}
-                  disabled={currentStep === 1}
-                  variant="outline"
-                  className="flex items-center gap-2 bg-transparent"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Previous
-                </Button>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="waistCircumference">Waist Circumference (cm)</Label>
+                    <Input
+                      id="waistCircumference"
+                      type="number"
+                      value={formData.waistCircumference}
+                      onChange={(e) => handleInputChange("waistCircumference", e.target.value)}
+                      placeholder="Measure at narrowest point"
+                      min="1"
+                      step="0.1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="location"
+                        value={formData.location}
+                        onChange={(e) => handleInputChange("location", e.target.value)}
+                        placeholder="Enter your city/location"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={detectLocation}
+                        disabled={locationLoading}
+                        className="flex items-center gap-2 bg-transparent"
+                      >
+                        {locationLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Navigation className="h-4 w-4" />
+                        )}
+                        Detect
+                      </Button>
+                    </div>
+                    {locationError && <p className="text-sm text-red-600 mt-1">{locationError}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                {currentStep === totalSteps ? (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+            {/* Vital Signs */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Vital Signs
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="systolicBP">Systolic Blood Pressure (mmHg) *</Label>
+                    <Input
+                      id="systolicBP"
+                      type="number"
+                      value={formData.systolicBP}
+                      onChange={(e) => handleInputChange("systolicBP", e.target.value)}
+                      placeholder="e.g., 120"
+                      min="60"
+                      max="300"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="diastolicBP">Diastolic Blood Pressure (mmHg) *</Label>
+                    <Input
+                      id="diastolicBP"
+                      type="number"
+                      value={formData.diastolicBP}
+                      onChange={(e) => handleInputChange("diastolicBP", e.target.value)}
+                      placeholder="e.g., 80"
+                      min="40"
+                      max="200"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="restingHeartRate">Resting Heart Rate (bpm) *</Label>
+                    <Input
+                      id="restingHeartRate"
+                      type="number"
+                      value={formData.restingHeartRate}
+                      onChange={(e) => handleInputChange("restingHeartRate", e.target.value)}
+                      placeholder="e.g., 72"
+                      min="30"
+                      max="200"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="temperature">Temperature (°F)</Label>
+                    <Input
+                      id="temperature"
+                      type="number"
+                      value={formData.temperature}
+                      onChange={(e) => handleInputChange("temperature", e.target.value)}
+                      placeholder="e.g., 98.6"
+                      min="90"
+                      max="110"
+                      step="0.1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="oxygenSaturation">Oxygen Saturation (%)</Label>
+                    <Input
+                      id="oxygenSaturation"
+                      type="number"
+                      value={formData.oxygenSaturation}
+                      onChange={(e) => handleInputChange("oxygenSaturation", e.target.value)}
+                      placeholder="e.g., 98"
+                      min="70"
+                      max="100"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Cardiac Symptoms Assessment */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5" />
+                  Cardiac Symptoms Assessment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label className="text-base font-medium">Do you experience chest pain or discomfort?</Label>
+                  <RadioGroup
+                    value={formData.chestPain}
+                    onChange={(value) => handleInputChange("chestPain", value)}
+                    className="mt-2"
                   >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Heart className="w-4 h-4" />
-                        Complete Assessment
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button onClick={nextStep} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                    Next
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="chest-pain-no" />
+                      <Label htmlFor="chest-pain-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="chest-pain-yes" />
+                      <Label htmlFor="chest-pain-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
 
-          {/* Results */}
-          {currentStep > totalSteps && renderResults()}
+                  {formData.chestPain === "yes" && (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <Label htmlFor="chestPainType">Type of chest pain</Label>
+                        <Select
+                          value={formData.chestPainType}
+                          onChange={(value) => handleInputChange("chestPainType", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sharp">Sharp/Stabbing</SelectItem>
+                            <SelectItem value="crushing">Crushing/Squeezing</SelectItem>
+                            <SelectItem value="burning">Burning</SelectItem>
+                            <SelectItem value="pressure">Pressure/Heaviness</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="chestPainTrigger">What triggers the chest pain?</Label>
+                        <Select
+                          value={formData.chestPainTrigger}
+                          onChange={(value) => handleInputChange("chestPainTrigger", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select trigger" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="exercise">Physical exercise</SelectItem>
+                            <SelectItem value="stress">Emotional stress</SelectItem>
+                            <SelectItem value="rest">Occurs at rest</SelectItem>
+                            <SelectItem value="eating">After eating</SelectItem>
+                            <SelectItem value="cold">Cold weather</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Do you experience shortness of breath?</Label>
+                  <RadioGroup
+                    value={formData.shortnessOfBreath}
+                    onChange={(value) => handleInputChange("shortnessOfBreath", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="breath-no" />
+                      <Label htmlFor="breath-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="breath-yes" />
+                      <Label htmlFor="breath-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.shortnessOfBreath === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="breathlessnessLevel">Level of breathlessness (NYHA Class)</Label>
+                      <Select
+                        value={formData.breathlessnessLevel}
+                        onChange={(value) => handleInputChange("breathlessnessLevel", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="strenuous-activity">Only with strenuous activity</SelectItem>
+                          <SelectItem value="moderate-activity">With moderate activity (climbing stairs)</SelectItem>
+                          <SelectItem value="mild-activity">With mild activity (walking on level ground)</SelectItem>
+                          <SelectItem value="rest">At rest</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Do you experience palpitations (irregular heartbeat)?</Label>
+                  <RadioGroup
+                    value={formData.palpitations}
+                    onChange={(value) => handleInputChange("palpitations", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="palpitations-no" />
+                      <Label htmlFor="palpitations-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="palpitations-yes" />
+                      <Label htmlFor="palpitations-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.palpitations === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="palpitationsFrequency">How often do you experience palpitations?</Label>
+                      <Select
+                        value={formData.palpitationsFrequency}
+                        onChange={(value) => handleInputChange("palpitationsFrequency", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="rarely">Rarely (less than once a month)</SelectItem>
+                          <SelectItem value="occasionally">Occasionally (few times a month)</SelectItem>
+                          <SelectItem value="frequently">Frequently (few times a week)</SelectItem>
+                          <SelectItem value="daily">Daily</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Do you experience unusual fatigue?</Label>
+                  <RadioGroup
+                    value={formData.fatigue}
+                    onChange={(value) => handleInputChange("fatigue", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="fatigue-no" />
+                      <Label htmlFor="fatigue-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="fatigue-yes" />
+                      <Label htmlFor="fatigue-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.fatigue === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="fatigueLevel">Level of fatigue</Label>
+                      <Select
+                        value={formData.fatigueLevel}
+                        onChange={(value) => handleInputChange("fatigueLevel", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mild">Mild - doesn't interfere with daily activities</SelectItem>
+                          <SelectItem value="moderate">Moderate - sometimes limits activities</SelectItem>
+                          <SelectItem value="severe">Severe - significantly limits daily activities</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Do you experience dizziness or lightheadedness?</Label>
+                  <RadioGroup
+                    value={formData.dizziness}
+                    onChange={(value) => handleInputChange("dizziness", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="dizziness-no" />
+                      <Label htmlFor="dizziness-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="dizziness-yes" />
+                      <Label htmlFor="dizziness-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Do you have swelling in your legs, ankles, or feet?</Label>
+                  <RadioGroup
+                    value={formData.swelling}
+                    onChange={(value) => handleInputChange("swelling", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="swelling-no" />
+                      <Label htmlFor="swelling-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="swelling-yes" />
+                      <Label htmlFor="swelling-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.swelling === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="swellingLocation">Location of swelling</Label>
+                      <Select
+                        value={formData.swellingLocation}
+                        onChange={(value) => handleInputChange("swellingLocation", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ankles">Ankles only</SelectItem>
+                          <SelectItem value="feet">Feet only</SelectItem>
+                          <SelectItem value="legs">Lower legs</SelectItem>
+                          <SelectItem value="all">Ankles, feet, and legs</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Cardiovascular Risk Factors */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Cardiovascular Risk Factors
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label className="text-base font-medium">Smoking status</Label>
+                  <RadioGroup
+                    value={formData.smoking}
+                    onChange={(value) => handleInputChange("smoking", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="never" id="smoking-never" />
+                      <Label htmlFor="smoking-never">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="former" id="smoking-former" />
+                      <Label htmlFor="smoking-former">Former smoker</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="current" id="smoking-current" />
+                      <Label htmlFor="smoking-current">Current smoker</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {(formData.smoking === "former" || formData.smoking === "current") && (
+                    <div className="mt-4">
+                      <Label htmlFor="smokingHistory">Smoking history (pack-years or duration)</Label>
+                      <Input
+                        id="smokingHistory"
+                        value={formData.smokingHistory}
+                        onChange={(value) => handleInputChange("smokingHistory", value)}
+                        placeholder="e.g., 10 pack-years or 5 years, 1 pack/day"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Alcohol consumption</Label>
+                  <RadioGroup
+                    value={formData.alcohol}
+                    onChange={(value) => handleInputChange("alcohol", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="none" id="alcohol-none" />
+                      <Label htmlFor="alcohol-none">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="light" id="alcohol-light" />
+                      <Label htmlFor="alcohol-light">Light (1-7 drinks/week)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="moderate" id="alcohol-moderate" />
+                      <Label htmlFor="alcohol-moderate">Moderate (8-14 drinks/week)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="heavy" id="alcohol-heavy" />
+                      <Label htmlFor="alcohol-heavy">Heavy (15+ drinks/week)</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.alcohol !== "none" && (
+                    <div className="mt-4">
+                      <Label htmlFor="alcoholFrequency">Drinking pattern</Label>
+                      <Input
+                        id="alcoholFrequency"
+                        value={formData.alcoholFrequency}
+                        onChange={(value) => handleInputChange("alcoholFrequency", value)}
+                        placeholder="e.g., 2-3 drinks on weekends"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Do you have diabetes?</Label>
+                  <RadioGroup
+                    value={formData.diabetes}
+                    onChange={(value) => handleInputChange("diabetes", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="diabetes-no" />
+                      <Label htmlFor="diabetes-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="prediabetes" id="diabetes-pre" />
+                      <Label htmlFor="diabetes-pre">Pre-diabetes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="diabetes-yes" />
+                      <Label htmlFor="diabetes-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.diabetes === "yes" && (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <Label htmlFor="diabetesType">Type of diabetes</Label>
+                        <Select
+                          value={formData.diabetesType}
+                          onChange={(value) => handleInputChange("diabetesType", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="type1">Type 1</SelectItem>
+                            <SelectItem value="type2">Type 2</SelectItem>
+                            <SelectItem value="gestational">Gestational</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="diabetesControl">How well controlled is your diabetes?</Label>
+                        <Select
+                          value={formData.diabetesControl}
+                          onChange={(value) => handleInputChange("diabetesControl", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select control level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="excellent">Excellent (HbA1c &lt; 6.5%)</SelectItem>
+                            <SelectItem value="good">Good (HbA1c 6.5-7.5%)</SelectItem>
+                            <SelectItem value="fair">Fair (HbA1c 7.5-8.5%)</SelectItem>
+                            <SelectItem value="poor">Poor (HbA1c &gt; 8.5%)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Do you have high blood pressure (hypertension)?</Label>
+                  <RadioGroup
+                    value={formData.hypertension}
+                    onChange={(value) => handleInputChange("hypertension", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="hypertension-no" />
+                      <Label htmlFor="hypertension-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="hypertension-yes" />
+                      <Label htmlFor="hypertension-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.hypertension === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="hypertensionDuration">How long have you had high blood pressure?</Label>
+                      <Input
+                        id="hypertensionDuration"
+                        value={formData.hypertensionDuration}
+                        onChange={(value) => handleInputChange("hypertensionDuration", value)}
+                        placeholder="e.g., 5 years"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Cholesterol levels</Label>
+                  <RadioGroup
+                    value={formData.cholesterol}
+                    onChange={(value) => handleInputChange("cholesterol", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="normal" id="cholesterol-normal" />
+                      <Label htmlFor="cholesterol-normal">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="borderline" id="cholesterol-borderline" />
+                      <Label htmlFor="cholesterol-borderline">Borderline high</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="high" id="cholesterol-high" />
+                      <Label htmlFor="cholesterol-high">High</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="unknown" id="cholesterol-unknown" />
+                      <Label htmlFor="cholesterol-unknown">Don't know</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {(formData.cholesterol === "borderline" || formData.cholesterol === "high") && (
+                    <div className="mt-4">
+                      <Label htmlFor="cholesterolLevel">Recent cholesterol levels (if known)</Label>
+                      <Input
+                        id="cholesterolLevel"
+                        value={formData.cholesterolLevel}
+                        onChange={(value) => handleInputChange("cholesterolLevel", value)}
+                        placeholder="e.g., Total: 250, LDL: 160, HDL: 35"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">
+                    Family history of heart disease (parents, siblings, children)
+                  </Label>
+                  <RadioGroup
+                    value={formData.familyHistory}
+                    onChange={(value) => handleInputChange("familyHistory", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="family-history-no" />
+                      <Label htmlFor="family-history-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="family-history-yes" />
+                      <Label htmlFor="family-history-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.familyHistory === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="familyHistoryDetails">Details of family history</Label>
+                      <Textarea
+                        id="familyHistoryDetails"
+                        value={formData.familyHistoryDetails}
+                        onChange={(value) => handleInputChange("familyHistoryDetails", value)}
+                        placeholder="e.g., Father had heart attack at age 55, Mother has high blood pressure"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lifestyle Assessment */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Dumbbell className="h-5 w-5" />
+                  Lifestyle Assessment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label className="text-base font-medium">Physical activity level</Label>
+                  <RadioGroup
+                    value={formData.physicalActivity}
+                    onChange={(value) => handleInputChange("physicalActivity", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="sedentary" id="activity-sedentary" />
+                      <Label htmlFor="activity-sedentary">Sedentary (little to no exercise)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="light" id="activity-light" />
+                      <Label htmlFor="activity-light">Light activity (1-2 days/week)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="moderate" id="activity-moderate" />
+                      <Label htmlFor="activity-moderate">Moderate activity (3-4 days/week)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="active" id="activity-active" />
+                      <Label htmlFor="activity-active">Very active (5+ days/week)</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.physicalActivity !== "sedentary" && (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <Label htmlFor="exerciseFrequency">Exercise frequency and duration</Label>
+                        <Input
+                          id="exerciseFrequency"
+                          value={formData.exerciseFrequency}
+                          onChange={(value) => handleInputChange("exerciseFrequency", value)}
+                          placeholder="e.g., 30 minutes, 3 times per week"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="exerciseType">Types of exercise</Label>
+                        <Input
+                          id="exerciseType"
+                          value={formData.exerciseType}
+                          onChange={(value) => handleInputChange("exerciseType", value)}
+                          placeholder="e.g., walking, swimming, cycling, weight training"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Diet quality</Label>
+                  <RadioGroup
+                    value={formData.diet}
+                    onChange={(value) => handleInputChange("diet", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="excellent" id="diet-excellent" />
+                      <Label htmlFor="diet-excellent">Excellent (Mediterranean/DASH style)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="good" id="diet-good" />
+                      <Label htmlFor="diet-good">Good (mostly healthy foods)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="fair" id="diet-fair" />
+                      <Label htmlFor="diet-fair">Fair (mixed healthy and unhealthy)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="poor" id="diet-poor" />
+                      <Label htmlFor="diet-poor">Poor (mostly processed/fast foods)</Label>
+                    </div>
+                  </RadioGroup>
+
+                  <div className="mt-4">
+                    <Label htmlFor="dietType">Describe your typical diet</Label>
+                    <Textarea
+                      id="dietType"
+                      value={formData.dietType}
+                      onChange={(value) => handleInputChange("dietType", value)}
+                      placeholder="e.g., vegetarian, low-sodium, high-fiber, typical Indian diet"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Stress level</Label>
+                  <RadioGroup
+                    value={formData.stress}
+                    onChange={(value) => handleInputChange("stress", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="low" id="stress-low" />
+                      <Label htmlFor="stress-low">Low</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="moderate" id="stress-moderate" />
+                      <Label htmlFor="stress-moderate">Moderate</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="high" id="stress-high" />
+                      <Label htmlFor="stress-high">High</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="very-high" id="stress-very-high" />
+                      <Label htmlFor="stress-very-high">Very High</Label>
+                    </div>
+                  </RadioGroup>
+
+                  <div className="mt-4">
+                    <Label htmlFor="stressLevel">Describe your main sources of stress</Label>
+                    <Textarea
+                      id="stressLevel"
+                      value={formData.stressLevel}
+                      onChange={(value) => handleInputChange("stressLevel", value)}
+                      placeholder="e.g., work pressure, financial concerns, family issues"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Sleep quality</Label>
+                  <RadioGroup
+                    value={formData.sleep}
+                    onChange={(value) => handleInputChange("sleep", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="excellent" id="sleep-excellent" />
+                      <Label htmlFor="sleep-excellent">Excellent (7-9 hours, restful)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="good" id="sleep-good" />
+                      <Label htmlFor="sleep-good">Good (6-8 hours, mostly restful)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="fair" id="sleep-fair" />
+                      <Label htmlFor="sleep-fair">Fair (5-7 hours, sometimes restless)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="poor" id="sleep-poor" />
+                      <Label htmlFor="sleep-poor">Poor (&lt;6 hours or frequently restless)</Label>
+                    </div>
+                  </RadioGroup>
+
+                  <div className="mt-4">
+                    <Label htmlFor="sleepHours">Average hours of sleep per night</Label>
+                    <Input
+                      id="sleepHours"
+                      value={formData.sleepHours}
+                      onChange={(value) => handleInputChange("sleepHours", value)}
+                      placeholder="e.g., 7 hours"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Medical History */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Medical History
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label className="text-base font-medium">Have you ever had a heart attack?</Label>
+                  <RadioGroup
+                    value={formData.previousHeartAttack}
+                    onChange={(value) => handleInputChange("previousHeartAttack", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="heart-attack-no" />
+                      <Label htmlFor="heart-attack-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="heart-attack-yes" />
+                      <Label htmlFor="heart-attack-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.previousHeartAttack === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="heartAttackDate">When did you have the heart attack?</Label>
+                      <Input
+                        id="heartAttackDate"
+                        value={formData.heartAttackDate}
+                        onChange={(value) => handleInputChange("heartAttackDate", value)}
+                        placeholder="e.g., January 2020 or 3 years ago"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Have you had any heart surgery or cardiac procedures?</Label>
+                  <RadioGroup
+                    value={formData.previousSurgery}
+                    onChange={(value) => handleInputChange("previousSurgery", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="surgery-no" />
+                      <Label htmlFor="surgery-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="surgery-yes" />
+                      <Label htmlFor="surgery-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.previousSurgery === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="surgeryDetails">Details of surgery/procedures</Label>
+                      <Textarea
+                        id="surgeryDetails"
+                        value={formData.surgeryDetails}
+                        onChange={(e) => handleInputChange("surgeryDetails", e.target.value)}
+                        placeholder="e.g., Angioplasty with stent in 2019, Bypass surgery in 2018"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Are you currently taking any medications?</Label>
+                  <RadioGroup
+                    value={formData.currentMedications}
+                    onChange={(value) => handleInputChange("currentMedications", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="medications-no" />
+                      <Label htmlFor="medications-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="medications-yes" />
+                      <Label htmlFor="medications-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.currentMedications === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="medicationsList">List all current medications with dosages</Label>
+                      <Textarea
+                        id="medicationsList"
+                        value={formData.medicationsList}
+                        onChange={(e) => handleInputChange("medicationsList", e.target.value)}
+                        placeholder="e.g., Lisinopril 10mg daily, Metformin 500mg twice daily, Aspirin 81mg daily"
+                        rows={4}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Do you have any drug allergies?</Label>
+                  <RadioGroup
+                    value={formData.allergies}
+                    onChange={(value) => handleInputChange("allergies", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="allergies-no" />
+                      <Label htmlFor="allergies-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="allergies-yes" />
+                      <Label htmlFor="allergies-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.allergies === "yes" && (
+                    <div className="mt-4">
+                      <Label htmlFor="allergiesList">List all drug allergies and reactions</Label>
+                      <Textarea
+                        id="allergiesList"
+                        value={formData.allergiesList}
+                        onChange={(e) => handleInputChange("allergiesList", e.target.value)}
+                        placeholder="e.g., Penicillin - rash, ACE inhibitors - cough"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Tests */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TestTube className="h-5 w-5" />
+                  Recent Medical Tests
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label className="text-base font-medium">Have you had a recent ECG/EKG?</Label>
+                  <RadioGroup
+                    value={formData.recentECG}
+                    onChange={(value) => handleInputChange("recentECG", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="ecg-no" />
+                      <Label htmlFor="ecg-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="ecg-yes" />
+                      <Label htmlFor="ecg-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.recentECG === "yes" && (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <Label htmlFor="ecgDate">When was the ECG done?</Label>
+                        <Input
+                          id="ecgDate"
+                          value={formData.ecgDate}
+                          onChange={(e) => handleInputChange("ecgDate", e.target.value)}
+                          placeholder="e.g., Last month, 3 months ago"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="ecgResults">ECG results (if known)</Label>
+                        <Textarea
+                          id="ecgResults"
+                          value={formData.ecgResults}
+                          onChange={(e) => handleInputChange("ecgResults", e.target.value)}
+                          placeholder="e.g., Normal, Left ventricular hypertrophy, Atrial fibrillation"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Have you had a recent echocardiogram?</Label>
+                  <RadioGroup
+                    value={formData.recentEcho}
+                    onChange={(value) => handleInputChange("recentEcho", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="echo-no" />
+                      <Label htmlFor="echo-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="echo-yes" />
+                      <Label htmlFor="echo-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.recentEcho === "yes" && (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <Label htmlFor="echoDate">When was the echocardiogram done?</Label>
+                        <Input
+                          id="echoDate"
+                          value={formData.echoDate}
+                          onChange={(e) => handleInputChange("echoDate", e.target.value)}
+                          placeholder="e.g., 6 months ago, Last year"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="echoResults">Echocardiogram results (if known)</Label>
+                        <Textarea
+                          id="echoResults"
+                          value={formData.echoResults}
+                          onChange={(e) => handleInputChange("echoResults", e.target.value)}
+                          placeholder="e.g., Normal function, EF 55%, Mild mitral regurgitation"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Have you had recent blood tests?</Label>
+                  <RadioGroup
+                    value={formData.bloodTests}
+                    onChange={(value) => handleInputChange("bloodTests", value)}
+                    className="mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="blood-no" />
+                      <Label htmlFor="blood-no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="blood-yes" />
+                      <Label htmlFor="blood-yes">Yes</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {formData.bloodTests === "yes" && (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <Label htmlFor="bloodTestDate">When were the blood tests done?</Label>
+                        <Input
+                          id="bloodTestDate"
+                          value={formData.bloodTestDate}
+                          onChange={(e) => handleInputChange("bloodTestDate", e.target.value)}
+                          placeholder="e.g., 2 months ago, Recently"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="bloodTestResults">Blood test results (if known)</Label>
+                        <Textarea
+                          id="bloodTestResults"
+                          value={formData.bloodTestResults}
+                          onChange={(e) => handleInputChange("bloodTestResults", e.target.value)}
+                          placeholder="e.g., Total cholesterol 220, LDL 140, HDL 35, HbA1c 7.2%, Creatinine 1.1"
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Submit Button */}
+            <Card>
+              <CardContent className="pt-6">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-lg"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Analyzing Your Heart Health...
+                    </>
+                  ) : (
+                    <>
+                      <Heart className="mr-2 h-5 w-5" />
+                      Complete Heart Health Assessment
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </form>
+
+          <PoweredByFooter />
         </div>
       </div>
-
-      <PoweredByFooter />
     </div>
   )
 }
