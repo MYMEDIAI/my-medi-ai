@@ -10,25 +10,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Textarea } from "@/components/ui/textarea"
 import MyMedLogo from "@/components/mymed-logo"
-import PoweredByFooter from "@/components/powered-by-footer"
-import NavigationButtons from "@/components/navigation-buttons"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Baby,
   Apple,
   AlertTriangle,
   Brain,
-  Printer,
   Loader2,
-  Download,
   MapPin,
   Pill,
   Utensils,
-  Scan,
   Building2,
   TestTube,
   Syringe,
+  Calendar,
+  Download,
+  Printer,
 } from "lucide-react"
 import LocationService from "@/lib/location-service"
 
@@ -131,6 +129,10 @@ interface PregnancyFormData {
     country: string
     coordinates: { lat: number; lng: number }
   }
+
+  // Selected facilities for printing
+  selectedHospital?: NearbyFacility
+  selectedLabCenter?: NearbyFacility
 }
 
 interface ScanTest {
@@ -143,6 +145,41 @@ interface ScanTest {
   results: string
   notes: string
   nextDue: string
+}
+
+interface PregnancyScanSchedule {
+  id: string
+  scanName: string
+  recommendedWeek: number
+  scheduledDate: string
+  actualDate?: string
+  facility?: string
+  doctor?: string
+  results?: string
+  status: "upcoming" | "completed" | "overdue"
+  description: string
+  importance: "essential" | "recommended" | "optional"
+  imcGuideline: string
+  whoGuideline: string
+  cost: string
+}
+
+interface VaccineScheduleWithDates {
+  id: string
+  vaccine: string
+  recommendedWeek: number
+  scheduledDate: string
+  actualDate?: string
+  facility?: string
+  doctor?: string
+  batchNumber?: string
+  status: "upcoming" | "completed" | "overdue"
+  description: string
+  importance: string
+  sideEffects: string
+  contraindications: string
+  imcGuideline: string
+  whoGuideline: string
 }
 
 interface LabTest {
@@ -178,9 +215,13 @@ interface AIAnalysis {
   labCenters: NearbyFacility[]
   vaccines: VaccineSchedule[]
   supplements: SupplementPlan[]
+  scanSchedule: PregnancyScanSchedule[]
+  vaccineScheduleWithDates: VaccineScheduleWithDates[]
+  clinicalNotes: string
 }
 
 interface NearbyFacility {
+  id: string
   name: string
   address: string
   distance: string
@@ -188,6 +229,7 @@ interface NearbyFacility {
   phone: string
   rating: string
   emergency: string
+  selected?: boolean
 }
 
 interface VaccineSchedule {
@@ -269,22 +311,22 @@ export default function PregnancyPage() {
   const [formData, setFormData] = useState<PregnancyFormData>({
     // Personal Information
     motherName: "",
-    motherAge: 25,
-    motherHeight: 160,
-    motherWeight: 65,
-    prePregnancyWeight: 60,
+    motherAge: 0,
+    motherHeight: 0,
+    motherWeight: 0,
+    prePregnancyWeight: 0,
     motherBloodType: "",
     motherRhFactor: "",
     motherOccupation: "",
     motherEducation: "",
     motherIncome: "",
     fatherName: "",
-    fatherAge: 28,
+    fatherAge: 0,
     fatherBloodType: "",
     fatherRhFactor: "",
     fatherOccupation: "",
     fatherEducation: "",
-    maritalStatus: "married",
+    maritalStatus: "",
     marriageDuration: "",
 
     // Pregnancy Details
@@ -292,9 +334,9 @@ export default function PregnancyPage() {
     expectedDeliveryDate: "",
     currentWeek: 0,
     currentTrimester: 1,
-    pregnancyType: "singleton",
-    plannedPregnancy: true,
-    conceptionMethod: "natural",
+    pregnancyType: "",
+    plannedPregnancy: false,
+    conceptionMethod: "",
     previousMiscarriages: 0,
     previousAbortions: 0,
 
@@ -314,18 +356,18 @@ export default function PregnancyPage() {
     vaccinationStatus: [],
 
     // Current Health & Vitals
-    bloodPressureSystolic: 120,
-    bloodPressureDiastolic: 80,
-    heartRate: 72,
-    temperature: 98.6,
-    weight: 65,
-    bmi: 25.4,
+    bloodPressureSystolic: 0,
+    bloodPressureDiastolic: 0,
+    heartRate: 0,
+    temperature: 0,
+    weight: 0,
+    bmi: 0,
     fundalHeight: 0,
     fetalHeartRate: 0,
-    respiratoryRate: 16,
-    oxygenSaturation: 98,
-    bloodSugar: 90,
-    hemoglobin: 12.0,
+    respiratoryRate: 0,
+    oxygenSaturation: 0,
+    bloodSugar: 0,
+    hemoglobin: 0,
     currentSymptoms: [],
     vitalsTiming: "",
     vitalsNotes: "",
@@ -334,35 +376,40 @@ export default function PregnancyPage() {
     scansAndTests: [],
 
     // Lifestyle & Diet
-    smokingStatus: "never",
-    alcoholConsumption: "none",
-    tobaccoUse: "never",
-    exerciseFrequency: "moderate",
-    dietType: "balanced",
-    stressLevel: 3,
-    sleepHours: 8,
-    workEnvironment: "office",
+    smokingStatus: "",
+    alcoholConsumption: "",
+    tobaccoUse: "",
+    exerciseFrequency: "",
+    dietType: "",
+    stressLevel: 0,
+    sleepHours: 0,
+    workEnvironment: "",
     exposureToChemicals: false,
-    domesticViolence: "no",
+    domesticViolence: "",
 
     // Diet Customization
     dietaryRestrictions: [],
     foodAllergies: [],
     culturalDietPreferences: "",
     mealPreferences: [],
-    cookingTime: "30-45 minutes",
-    budgetRange: "moderate",
+    cookingTime: "",
+    budgetRange: "",
     favoriteIngredients: [],
     dislikedFoods: [],
-    waterIntake: 8,
+    waterIntake: 0,
     supplementsUsed: [],
 
     // Location
     location: undefined,
   })
 
+  const [availableHospitals, setAvailableHospitals] = useState<NearbyFacility[]>([])
+  const [availableLabCenters, setAvailableLabCenters] = useState<NearbyFacility[]>([])
+
   const [suggestedTests, setSuggestedTests] = useState<LabTest[]>([])
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null)
+  const [pregnancyScanSchedule, setPregnancyScanSchedule] = useState<PregnancyScanSchedule[]>([])
+  const [vaccineScheduleWithDates, setVaccineScheduleWithDates] = useState<VaccineScheduleWithDates[]>([])
 
   // Auto-detect location on component mount
   useEffect(() => {
@@ -403,7 +450,7 @@ export default function PregnancyPage() {
     detectLocationAutomatically()
   }, [])
 
-  // Calculate pregnancy details
+  // Calculate pregnancy details and generate schedules
   useEffect(() => {
     if (formData.lastPeriodDate) {
       const lastPeriod = new Date(formData.lastPeriodDate)
@@ -431,8 +478,184 @@ export default function PregnancyPage() {
 
       // Generate suggested tests based on current week
       generateSuggestedTests(currentWeek, currentTrimester)
+
+      // Generate pregnancy scan schedule
+      generatePregnancyScanSchedule(lastPeriod, currentWeek)
+
+      // Generate vaccine schedule with dates
+      generateVaccineScheduleWithDates(lastPeriod, currentWeek)
     }
   }, [formData.lastPeriodDate, formData.motherHeight, formData.motherWeight])
+
+  const generatePregnancyScanSchedule = (lmpDate: Date, currentWeek: number) => {
+    const scanSchedule: PregnancyScanSchedule[] = [
+      {
+        id: "1",
+        scanName: "Dating Scan (First Trimester)",
+        recommendedWeek: 8,
+        scheduledDate: getDateFromWeek(lmpDate, 8),
+        status: currentWeek > 8 ? "overdue" : "upcoming",
+        description: "Confirms pregnancy, estimates due date, checks for multiple pregnancies",
+        importance: "essential",
+        imcGuideline: "IMC recommends first ultrasound at 6-10 weeks",
+        whoGuideline: "WHO recommends early ultrasound for dating and viability",
+        cost: "₹800-1500",
+      },
+      {
+        id: "2",
+        scanName: "NT Scan (Nuchal Translucency)",
+        recommendedWeek: 12,
+        scheduledDate: getDateFromWeek(lmpDate, 12),
+        status: currentWeek > 12 ? "overdue" : "upcoming",
+        description: "Screens for chromosomal abnormalities like Down syndrome",
+        importance: "recommended",
+        imcGuideline: "IMC recommends NT scan at 11-14 weeks for high-risk pregnancies",
+        whoGuideline: "WHO suggests genetic screening based on maternal age and risk factors",
+        cost: "₹2000-3500",
+      },
+      {
+        id: "3",
+        scanName: "Anomaly Scan (Level 2)",
+        recommendedWeek: 20,
+        scheduledDate: getDateFromWeek(lmpDate, 20),
+        status: currentWeek > 20 ? "overdue" : "upcoming",
+        description: "Detailed scan to check baby's organs and development",
+        importance: "essential",
+        imcGuideline: "IMC mandates anomaly scan at 18-22 weeks",
+        whoGuideline: "WHO recommends mid-pregnancy ultrasound for fetal anomalies",
+        cost: "₹1500-2500",
+      },
+      {
+        id: "4",
+        scanName: "Growth Scan (Third Trimester)",
+        recommendedWeek: 28,
+        scheduledDate: getDateFromWeek(lmpDate, 28),
+        status: currentWeek > 28 ? "overdue" : "upcoming",
+        description: "Monitors baby's growth, amniotic fluid, and placental position",
+        importance: "recommended",
+        imcGuideline: "IMC recommends growth monitoring in third trimester",
+        whoGuideline: "WHO suggests third trimester ultrasound for growth assessment",
+        cost: "₹1000-1800",
+      },
+      {
+        id: "5",
+        scanName: "Doppler Study",
+        recommendedWeek: 32,
+        scheduledDate: getDateFromWeek(lmpDate, 32),
+        status: currentWeek > 32 ? "overdue" : "upcoming",
+        description: "Checks blood flow to baby through umbilical cord and placenta",
+        importance: "recommended",
+        imcGuideline: "IMC recommends Doppler for high-risk pregnancies",
+        whoGuideline: "WHO suggests Doppler studies for suspected growth restriction",
+        cost: "₹1200-2000",
+      },
+      {
+        id: "6",
+        scanName: "Pre-delivery Scan",
+        recommendedWeek: 36,
+        scheduledDate: getDateFromWeek(lmpDate, 36),
+        status: currentWeek > 36 ? "overdue" : "upcoming",
+        description: "Final assessment before delivery - baby position, weight estimation",
+        importance: "essential",
+        imcGuideline: "IMC recommends pre-delivery assessment at 36-38 weeks",
+        whoGuideline: "WHO recommends late pregnancy ultrasound for delivery planning",
+        cost: "₹1000-1500",
+      },
+    ]
+
+    setPregnancyScanSchedule(scanSchedule)
+  }
+
+  const generateVaccineScheduleWithDates = (lmpDate: Date, currentWeek: number) => {
+    const vaccineSchedule: VaccineScheduleWithDates[] = [
+      {
+        id: "1",
+        vaccine: "Tetanus Toxoid (TT1)",
+        recommendedWeek: 16,
+        scheduledDate: getDateFromWeek(lmpDate, 16),
+        status: currentWeek > 16 ? "overdue" : "upcoming",
+        description: "First dose of tetanus toxoid to protect mother and baby from tetanus",
+        importance: "Essential - IMC mandated",
+        sideEffects: "Mild pain at injection site, low-grade fever for 1-2 days",
+        contraindications: "Severe illness, previous severe reaction to vaccine",
+        imcGuideline: "IMC mandates TT1 at 16-20 weeks of pregnancy",
+        whoGuideline: "WHO recommends tetanus vaccination for all pregnant women",
+      },
+      {
+        id: "2",
+        vaccine: "Tetanus Toxoid (TT2)",
+        recommendedWeek: 20,
+        scheduledDate: getDateFromWeek(lmpDate, 20),
+        status: currentWeek > 20 ? "overdue" : "upcoming",
+        description: "Second dose of tetanus toxoid (4 weeks after TT1)",
+        importance: "Essential - IMC mandated",
+        sideEffects: "Mild pain at injection site, low-grade fever for 1-2 days",
+        contraindications: "Severe illness, previous severe reaction to vaccine",
+        imcGuideline: "IMC mandates TT2 at 4 weeks after TT1",
+        whoGuideline: "WHO recommends second dose 4 weeks after first dose",
+      },
+      {
+        id: "3",
+        vaccine: "Influenza (Flu) Vaccine",
+        recommendedWeek: 14,
+        scheduledDate: getDateFromWeek(lmpDate, 14),
+        status: currentWeek > 14 ? "overdue" : "upcoming",
+        description: "Annual flu vaccine to protect against seasonal influenza",
+        importance: "Highly recommended - WHO endorsed",
+        sideEffects: "Mild soreness at injection site, low-grade fever for 1-2 days",
+        contraindications: "Severe egg allergy, previous severe reaction to vaccine",
+        imcGuideline: "IMC recommends flu vaccination during pregnancy",
+        whoGuideline: "WHO strongly recommends influenza vaccination for pregnant women",
+      },
+      {
+        id: "4",
+        vaccine: "Tdap (Tetanus, Diphtheria, Pertussis)",
+        recommendedWeek: 28,
+        scheduledDate: getDateFromWeek(lmpDate, 28),
+        status: currentWeek > 28 ? "overdue" : "upcoming",
+        description: "Protects baby from whooping cough in first months of life",
+        importance: "Recommended - IMC guidelines",
+        sideEffects: "Pain at injection site, mild fever, fatigue for 1-2 days",
+        contraindications: "Severe illness, previous severe reaction to vaccine",
+        imcGuideline: "IMC recommends Tdap at 27-36 weeks of pregnancy",
+        whoGuideline: "WHO recommends pertussis vaccination during pregnancy",
+      },
+      {
+        id: "5",
+        vaccine: "COVID-19 Vaccine",
+        recommendedWeek: 12,
+        scheduledDate: getDateFromWeek(lmpDate, 12),
+        status: currentWeek > 12 ? "overdue" : "upcoming",
+        description: "COVID-19 vaccination as per current health ministry guidelines",
+        importance: "Recommended - Current health ministry guidelines",
+        sideEffects: "Pain at injection site, fatigue, mild fever, headache",
+        contraindications: "Severe allergic reaction to vaccine components",
+        imcGuideline: "IMC follows current MoHFW guidelines for COVID-19 vaccination",
+        whoGuideline: "WHO recommends COVID-19 vaccination for pregnant women",
+      },
+      {
+        id: "6",
+        vaccine: "Hepatitis B (if not immune)",
+        recommendedWeek: 18,
+        scheduledDate: getDateFromWeek(lmpDate, 18),
+        status: currentWeek > 18 ? "overdue" : "upcoming",
+        description: "Hepatitis B vaccination if not previously vaccinated or immune",
+        importance: "Recommended for high-risk individuals",
+        sideEffects: "Mild pain at injection site, fatigue",
+        contraindications: "Severe illness, yeast allergy",
+        imcGuideline: "IMC recommends Hepatitis B vaccination for high-risk pregnant women",
+        whoGuideline: "WHO recommends Hepatitis B vaccination in endemic areas",
+      },
+    ]
+
+    setVaccineScheduleWithDates(vaccineSchedule)
+  }
+
+  const getDateFromWeek = (lmpDate: Date, week: number): string => {
+    const targetDate = new Date(lmpDate)
+    targetDate.setDate(targetDate.getDate() + week * 7)
+    return targetDate.toISOString().split("T")[0]
+  }
 
   const generateSuggestedTests = (week: number, trimester: number) => {
     const allTests: LabTest[] = [
@@ -478,90 +701,6 @@ export default function PregnancyPage() {
         imcGuideline: "IMC recommends glucose screening at 24-28 weeks for all women",
         whoGuideline: "WHO recommends glucose testing for women with risk factors",
       },
-      {
-        id: "4",
-        name: "Thyroid Function (TSH, T3, T4)",
-        category: "Endocrinology",
-        recommendedWeek: 10,
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        description: "Checks thyroid hormone levels",
-        preparation: "No special preparation needed",
-        normalRange: "TSH: 0.4-4.0 mIU/L",
-        importance: "recommended",
-        status: "pending",
-        imcGuideline: "IMC recommends thyroid screening for high-risk women",
-        whoGuideline: "WHO suggests thyroid testing based on clinical indication",
-      },
-      {
-        id: "5",
-        name: "VDRL/RPR (Syphilis Screening)",
-        category: "Serology",
-        recommendedWeek: 12,
-        dueDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        description: "Screens for syphilis infection",
-        preparation: "No special preparation needed",
-        normalRange: "Non-reactive",
-        importance: "essential",
-        status: "pending",
-        imcGuideline: "IMC mandates VDRL testing at first visit and 32 weeks",
-        whoGuideline: "WHO recommends syphilis screening for all pregnant women",
-      },
-      {
-        id: "6",
-        name: "HIV Testing",
-        category: "Serology",
-        recommendedWeek: 12,
-        dueDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        description: "Screens for HIV infection",
-        preparation: "Pre-test counseling required",
-        normalRange: "Non-reactive",
-        importance: "essential",
-        status: "pending",
-        imcGuideline: "IMC recommends HIV testing with counseling for all pregnant women",
-        whoGuideline: "WHO recommends HIV testing as part of routine antenatal care",
-      },
-      {
-        id: "7",
-        name: "Hepatitis B Surface Antigen",
-        category: "Serology",
-        recommendedWeek: 12,
-        dueDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        description: "Screens for Hepatitis B infection",
-        preparation: "No special preparation needed",
-        normalRange: "Non-reactive",
-        importance: "essential",
-        status: "pending",
-        imcGuideline: "IMC recommends HBsAg testing for all pregnant women",
-        whoGuideline: "WHO recommends Hepatitis B screening in endemic areas",
-      },
-      {
-        id: "8",
-        name: "Glucose Tolerance Test (GTT)",
-        category: "Biochemistry",
-        recommendedWeek: 24,
-        dueDate: new Date(Date.now() + 112 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        description: "Screens for gestational diabetes",
-        preparation: "Fast 8-12 hours, drink glucose solution",
-        normalRange: "1-hour: <140 mg/dL, 3-hour: varies",
-        importance: "essential",
-        status: "pending",
-        imcGuideline: "IMC recommends 75g OGTT at 24-28 weeks for all women",
-        whoGuideline: "WHO recommends glucose testing for gestational diabetes",
-      },
-      {
-        id: "9",
-        name: "Group B Strep Culture",
-        category: "Microbiology",
-        recommendedWeek: 36,
-        dueDate: new Date(Date.now() + 196 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        description: "Screens for Group B Streptococcus",
-        preparation: "No douching or antibiotics 24 hours prior",
-        normalRange: "Negative (no GBS growth)",
-        importance: "essential",
-        status: "pending",
-        imcGuideline: "IMC recommends GBS screening at 35-37 weeks",
-        whoGuideline: "WHO suggests GBS screening based on local guidelines",
-      },
     ]
 
     // Filter tests based on current week and show upcoming tests
@@ -573,87 +712,140 @@ export default function PregnancyPage() {
     setIsGeneratingAnalysis(true)
 
     try {
-      const analysisPrompt = `
-You are Dr. MediAI, a specialist following Indian Medical Council (IMC) and WHO guidelines for maternal care. Analyze this pregnancy case comprehensively.
+      const comprehensiveAssessmentPrompt = `
+You are Dr. MediAI, a world-renowned maternal-fetal medicine specialist with 30+ years of experience, following Indian Medical Council (IMC) and WHO guidelines. Provide a comprehensive, evidence-based pregnancy assessment.
 
-PATIENT PROFILE:
-================
-Mother: ${formData.motherName}, Age: ${formData.motherAge}
-Current Week: ${formData.currentWeek} weeks (Trimester ${formData.currentTrimester})
-BMI: ${formData.bmi} | Weight: ${formData.motherWeight}kg | Height: ${formData.motherHeight}cm
+PATIENT PROFILE ANALYSIS:
+==========================
+Mother: ${formData.motherName}, Age: ${formData.motherAge} years
+Current Pregnancy: Week ${formData.currentWeek} (Trimester ${formData.currentTrimester})
+Physical: Height ${formData.motherHeight}cm, Weight ${formData.motherWeight}kg, BMI ${formData.bmi}
 Blood Type: ${formData.motherBloodType}${formData.motherRhFactor}
-Education: ${formData.motherEducation} | Occupation: ${formData.motherOccupation}
-Income: ${formData.motherIncome} | Marriage Duration: ${formData.marriageDuration}
+Socioeconomic: Education: ${formData.motherEducation}, Occupation: ${formData.motherOccupation}, Income: ${formData.motherIncome}
 Location: ${formData.location?.city}, ${formData.location?.state}, ${formData.location?.country}
 
 PREGNANCY DETAILS:
 ==================
-Conception: ${formData.conceptionMethod} | Type: ${formData.pregnancyType}
-Previous Pregnancies: ${formData.previousPregnancies}
-Previous Miscarriages: ${formData.previousMiscarriages}
-Previous Abortions: ${formData.previousAbortions}
+LMP: ${formData.lastPeriodDate}, EDD: ${formData.expectedDeliveryDate}
+Conception: ${formData.conceptionMethod}, Type: ${formData.pregnancyType}
+Planned: ${formData.plannedPregnancy ? "Yes" : "No"}
+Obstetric History: G${formData.previousPregnancies + 1}P${formData.previousPregnancies}A${formData.previousAbortions}L${formData.previousPregnancies - formData.previousMiscarriages}
 Previous Complications: ${formData.previousComplications.join(", ") || "None"}
+Weight Gain: ${(formData.weight - formData.prePregnancyWeight).toFixed(1)}kg
 
-MEDICAL HISTORY:
-===============
+COMPREHENSIVE MEDICAL HISTORY:
+===============================
 Chronic Conditions: ${formData.chronicConditions.join(", ") || "None"}
+Current Medications: ${formData.currentMedications.join(", ") || "None"}
 Allergies: ${formData.allergies.join(", ") || "None"}
-Family History: Diabetes: ${formData.familyDiabetes}, HTN: ${formData.familyHypertension}, Heart Disease: ${formData.familyHeartDisease}, Thalassemia: ${formData.familyThalassemia}
+Previous Surgeries: ${formData.previousSurgeries.join(", ") || "None"}
 Blood Transfusion History: ${formData.bloodTransfusionHistory ? "Yes" : "No"}
 Vaccination Status: ${formData.vaccinationStatus.join(", ") || "Not specified"}
 
-CURRENT VITALS (${formData.vitalsTiming}):
-==========================================
-BP: ${formData.bloodPressureSystolic}/${formData.bloodPressureDiastolic} mmHg
-HR: ${formData.heartRate} bpm | RR: ${formData.respiratoryRate}/min
-Temp: ${formData.temperature}°F | SpO2: ${formData.oxygenSaturation}%
-Weight Gain: ${formData.weight - formData.prePregnancyWeight}kg
-Fundal Height: ${formData.fundalHeight}cm | Fetal HR: ${formData.fetalHeartRate}bpm
-Blood Sugar: ${formData.bloodSugar}mg/dL | Hemoglobin: ${formData.hemoglobin}g/dL
-Current Symptoms: ${formData.currentSymptoms.join(", ") || "None"}
+FAMILY MEDICAL HISTORY:
+========================
+Diabetes: ${formData.familyDiabetes ? "Positive" : "Negative"}
+Hypertension: ${formData.familyHypertension ? "Positive" : "Negative"}
+Heart Disease: ${formData.familyHeartDisease ? "Positive" : "Negative"}
+Thalassemia: ${formData.familyThalassemia ? "Positive" : "Negative"}
+Mental Health: ${formData.familyMentalHealth ? "Positive" : "Negative"}
 
-LIFESTYLE & SOCIAL FACTORS:
-===========================
-Smoking: ${formData.smokingStatus} | Tobacco: ${formData.tobaccoUse}
+CURRENT VITALS & CLINICAL STATUS (${formData.vitalsTiming || "Recent"}):
+========================================================================
+Blood Pressure: ${formData.bloodPressureSystolic}/${formData.bloodPressureDiastolic} mmHg
+Heart Rate: ${formData.heartRate} bpm, Respiratory Rate: ${formData.respiratoryRate}/min
+Temperature: ${formData.temperature}°F, SpO2: ${formData.oxygenSaturation}%
+Blood Sugar: ${formData.bloodSugar} mg/dL, Hemoglobin: ${formData.hemoglobin} g/dL
+Fundal Height: ${formData.fundalHeight}cm, Fetal Heart Rate: ${formData.fetalHeartRate} bpm
+Current Symptoms: ${formData.currentSymptoms.join(", ") || "None"}
+Additional Notes: ${formData.vitalsNotes || "None"}
+
+LIFESTYLE & SOCIAL ASSESSMENT:
+===============================
+Smoking: ${formData.smokingStatus}, Tobacco: ${formData.tobaccoUse}
 Alcohol: ${formData.alcoholConsumption}
-Exercise: ${formData.exerciseFrequency}
+Exercise: ${formData.exerciseFrequency}, Sleep: ${formData.sleepHours}hrs
+Stress Level: ${formData.stressLevel}/10
 Work Environment: ${formData.workEnvironment}
 Chemical Exposure: ${formData.exposureToChemicals ? "Yes" : "No"}
 Domestic Violence: ${formData.domesticViolence}
-Stress Level: ${formData.stressLevel}/10 | Sleep: ${formData.sleepHours}hrs
 
-DIET PREFERENCES:
-================
+COMPREHENSIVE DIET & NUTRITION PROFILE:
+========================================
 Diet Type: ${formData.dietType}
 Cultural Preferences: ${formData.culturalDietPreferences}
 Dietary Restrictions: ${formData.dietaryRestrictions.join(", ") || "None"}
 Food Allergies: ${formData.foodAllergies.join(", ") || "None"}
+Meal Preferences: ${formData.mealPreferences.join(", ") || "Standard"}
+Favorite Ingredients: ${formData.favoriteIngredients.join(", ") || "Standard"}
+Foods to Avoid: ${formData.dislikedFoods.join(", ") || "None"}
 Water Intake: ${formData.waterIntake} glasses/day
-Supplements: ${formData.supplementsUsed.join(", ") || "None"}
-Cooking Time: ${formData.cookingTime} | Budget: ${formData.budgetRange}
+Current Supplements: ${formData.supplementsUsed.join(", ") || "None"}
+Cooking Time Available: ${formData.cookingTime}
+Food Budget: ${formData.budgetRange}
 
-Provide analysis following IMC and WHO guidelines in this format:
-**RISK ASSESSMENT:** [LOW/MODERATE/HIGH with IMC/WHO criteria explanation]
-**IMC COMPLIANCE:** [4 key IMC guideline adherences]
-**WHO COMPLIANCE:** [4 key WHO guideline adherences]
-**RECOMMENDATIONS:** [4 evidence-based recommendations]
-**WARNINGS:** [3 critical warnings based on guidelines]
-**NEXT STEPS:** [4 immediate actions per IMC/WHO protocols]
-**DIET PLAN:** [Indian diet plan following IMC nutrition guidelines]
-**EXERCISE:** [Safe exercise per IMC/WHO recommendations]
-**MONITORING:** [Monitoring schedule per guidelines]
-**WEEKLY PREDICTIONS:** [Next 4 weeks per standard protocols]
-**HOSPITALS:** [5 nearby hospitals with specialties]
-**LABS:** [5 nearby lab centers with services]
-**VACCINES:** [Pregnancy vaccine schedule per IMC/WHO]
-**SUPPLEMENTS:** [Essential supplements with dosages and brands]
+Based on this comprehensive assessment, provide detailed analysis in EXACTLY this format:
+
+**RISK ASSESSMENT:** [Provide detailed risk stratification: LOW/MODERATE/HIGH with specific IMC/WHO criteria and reasoning based on all factors including age, BMI, medical history, family history, current vitals, and lifestyle factors]
+
+**IMC COMPLIANCE ANALYSIS:** 
+• [Specific IMC guideline compliance point 1 based on patient data]
+• [Specific IMC guideline compliance point 2 based on patient data]
+• [Specific IMC guideline compliance point 3 based on patient data]
+• [Specific IMC guideline compliance point 4 based on patient data]
+
+**WHO COMPLIANCE ANALYSIS:**
+• [Specific WHO guideline compliance point 1 based on patient data]
+• [Specific WHO guideline compliance point 2 based on patient data]
+• [Specific WHO guideline compliance point 3 based on patient data]
+• [Specific WHO guideline compliance point 4 based on patient data]
+
+**CLINICAL RECOMMENDATIONS:**
+• [Evidence-based recommendation 1 specific to patient's condition and risk factors]
+• [Evidence-based recommendation 2 specific to patient's medical history]
+• [Evidence-based recommendation 3 specific to patient's lifestyle and social factors]
+• [Evidence-based recommendation 4 specific to patient's nutritional needs]
+
+**CRITICAL WARNINGS:**
+• [Critical warning 1 based on patient's specific risk factors]
+• [Critical warning 2 based on current vitals and symptoms]
+• [Critical warning 3 based on family history and lifestyle]
+
+**IMMEDIATE NEXT STEPS:**
+• [Immediate action 1 based on current week and trimester]
+• [Immediate action 2 based on current symptoms and vitals]
+• [Immediate action 3 based on risk assessment]
+• [Immediate action 4 based on IMC/WHO protocols]
+
+**PERSONALIZED DIET PLAN:** [Create detailed Indian diet plan considering: diet type (${formData.dietType}), cultural preferences (${formData.culturalDietPreferences}), restrictions (${formData.dietaryRestrictions.join(", ")}), allergies (${formData.foodAllergies.join(", ") || "None"} ), favorite ingredients (${formData.favoriteIngredients.join(", ") || "Standard"} ), cooking time (${formData.cookingTime}), budget (${formData.budgetRange}), and current trimester nutritional needs]
+
+**EXERCISE RECOMMENDATIONS:** [Safe exercise plan based on current fitness level (${formData.exerciseFrequency}), trimester (${formData.currentTrimester}), and any medical restrictions]
+
+**MONITORING SCHEDULE:** 
+• [Monitoring recommendation 1 based on risk level and current week]
+• [Monitoring recommendation 2 based on family history and medical conditions]
+• [Monitoring recommendation 3 based on current symptoms and vitals]
+• [Monitoring recommendation 4 based on IMC/WHO protocols]
+
+**WEEKLY PREDICTIONS:** [Provide specific predictions for next 4 weeks based on current week ${formData.currentWeek} and individual risk factors]
+
+**SUPPLEMENT RECOMMENDATIONS:** [Specific supplements based on current supplements used (${formData.supplementsUsed.join(", ")}), dietary restrictions, and trimester needs with exact dosages and Indian brands]
+
+**AI CLINICAL NOTES FOR DOCTORS:** [Comprehensive clinical summary highlighting key risk factors, recommended interventions, monitoring priorities, and specific areas requiring medical attention based on the complete patient profile]
+
+Ensure all recommendations are:
+1. Specific to this patient's unique profile
+2. Evidence-based per IMC/WHO guidelines
+3. Culturally appropriate for Indian context
+4. Practical and actionable
+5. Consider all provided medical, social, and lifestyle factors
 `
 
       const response = await fetch("/api/ai-integration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: analysisPrompt,
+          message: comprehensiveAssessmentPrompt,
           type: "assessment",
         }),
       })
@@ -663,21 +855,19 @@ Provide analysis following IMC and WHO guidelines in this format:
       if (response.ok && data.response) {
         const aiText = typeof data.response === "string" ? data.response : JSON.stringify(data.response)
 
-        // Parse AI response
+        // Parse AI response with enhanced parsing
         const riskAssessment = extractSection(aiText, "RISK ASSESSMENT")
-        const imcCompliance = parseList(aiText, "IMC COMPLIANCE")
-        const whoCompliance = parseList(aiText, "WHO COMPLIANCE")
-        const recommendations = parseList(aiText, "RECOMMENDATIONS")
-        const warnings = parseList(aiText, "WARNINGS")
-        const nextSteps = parseList(aiText, "NEXT STEPS")
-        const dietInfo = extractSection(aiText, "DIET PLAN")
-        const exerciseInfo = extractSection(aiText, "EXERCISE")
-        const monitoringInfo = parseList(aiText, "MONITORING")
+        const imcCompliance = parseList(aiText, "IMC COMPLIANCE ANALYSIS")
+        const whoCompliance = parseList(aiText, "WHO COMPLIANCE ANALYSIS")
+        const recommendations = parseList(aiText, "CLINICAL RECOMMENDATIONS")
+        const warnings = parseList(aiText, "CRITICAL WARNINGS")
+        const nextSteps = parseList(aiText, "IMMEDIATE NEXT STEPS")
+        const dietInfo = extractSection(aiText, "PERSONALIZED DIET PLAN")
+        const exerciseInfo = extractSection(aiText, "EXERCISE RECOMMENDATIONS")
+        const monitoringInfo = parseList(aiText, "MONITORING SCHEDULE")
         const weeklyPredictionsInfo = parseList(aiText, "WEEKLY PREDICTIONS")
-        const hospitalsInfo = parseList(aiText, "HOSPITALS")
-        const labsInfo = parseList(aiText, "LABS")
-        const vaccinesInfo = parseList(aiText, "VACCINES")
-        const supplementsInfo = parseList(aiText, "SUPPLEMENTS")
+        const supplementsInfo = parseList(aiText, "SUPPLEMENT RECOMMENDATIONS")
+        const clinicalNotes = extractSection(aiText, "AI CLINICAL NOTES FOR DOCTORS")
 
         // Determine risk level
         let riskLevel: "low" | "moderate" | "high" = "low"
@@ -698,11 +888,20 @@ Provide analysis following IMC and WHO guidelines in this format:
           exercisePlan: generateExercisePlan(formData.currentTrimester, exerciseInfo),
           monitoringSchedule: monitoringInfo,
           weeklyPredictions: generateWeeklyPredictions(weeklyPredictionsInfo),
-          nearbyHospitals: generateNearbyHospitals(hospitalsInfo),
-          labCenters: generateLabCenters(labsInfo),
-          vaccines: generateVaccineSchedule(vaccinesInfo),
-          supplements: generateSupplementPlan(supplementsInfo),
+          nearbyHospitals: [],
+          labCenters: [],
+          vaccines: generateVaccineSchedule([]),
+          supplements: generateSupplementPlan(supplementsInfo.join(" ")),
+          scanSchedule: pregnancyScanSchedule,
+          vaccineScheduleWithDates: vaccineScheduleWithDates,
+          clinicalNotes: clinicalNotes,
         }
+
+        const hospitals = await generateNearbyHospitals([])
+        analysis.nearbyHospitals = hospitals
+
+        const labs = generateLabCenters([])
+        analysis.labCenters = labs
 
         setAiAnalysis(analysis)
         setAnalysisGenerated(true)
@@ -870,59 +1069,48 @@ Provide analysis following IMC and WHO guidelines in this format:
     ]
   }
 
-  const generateNearbyHospitals = (hospitalsInfo: string[]): NearbyFacility[] => {
-    return [
+  const generateNearbyHospitals = async (hospitalsInfo: string[]): Promise<NearbyFacility[]> => {
+    const labs = [
       {
-        name: `Apollo Hospital - ${formData.location?.city || "Your City"}`,
-        address: `Main Branch, ${formData.location?.city || "Your City"}`,
-        distance: "2.5 km from your location",
-        specialties: "Maternity, Neonatal ICU, High-risk pregnancy, Emergency care",
-        phone: "+91-40-2345-6789",
-        rating: "4.5/5 ⭐ (2,450 reviews)",
-        emergency: "24/7 Emergency Department with Maternity Services",
-      },
-      {
-        name: `Fortis Hospital - ${formData.location?.city || "Your City"}`,
-        address: `Central Location, ${formData.location?.city || "Your City"}`,
-        distance: "3.8 km from your location",
-        specialties: "Multi-specialty, Obstetrics & Gynecology, Pediatrics",
-        phone: "+91-40-3456-7890",
-        rating: "4.3/5 ⭐ (1,890 reviews)",
-        emergency: "Trauma Center with Maternity Ward",
-      },
-      {
-        name: `Max Healthcare - ${formData.location?.city || "Your City"}`,
+        id: "1",
+        name: "Apollo Hospital",
         address: `Medical Complex, ${formData.location?.city || "Your City"}`,
-        distance: "4.2 km from your location",
-        specialties: "Advanced maternity care, NICU, Fetal medicine",
-        phone: "+91-40-4567-8901",
-        rating: "4.4/5 ⭐ (1,650 reviews)",
-        emergency: "24/7 Maternity Emergency Services",
-      },
-      {
-        name: `Manipal Hospital - ${formData.location?.city || "Your City"}`,
-        address: `Healthcare Hub, ${formData.location?.city || "Your City"}`,
-        distance: "5.1 km from your location",
-        specialties: "Women & Child care, High-risk pregnancy unit",
+        distance: "1.2 km from your location",
+        specialties: "Maternity care, NICU, Emergency services, Gynecology",
         phone: "+91-40-5678-9012",
-        rating: "4.2/5 ⭐ (1,420 reviews)",
-        emergency: "Dedicated Maternity Emergency Unit",
+        rating: "4.5/5 ⭐ (2,250 reviews)",
+        emergency: "24/7 emergency services, Ambulance available",
       },
       {
-        name: `Government General Hospital - ${formData.location?.city || "Your City"}`,
-        address: `Government Complex, ${formData.location?.city || "Your City"}`,
-        distance: "6.0 km from your location",
-        specialties: "Government maternity services, Free delivery",
+        id: "2",
+        name: "Fortis Hospital",
+        address: `Healthcare Hub, ${formData.location?.city || "Your City"}`,
+        distance: "2.1 km from your location",
+        specialties: "High-risk pregnancy care, Advanced NICU, Fetal medicine",
         phone: "+91-40-6789-0123",
-        rating: "3.8/5 ⭐ (980 reviews)",
-        emergency: "24/7 Government Emergency Services",
+        rating: "4.3/5 ⭐ (1,800 reviews)",
+        emergency: "24/7 maternity emergency, Cesarean facilities",
+      },
+      {
+        id: "3",
+        name: "Max Healthcare",
+        address: `Medical Center, ${formData.location?.city || "Your City"}`,
+        distance: "3.5 km from your location",
+        specialties: "Normal delivery, Painless delivery, Lactation support",
+        phone: "+91-40-7890-1234",
+        rating: "4.2/5 ⭐ (1,500 reviews)",
+        emergency: "Emergency obstetric care, Blood bank facility",
       },
     ]
+
+    setAvailableHospitals(labs)
+    return labs
   }
 
   const generateLabCenters = (labsInfo: string[]): NearbyFacility[] => {
-    return [
+    const labs = [
       {
+        id: "1",
         name: "Dr. Lal PathLabs",
         address: `Central Plaza, ${formData.location?.city || "Your City"}`,
         distance: "1.2 km from your location",
@@ -932,6 +1120,7 @@ Provide analysis following IMC and WHO guidelines in this format:
         emergency: "Home collection available, Same-day reports for urgent tests",
       },
       {
+        id: "2",
         name: "SRL Diagnostics",
         address: `Medical Complex, ${formData.location?.city || "Your City"}`,
         distance: "2.1 km from your location",
@@ -941,6 +1130,7 @@ Provide analysis following IMC and WHO guidelines in this format:
         emergency: "24/7 emergency lab services, Free home collection",
       },
       {
+        id: "3",
         name: "Metropolis Healthcare",
         address: `Health Hub, ${formData.location?.city || "Your City"}`,
         distance: "3.5 km from your location",
@@ -949,118 +1139,52 @@ Provide analysis following IMC and WHO guidelines in this format:
         rating: "4.1/5 ⭐ (950 reviews)",
         emergency: "Online reports, Mobile app for tracking",
       },
-      {
-        name: "Thyrocare Technologies",
-        address: `Diagnostic Center, ${formData.location?.city || "Your City"}`,
-        distance: "4.0 km from your location",
-        specialties: "Thyroid tests, Diabetes screening, Vitamin deficiency tests",
-        phone: "+91-40-8901-2345",
-        rating: "4.0/5 ⭐ (800 reviews)",
-        emergency: "Affordable packages, Quick turnaround time",
-      },
-      {
-        name: "Quest Diagnostics",
-        address: `Laboratory Complex, ${formData.location?.city || "Your City"}`,
-        distance: "4.8 km from your location",
-        specialties: "Specialized pregnancy tests, Genetic screening, Allergy tests",
-        phone: "+91-40-9012-3456",
-        rating: "4.2/5 ⭐ (720 reviews)",
-        emergency: "Advanced testing facilities, Expert consultation",
-      },
     ]
+
+    setAvailableLabCenters(labs)
+    return labs
   }
 
   const generateVaccineSchedule = (vaccinesInfo: string[]): VaccineSchedule[] => {
     return [
       {
         vaccine: "Tetanus Toxoid (TT)",
-        timing: "First dose at 16-20 weeks, Second dose 4 weeks later",
-        description: "Protects mother and baby from tetanus infection",
-        importance: "Essential - IMC mandated",
-        sideEffects: "Mild pain at injection site, low-grade fever",
-        contraindications: "Severe illness, previous severe reaction",
+        timing: "16-20 weeks, then 4 weeks later",
+        description: "Protects against tetanus",
+        importance: "Essential",
+        sideEffects: "Soreness, fever",
+        contraindications: "Severe allergic reaction",
       },
       {
-        vaccine: "Influenza (Flu) Vaccine",
-        timing: "Any trimester, preferably before flu season",
-        description: "Protects against seasonal influenza",
-        importance: "Highly recommended - WHO endorsed",
-        sideEffects: "Mild soreness, low-grade fever for 1-2 days",
-        contraindications: "Severe egg allergy, previous severe reaction",
-      },
-      {
-        vaccine: "Tdap (Tetanus, Diphtheria, Pertussis)",
-        timing: "27-36 weeks of pregnancy",
-        description: "Protects baby from whooping cough in first months",
-        importance: "Recommended - IMC guidelines",
-        sideEffects: "Pain at injection site, mild fever, fatigue",
-        contraindications: "Severe illness, previous severe reaction to vaccine",
-      },
-      {
-        vaccine: "COVID-19 Vaccine",
-        timing: "Any trimester as per current guidelines",
-        description: "Protects against COVID-19 infection",
-        importance: "Recommended - Current health ministry guidelines",
-        sideEffects: "Pain at injection site, fatigue, mild fever",
-        contraindications: "Severe allergic reaction to vaccine components",
-      },
-      {
-        vaccine: "Hepatitis B",
-        timing: "If not previously vaccinated or at high risk",
-        description: "Protects against Hepatitis B infection",
-        importance: "Recommended for high-risk individuals",
-        sideEffects: "Mild pain at injection site, fatigue",
-        contraindications: "Severe illness, yeast allergy",
+        vaccine: "Influenza",
+        timing: "Any trimester during flu season",
+        description: "Protects against seasonal flu",
+        importance: "Recommended",
+        sideEffects: "Soreness, fever",
+        contraindications: "Severe egg allergy",
       },
     ]
   }
 
-  const generateSupplementPlan = (supplementsInfo: string[]): SupplementPlan[] => {
+  const generateSupplementPlan = (supplementsInfo: string): SupplementPlan[] => {
     return [
       {
         name: "Folic Acid",
-        dosage: "400-600 mcg daily",
-        timing: "Before conception and first trimester",
-        benefits: "Prevents neural tube defects, supports DNA synthesis",
-        brands: "Folvite, Folinal, Generic brands",
-        warnings: "High doses may mask B12 deficiency",
-        price: "₹50-150/month",
+        dosage: "400-800 mcg daily",
+        timing: "Before and during pregnancy",
+        benefits: "Prevents neural tube defects",
+        brands: "Various",
+        warnings: "Consult doctor",
+        price: "Affordable",
       },
       {
-        name: "Iron Supplement",
-        dosage: "30-60 mg elemental iron daily",
-        timing: "Second and third trimester, with Vitamin C",
-        benefits: "Prevents anemia, supports increased blood volume",
-        brands: "Ferrous sulfate, Autrin, Orofer",
-        warnings: "May cause constipation, take with food",
-        price: "₹100-300/month",
-      },
-      {
-        name: "Calcium + Vitamin D",
-        dosage: "1000mg Calcium + 600 IU Vitamin D daily",
-        timing: "Throughout pregnancy, preferably with meals",
-        benefits: "Bone health, muscle function, fetal development",
-        brands: "Shelcal, Calcimax, Ostocalcium",
-        warnings: "Avoid with iron supplements, may cause constipation",
-        price: "₹200-400/month",
-      },
-      {
-        name: "Omega-3 DHA",
-        dosage: "200-300 mg DHA daily",
-        timing: "Throughout pregnancy, with meals",
-        benefits: "Brain development, eye development, reduces preterm birth",
-        brands: "Seven Seas, Neuherbs, Carbamide Forte",
-        warnings: "Choose mercury-free sources, avoid high doses",
-        price: "₹300-600/month",
-      },
-      {
-        name: "Prenatal Multivitamin",
-        dosage: "One tablet daily as prescribed",
-        timing: "Throughout pregnancy, preferably with breakfast",
-        benefits: "Comprehensive nutrition, fills dietary gaps",
-        brands: "Pregnacare, Supradyn, Becosules",
-        warnings: "Don't exceed recommended dose, may cause nausea",
-        price: "₹400-800/month",
+        name: "Iron",
+        dosage: "27mg daily",
+        timing: "During pregnancy",
+        benefits: "Prevents anemia",
+        brands: "Various",
+        warnings: "May cause constipation",
+        price: "Affordable",
       },
     ]
   }
@@ -1113,624 +1237,698 @@ Provide analysis following IMC and WHO guidelines in this format:
     })
   }
 
-  const addScanTest = () => {
-    const newScanTest: ScanTest = {
-      id: Date.now().toString(),
-      type: "",
-      date: new Date().toISOString().split("T")[0],
-      time: "",
-      facility: "",
-      doctor: "",
-      results: "",
-      notes: "",
-      nextDue: "",
-    }
-    setFormData((prev) => ({
-      ...prev,
-      scansAndTests: [...prev.scansAndTests, newScanTest],
-    }))
+  const updateScanSchedule = (id: string, field: keyof PregnancyScanSchedule, value: string) => {
+    setPregnancyScanSchedule((prev) => prev.map((scan) => (scan.id === id ? { ...scan, [field]: value } : scan)))
   }
 
-  const updateScanTest = (index: number, field: keyof ScanTest, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      scansAndTests: prev.scansAndTests.map((scan, i) => (i === index ? { ...scan, [field]: value } : scan)),
-    }))
+  const updateVaccineSchedule = (id: string, field: keyof VaccineScheduleWithDates, value: string) => {
+    setVaccineScheduleWithDates((prev) =>
+      prev.map((vaccine) => (vaccine.id === id ? { ...vaccine, [field]: value } : vaccine)),
+    )
   }
 
-  const removeScanTest = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      scansAndTests: prev.scansAndTests.filter((_, i) => i !== index),
-    }))
+  const handleHospitalSelection = (hospital: NearbyFacility) => {
+    setFormData((prev) => ({ ...prev, selectedHospital: hospital }))
+  }
+
+  const handleLabSelection = (lab: NearbyFacility) => {
+    setFormData((prev) => ({ ...prev, selectedLabCenter: lab }))
   }
 
   const handlePrint = () => {
-    const printContent = generatePrintContent()
-    const printWindow = window.open("", "_blank")
-    if (printWindow) {
-      printWindow.document.write(printContent)
-      printWindow.document.close()
-      printWindow.focus()
-      setTimeout(() => {
-        printWindow.print()
-        printWindow.close()
-      }, 250)
-    }
+    generateComprehensivePrintReport()
   }
 
   const handleDownloadPDF = () => {
-    const printContent = generatePrintContent()
-    const blob = new Blob([printContent], { type: "text/html" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `pregnancy-report-${formData.motherName || "patient"}-${new Date().toISOString().split("T")[0]}.html`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    generateComprehensivePrintReport()
   }
 
-  const generatePrintContent = (): string => {
-    const currentDate = new Date().toLocaleDateString()
-    const currentTime = new Date().toLocaleTimeString()
+  const generateComprehensivePrintReport = () => {
+    if (!formData.motherName) {
+      alert("Please fill in basic information before generating report")
+      return
+    }
 
-    return `
+    const currentDate = new Date().toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    })
+
+    const currentTime = new Date().toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+
+    const reportContent = `
 <!DOCTYPE html>
 <html>
 <head>
-  <title>MyMedi.ai - Comprehensive Pregnancy Care Report (IMC & WHO Guidelines)</title>
+  <title>MyMedi.ai - Comprehensive Pregnancy Care Report</title>
   <meta charset="UTF-8">
   <style>
-    @media print {
-      body { margin: 0; font-size: 9px; }
-      .page-break { page-break-before: always; }
-      .no-break { page-break-inside: avoid; }
-      .section { margin: 8px 0; }
-      .section-content { padding: 8px; }
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body { 
       font-family: Arial, sans-serif; 
-      margin: 8px; 
-      line-height: 1.3; 
-      color: #000;
       font-size: 9px;
+      line-height: 1.2;
+      color: #000;
+      background: white;
+      padding: 8mm;
     }
-    .header { 
-      text-align: center; 
-      border-bottom: 2px solid #2563eb;
-      padding: 12px;
+    
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #333;
+      padding-bottom: 8px;
       margin-bottom: 12px;
-      background: #f8fafc;
-      border-radius: 6px;
     }
-    .header h1 { margin: 0; font-size: 16px; font-weight: bold; color: #2563eb; }
-    .header p { margin: 1px 0; font-size: 9px; color: #4b5563; }
-    .section { 
-      margin: 8px 0; 
-      border: 1px solid #e5e7eb;
+    
+    .header h1 {
+      font-size: 16px;
+      margin-bottom: 2px;
+      font-weight: bold;
+    }
+    
+    .header p {
+      font-size: 8px;
+      color: #666;
+    }
+    
+    .patient-summary {
+      background: #f8f9fa;
+      padding: 6px;
       border-radius: 4px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+    }
+    
+    .patient-summary h3 {
+      font-size: 10px;
+      margin-bottom: 4px;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      font-size: 8px;
+    }
+    
+    .section {
+      margin-bottom: 8px;
       page-break-inside: avoid;
     }
-    .section-header { 
-      background: #f3f4f6; 
-      padding: 6px 10px; 
-      border-bottom: 1px solid #d1d5db;
-      font-weight: bold; 
-      font-size: 10px;
-      color: #374151;
-    }
-    .section-content { padding: 8px 10px; }
-    .patient-info { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr 1fr; 
-      gap: 10px; 
-      margin-bottom: 10px;
-      background: #f0f9ff;
-      padding: 8px;
-      border-radius: 4px;
-    }
-    .info-item { margin: 1px 0; font-size: 8px; }
-    .info-item strong { color: #1e40af; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px; }
-    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-    .vital-card {
-      border: 1px solid #e5e7eb;
-      padding: 4px;
-      border-radius: 3px;
-      text-align: center;
-      background: #f9fafb;
-    }
-    .vital-value {
-      font-size: 11px;
+    
+    .section-header {
+      background: #e9ecef;
+      padding: 3px 6px;
       font-weight: bold;
-      color: #1f2937;
+      font-size: 9px;
+      border-left: 3px solid #007bff;
+      margin-bottom: 4px;
     }
-    .vital-label {
-      font-size: 7px;
-      color: #6b7280;
-      margin-top: 1px;
+    
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
-    .table {
+    
+    .three-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    
+    .four-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 4px;
+    }
+    
+    table {
       width: 100%;
       border-collapse: collapse;
-      margin: 6px 0;
       font-size: 7px;
+      margin-bottom: 6px;
     }
-    .table th, .table td {
-      border: 1px solid #d1d5db;
-      padding: 3px 4px;
+    
+    th, td {
+      border: 1px solid #ccc;
+      padding: 2px 3px;
       text-align: left;
       vertical-align: top;
     }
-    .table th {
-      background: #f3f4f6;
+    
+    th {
+      background: #f1f3f4;
       font-weight: bold;
-      color: #374151;
+      font-size: 7px;
     }
-    .analysis-box {
-      background: #ecfdf5;
-      border: 1px solid #10b981;
-      padding: 8px;
-      margin: 8px 0;
-      border-radius: 4px;
-    }
-    .analysis-title {
-      font-weight: bold;
-      color: #065f46;
-      margin-bottom: 4px;
-      font-size: 9px;
-    }
-    .risk-level {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-weight: bold;
+    
+    .compact-list {
       font-size: 8px;
-      margin-bottom: 4px;
+      line-height: 1.1;
     }
-    .risk-low { background: #dcfce7; color: #166534; }
-    .risk-moderate { background: #fef3c7; color: #92400e; }
-    .risk-high { background: #fee2e2; color: #991b1b; }
-    .guideline-box {
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      padding: 6px;
-      margin: 6px 0;
+    
+    .compact-list li {
+      margin-bottom: 1px;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 1px 4px;
+      background: #e9ecef;
+      border-radius: 2px;
+      font-size: 7px;
+      margin: 1px;
+    }
+    
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-danger { background: #f8d7da; color: #721c24; }
+    .badge-info { background: #d1ecf1; color: #0c5460; }
+    
+    .meal-compact {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
       border-radius: 3px;
+      padding: 4px;
+      margin-bottom: 3px;
+      font-size: 7px;
     }
-    .imc-box {
-      background: #dbeafe;
-      border: 1px solid #3b82f6;
-      padding: 6px;
-      margin: 6px 0;
-      border-radius: 3px;
-    }
-    .who-box {
-      background: #dcfce7;
-      border: 1px solid #10b981;
-      padding: 6px;
-      margin: 6px 0;
-      border-radius: 3px;
-    }
-    .meal-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 3px;
-      padding: 6px;
-      margin-bottom: 4px;
-    }
+    
     .meal-header {
       font-weight: bold;
-      color: #1e40af;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .vital-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
       font-size: 8px;
     }
-    .facility-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 3px;
-      padding: 6px;
-      margin-bottom: 4px;
+    
+    .vital-item {
+      background: #f8f9fa;
+      padding: 3px;
+      border-radius: 2px;
+      text-align: center;
     }
+    
+    .facility-compact {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 3px;
+      padding: 4px;
+      margin-bottom: 3px;
+      font-size: 7px;
+    }
+    
     .facility-name {
       font-weight: bold;
-      color: #1e40af;
-      margin-bottom: 2px;
-      font-size: 8px;
+      margin-bottom: 1px;
     }
-    .facility-details {
+    
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
       font-size: 7px;
-      color: #4b5563;
-      line-height: 1.2;
     }
+    
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    
+    .checkbox {
+      width: 8px;
+      height: 8px;
+      border: 1px solid #333;
+      display: inline-block;
+      margin-right: 2px;
+    }
+    
+    .checked {
+      background: #333;
+    }
+    
     .footer {
       text-align: center;
-      margin-top: 15px;
-      padding: 8px;
-      border-top: 1px solid #e5e7eb;
+      margin-top: 12px;
+      padding: 6px;
+      border-top: 1px solid #ddd;
       font-size: 7px;
-      color: #6b7280;
+      color: #666;
     }
-    ul, ol { margin: 3px 0; padding-left: 12px; }
-    li { margin: 1px 0; font-size: 7px; }
-    .compact-list li { margin: 0; font-size: 7px; line-height: 1.2; }
+    
+    .page-break {
+      page-break-before: always;
+    }
+    
+    @media print {
+      body { margin: 0; padding: 5mm; }
+      .section { page-break-inside: avoid; }
+      @page { margin: 10mm; }
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>🏥 MyMedi.ai - Comprehensive Pregnancy Care Report</h1>
-    <p>Following Indian Medical Council (IMC) & WHO Guidelines</p>
-    <p>Generated on: ${currentDate} at ${currentTime}</p>
-    ${formData.location ? `<p>📍 Location: ${formData.location.city}, ${formData.location.state}, ${formData.location.country}</p>` : ""}
+    <p>AI-Powered Maternal Health Analysis | Generated: ${currentDate} ${currentTime} | Report ID: PRC-${Date.now().toString().slice(-8)}</p>
   </div>
 
-  <!-- Patient Information Section -->
-  <div class="section no-break">
-    <div class="section-header">👤 PATIENT INFORMATION</div>
-    <div class="section-content">
-      <div class="patient-info">
-        <div>
-          <div class="info-item"><strong>Mother:</strong> ${formData.motherName || "Not specified"}</div>
-          <div class="info-item"><strong>Age:</strong> ${formData.motherAge} years</div>
-          <div class="info-item"><strong>Height:</strong> ${formData.motherHeight} cm</div>
-          <div class="info-item"><strong>Weight:</strong> ${formData.motherWeight} kg</div>
-          <div class="info-item"><strong>BMI:</strong> ${formData.bmi}</div>
-          <div class="info-item"><strong>Blood Type:</strong> ${formData.motherBloodType}${formData.motherRhFactor}</div>
-          <div class="info-item"><strong>Education:</strong> ${formData.motherEducation || "Not specified"}</div>
-          <div class="info-item"><strong>Occupation:</strong> ${formData.motherOccupation || "Not specified"}</div>
-        </div>
-        <div>
-          <div class="info-item"><strong>Father:</strong> ${formData.fatherName || "Not specified"}</div>
-          <div class="info-item"><strong>Age:</strong> ${formData.fatherAge} years</div>
-          <div class="info-item"><strong>Blood Type:</strong> ${formData.fatherBloodType}${formData.fatherRhFactor}</div>
-          <div class="info-item"><strong>Education:</strong> ${formData.fatherEducation || "Not specified"}</div>
-          <div class="info-item"><strong>Occupation:</strong> ${formData.fatherOccupation || "Not specified"}</div>
-          <div class="info-item"><strong>Marriage Duration:</strong> ${formData.marriageDuration || "Not specified"}</div>
-          <div class="info-item"><strong>Income:</strong> ${formData.motherIncome || "Not specified"}</div>
-        </div>
-        <div>
-          <div class="info-item"><strong>Current Week:</strong> ${formData.currentWeek} weeks</div>
-          <div class="info-item"><strong>Trimester:</strong> ${formData.currentTrimester}</div>
-          <div class="info-item"><strong>LMP:</strong> ${formData.lastPeriodDate || "Not specified"}</div>
-          <div class="info-item"><strong>EDD:</strong> ${formData.expectedDeliveryDate || "Not calculated"}</div>
-          <div class="info-item"><strong>Pregnancy Type:</strong> ${formData.pregnancyType}</div>
-          <div class="info-item"><strong>Conception:</strong> ${formData.conceptionMethod}</div>
-          <div class="info-item"><strong>Weight Gain:</strong> ${(formData.weight - formData.prePregnancyWeight).toFixed(1)} kg</div>
-        </div>
-      </div>
+  <div class="patient-summary">
+    <h3>👤 PATIENT SUMMARY</h3>
+    <div class="summary-grid">
+      <div><strong>Name:</strong> ${formData.motherName}</div>
+      <div><strong>Age:</strong> ${formData.motherAge} years</div>
+      <div><strong>Week:</strong> ${formData.currentWeek} (T${formData.currentTrimester})</div>
+      <div><strong>BMI:</strong> ${formData.bmi || 'Not calculated'}</div>
+      <div><strong>Blood Type:</strong> ${formData.motherBloodType}${formData.motherRhFactor}</div>
+      <div><strong>EDD:</strong> ${formData.expectedDeliveryDate || 'Not set'}</div>
+      <div><strong>Location:</strong> ${formData.location?.city || 'Not specified'}</div>
+      <div><strong>Weight Gain:</strong> ${formData.weight && formData.prePregnancyWeight ? (formData.weight - formData.prePregnancyWeight).toFixed(1) + 'kg' : 'N/A'}</div>
     </div>
   </div>
 
-  <!-- Current Vitals -->
-  <div class="section no-break">
-    <div class="section-header">💓 CURRENT VITALS (${formData.vitalsTiming || "Not specified"})</div>
-    <div class="section-content">
-      <div class="grid-5">
-        <div class="vital-card">
-          <div class="vital-value">${formData.bloodPressureSystolic}/${formData.bloodPressureDiastolic}</div>
-          <div class="vital-label">BP (mmHg)</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-value">${formData.heartRate}</div>
-          <div class="vital-label">HR (bpm)</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-value">${formData.temperature}</div>
-          <div class="vital-label">Temp (°F)</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-value">${formData.respiratoryRate}</div>
-          <div class="vital-label">RR (/min)</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-value">${formData.oxygenSaturation}</div>
-          <div class="vital-label">SpO2 (%)</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-value">${formData.bloodSugar}</div>
-          <div class="vital-label">Sugar (mg/dL)</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-value">${formData.hemoglobin}</div>
-          <div class="vital-label">Hgb (g/dL)</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-value">${formData.fundalHeight || "N/A"}</div>
-          <div class="vital-label">FH (cm)</div>
-        </div>
-        <div class="vital-card">
-          <div class="vital-value">${formData.fetalHeartRate || "N/A"}</div>
-          <div class="vital-label">FHR (bpm)</div>
-        </div>
-      </div>
-      ${
-        formData.currentSymptoms.length > 0
-          ? `
-      <div style="margin-top: 6px;">
-        <strong>Current Symptoms:</strong> ${formData.currentSymptoms.join(", ")}
-      </div>
-      `
-          : ""
-      }
-    </div>
-  </div>
-
-  <!-- Scans & Tests -->
-  ${
-    formData.scansAndTests.length > 0
-      ? `
   <div class="section">
-    <div class="section-header">🔬 SCANS & TESTS</div>
-    <div class="section-content">
-      <table class="table">
-        <thead>
+    <div class="section-header">📋 PREGNANCY DETAILS</div>
+    <div class="four-column">
+      <div><strong>LMP:</strong> ${formData.lastPeriodDate || 'Not specified'}</div>
+      <div><strong>Type:</strong> ${formData.pregnancyType || 'Not specified'}</div>
+      <div><strong>Planned:</strong> ${formData.plannedPregnancy ? 'Yes' : 'No'}</div>
+      <div><strong>Method:</strong> ${formData.conceptionMethod || 'Natural'}</div>
+      <div><strong>Previous:</strong> G${formData.previousPregnancies + 1}P${formData.previousPregnancies}A${formData.previousAbortions}</div>
+      <div><strong>Miscarriages:</strong> ${formData.previousMiscarriages}</div>
+      <div><strong>Marriage:</strong> ${formData.marriageDuration || 'Not specified'}</div>
+      <div><strong>Education:</strong> ${formData.motherEducation || 'Not specified'}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">🩺 CURRENT VITALS & HEALTH STATUS</div>
+    <div class="vital-grid">
+      <div class="vital-item">
+        <div style="font-weight: bold;">${formData.bloodPressureSystolic || '--'}/${formData.bloodPressureDiastolic || '--'}</div>
+        <div>BP (mmHg)</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">${formData.heartRate || '--'}</div>
+        <div>HR (bpm)</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">${formData.temperature || '--'}</div>
+        <div>Temp (°F)</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">${formData.oxygenSaturation || '--'}</div>
+        <div>SpO2 (%)</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">${formData.bloodSugar || '--'}</div>
+        <div>BS (mg/dL)</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">${formData.hemoglobin || '--'}</div>
+        <div>Hgb (g/dL)</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">${formData.fundalHeight || '--'}</div>
+        <div>FH (cm)</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">${formData.fetalHeartRate || '--'}</div>
+        <div>FHR (bpm)</div>
+      </div>
+    </div>
+    ${formData.currentSymptoms.length > 0 ? `
+    <div style="margin-top: 4px;">
+      <strong>Current Symptoms:</strong> ${formData.currentSymptoms.join(', ')}
+    </div>
+    ` : ''}
+    ${formData.vitalsNotes ? `
+    <div style="margin-top: 2px; font-size: 7px;">
+      <strong>Notes:</strong> ${formData.vitalsNotes}
+    </div>
+    ` : ''}
+  </div>
+
+  <div class="section">
+    <div class="section-header">🏥 MEDICAL HISTORY</div>
+    <div class="two-column">
+      <div>
+        <strong>Chronic Conditions:</strong><br>
+        <div className="checkbox-grid">
+          ${chronicConditions.slice(0, 12).map(condition => `
+            <div class="checkbox-item">
+              <span class="checkbox ${formData.chronicConditions.includes(condition) ? 'checked' : ''}"></span>
+              ${condition}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div>
+        <strong>Allergies:</strong><br>
+        <div className="checkbox-grid">
+          ${allergyOptions.slice(0, 12).map(allergy => `
+            <div class="checkbox-item">
+              <span class="checkbox ${formData.allergies.includes(allergy) ? 'checked' : ''}"></span>
+              ${allergy}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="two-column" style="margin-top: 4px;">
+      <div>
+        <strong>Current Medications:</strong><br>
+        ${formData.currentMedications.length > 0 ? formData.currentMedications.join(', ') : 'None reported'}
+      </div>
+      <div>
+        <strong>Previous Complications:</strong><br>
+        ${formData.previousComplications.length > 0 ? formData.previousComplications.join(', ') : 'None reported'}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">👨‍👩‍👧‍👦 FAMILY HISTORY</div>
+    <div className="checkbox-grid">
+      <div class="checkbox-item">
+        <span class="checkbox ${formData.familyDiabetes ? 'checked' : ''}"></span>
+        Diabetes
+      </div>
+      <div class="checkbox-item">
+        <span class="checkbox ${formData.familyHypertension ? 'checked' : ''}"></span>
+        Hypertension
+      </div>
+      <div class="checkbox-item">
+        <span class="checkbox ${formData.familyHeartDisease ? 'checked' : ''}"></span>
+        Heart Disease
+      </div>
+      <div class="checkbox-item">
+        <span class="checkbox ${formData.familyThalassemia ? 'checked' : ''}"></span>
+        Thalassemia
+      </div>
+      <div class="checkbox-item">
+        <span class="checkbox ${formData.familyMentalHealth ? 'checked' : ''}"></span>
+        Mental Health
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">🍽️ DIET & LIFESTYLE</div>
+    <div class="four-column">
+      <div><strong>Diet Type:</strong> ${formData.dietType || 'Not specified'}</div>
+      <div><strong>Cultural Pref:</strong> ${formData.culturalDietPreferences || 'Not specified'}</div>
+      <div><strong>Water Intake:</strong> ${formData.waterIntake || '--'} glasses/day</div>
+      <div><strong>Sleep:</strong> ${formData.sleepHours || '--'} hours</div>
+      <div><strong>Exercise:</strong> ${formData.exerciseFrequency || 'Not specified'}</div>
+      <div><strong>Stress Level:</strong> ${formData.stressLevel || '--'}/10</div>
+      <div><strong>Smoking:</strong> ${formData.smokingStatus || 'Not specified'}</div>
+      <div><strong>Alcohol:</strong> ${formData.alcoholConsumption || 'Not specified'}</div>
+    </div>
+    ${formData.dietaryRestrictions.length > 0 ? `
+    <div style="margin-top: 4px;">
+      <strong>Dietary Restrictions:</strong> ${formData.dietaryRestrictions.join(', ')}
+    </div>
+    ` : ''}
+    ${formData.foodAllergies.length > 0 ? `
+    <div style="margin-top: 2px;">
+      <strong>Food Allergies:</strong> ${formData.foodAllergies.join(', ')}
+    </div>
+    ` : ''}
+  </div>
+
+  ${pregnancyScanSchedule.length > 0 ? `
+  <div class="section">
+    <div class="section-header">📅 SCAN SCHEDULE</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Scan</th>
+          <th>Week</th>
+          <th>Scheduled</th>
+          <th>Status</th>
+          <th>Cost</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${pregnancyScanSchedule.map(scan => `
           <tr>
-            <th>Type</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Facility</th>
-            <th>Doctor</th>
-            <th>Results</th>
-            <th>Next Due</th>
+            <td>${scan.scanName}</td>
+            <td>${scan.recommendedWeek}</td>
+            <td>${scan.scheduledDate}</td>
+            <td><span class="badge badge-${scan.status === 'completed' ? 'success' : scan.status === 'overdue' ? 'danger' : 'info'}">${scan.status}</span></td>
+            <td>${scan.cost}</td>
+            <td>${scan.description}</td>
           </tr>
-        </thead>
-        <tbody>
-          ${formData.scansAndTests
-            .map(
-              (scan) => `
-            <tr>
-              <td>${scan.type}</td>
-              <td>${scan.date}</td>
-              <td>${scan.time}</td>
-              <td>${scan.facility}</td>
-              <td>${scan.doctor}</td>
-              <td>${scan.results}</td>
-              <td>${scan.nextDue}</td>
-            </tr>
-          `,
-            )
-            .join("")}
-        </tbody>
-      </table>
-    </div>
+        `).join('')}
+      </tbody>
+    </table>
   </div>
-  `
-      : ""
-  }
+  ` : ''}
 
-  <!-- Medical History -->
-  <div class="section">
-    <div class="section-header">📋 MEDICAL HISTORY</div>
-    <div class="section-content">
-      <div class="grid-2">
-        <div>
-          <div class="info-item"><strong>Chronic Conditions:</strong> ${formData.chronicConditions.join(", ") || "None"}</div>
-          <div class="info-item"><strong>Allergies:</strong> ${formData.allergies.join(", ") || "None"}</div>
-          <div class="info-item"><strong>Previous Surgeries:</strong> ${formData.previousSurgeries.join(", ") || "None"}</div>
-          <div class="info-item"><strong>Current Medications:</strong> ${formData.currentMedications.join(", ") || "None"}</div>
-          <div class="info-item"><strong>Blood Transfusion:</strong> ${formData.bloodTransfusionHistory ? "Yes" : "No"}</div>
-        </div>
-        <div>
-          <div class="info-item"><strong>Family Diabetes:</strong> ${formData.familyDiabetes ? "Yes" : "No"}</div>
-          <div class="info-item"><strong>Family Hypertension:</strong> ${formData.familyHypertension ? "Yes" : "No"}</div>
-          <div class="info-item"><strong>Family Heart Disease:</strong> ${formData.familyHeartDisease ? "Yes" : "No"}</div>
-          <div class="info-item"><strong>Family Thalassemia:</strong> ${formData.familyThalassemia ? "Yes" : "No"}</div>
-          <div class="info-item"><strong>Previous Pregnancies:</strong> ${formData.previousPregnancies}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- AI Analysis Results -->
-  ${
-    aiAnalysis
-      ? `
-  <div class="section">
-    <div class="section-header">🤖 AI ANALYSIS (IMC & WHO COMPLIANT)</div>
-    <div class="section-content">
-      <div class="analysis-box">
-        <div class="analysis-title">Risk Assessment</div>
-        <div class="risk-level risk-${aiAnalysis.riskLevel}">${aiAnalysis.riskLevel.toUpperCase()} RISK</div>
-        <p style="font-size: 8px; margin: 4px 0;">${aiAnalysis.riskAssessment}</p>
-      </div>
-      
-      <div class="grid-2">
-        <div class="imc-box">
-          <div class="analysis-title">🇮🇳 IMC Compliance</div>
-          <ul class="compact-list">
-            ${aiAnalysis.imcCompliance.map((item) => `<li>${item}</li>`).join("")}
-          </ul>
-        </div>
-        <div class="who-box">
-          <div class="analysis-title">🌍 WHO Compliance</div>
-          <ul class="compact-list">
-            ${aiAnalysis.whoCompliance.map((item) => `<li>${item}</li>`).join("")}
-          </ul>
-        </div>
-      </div>
-      
-      <div class="grid-2">
-        <div>
-          <div class="analysis-title">🎯 Recommendations</div>
-          <ul class="compact-list">
-            ${aiAnalysis.recommendations.map((rec) => `<li>${rec}</li>`).join("")}
-          </ul>
-        </div>
-        <div>
-          <div class="analysis-title">⚠️ Warnings</div>
-          <ul class="compact-list">
-            ${aiAnalysis.warnings.map((warn) => `<li style="color: #991b1b;">${warn}</li>`).join("")}
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Diet Plan -->
-  <div class="section">
-    <div class="section-header">🍎 PERSONALIZED DIET PLAN - TRIMESTER ${aiAnalysis.dietPlan.trimester}</div>
-    <div class="section-content">
-      <div class="grid-3" style="margin-bottom: 8px;">
-        <div style="text-align: center; background: #f0f9ff; padding: 4px; border-radius: 3px;">
-          <div style="font-size: 12px; font-weight: bold; color: #1e40af;">${aiAnalysis.dietPlan.dailyCalories}</div>
-          <div style="font-size: 7px;">Daily Calories</div>
-        </div>
-        <div style="text-align: center; background: #f0fdf4; padding: 4px; border-radius: 3px;">
-          <div style="font-size: 12px; font-weight: bold; color: #166534;">${aiAnalysis.dietPlan.dailyProtein}g</div>
-          <div style="font-size: 7px;">Daily Protein</div>
-        </div>
-        <div style="text-align: center; background: #fef3c7; padding: 4px; border-radius: 3px;">
-          <div style="font-size: 12px; font-weight: bold; color: #92400e;">7 Days</div>
-          <div style="font-size: 7px;">Meal Plan</div>
-        </div>
-      </div>
-      
-      <div class="grid-2">
-        <div>
-          <strong style="font-size: 8px;">Key Nutrients:</strong>
-          <div style="font-size: 7px;">${aiAnalysis.dietPlan.keyNutrients.join(", ")}</div>
-        </div>
-        <div>
-          <strong style="font-size: 8px;">Supplements:</strong>
-          <div style="font-size: 7px;">${aiAnalysis.dietPlan.supplements.join(", ")}</div>
-        </div>
-      </div>
-      
-      <div style="margin-top: 6px;">
-        <strong style="font-size: 8px;">Foods to Avoid:</strong>
-        <div style="font-size: 7px; color: #dc2626;">${aiAnalysis.dietPlan.avoidFoods.join(", ")}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Supplements -->
-  <div class="section">
-    <div class="section-header">💊 RECOMMENDED SUPPLEMENTS</div>
-    <div class="section-content">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Supplement</th>
-            <th>Dosage</th>
-            <th>Timing</th>
-            <th>Benefits</th>
-            <th>Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${aiAnalysis.supplements
-            .map(
-              (supplement) => `
-            <tr>
-              <td><strong>${supplement.name}</strong></td>
-              <td>${supplement.dosage}</td>
-              <td>${supplement.timing}</td>
-              <td>${supplement.benefits}</td>
-              <td>${supplement.price}</td>
-            </tr>
-          `,
-            )
-            .join("")}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Vaccines -->
+  ${vaccineScheduleWithDates.length > 0 ? `
   <div class="section">
     <div class="section-header">💉 VACCINATION SCHEDULE</div>
-    <div class="section-content">
-      <table class="table">
-        <thead>
+    <table>
+      <thead>
+        <tr>
+          <th>Vaccine</th>
+          <th>Week</th>
+          <th>Scheduled</th>
+          <th>Status</th>
+          <th>Importance</th>
+          <th>Side Effects</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${vaccineScheduleWithDates.map(vaccine => `
           <tr>
-            <th>Vaccine</th>
-            <th>Timing</th>
-            <th>Description</th>
-            <th>Importance</th>
-            <th>Side Effects</th>
+            <td>${vaccine.vaccine}</td>
+            <td>${vaccine.recommendedWeek}</td>
+            <td>${vaccine.scheduledDate}</td>
+            <td><span class="badge badge-${vaccine.status === 'completed' ? 'success' : vaccine.status === 'overdue' ? 'danger' : 'info'}">${vaccine.status}</span></td>
+            <td>${vaccine.importance}</td>
+            <td>${vaccine.sideEffects}</td>
           </tr>
-        </thead>
-        <tbody>
-          ${aiAnalysis.vaccines
-            .map(
-              (vaccine) => `
-            <tr>
-              <td><strong>${vaccine.vaccine}</strong></td>
-              <td>${vaccine.timing}</td>
-              <td>${vaccine.description}</td>
-              <td>${vaccine.importance}</td>
-              <td>${vaccine.sideEffects}</td>
-            </tr>
-          `,
-            )
-            .join("")}
-        </tbody>
-      </table>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+  ` : ''}
+
+  ${aiAnalysis ? `
+  <div class="page-break"></div>
+  
+  <div class="section">
+    <div class="section-header">🤖 AI ANALYSIS & RECOMMENDATIONS</div>
+    <div class="two-column">
+      <div>
+        <strong>Risk Level:</strong> 
+        <span class="badge badge-${aiAnalysis.riskLevel === 'high' ? 'danger' : aiAnalysis.riskLevel === 'moderate' ? 'warning' : 'success'}">${aiAnalysis.riskLevel.toUpperCase()}</span>
+      </div>
+      <div>
+        <strong>Assessment:</strong> ${aiAnalysis.riskAssessment.substring(0, 100)}...
+      </div>
     </div>
   </div>
 
-  <!-- Hospitals -->
+  <div class="section">
+    <div class="section-header">📋 CLINICAL RECOMMENDATIONS</div>
+    <div class="compact-list">
+      <ul>
+        ${aiAnalysis.recommendations.map(rec => `<li>• ${rec}</li>`).join('')}
+      </ul>
+    </div>
+  </div>
+
+  ${aiAnalysis.warnings.length > 0 ? `
+  <div class="section">
+    <div class="section-header">⚠️ CRITICAL WARNINGS</div>
+    <div class="compact-list">
+      <ul>
+        ${aiAnalysis.warnings.map(warning => `<li>• ${warning}</li>`).join('')}
+      </ul>
+    </div>
+  </div>
+  ` : ''}
+
+  <div class="section">
+    <div class="section-header">📝 IMMEDIATE NEXT STEPS</div>
+    <div class="compact-list">
+      <ul>
+        ${aiAnalysis.nextSteps.map(step => `<li>• ${step}</li>`).join('')}
+      </ul>
+    </div>
+  </div>
+
+  ${aiAnalysis.dietPlan ? `
+  <div class="section">
+    <div class="section-header">🍽️ PERSONALIZED DIET PLAN</div>
+    <div class="three-column" style="margin-bottom: 6px;">
+      <div class="vital-item">
+        <div style="font-weight: bold;">${aiAnalysis.dietPlan.dailyCalories}</div>
+        <div>Daily Calories</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">${aiAnalysis.dietPlan.dailyProtein}g</div>
+        <div>Daily Protein</div>
+      </div>
+      <div class="vital-item">
+        <div style="font-weight: bold;">T${aiAnalysis.dietPlan.trimester}</div>
+        <div>Trimester</div>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 4px;">
+      <strong>Key Nutrients:</strong> ${aiAnalysis.dietPlan.keyNutrients.join(', ')}
+    </div>
+    
+    <div style="margin-bottom: 4px;">
+      <strong>Foods to Avoid:</strong> ${aiAnalysis.dietPlan.avoidFoods.join(', ')}
+    </div>
+    
+    <div>
+      <strong>Hydration:</strong> ${aiAnalysis.dietPlan.hydration}
+    </div>
+  </div>
+  ` : ''}
+
+  ${aiAnalysis.supplements && aiAnalysis.supplements.length > 0 ? `
+  <div class="section">
+    <div class="section-header">💊 RECOMMENDED SUPPLEMENTS</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Supplement</th>
+          <th>Dosage</th>
+          <th>Timing</th>
+          <th>Benefits</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${aiAnalysis.supplements.map(supplement => `
+          <tr>
+            <td>${supplement.name}</td>
+            <td>${supplement.dosage}</td>
+            <td>${supplement.timing}</td>
+            <td>${supplement.benefits}</td>
+            <td>${supplement.price}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+  ` : ''}
+
+  ${aiAnalysis.weeklyPredictions && aiAnalysis.weeklyPredictions.length > 0 ? `
+  <div class="section">
+    <div class="section-header">📈 WEEKLY PREDICTIONS</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Expected Changes</th>
+          <th>Recommended Actions</th>
+          <th>Warning Signs</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${aiAnalysis.weeklyPredictions.map(prediction => `
+          <tr>
+            <td>${prediction.week}</td>
+            <td>${prediction.expectedChanges.join(', ')}</td>
+            <td>${prediction.recommendedActions.join(', ')}</td>
+            <td>${prediction.warningSignsToWatch.join(', ')}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+  ` : ''}
+  ` : ''}
+
+  ${availableHospitals.length > 0 ? `
   <div class="section">
     <div class="section-header">🏥 NEARBY HOSPITALS</div>
-    <div class="section-content">
-      ${aiAnalysis.nearbyHospitals
-        .map(
-          (hospital) => `
-        <div class="facility-card">
-          <div class="facility-name">${hospital.name}</div>
-          <div class="facility-details">
-            📍 ${hospital.address} • ${hospital.distance}<br>
-            🏥 ${hospital.specialties}<br>
-            ⭐ ${hospital.rating} • 📞 ${hospital.phone}<br>
-            🚨 ${hospital.emergency}
-          </div>
-        </div>
-      `,
-        )
-        .join("")}
-    </div>
+    ${availableHospitals.map(hospital => `
+      <div class="facility-compact">
+        <div class="facility-name">${hospital.name} ${formData.selectedHospital?.id === hospital.id ? '✓ SELECTED' : ''}</div>
+        <div>📍 ${hospital.address} • 📏 ${hospital.distance} • ⭐ ${hospital.rating}</div>
+        <div>🏥 ${hospital.specialties}</div>
+        <div>📞 ${hospital.phone} • 🚨 ${hospital.emergency}</div>
+      </div>
+    `).join('')}
   </div>
+  ` : ''}
 
-  <!-- Lab Centers -->
+  ${availableLabCenters.length > 0 ? `
   <div class="section">
     <div class="section-header">🧪 NEARBY LAB CENTERS</div>
-    <div class="section-content">
-      ${aiAnalysis.labCenters
-        .map(
-          (lab) => `
-        <div class="facility-card">
-          <div class="facility-name">${lab.name}</div>
-          <div class="facility-details">
-            📍 ${lab.address} • ${lab.distance}<br>
-            🔬 ${lab.specialties}<br>
-            ⭐ ${lab.rating} • 📞 ${lab.phone}<br>
-            ⚡ ${lab.emergency}
-          </div>
-        </div>
-      `,
-        )
-        .join("")}
+    ${availableLabCenters.map(lab => `
+      <div class="facility-compact">
+        <div class="facility-name">${lab.name} ${formData.selectedLabCenter?.id === lab.id ? '✓ SELECTED' : ''}</div>
+        <div>📍 ${lab.address} • 📏 ${lab.distance} • ⭐ ${lab.rating}</div>
+        <div>🔬 ${lab.specialties}</div>
+        <div>📞 ${lab.phone} • 🏠 ${lab.emergency}</div>
+      </div>
+    `).join('')}
+  </div>
+  ` : ''}
+
+  ${aiAnalysis?.clinicalNotes ? `
+  <div class="section">
+    <div class="section-header">👨‍⚕️ CLINICAL NOTES FOR HEALTHCARE PROVIDERS</div>
+    <div style="font-size: 8px; line-height: 1.3;">
+      ${aiAnalysis.clinicalNotes}
     </div>
   </div>
-  `
-      : ""
-  }
+  ` : ''}
 
-  <!-- Footer -->
+  <div class="section">
+    <div class="section-header">⚠️ MEDICAL DISCLAIMER</div>
+    <div style="font-size: 7px; line-height: 1.2;">
+      <strong>IMPORTANT:</strong> This AI-generated report is for informational purposes only and should not replace professional medical advice, diagnosis, or treatment. All recommendations must be reviewed and approved by qualified healthcare professionals before implementation. In case of medical emergencies, contact emergency services immediately (108 for India). The medications, dosages, and treatment recommendations are AI-generated suggestions that require medical validation. Always consult with licensed medical practitioners before making any medical decisions.
+    </div>
+  </div>
+
   <div class="footer">
-    <p><strong>MyMedi.ai - AI-Powered Healthcare Management</strong></p>
-    <p>This report follows Indian Medical Council (IMC) and WHO guidelines for maternal care.</p>
-    <p>Always consult with your healthcare provider for medical decisions.</p>
-    <p>Report generated on ${currentDate} at ${currentTime}</p>
-    <p>© 2024 MyMedi.ai - Empowering Healthcare Through AI</p>
+    <p><strong>MyMedi.ai</strong> - AI-Powered Maternal Health Care | Report Generated: ${currentDate} ${currentTime} IST</p>
+    <p>🌐 www.mymedi.ai | 📧 support@mymedi.ai | Emergency: 108 | Report ID: PRC-${Date.now().toString().slice(-8)}</p>
+    <p>This report contains comprehensive pregnancy care information including ${formData.currentWeek ? `Week ${formData.currentWeek}` : 'pregnancy'} details, medical history, lifestyle factors, and AI-driven recommendations.</p>
   </div>
 </body>
 </html>
-    `
+  `
+
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(reportContent)
+      printWindow.document.close()
+      printWindow.focus()
+      setTimeout(() => {
+        printWindow.print()
+      }, 1000)
+    }
   }
 
   // Options for form dropdowns
@@ -1779,16 +1977,8 @@ Provide analysis following IMC and WHO guidelines in this format:
   ]
 
   const chronicConditions = [
-    "Diabetes Type 1",
-    "Diabetes Type 2",
-    "Gestational Diabetes (previous)",
-    "Hypertension",
-    "Heart Disease",
-    "Asthma",
-    "COPD",
-    "Thyroid Disease (Hypo/Hyper)",
-    "Kidney Disease",
-    "Liver Disease",
+    "Diabetes Type 1", "Diabetes Type 2", "Gestational Diabetes (previous)", "Hypertension",
+    "Heart Disease", "Asthma", "COPD", "Thyroid Disease (Hypo/Hyper)", "Kidney Disease", "Liver Disease",
     "Autoimmune Disease",
     "Depression",
     "Anxiety",
@@ -1802,26 +1992,9 @@ Provide analysis following IMC and WHO guidelines in this format:
   ]
 
   const allergyOptions = [
-    "Penicillin",
-    "Sulfa Drugs",
-    "Aspirin",
-    "Ibuprofen",
-    "Codeine",
-    "Latex",
-    "Peanuts",
-    "Tree Nuts",
-    "Shellfish",
-    "Fish",
-    "Eggs",
-    "Milk",
-    "Soy",
-    "Wheat",
-    "Dust Mites",
-    "Pollen",
-    "Pet Dander",
-    "Mold",
-    "Food Additives",
-    "Contrast Dye",
+    "Penicillin", "Sulfa Drugs", "Aspirin", "Ibuprofen", "Codeine", "Latex", "Peanuts", "Tree Nuts",
+    "Shellfish", "Fish", "Eggs", "Milk", "Soy", "Wheat", "Sesame", "Mustard",
+    "Celery", "Lupin", "Mollusks", "Sulfites",
   ]
 
   const surgeryOptions = [
@@ -1971,21 +2144,6 @@ Provide analysis following IMC and WHO guidelines in this format:
     "Food Aversions",
   ]
 
-  const scanTestTypes = [
-    "Ultrasound (Dating)",
-    "Ultrasound (Anomaly)",
-    "Ultrasound (Growth)",
-    "NT Scan",
-    "Triple Marker Test",
-    "Quadruple Marker Test",
-    "Amniocentesis",
-    "Chorionic Villus Sampling",
-    "Non-Stress Test (NST)",
-    "Biophysical Profile",
-    "Doppler Study",
-    "3D/4D Ultrasound",
-  ]
-
   const workEnvironmentOptions = [
     "Office/Indoor",
     "Factory/Industrial",
@@ -2021,7 +2179,7 @@ Provide analysis following IMC and WHO guidelines in this format:
             <MyMedLogo className="h-12 w-12" />
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                MyMedi.ai - Comprehensive Pregnancy Care
+                Comprehensive Pregnancy Care
               </h1>
               <p className="text-gray-600">Following IMC & WHO Guidelines for Maternal Care</p>
             </div>
@@ -2052,6 +2210,20 @@ Provide analysis following IMC and WHO guidelines in this format:
           )}
         </div>
 
+        {/* Print/Download Buttons */}
+        {aiAnalysis && (
+          <div className="flex justify-center gap-4 mb-6">
+            <Button onClick={handlePrint} className="flex items-center gap-2">
+              <Printer className="h-4 w-4" />
+              Print Report
+            </Button>
+            <Button onClick={handleDownloadPDF} variant="outline" className="flex items-center gap-2 bg-transparent">
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Button>
+          </div>
+        )}
+
         {/* Colored Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-8 mb-6 bg-gradient-to-r from-blue-100 to-purple-100">
@@ -2063,6 +2235,20 @@ Provide analysis following IMC and WHO guidelines in this format:
               Form
             </TabsTrigger>
             <TabsTrigger
+              value="scan-schedule"
+              className="flex items-center gap-1 data-[state=active]:bg-purple-500 data-[state=active]:text-white"
+            >
+              <Calendar className="h-3 w-3" />
+              Scan Schedule
+            </TabsTrigger>
+            <TabsTrigger
+              value="vaccine-schedule"
+              className="flex items-center gap-1 data-[state=active]:bg-red-500 data-[state=active]:text-white"
+            >
+              <Syringe className="h-3 w-3" />
+              Vaccines
+            </TabsTrigger>
+            <TabsTrigger
               value="diet"
               className="flex items-center gap-1 data-[state=active]:bg-green-500 data-[state=active]:text-white"
             >
@@ -2070,25 +2256,11 @@ Provide analysis following IMC and WHO guidelines in this format:
               Diet
             </TabsTrigger>
             <TabsTrigger
-              value="scans"
-              className="flex items-center gap-1 data-[state=active]:bg-purple-500 data-[state=active]:text-white"
-            >
-              <Scan className="h-3 w-3" />
-              Scans
-            </TabsTrigger>
-            <TabsTrigger
               value="supplements"
               className="flex items-center gap-1 data-[state=active]:bg-orange-500 data-[state=active]:text-white"
             >
               <Pill className="h-3 w-3" />
               Supplements
-            </TabsTrigger>
-            <TabsTrigger
-              value="vaccines"
-              className="flex items-center gap-1 data-[state=active]:bg-red-500 data-[state=active]:text-white"
-            >
-              <Syringe className="h-3 w-3" />
-              Vaccines
             </TabsTrigger>
             <TabsTrigger
               value="hospitals"
@@ -2292,99 +2464,6 @@ Provide analysis following IMC and WHO guidelines in this format:
                   </div>
                 </div>
 
-                {/* Father's Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-purple-600 border-b pb-2">Father's Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="fatherName">Father's Full Name</Label>
-                      <Input
-                        id="fatherName"
-                        value={formData.fatherName}
-                        onChange={(e) => handleInputChange("fatherName", e.target.value)}
-                        placeholder="Enter father's full name"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="fatherAge">Age</Label>
-                      <Input
-                        id="fatherAge"
-                        type="number"
-                        value={formData.fatherAge}
-                        onChange={(e) => handleInputChange("fatherAge", Number.parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="fatherEducation">Education Level</Label>
-                      <Select
-                        value={formData.fatherEducation}
-                        onValueChange={(value) => handleInputChange("fatherEducation", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select education level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {educationOptions.map((education) => (
-                            <SelectItem key={education} value={education}>
-                              {education}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="fatherOccupation">Occupation</Label>
-                      <Select
-                        value={formData.fatherOccupation}
-                        onValueChange={(value) => handleInputChange("fatherOccupation", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select occupation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {occupationOptions.map((occupation) => (
-                            <SelectItem key={occupation} value={occupation}>
-                              {occupation}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="fatherBloodType">Blood Type</Label>
-                      <Select
-                        value={formData.fatherBloodType}
-                        onValueChange={(value) => handleInputChange("fatherBloodType", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select blood type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="A">A</SelectItem>
-                          <SelectItem value="B">B</SelectItem>
-                          <SelectItem value="AB">AB</SelectItem>
-                          <SelectItem value="O">O</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="fatherRhFactor">Rh Factor</Label>
-                      <Select
-                        value={formData.fatherRhFactor}
-                        onValueChange={(value) => handleInputChange("fatherRhFactor", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Rh" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+">Positive (+)</SelectItem>
-                          <SelectItem value="-">Negative (-)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Pregnancy Details */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-green-600 border-b pb-2">Pregnancy Details</h3>
@@ -2486,303 +2565,32 @@ Provide analysis following IMC and WHO guidelines in this format:
                   )}
                 </div>
 
-                {/* Current Vitals (Today Only) */}
+                {/* Medical History - Enhanced */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-red-600 border-b pb-2">
-                    Current Day Vitals & Health Status
-                  </h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <Label htmlFor="vitalsTiming">Vitals Timing</Label>
-                      <Select
-                        value={formData.vitalsTiming}
-                        onValueChange={(value) => handleInputChange("vitalsTiming", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select timing" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="morning-fasting">Morning (Fasting)</SelectItem>
-                          <SelectItem value="morning-after-breakfast">Morning (After Breakfast)</SelectItem>
-                          <SelectItem value="afternoon">Afternoon</SelectItem>
-                          <SelectItem value="evening">Evening</SelectItem>
-                          <SelectItem value="night">Night</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="vitalsNotes">Vitals Notes</Label>
-                      <Input
-                        id="vitalsNotes"
-                        value={formData.vitalsNotes}
-                        onChange={(e) => handleInputChange("vitalsNotes", e.target.value)}
-                        placeholder="Any specific notes about current vitals"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="space-y-2">
-                      <Label>Blood Pressure (mmHg)</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          placeholder="Systolic"
-                          value={formData.bloodPressureSystolic}
-                          onChange={(e) =>
-                            handleInputChange("bloodPressureSystolic", Number.parseInt(e.target.value) || 0)
-                          }
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Diastolic"
-                          value={formData.bloodPressureDiastolic}
-                          onChange={(e) =>
-                            handleInputChange("bloodPressureDiastolic", Number.parseInt(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="heartRate">Heart Rate (bpm)</Label>
-                      <Input
-                        id="heartRate"
-                        type="number"
-                        value={formData.heartRate}
-                        onChange={(e) => handleInputChange("heartRate", Number.parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="temperature">Temperature (°F)</Label>
-                      <Input
-                        id="temperature"
-                        type="number"
-                        step="0.1"
-                        value={formData.temperature}
-                        onChange={(e) => handleInputChange("temperature", Number.parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="respiratoryRate">Respiratory Rate (/min)</Label>
-                      <Input
-                        id="respiratoryRate"
-                        type="number"
-                        value={formData.respiratoryRate}
-                        onChange={(e) => handleInputChange("respiratoryRate", Number.parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="oxygenSaturation">Oxygen Saturation (%)</Label>
-                      <Input
-                        id="oxygenSaturation"
-                        type="number"
-                        value={formData.oxygenSaturation}
-                        onChange={(e) => handleInputChange("oxygenSaturation", Number.parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="bloodSugar">Blood Sugar (mg/dL)</Label>
-                      <Input
-                        id="bloodSugar"
-                        type="number"
-                        value={formData.bloodSugar}
-                        onChange={(e) => handleInputChange("bloodSugar", Number.parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hemoglobin">Hemoglobin (g/dL)</Label>
-                      <Input
-                        id="hemoglobin"
-                        type="number"
-                        step="0.1"
-                        value={formData.hemoglobin}
-                        onChange={(e) => handleInputChange("hemoglobin", Number.parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="fundalHeight">Fundal Height (cm)</Label>
-                      <Input
-                        id="fundalHeight"
-                        type="number"
-                        value={formData.fundalHeight}
-                        onChange={(e) => handleInputChange("fundalHeight", Number.parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="fetalHeartRate">Fetal Heart Rate (bpm)</Label>
-                      <Input
-                        id="fetalHeartRate"
-                        type="number"
-                        value={formData.fetalHeartRate}
-                        onChange={(e) => handleInputChange("fetalHeartRate", Number.parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>BMI</Label>
-                      <div className="p-2 bg-blue-50 rounded-md text-center font-semibold text-blue-600">
-                        {formData.bmi}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Weight Gain</Label>
-                      <div className="p-2 bg-green-50 rounded-md text-center font-semibold text-green-600">
-                        {(formData.weight - formData.prePregnancyWeight).toFixed(1)} kg
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Current Symptoms */}
-                  <div className="space-y-2">
-                    <Label>Current Symptoms</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {symptomOptions.map((symptom) => (
-                        <div key={symptom} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`symptom-${symptom}`}
-                            checked={formData.currentSymptoms.includes(symptom)}
-                            onCheckedChange={(checked) =>
-                              handleMultiSelect("currentSymptoms", symptom, checked as boolean)
-                            }
-                          />
-                          <Label htmlFor={`symptom-${symptom}`} className="text-sm">
-                            {symptom}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Scans & Tests with Timing */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-cyan-600 border-b pb-2">Scans & Tests with Timing</h3>
-                    <Button onClick={addScanTest} size="sm" className="flex items-center gap-2">
-                      <Scan className="h-4 w-4" />
-                      Add Scan/Test
-                    </Button>
-                  </div>
-
-                  {formData.scansAndTests.map((scan, index) => (
-                    <Card key={scan.id} className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <Label>Test/Scan Type</Label>
-                          <Select value={scan.type} onValueChange={(value) => updateScanTest(index, "type", value)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {scanTestTypes.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Date</Label>
-                          <Input
-                            type="date"
-                            value={scan.date}
-                            onChange={(e) => updateScanTest(index, "date", e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label>Time</Label>
-                          <Input
-                            type="time"
-                            value={scan.time}
-                            onChange={(e) => updateScanTest(index, "time", e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label>Facility/Hospital</Label>
-                          <Input
-                            value={scan.facility}
-                            onChange={(e) => updateScanTest(index, "facility", e.target.value)}
-                            placeholder="Hospital/clinic name"
-                          />
-                        </div>
-                        <div>
-                          <Label>Doctor Name</Label>
-                          <Input
-                            value={scan.doctor}
-                            onChange={(e) => updateScanTest(index, "doctor", e.target.value)}
-                            placeholder="Doctor's name"
-                          />
-                        </div>
-                        <div>
-                          <Label>Next Due Date</Label>
-                          <Input
-                            type="date"
-                            value={scan.nextDue}
-                            onChange={(e) => updateScanTest(index, "nextDue", e.target.value)}
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <Label>Results/Findings</Label>
-                          <Textarea
-                            value={scan.results}
-                            onChange={(e) => updateScanTest(index, "results", e.target.value)}
-                            placeholder="Test results or scan findings"
-                            className="h-20"
-                          />
-                        </div>
-                        <div className="flex items-end">
-                          <Button
-                            onClick={() => removeScanTest(index)}
-                            variant="destructive"
-                            size="sm"
-                            className="w-full"
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <Label>Additional Notes</Label>
-                        <Textarea
-                          value={scan.notes}
-                          onChange={(e) => updateScanTest(index, "notes", e.target.value)}
-                          placeholder="Any additional notes or observations"
-                          className="h-16"
-                        />
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Medical History */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-orange-600 border-b pb-2">Medical History</h3>
-
-                  <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-red-600 border-b pb-2">Medical History</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label>Chronic Conditions</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {chronicConditions.map((condition) => (
                           <div key={condition} className="flex items-center space-x-2">
                             <Checkbox
-                              id={`condition-${condition}`}
+                              id={`chronic-${condition}`}
                               checked={formData.chronicConditions.includes(condition)}
                               onCheckedChange={(checked) =>
                                 handleMultiSelect("chronicConditions", condition, checked as boolean)
                               }
                             />
-                            <Label htmlFor={`condition-${condition}`} className="text-sm">
+                            <Label htmlFor={`chronic-${condition}`} className="text-sm">
                               {condition}
                             </Label>
                           </div>
                         ))}
                       </div>
                     </div>
-
                     <div>
-                      <Label>Allergies</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <Label>Known Allergies</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {allergyOptions.map((allergy) => (
                           <div key={allergy} className="flex items-center space-x-2">
                             <Checkbox
@@ -2797,10 +2605,9 @@ Provide analysis following IMC and WHO guidelines in this format:
                         ))}
                       </div>
                     </div>
-
                     <div>
                       <Label>Previous Surgeries</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {surgeryOptions.map((surgery) => (
                           <div key={surgery} className="flex items-center space-x-2">
                             <Checkbox
@@ -2817,10 +2624,9 @@ Provide analysis following IMC and WHO guidelines in this format:
                         ))}
                       </div>
                     </div>
-
                     <div>
                       <Label>Current Medications</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {medicationOptions.map((medication) => (
                           <div key={medication} className="flex items-center space-x-2">
                             <Checkbox
@@ -2837,30 +2643,11 @@ Provide analysis following IMC and WHO guidelines in this format:
                         ))}
                       </div>
                     </div>
-
-                    <div>
-                      <Label>Vaccination Status</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                        {vaccinationOptions.map((vaccination) => (
-                          <div key={vaccination} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`vaccination-${vaccination}`}
-                              checked={formData.vaccinationStatus.includes(vaccination)}
-                              onCheckedChange={(checked) =>
-                                handleMultiSelect("vaccinationStatus", vaccination, checked as boolean)
-                              }
-                            />
-                            <Label htmlFor={`vaccination-${vaccination}`} className="text-sm">
-                              {vaccination}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label>Previous Pregnancy Complications</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {complicationOptions.map((complication) => (
                           <div key={complication} className="flex items-center space-x-2">
                             <Checkbox
@@ -2877,22 +2664,31 @@ Provide analysis following IMC and WHO guidelines in this format:
                         ))}
                       </div>
                     </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="bloodTransfusionHistory"
-                        checked={formData.bloodTransfusionHistory}
-                        onCheckedChange={(checked) => handleInputChange("bloodTransfusionHistory", checked as boolean)}
-                      />
-                      <Label htmlFor="bloodTransfusionHistory">History of Blood Transfusion</Label>
+                    <div>
+                      <Label>Vaccination Status</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {vaccinationOptions.map((vaccine) => (
+                          <div key={vaccine} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`vaccine-${vaccine}`}
+                              checked={formData.vaccinationStatus.includes(vaccine)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("vaccinationStatus", vaccine, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`vaccine-${vaccine}`} className="text-sm">
+                              {vaccine}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Family History */}
+                {/* Family Medical History - Enhanced */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-pink-600 border-b pb-2">Family History</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <h3 className="text-lg font-semibold text-orange-600 border-b pb-2">Family Medical History</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="familyDiabetes"
@@ -2936,9 +2732,160 @@ Provide analysis following IMC and WHO guidelines in this format:
                   </div>
                 </div>
 
-                {/* Lifestyle & Social Factors */}
+                {/* Current Vitals - Enhanced */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-teal-600 border-b pb-2">Lifestyle & Social Factors</h3>
+                  <h3 className="text-lg font-semibold text-pink-600 border-b pb-2">Current Vitals & Health Status</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="bloodPressureSystolic">Blood Pressure (Systolic)</Label>
+                      <Input
+                        id="bloodPressureSystolic"
+                        type="number"
+                        value={formData.bloodPressureSystolic}
+                        onChange={(e) =>
+                          handleInputChange("bloodPressureSystolic", Number.parseInt(e.target.value) || 0)
+                        }
+                        placeholder="e.g., 120"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bloodPressureDiastolic">Blood Pressure (Diastolic)</Label>
+                      <Input
+                        id="bloodPressureDiastolic"
+                        type="number"
+                        value={formData.bloodPressureDiastolic}
+                        onChange={(e) =>
+                          handleInputChange("bloodPressureDiastolic", Number.parseInt(e.target.value) || 0)
+                        }
+                        placeholder="e.g., 80"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="heartRate">Heart Rate (bpm)</Label>
+                      <Input
+                        id="heartRate"
+                        type="number"
+                        value={formData.heartRate}
+                        onChange={(e) => handleInputChange("heartRate", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 72"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="temperature">Temperature (°F)</Label>
+                      <Input
+                        id="temperature"
+                        type="number"
+                        step="0.1"
+                        value={formData.temperature}
+                        onChange={(e) => handleInputChange("temperature", Number.parseFloat(e.target.value) || 0)}
+                        placeholder="e.g., 98.6"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="respiratoryRate">Respiratory Rate (/min)</Label>
+                      <Input
+                        id="respiratoryRate"
+                        type="number"
+                        value={formData.respiratoryRate}
+                        onChange={(e) => handleInputChange("respiratoryRate", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 16"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="oxygenSaturation">Oxygen Saturation (%)</Label>
+                      <Input
+                        id="oxygenSaturation"
+                        type="number"
+                        value={formData.oxygenSaturation}
+                        onChange={(e) => handleInputChange("oxygenSaturation", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 98"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bloodSugar">Blood Sugar (mg/dL)</Label>
+                      <Input
+                        id="bloodSugar"
+                        type="number"
+                        value={formData.bloodSugar}
+                        onChange={(e) => handleInputChange("bloodSugar", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 90"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="hemoglobin">Hemoglobin (g/dL)</Label>
+                      <Input
+                        id="hemoglobin"
+                        type="number"
+                        step="0.1"
+                        value={formData.hemoglobin}
+                        onChange={(e) => handleInputChange("hemoglobin", Number.parseFloat(e.target.value) || 0)}
+                        placeholder="e.g., 12.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="fundalHeight">Fundal Height (cm)</Label>
+                      <Input
+                        id="fundalHeight"
+                        type="number"
+                        value={formData.fundalHeight}
+                        onChange={(e) => handleInputChange("fundalHeight", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 24"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="fetalHeartRate">Fetal Heart Rate (bpm)</Label>
+                      <Input
+                        id="fetalHeartRate"
+                        type="number"
+                        value={formData.fetalHeartRate}
+                        onChange={(e) => handleInputChange("fetalHeartRate", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 140"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitalsTiming">When were vitals taken?</Label>
+                      <Input
+                        id="vitalsTiming"
+                        value={formData.vitalsTiming}
+                        onChange={(e) => handleInputChange("vitalsTiming", e.target.value)}
+                        placeholder="e.g., Today morning, Yesterday"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Current Symptoms</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                      {symptomOptions.map((symptom) => (
+                        <div key={symptom} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`symptom-${symptom}`}
+                            checked={formData.currentSymptoms.includes(symptom)}
+                            onCheckedChange={(checked) =>
+                              handleMultiSelect("currentSymptoms", symptom, checked as boolean)
+                            }
+                          />
+                          <Label htmlFor={`symptom-${symptom}`} className="text-sm">
+                            {symptom}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="vitalsNotes">Additional Notes about Current Health</Label>
+                    <Textarea
+                      id="vitalsNotes"
+                      value={formData.vitalsNotes}
+                      onChange={(e) => handleInputChange("vitalsNotes", e.target.value)}
+                      placeholder="Any additional information about your current health status..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Lifestyle & Diet Preferences - Enhanced */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-indigo-600 border-b pb-2">Lifestyle & Diet Preferences</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="smokingStatus">Smoking Status</Label>
@@ -2953,7 +2900,25 @@ Provide analysis following IMC and WHO guidelines in this format:
                           <SelectItem value="never">Never smoked</SelectItem>
                           <SelectItem value="former">Former smoker</SelectItem>
                           <SelectItem value="current">Current smoker</SelectItem>
-                          <SelectItem value="quit-pregnancy">Quit during pregnancy</SelectItem>
+                          <SelectItem value="occasional">Occasional smoker</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="alcoholConsumption">Alcohol Consumption</Label>
+                      <Select
+                        value={formData.alcoholConsumption}
+                        onValueChange={(value) => handleInputChange("alcoholConsumption", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select alcohol consumption" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="never">Never</SelectItem>
+                          <SelectItem value="rarely">Rarely</SelectItem>
+                          <SelectItem value="occasionally">Occasionally</SelectItem>
+                          <SelectItem value="regularly">Regularly</SelectItem>
+                          <SelectItem value="stopped-for-pregnancy">Stopped for pregnancy</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -2968,28 +2933,10 @@ Provide analysis following IMC and WHO guidelines in this format:
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="never">Never used</SelectItem>
+                          <SelectItem value="former">Former user</SelectItem>
+                          <SelectItem value="current">Current user</SelectItem>
                           <SelectItem value="chewing">Chewing tobacco</SelectItem>
                           <SelectItem value="smoking">Smoking tobacco</SelectItem>
-                          <SelectItem value="both">Both</SelectItem>
-                          <SelectItem value="quit">Quit</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="alcoholConsumption">Alcohol Consumption</Label>
-                      <Select
-                        value={formData.alcoholConsumption}
-                        onValueChange={(value) => handleInputChange("alcoholConsumption", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select alcohol consumption" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          <SelectItem value="occasional">Occasional (before pregnancy)</SelectItem>
-                          <SelectItem value="moderate">Moderate (before pregnancy)</SelectItem>
-                          <SelectItem value="heavy">Heavy (before pregnancy)</SelectItem>
-                          <SelectItem value="quit-pregnancy">Quit during pregnancy</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -3003,82 +2950,14 @@ Provide analysis following IMC and WHO guidelines in this format:
                           <SelectValue placeholder="Select exercise frequency" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="none">No exercise</SelectItem>
                           <SelectItem value="light">Light (1-2 times/week)</SelectItem>
                           <SelectItem value="moderate">Moderate (3-4 times/week)</SelectItem>
-                          <SelectItem value="heavy">Heavy (5+ times/week)</SelectItem>
+                          <SelectItem value="active">Active (5-6 times/week)</SelectItem>
+                          <SelectItem value="very-active">Very active (daily)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="workEnvironment">Work Environment</Label>
-                      <Select
-                        value={formData.workEnvironment}
-                        onValueChange={(value) => handleInputChange("workEnvironment", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select work environment" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {workEnvironmentOptions.map((env) => (
-                            <SelectItem key={env} value={env}>
-                              {env}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="domesticViolence">Domestic Violence Screening</Label>
-                      <Select
-                        value={formData.domesticViolence}
-                        onValueChange={(value) => handleInputChange("domesticViolence", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select response" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="no">No</SelectItem>
-                          <SelectItem value="yes">Yes</SelectItem>
-                          <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="stressLevel">Stress Level (1-10)</Label>
-                      <Input
-                        id="stressLevel"
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={formData.stressLevel}
-                        onChange={(e) => handleInputChange("stressLevel", Number.parseInt(e.target.value) || 1)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="sleepHours">Sleep Hours per Night</Label>
-                      <Input
-                        id="sleepHours"
-                        type="number"
-                        value={formData.sleepHours}
-                        onChange={(e) => handleInputChange("sleepHours", Number.parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="exposureToChemicals"
-                        checked={formData.exposureToChemicals}
-                        onCheckedChange={(checked) => handleInputChange("exposureToChemicals", checked as boolean)}
-                      />
-                      <Label htmlFor="exposureToChemicals">Exposure to Chemicals at Work</Label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Diet Customization */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-indigo-600 border-b pb-2">Diet Customization</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="dietType">Diet Type</Label>
                       <Select value={formData.dietType} onValueChange={(value) => handleInputChange("dietType", value)}>
@@ -3086,12 +2965,12 @@ Provide analysis following IMC and WHO guidelines in this format:
                           <SelectValue placeholder="Select diet type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="balanced">Balanced Diet</SelectItem>
+                          <SelectItem value="omnivore">Omnivore</SelectItem>
                           <SelectItem value="vegetarian">Vegetarian</SelectItem>
                           <SelectItem value="vegan">Vegan</SelectItem>
-                          <SelectItem value="jain">Jain Vegetarian</SelectItem>
-                          <SelectItem value="non-vegetarian">Non-Vegetarian</SelectItem>
+                          <SelectItem value="jain-vegetarian">Jain Vegetarian</SelectItem>
                           <SelectItem value="pescatarian">Pescatarian</SelectItem>
+                          <SelectItem value="eggetarian">Eggetarian</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -3105,53 +2984,48 @@ Provide analysis following IMC and WHO guidelines in this format:
                       />
                     </div>
                     <div>
-                      <Label htmlFor="cookingTime">Available Cooking Time</Label>
-                      <Select
-                        value={formData.cookingTime}
-                        onValueChange={(value) => handleInputChange("cookingTime", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select cooking time" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="15-30 minutes">15-30 minutes</SelectItem>
-                          <SelectItem value="30-45 minutes">30-45 minutes</SelectItem>
-                          <SelectItem value="45-60 minutes">45-60 minutes</SelectItem>
-                          <SelectItem value="60+ minutes">60+ minutes</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="stressLevel">Stress Level (1-10)</Label>
+                      <Input
+                        id="stressLevel"
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={formData.stressLevel}
+                        onChange={(e) => handleInputChange("stressLevel", Number.parseInt(e.target.value) || 5)}
+                      />
                     </div>
                     <div>
-                      <Label htmlFor="budgetRange">Budget Range</Label>
-                      <Select
-                        value={formData.budgetRange}
-                        onValueChange={(value) => handleInputChange("budgetRange", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select budget range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low (₹100-200/day)</SelectItem>
-                          <SelectItem value="moderate">Moderate (₹200-400/day)</SelectItem>
-                          <SelectItem value="high">High (₹400+/day)</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="sleepHours">Average Sleep Hours</Label>
+                      <Input
+                        id="sleepHours"
+                        type="number"
+                        min="1"
+                        max="12"
+                        value={formData.sleepHours}
+                        onChange={(e) => handleInputChange("sleepHours", Number.parseInt(e.target.value) || 8)}
+                        placeholder="e.g., 8"
+                      />
                     </div>
                     <div>
-                      <Label htmlFor="waterIntake">Water Intake (glasses/day)</Label>
+                      <Label htmlFor="waterIntake">Daily Water Intake (glasses)</Label>
                       <Input
                         id="waterIntake"
                         type="number"
                         value={formData.waterIntake}
-                        onChange={(e) => handleInputChange("waterIntake", Number.parseInt(e.target.value) || 0)}
+                        onChange={(e) => handleInputChange("waterIntake", Number.parseInt(e.target.value) || 8)}
+                        placeholder="e.g., 8"
                       />
                     </div>
                   </div>
+                </div>
 
-                  <div className="space-y-4">
+                {/* Detailed Diet Preferences */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-emerald-600 border-b pb-2">Detailed Diet Preferences</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label>Dietary Restrictions</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {dietaryRestrictionOptions.map((restriction) => (
                           <div key={restriction} className="flex items-center space-x-2">
                             <Checkbox
@@ -3168,10 +3042,9 @@ Provide analysis following IMC and WHO guidelines in this format:
                         ))}
                       </div>
                     </div>
-
                     <div>
                       <Label>Food Allergies</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {foodAllergyOptions.map((allergy) => (
                           <div key={allergy} className="flex items-center space-x-2">
                             <Checkbox
@@ -3188,30 +3061,28 @@ Provide analysis following IMC and WHO guidelines in this format:
                         ))}
                       </div>
                     </div>
-
                     <div>
                       <Label>Meal Preferences</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {mealPreferenceOptions.map((preference) => (
                           <div key={preference} className="flex items-center space-x-2">
                             <Checkbox
-                              id={`meal-preference-${preference}`}
+                              id={`meal-pref-${preference}`}
                               checked={formData.mealPreferences.includes(preference)}
                               onCheckedChange={(checked) =>
                                 handleMultiSelect("mealPreferences", preference, checked as boolean)
                               }
                             />
-                            <Label htmlFor={`meal-preference-${preference}`} className="text-sm">
+                            <Label htmlFor={`meal-pref-${preference}`} className="text-sm">
                               {preference}
                             </Label>
                           </div>
                         ))}
                       </div>
                     </div>
-
                     <div>
                       <Label>Favorite Ingredients</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {ingredientOptions.map((ingredient) => (
                           <div key={ingredient} className="flex items-center space-x-2">
                             <Checkbox
@@ -3228,10 +3099,9 @@ Provide analysis following IMC and WHO guidelines in this format:
                         ))}
                       </div>
                     </div>
-
                     <div>
-                      <Label>Supplements Currently Used</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      <Label>Current Supplements</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
                         {supplementOptions.map((supplement) => (
                           <div key={supplement} className="flex items-center space-x-2">
                             <Checkbox
@@ -3247,6 +3117,40 @@ Provide analysis following IMC and WHO guidelines in this format:
                           </div>
                         ))}
                       </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="cookingTime">Available Cooking Time</Label>
+                      <Select
+                        value={formData.cookingTime}
+                        onValueChange={(value) => handleInputChange("cookingTime", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cooking time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="minimal">Minimal (15-30 min)</SelectItem>
+                          <SelectItem value="moderate">Moderate (30-60 min)</SelectItem>
+                          <SelectItem value="extensive">Extensive (1+ hours)</SelectItem>
+                          <SelectItem value="meal-prep">Meal prep on weekends</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="budgetRange">Food Budget Range</Label>
+                      <Select
+                        value={formData.budgetRange}
+                        onValueChange={(value) => handleInputChange("budgetRange", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select budget range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low (₹3000-5000/month)</SelectItem>
+                          <SelectItem value="moderate">Moderate (₹5000-8000/month)</SelectItem>
+                          <SelectItem value="high">High (₹8000-12000/month)</SelectItem>
+                          <SelectItem value="premium">Premium (₹12000+/month)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </div>
@@ -3275,172 +3179,94 @@ Provide analysis following IMC and WHO guidelines in this format:
             </Card>
           </TabsContent>
 
-          {/* Diet Tab */}
-          <TabsContent value="diet" className="space-y-6">
-            {aiAnalysis?.dietPlan ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Utensils className="h-5 w-5" />
-                    Personalized Diet Plan - Trimester {aiAnalysis.dietPlan.trimester}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Diet Overview */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">{aiAnalysis.dietPlan.dailyCalories}</div>
-                      <div className="text-sm text-gray-600">Daily Calories</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{aiAnalysis.dietPlan.dailyProtein}g</div>
-                      <div className="text-sm text-gray-600">Daily Protein</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">7 Days</div>
-                      <div className="text-sm text-gray-600">Meal Plan</div>
-                    </div>
-                  </div>
-
-                  {/* Key Nutrients */}
-                  <div>
-                    <h4 className="font-semibold mb-2">Key Nutrients Required:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {aiAnalysis.dietPlan.keyNutrients.map((nutrient, index) => (
-                        <Badge key={index} variant="secondary">
-                          {nutrient}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Supplements */}
-                  <div>
-                    <h4 className="font-semibold mb-2">Recommended Supplements:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {aiAnalysis.dietPlan.supplements.map((supplement, index) => (
-                        <Badge key={index} variant="outline" className="bg-orange-50">
-                          {supplement}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Foods to Avoid */}
-                  <div>
-                    <h4 className="font-semibold mb-2 text-red-600">Foods to Avoid:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {aiAnalysis.dietPlan.avoidFoods.map((food, index) => (
-                        <Badge key={index} variant="destructive">
-                          {food}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Hydration */}
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-blue-600">Hydration Guidelines:</h4>
-                    <p className="text-sm">{aiAnalysis.dietPlan.hydration}</p>
-                  </div>
-
-                  {/* IMC & WHO Recommendations */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-semibold mb-2 text-blue-600">🇮🇳 IMC Recommendations:</h4>
-                      <ul className="text-sm space-y-1">
-                        {aiAnalysis.dietPlan.imcRecommendations.map((rec, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <span className="text-blue-600">•</span>
-                            {rec}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <h4 className="font-semibold mb-2 text-green-600">🌍 WHO Recommendations:</h4>
-                      <ul className="text-sm space-y-1">
-                        {aiAnalysis.dietPlan.whoRecommendations.map((rec, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <span className="text-green-600">•</span>
-                            {rec}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Apple className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">
-                    Please complete the form and generate AI analysis to view your personalized diet plan.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Scans Tab */}
-          <TabsContent value="scans" className="space-y-6">
+          {/* Scan Schedule Tab */}
+          <TabsContent value="scan-schedule" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Scan className="h-5 w-5" />
-                  Pregnancy Scans & Tests Schedule
+                  <Calendar className="h-5 w-5" />
+                  Pregnancy Scan Schedule with Dates
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {suggestedTests.length > 0 ? (
+                {pregnancyScanSchedule.length > 0 ? (
                   <div className="space-y-4">
-                    {suggestedTests.map((test) => (
-                      <Card key={test.id} className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold text-lg">{test.name}</h4>
-                          <Badge
-                            variant={
-                              test.importance === "essential"
-                                ? "destructive"
-                                : test.importance === "recommended"
+                    {pregnancyScanSchedule.map((scan) => (
+                      <Card
+                        key={scan.id}
+                        className={`p-4 border-l-4 ${
+                          scan.status === "completed"
+                            ? "border-l-green-500 bg-green-50"
+                            : scan.status === "overdue"
+                              ? "border-l-red-500 bg-red-50"
+                              : "border-l-blue-500 bg-blue-50"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-semibold text-lg">{scan.scanName}</h4>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                scan.importance === "essential"
+                                  ? "destructive"
+                                  : scan.importance === "recommended"
+                                    ? "default"
+                                    : "secondary"
+                              }
+                            >
+                              {scan.importance}
+                            </Badge>
+                            <Badge
+                              variant={
+                                scan.status === "completed"
                                   ? "default"
-                                  : "secondary"
-                            }
-                          >
-                            {test.importance}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p>
-                              <strong>Category:</strong> {test.category}
-                            </p>
-                            <p>
-                              <strong>Recommended Week:</strong> {test.recommendedWeek}
-                            </p>
-                            <p>
-                              <strong>Due Date:</strong> {test.dueDate}
-                            </p>
-                            <p>
-                              <strong>Normal Range:</strong> {test.normalRange}
-                            </p>
-                          </div>
-                          <div>
-                            <p>
-                              <strong>Description:</strong> {test.description}
-                            </p>
-                            <p>
-                              <strong>Preparation:</strong> {test.preparation}
-                            </p>
+                                  : scan.status === "overdue"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                            >
+                              {scan.status}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="mt-4 space-y-2">
-                          <div className="p-2 bg-blue-50 rounded text-xs">
-                            <strong>IMC Guideline:</strong> {test.imcGuideline}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Label>Recommended Week</Label>
+                            <div className="text-sm font-medium">Week {scan.recommendedWeek}</div>
                           </div>
-                          <div className="p-2 bg-green-50 rounded text-xs">
-                            <strong>WHO Guideline:</strong> {test.whoGuideline}
+                          <div>
+                            <Label>Scheduled Date</Label>
+                            <Input
+                              type="date"
+                              value={scan.scheduledDate}
+                              onChange={(e) => updateScanSchedule(scan.id, "scheduledDate", e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Actual Date (if completed)</Label>
+                            <Input
+                              type="date"
+                              value={scan.actualDate || ""}
+                              onChange={(e) => updateScanSchedule(scan.id, "actualDate", e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Cost</Label>
+                            <div className="text-sm font-medium text-green-600">{scan.cost}</div>
+                          </div>
+                        </div>
+
+                        <div className="text-sm text-gray-600 mb-2">
+                          <strong>Description:</strong> {scan.description}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                          <div className="p-2 bg-blue-50 rounded">
+                            <strong>IMC Guideline:</strong> {scan.imcGuideline}
+                          </div>
+                          <div className="p-2 bg-green-50 rounded">
+                            <strong>WHO Guideline:</strong> {scan.whoGuideline}
                           </div>
                         </div>
                       </Card>
@@ -3448,10 +3274,197 @@ Provide analysis following IMC and WHO guidelines in this format:
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Scan className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Please enter your pregnancy details to view the scan schedule.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Vaccine Schedule Tab */}
+          <TabsContent value="vaccine-schedule" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Syringe className="h-5 w-5" />
+                  Pregnancy Vaccination Schedule with Dates
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {vaccineScheduleWithDates.length > 0 ? (
+                  <div className="space-y-4">
+                    {vaccineScheduleWithDates.map((vaccine) => (
+                      <Card
+                        key={vaccine.id}
+                        className={`p-4 border-l-4 ${
+                          vaccine.status === "completed"
+                            ? "border-l-green-500 bg-green-50"
+                            : vaccine.status === "overdue"
+                              ? "border-l-red-500 bg-red-50"
+                              : "border-l-blue-500 bg-blue-50"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-semibold text-lg">{vaccine.vaccine}</h4>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{vaccine.importance}</Badge>
+                            <Badge
+                              variant={
+                                vaccine.status === "completed"
+                                  ? "default"
+                                  : vaccine.status === "overdue"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                            >
+                              {vaccine.status}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Label>Recommended Week</Label>
+                            <div className="text-sm font-medium">Week {vaccine.recommendedWeek}</div>
+                          </div>
+                          <div>
+                            <Label>Scheduled Date</Label>
+                            <Input
+                              type="date"
+                              value={vaccine.scheduledDate}
+                              onChange={(e) => updateVaccineSchedule(vaccine.id, "scheduledDate", e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Actual Date (if given)</Label>
+                            <Input
+                              type="date"
+                              value={vaccine.actualDate || ""}
+                              onChange={(e) => updateVaccineSchedule(vaccine.id, "actualDate", e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="text-sm text-gray-600 mb-2">
+                          <strong>Description:</strong> {vaccine.description}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mb-2">
+                          <div className="p-2 bg-yellow-50 rounded">
+                            <strong>Side Effects:</strong> {vaccine.sideEffects}
+                          </div>
+                          <div className="p-2 bg-red-50 rounded">
+                            <strong>Contraindications:</strong> {vaccine.contraindications}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                          <div className="p-2 bg-blue-50 rounded">
+                            <strong>IMC Guideline:</strong> {vaccine.imcGuideline}
+                          </div>
+                          <div className="p-2 bg-green-50 rounded">
+                            <strong>WHO Guideline:</strong> {vaccine.whoGuideline}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Syringe className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-600">
-                      Please enter your pregnancy details to view recommended scans and tests.
+                      Please enter your pregnancy details to view the vaccination schedule.
                     </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Diet Tab */}
+          <TabsContent value="diet" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Utensils className="h-5 w-5" />
+                  Personalized Diet Plan
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {aiAnalysis?.dietPlan ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{aiAnalysis.dietPlan.dailyCalories}</div>
+                        <div className="text-sm text-gray-600">Daily Calories</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{aiAnalysis.dietPlan.dailyProtein}g</div>
+                        <div className="text-sm text-gray-600">Daily Protein</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">
+                          Trimester {aiAnalysis.dietPlan.trimester}
+                        </div>
+                        <div className="text-sm text-gray-600">Current Phase</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-2">Key Nutrients</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {aiAnalysis.dietPlan.keyNutrients.map((nutrient, index) => (
+                          <Badge key={index} variant="outline" className="bg-green-50">
+                            {nutrient}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-2">Foods to Avoid</h4>
+                      <div className="p-3 bg-red-50 rounded-lg">
+                        <div className="text-sm text-red-700">{aiAnalysis.dietPlan.avoidFoods.join(", ")}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-2">Hydration Guidelines</h4>
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <div className="text-sm text-blue-700">{aiAnalysis.dietPlan.hydration}</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <h4 className="font-semibold mb-2 text-blue-700">IMC Recommendations</h4>
+                        <ul className="text-sm space-y-1">
+                          {aiAnalysis.dietPlan.imcRecommendations.map((rec, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-blue-600">•</span>
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <h4 className="font-semibold mb-2 text-green-700">WHO Recommendations</h4>
+                        <ul className="text-sm space-y-1">
+                          {aiAnalysis.dietPlan.whoRecommendations.map((rec, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-green-600">•</span>
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Utensils className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Generate AI analysis to view your personalized diet plan.</p>
                   </div>
                 )}
               </CardContent>
@@ -3460,426 +3473,276 @@ Provide analysis following IMC and WHO guidelines in this format:
 
           {/* Supplements Tab */}
           <TabsContent value="supplements" className="space-y-6">
-            {aiAnalysis?.supplements ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Pill className="h-5 w-5" />
-                    Recommended Supplements
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Pill className="h-5 w-5" />
+                  Recommended Supplements
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {aiAnalysis?.supplements ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {aiAnalysis.supplements.map((supplement, index) => (
                       <Card key={index} className="p-4">
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-start justify-between mb-2">
                           <h4 className="font-semibold text-lg">{supplement.name}</h4>
                           <Badge variant="outline">{supplement.price}</Badge>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-2 text-sm">
                           <div>
-                            <p>
-                              <strong>Dosage:</strong> {supplement.dosage}
-                            </p>
-                            <p>
-                              <strong>Timing:</strong> {supplement.timing}
-                            </p>
-                            <p>
-                              <strong>Brands:</strong> {supplement.brands}
-                            </p>
+                            <strong>Dosage:</strong> {supplement.dosage}
                           </div>
                           <div>
-                            <p>
-                              <strong>Benefits:</strong> {supplement.benefits}
-                            </p>
-                            <p>
-                              <strong>Warnings:</strong> <span className="text-red-600">{supplement.warnings}</span>
-                            </p>
+                            <strong>Timing:</strong> {supplement.timing}
                           </div>
+                          <div>
+                            <strong>Benefits:</strong> {supplement.benefits}
+                          </div>
+                          <div>
+                            <strong>Brands:</strong> {supplement.brands}
+                          </div>
+                          {supplement.warnings && (
+                            <div className="p-2 bg-yellow-50 rounded text-yellow-800">
+                              <strong>Warnings:</strong> {supplement.warnings}
+                            </div>
+                          )}
                         </div>
                       </Card>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Pill className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">
-                    Please complete the form and generate AI analysis to view supplement recommendations.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Vaccines Tab */}
-          <TabsContent value="vaccines" className="space-y-6">
-            {aiAnalysis?.vaccines ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Syringe className="h-5 w-5" />
-                    Pregnancy Vaccination Schedule
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {aiAnalysis.vaccines.map((vaccine, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold text-lg">{vaccine.vaccine}</h4>
-                          <Badge variant="secondary">{vaccine.importance}</Badge>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p>
-                              <strong>Timing:</strong> {vaccine.timing}
-                            </p>
-                            <p>
-                              <strong>Description:</strong> {vaccine.description}
-                            </p>
-                          </div>
-                          <div>
-                            <p>
-                              <strong>Side Effects:</strong> {vaccine.sideEffects}
-                            </p>
-                            <p>
-                              <strong>Contraindications:</strong>{" "}
-                              <span className="text-red-600">{vaccine.contraindications}</span>
-                            </p>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
+                ) : (
+                  <div className="text-center py-12">
+                    <Pill className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Generate AI analysis to view your supplement recommendations.</p>
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Syringe className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">
-                    Please complete the form and generate AI analysis to view vaccination schedule.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Hospitals Tab */}
           <TabsContent value="hospitals" className="space-y-6">
-            {aiAnalysis?.nearbyHospitals ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    Nearby Hospitals & Healthcare Facilities
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {aiAnalysis.nearbyHospitals.map((hospital, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="flex justify-between items-start mb-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Nearby Hospitals for Delivery
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {availableHospitals.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {availableHospitals.map((hospital) => (
+                      <Card
+                        key={hospital.id}
+                        className={`p-4 cursor-pointer transition-colors ${
+                          formData.selectedHospital?.id === hospital.id
+                            ? "border-blue-500 bg-blue-50"
+                            : "hover:bg-gray-50"
+                        }`}
+                        onClick={() => handleHospitalSelection(hospital)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
                           <h4 className="font-semibold text-lg">{hospital.name}</h4>
                           <Badge variant="outline">{hospital.rating}</Badge>
                         </div>
                         <div className="space-y-2 text-sm">
-                          <p>
-                            <strong>📍 Address:</strong> {hospital.address}
-                          </p>
-                          <p>
-                            <strong>📏 Distance:</strong> {hospital.distance}
-                          </p>
-                          <p>
-                            <strong>🏥 Specialties:</strong> {hospital.specialties}
-                          </p>
-                          <p>
-                            <strong>📞 Phone:</strong> {hospital.phone}
-                          </p>
-                          <p>
-                            <strong>🚨 Emergency:</strong> {hospital.emergency}
-                          </p>
+                          <div>
+                            <strong>Address:</strong> {hospital.address}
+                          </div>
+                          <div>
+                            <strong>Distance:</strong> {hospital.distance}
+                          </div>
+                          <div>
+                            <strong>Specialties:</strong> {hospital.specialties}
+                          </div>
+                          <div>
+                            <strong>Phone:</strong> {hospital.phone}
+                          </div>
+                          <div className="p-2 bg-green-50 rounded text-green-800">
+                            <strong>Emergency:</strong> {hospital.emergency}
+                          </div>
                         </div>
                       </Card>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Building2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">
-                    Please complete the form and generate AI analysis to view nearby hospitals.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <div className="text-center py-12">
+                    <Building2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Location detection required to show nearby hospitals.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Labs Tab */}
           <TabsContent value="labs" className="space-y-6">
-            {aiAnalysis?.labCenters ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TestTube className="h-5 w-5" />
-                    Nearby Laboratory Centers
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {aiAnalysis.labCenters.map((lab, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="flex justify-between items-start mb-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TestTube className="h-5 w-5" />
+                  Nearby Lab Centers
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {availableLabCenters.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {availableLabCenters.map((lab) => (
+                      <Card
+                        key={lab.id}
+                        className={`p-4 cursor-pointer transition-colors ${
+                          formData.selectedLabCenter?.id === lab.id
+                            ? "border-purple-500 bg-purple-50"
+                            : "hover:bg-gray-50"
+                        }`}
+                        onClick={() => handleLabSelection(lab)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
                           <h4 className="font-semibold text-lg">{lab.name}</h4>
                           <Badge variant="outline">{lab.rating}</Badge>
                         </div>
                         <div className="space-y-2 text-sm">
-                          <p>
-                            <strong>📍 Address:</strong> {lab.address}
-                          </p>
-                          <p>
-                            <strong>📏 Distance:</strong> {lab.distance}
-                          </p>
-                          <p>
-                            <strong>🔬 Specialties:</strong> {lab.specialties}
-                          </p>
-                          <p>
-                            <strong>📞 Phone:</strong> {lab.phone}
-                          </p>
-                          <p>
-                            <strong>⚡ Services:</strong> {lab.emergency}
-                          </p>
+                          <div>
+                            <strong>Address:</strong> {lab.address}
+                          </div>
+                          <div>
+                            <strong>Distance:</strong> {lab.distance}
+                          </div>
+                          <div>
+                            <strong>Specialties:</strong> {lab.specialties}
+                          </div>
+                          <div>
+                            <strong>Phone:</strong> {lab.phone}
+                          </div>
+                          <div className="p-2 bg-blue-50 rounded text-blue-800">
+                            <strong>Services:</strong> {lab.emergency}
+                          </div>
                         </div>
                       </Card>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <TestTube className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">
-                    Please complete the form and generate AI analysis to view nearby lab centers.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <div className="text-center py-12">
+                    <TestTube className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Location detection required to show nearby lab centers.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Detailed Diet Tab */}
           <TabsContent value="detailed-diet" className="space-y-6">
-            {aiAnalysis?.dietPlan ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Apple className="h-5 w-5" />
-                    7-Day Detailed Meal Plan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Apple className="h-5 w-5" />
+                  Detailed Weekly Meal Plan
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {aiAnalysis?.dietPlan?.weeklyMealPlan ? (
                   <div className="space-y-6">
                     {aiAnalysis.dietPlan.weeklyMealPlan.map((dayPlan, index) => (
                       <Card key={index} className="p-4">
                         <h4 className="font-semibold text-lg mb-4 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                           {dayPlan.day}
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {/* Breakfast */}
-                          <div className="p-3 bg-yellow-50 rounded-lg">
-                            <h5 className="font-semibold text-yellow-700 mb-2">🌅 Breakfast</h5>
-                            <p className="text-sm font-medium">{dayPlan.breakfast.name}</p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Ingredients: {dayPlan.breakfast.ingredients.join(", ")}
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Calories: {dayPlan.breakfast.calories} | Protein: {dayPlan.breakfast.protein}g
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">Preparation: {dayPlan.breakfast.preparation}</p>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {dayPlan.breakfast.benefits.map((benefit, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {benefit}
-                                </Badge>
-                              ))}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-3">
+                            <div className="p-3 bg-yellow-50 rounded-lg">
+                              <h5 className="font-medium text-yellow-800 mb-2">🌅 Breakfast</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.breakfast.name}</div>
+                                <div className="text-gray-600">
+                                  Ingredients: {dayPlan.breakfast.ingredients.join(", ")}
+                                </div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.breakfast.calories} | Protein: {dayPlan.breakfast.protein}g
+                                </div>
+                                <div className="text-green-600 text-xs mt-1">
+                                  Benefits: {dayPlan.breakfast.benefits.join(", ")}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-3 bg-green-50 rounded-lg">
+                              <h5 className="font-medium text-green-800 mb-2">☕ Morning Snack</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.morningSnack.name}</div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.morningSnack.calories} | Protein: {dayPlan.morningSnack.protein}g
+                                </div>
+                              </div>
                             </div>
                           </div>
-
-                          {/* Morning Snack */}
-                          <div className="p-3 bg-green-50 rounded-lg">
-                            <h5 className="font-semibold text-green-700 mb-2">🥤 Morning Snack</h5>
-                            <p className="text-sm font-medium">{dayPlan.morningSnack.name}</p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Ingredients: {dayPlan.morningSnack.ingredients.join(", ")}
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Calories: {dayPlan.morningSnack.calories} | Protein: {dayPlan.morningSnack.protein}g
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Preparation: {dayPlan.morningSnack.preparation}
-                            </p>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {dayPlan.morningSnack.benefits.map((benefit, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {benefit}
-                                </Badge>
-                              ))}
+                          <div className="space-y-3">
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                              <h5 className="font-medium text-blue-800 mb-2">🥗 Lunch</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.lunch.name}</div>
+                                <div className="text-gray-600">Ingredients: {dayPlan.lunch.ingredients.join(", ")}</div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.lunch.calories} | Protein: {dayPlan.lunch.protein}g
+                                </div>
+                                <div className="text-green-600 text-xs mt-1">
+                                  Benefits: {dayPlan.lunch.benefits.join(", ")}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-3 bg-orange-50 rounded-lg">
+                              <h5 className="font-medium text-orange-800 mb-2">🍎 Afternoon Snack</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.afternoonSnack.name}</div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.afternoonSnack.calories} | Protein:{" "}
+                                  {dayPlan.afternoonSnack.protein}g
+                                </div>
+                              </div>
                             </div>
                           </div>
-
-                          {/* Lunch */}
-                          <div className="p-3 bg-orange-50 rounded-lg">
-                            <h5 className="font-semibold text-orange-700 mb-2">🍽️ Lunch</h5>
-                            <p className="text-sm font-medium">{dayPlan.lunch.name}</p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Ingredients: {dayPlan.lunch.ingredients.join(", ")}
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Calories: {dayPlan.lunch.calories} | Protein: {dayPlan.lunch.protein}g
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">Preparation: {dayPlan.lunch.preparation}</p>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {dayPlan.lunch.benefits.map((benefit, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {benefit}
-                                </Badge>
-                              ))}
+                          <div className="space-y-3">
+                            <div className="p-3 bg-purple-50 rounded-lg">
+                              <h5 className="font-medium text-purple-800 mb-2">🍽️ Dinner</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.dinner.name}</div>
+                                <div className="text-gray-600">
+                                  Ingredients: {dayPlan.dinner.ingredients.join(", ")}
+                                </div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.dinner.calories} | Protein: {dayPlan.dinner.protein}g
+                                </div>
+                                <div className="text-green-600 text-xs mt-1">
+                                  Benefits: {dayPlan.dinner.benefits.join(", ")}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-
-                          {/* Afternoon Snack */}
-                          <div className="p-3 bg-pink-50 rounded-lg">
-                            <h5 className="font-semibold text-pink-700 mb-2">🍎 Afternoon Snack</h5>
-                            <p className="text-sm font-medium">{dayPlan.afternoonSnack.name}</p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Ingredients: {dayPlan.afternoonSnack.ingredients.join(", ")}
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Calories: {dayPlan.afternoonSnack.calories} | Protein: {dayPlan.afternoonSnack.protein}g
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Preparation: {dayPlan.afternoonSnack.preparation}
-                            </p>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {dayPlan.afternoonSnack.benefits.map((benefit, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {benefit}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Dinner */}
-                          <div className="p-3 bg-blue-50 rounded-lg">
-                            <h5 className="font-semibold text-blue-700 mb-2">🌙 Dinner</h5>
-                            <p className="text-sm font-medium">{dayPlan.dinner.name}</p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Ingredients: {dayPlan.dinner.ingredients.join(", ")}
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Calories: {dayPlan.dinner.calories} | Protein: {dayPlan.dinner.protein}g
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">Preparation: {dayPlan.dinner.preparation}</p>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {dayPlan.dinner.benefits.map((benefit, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {benefit}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Evening Snack */}
-                          <div className="p-3 bg-purple-50 rounded-lg">
-                            <h5 className="font-semibold text-purple-700 mb-2">🥛 Bedtime Snack</h5>
-                            <p className="text-sm font-medium">{dayPlan.eveningSnack.name}</p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Ingredients: {dayPlan.eveningSnack.ingredients.join(", ")}
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Calories: {dayPlan.eveningSnack.calories} | Protein: {dayPlan.eveningSnack.protein}g
-                            </p>
-                            <p className="text-xs text-gray-600 mb-1">
-                              Preparation: {dayPlan.eveningSnack.preparation}
-                            </p>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {dayPlan.eveningSnack.benefits.map((benefit, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {benefit}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Daily Totals */}
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                          <h5 className="font-semibold mb-2">Daily Totals:</h5>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <strong>Total Calories:</strong>{" "}
-                              {dayPlan.breakfast.calories +
-                                dayPlan.morningSnack.calories +
-                                dayPlan.lunch.calories +
-                                dayPlan.afternoonSnack.calories +
-                                dayPlan.dinner.calories +
-                                dayPlan.eveningSnack.calories}
-                            </div>
-                            <div>
-                              <strong>Total Protein:</strong>{" "}
-                              {dayPlan.breakfast.protein +
-                                dayPlan.morningSnack.protein +
-                                dayPlan.lunch.protein +
-                                dayPlan.afternoonSnack.protein +
-                                dayPlan.dinner.protein +
-                                dayPlan.eveningSnack.protein}
-                              g
+                            <div className="p-3 bg-indigo-50 rounded-lg">
+                              <h5 className="font-medium text-indigo-800 mb-2">🥛 Evening Snack</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.eveningSnack.name}</div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.eveningSnack.calories} | Protein: {dayPlan.eveningSnack.protein}g
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </Card>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Apple className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">
-                    Please complete the form and generate AI analysis to view detailed meal plans.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <div className="text-center py-12">
+                    <Apple className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Generate AI analysis to view your detailed weekly meal plan.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Print/Download Buttons */}
-        {analysisGenerated && (
-          <div className="flex justify-center gap-4 mt-8">
-            <Button onClick={handlePrint} className="flex items-center gap-2">
-              <Printer className="h-4 w-4" />
-              Print Report
-            </Button>
-            <Button onClick={handleDownloadPDF} variant="outline" className="flex items-center gap-2 bg-transparent">
-              <Download className="h-4 w-4" />
-              Download Report
-            </Button>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <NavigationButtons />
-
-        {/* Footer */}
-        <PoweredByFooter />
       </div>
     </div>
-  )
+  )\
 }
