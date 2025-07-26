@@ -1279,8 +1279,8 @@ Ensure all recommendations are:
     const currentTime = new Date().toLocaleTimeString("en-IN", {
       timeZone: "Asia/Kolkata",
       hour12: true,
-      hour: '2-digit',
-      minute: '2-digit'
+      hour: "2-digit",
+      minute: "2-digit",
     })
 
     const reportContent = `
@@ -1517,25 +1517,25 @@ Ensure all recommendations are:
       <div><strong>Name:</strong> ${formData.motherName}</div>
       <div><strong>Age:</strong> ${formData.motherAge} years</div>
       <div><strong>Week:</strong> ${formData.currentWeek} (T${formData.currentTrimester})</div>
-      <div><strong>BMI:</strong> ${formData.bmi || 'Not calculated'}</div>
+      <div><strong>BMI:</strong> ${formData.bmi || "Not calculated"}</div>
       <div><strong>Blood Type:</strong> ${formData.motherBloodType}${formData.motherRhFactor}</div>
-      <div><strong>EDD:</strong> ${formData.expectedDeliveryDate || 'Not set'}</div>
-      <div><strong>Location:</strong> ${formData.location?.city || 'Not specified'}</div>
-      <div><strong>Weight Gain:</strong> ${formData.weight && formData.prePregnancyWeight ? (formData.weight - formData.prePregnancyWeight).toFixed(1) + 'kg' : 'N/A'}</div>
+      <div><strong>EDD:</strong> ${formData.expectedDeliveryDate || "Not set"}</div>
+      <div><strong>Location:</strong> ${formData.location?.city || "Not specified"}</div>
+      <div><strong>Weight Gain:</strong> ${formData.weight && formData.prePregnancyWeight ? (formData.weight - formData.prePregnancyWeight).toFixed(1) + "kg" : "N/A"}</div>
     </div>
   </div>
 
   <div class="section">
     <div class="section-header">📋 PREGNANCY DETAILS</div>
     <div class="four-column">
-      <div><strong>LMP:</strong> ${formData.lastPeriodDate || 'Not specified'}</div>
-      <div><strong>Type:</strong> ${formData.pregnancyType || 'Not specified'}</div>
-      <div><strong>Planned:</strong> ${formData.plannedPregnancy ? 'Yes' : 'No'}</div>
-      <div><strong>Method:</strong> ${formData.conceptionMethod || 'Natural'}</div>
+      <div><strong>LMP:</strong> ${formData.lastPeriodDate || "Not specified"}</div>
+      <div><strong>Type:</strong> ${formData.pregnancyType || "Not specified"}</div>
+      <div><strong>Planned:</strong> ${formData.plannedPregnancy ? "Yes" : "No"}</div>
+      <div><strong>Method:</strong> ${formData.conceptionMethod || "Natural"}</div>
       <div><strong>Previous:</strong> G${formData.previousPregnancies + 1}P${formData.previousPregnancies}A${formData.previousAbortions}</div>
       <div><strong>Miscarriages:</strong> ${formData.previousMiscarriages}</div>
-      <div><strong>Marriage:</strong> ${formData.marriageDuration || 'Not specified'}</div>
-      <div><strong>Education:</strong> ${formData.motherEducation || 'Not specified'}</div>
+      <div><strong>Marriage:</strong> ${formData.marriageDuration || "Not specified"}</div>
+      <div><strong>Education:</strong> ${formData.motherEducation || "Not specified"}</div>
     </div>
   </div>
 
@@ -1543,48 +1543,56 @@ Ensure all recommendations are:
     <div class="section-header">🩺 CURRENT VITALS & HEALTH STATUS</div>
     <div class="vital-grid">
       <div class="vital-item">
-        <div style="font-weight: bold;">${formData.bloodPressureSystolic || '--'}/${formData.bloodPressureDiastolic || '--'}</div>
+        <div style="font-weight: bold;">${formData.bloodPressureSystolic || "--"}/${formData.bloodPressureDiastolic || "--"}</div>
         <div>BP (mmHg)</div>
       </div>
       <div class="vital-item">
-        <div style="font-weight: bold;">${formData.heartRate || '--'}</div>
+        <div style="font-weight: bold;">${formData.heartRate || "--"}</div>
         <div>HR (bpm)</div>
       </div>
       <div class="vital-item">
-        <div style="font-weight: bold;">${formData.temperature || '--'}</div>
+        <div style="font-weight: bold;">${formData.temperature || "--"}</div>
         <div>Temp (°F)</div>
       </div>
       <div class="vital-item">
-        <div style="font-weight: bold;">${formData.oxygenSaturation || '--'}</div>
+        <div style="font-weight: bold;">${formData.oxygenSaturation || "--"}</div>
         <div>SpO2 (%)</div>
       </div>
       <div class="vital-item">
-        <div style="font-weight: bold;">${formData.bloodSugar || '--'}</div>
+        <div style="font-weight: bold;">${formData.bloodSugar || "--"}</div>
         <div>BS (mg/dL)</div>
       </div>
       <div class="vital-item">
-        <div style="font-weight: bold;">${formData.hemoglobin || '--'}</div>
+        <div style="font-weight: bold;">${formData.hemoglobin || "--"}</div>
         <div>Hgb (g/dL)</div>
       </div>
       <div class="vital-item">
-        <div style="font-weight: bold;">${formData.fundalHeight || '--'}</div>
+        <div style="font-weight: bold;">${formData.fundalHeight || "--"}</div>
         <div>FH (cm)</div>
       </div>
       <div class="vital-item">
-        <div style="font-weight: bold;">${formData.fetalHeartRate || '--'}</div>
+        <div style="font-weight: bold;">${formData.fetalHeartRate || "--"}</div>
         <div>FHR (bpm)</div>
       </div>
     </div>
-    ${formData.currentSymptoms.length > 0 ? `
+    ${
+      formData.currentSymptoms.length > 0
+        ? `
     <div style="margin-top: 4px;">
-      <strong>Current Symptoms:</strong> ${formData.currentSymptoms.join(', ')}
+      <strong>Current Symptoms:</strong> ${formData.currentSymptoms.join(", ")}
     </div>
-    ` : ''}
-    ${formData.vitalsNotes ? `
+    `
+        : ""
+    }
+    ${
+      formData.vitalsNotes
+        ? `
     <div style="margin-top: 2px; font-size: 7px;">
       <strong>Notes:</strong> ${formData.vitalsNotes}
     </div>
-    ` : ''}
+    `
+        : ""
+    }
   </div>
 
   <div class="section">
@@ -1593,34 +1601,44 @@ Ensure all recommendations are:
       <div>
         <strong>Chronic Conditions:</strong><br>
         <div className="checkbox-grid">
-          ${chronicConditions.slice(0, 12).map(condition => `
+          ${chronicConditions
+            .slice(0, 12)
+            .map(
+              (condition) => `
             <div class="checkbox-item">
-              <span class="checkbox ${formData.chronicConditions.includes(condition) ? 'checked' : ''}"></span>
+              <span class="checkbox ${formData.chronicConditions.includes(condition) ? "checked" : ""}"></span>
               ${condition}
             </div>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </div>
       </div>
       <div>
         <strong>Allergies:</strong><br>
         <div className="checkbox-grid">
-          ${allergyOptions.slice(0, 12).map(allergy => `
+          ${allergyOptions
+            .slice(0, 12)
+            .map(
+              (allergy) => `
             <div class="checkbox-item">
-              <span class="checkbox ${formData.allergies.includes(allergy) ? 'checked' : ''}"></span>
+              <span class="checkbox ${formData.allergies.includes(allergy) ? "checked" : ""}"></span>
               ${allergy}
             </div>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </div>
       </div>
     </div>
     <div class="two-column" style="margin-top: 4px;">
       <div>
         <strong>Current Medications:</strong><br>
-        ${formData.currentMedications.length > 0 ? formData.currentMedications.join(', ') : 'None reported'}
+        ${formData.currentMedications.length > 0 ? formData.currentMedications.join(", ") : "None reported"}
       </div>
       <div>
         <strong>Previous Complications:</strong><br>
-        ${formData.previousComplications.length > 0 ? formData.previousComplications.join(', ') : 'None reported'}
+        ${formData.previousComplications.length > 0 ? formData.previousComplications.join(", ") : "None reported"}
       </div>
     </div>
   </div>
@@ -1629,23 +1647,23 @@ Ensure all recommendations are:
     <div class="section-header">👨‍👩‍👧‍👦 FAMILY HISTORY</div>
     <div className="checkbox-grid">
       <div class="checkbox-item">
-        <span class="checkbox ${formData.familyDiabetes ? 'checked' : ''}"></span>
+        <span class="checkbox ${formData.familyDiabetes ? "checked" : ""}"></span>
         Diabetes
       </div>
       <div class="checkbox-item">
-        <span class="checkbox ${formData.familyHypertension ? 'checked' : ''}"></span>
+        <span class="checkbox ${formData.familyHypertension ? "checked" : ""}"></span>
         Hypertension
       </div>
       <div class="checkbox-item">
-        <span class="checkbox ${formData.familyHeartDisease ? 'checked' : ''}"></span>
+        <span class="checkbox ${formData.familyHeartDisease ? "checked" : ""}"></span>
         Heart Disease
       </div>
       <div class="checkbox-item">
-        <span class="checkbox ${formData.familyThalassemia ? 'checked' : ''}"></span>
+        <span class="checkbox ${formData.familyThalassemia ? "checked" : ""}"></span>
         Thalassemia
       </div>
       <div class="checkbox-item">
-        <span class="checkbox ${formData.familyMentalHealth ? 'checked' : ''}"></span>
+        <span class="checkbox ${formData.familyMentalHealth ? "checked" : ""}"></span>
         Mental Health
       </div>
     </div>
@@ -1654,28 +1672,38 @@ Ensure all recommendations are:
   <div class="section">
     <div class="section-header">🍽️ DIET & LIFESTYLE</div>
     <div class="four-column">
-      <div><strong>Diet Type:</strong> ${formData.dietType || 'Not specified'}</div>
-      <div><strong>Cultural Pref:</strong> ${formData.culturalDietPreferences || 'Not specified'}</div>
-      <div><strong>Water Intake:</strong> ${formData.waterIntake || '--'} glasses/day</div>
-      <div><strong>Sleep:</strong> ${formData.sleepHours || '--'} hours</div>
-      <div><strong>Exercise:</strong> ${formData.exerciseFrequency || 'Not specified'}</div>
-      <div><strong>Stress Level:</strong> ${formData.stressLevel || '--'}/10</div>
-      <div><strong>Smoking:</strong> ${formData.smokingStatus || 'Not specified'}</div>
-      <div><strong>Alcohol:</strong> ${formData.alcoholConsumption || 'Not specified'}</div>
+      <div><strong>Diet Type:</strong> ${formData.dietType || "Not specified"}</div>
+      <div><strong>Cultural Pref:</strong> ${formData.culturalDietPreferences || "Not specified"}</div>
+      <div><strong>Water Intake:</strong> ${formData.waterIntake || "--"} glasses/day</div>
+      <div><strong>Sleep:</strong> ${formData.sleepHours || "--"} hours</div>
+      <div><strong>Exercise:</strong> ${formData.exerciseFrequency || "Not specified"}</div>
+      <div><strong>Stress Level:</strong> ${formData.stressLevel || "--"}/10</div>
+      <div><strong>Smoking:</strong> ${formData.smokingStatus || "Not specified"}</div>
+      <div><strong>Alcohol:</strong> ${formData.alcoholConsumption || "Not specified"}</div>
     </div>
-    ${formData.dietaryRestrictions.length > 0 ? `
+    ${
+      formData.dietaryRestrictions.length > 0
+        ? `
     <div style="margin-top: 4px;">
-      <strong>Dietary Restrictions:</strong> ${formData.dietaryRestrictions.join(', ')}
+      <strong>Dietary Restrictions:</strong> ${formData.dietaryRestrictions.join(", ")}
     </div>
-    ` : ''}
-    ${formData.foodAllergies.length > 0 ? `
+    `
+        : ""
+    }
+    ${
+      formData.foodAllergies.length > 0
+        ? `
     <div style="margin-top: 2px;">
-      <strong>Food Allergies:</strong> ${formData.foodAllergies.join(', ')}
+      <strong>Food Allergies:</strong> ${formData.foodAllergies.join(", ")}
     </div>
-    ` : ''}
+    `
+        : ""
+    }
   </div>
 
-  ${pregnancyScanSchedule.length > 0 ? `
+  ${
+    pregnancyScanSchedule.length > 0
+      ? `
   <div class="section">
     <div class="section-header">📅 SCAN SCHEDULE</div>
     <table>
@@ -1690,22 +1718,30 @@ Ensure all recommendations are:
         </tr>
       </thead>
       <tbody>
-        ${pregnancyScanSchedule.map(scan => `
+        ${pregnancyScanSchedule
+          .map(
+            (scan) => `
           <tr>
             <td>${scan.scanName}</td>
             <td>${scan.recommendedWeek}</td>
             <td>${scan.scheduledDate}</td>
-            <td><span class="badge badge-${scan.status === 'completed' ? 'success' : scan.status === 'overdue' ? 'danger' : 'info'}">${scan.status}</span></td>
+            <td><span class="badge badge-${scan.status === "completed" ? "success" : scan.status === "overdue" ? "danger" : "info"}">${scan.status}</span></td>
             <td>${scan.cost}</td>
             <td>${scan.description}</td>
           </tr>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </tbody>
     </table>
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
-  ${vaccineScheduleWithDates.length > 0 ? `
+  ${
+    vaccineScheduleWithDates.length > 0
+      ? `
   <div class="section">
     <div class="section-header">💉 VACCINATION SCHEDULE</div>
     <table>
@@ -1720,22 +1756,30 @@ Ensure all recommendations are:
         </tr>
       </thead>
       <tbody>
-        ${vaccineScheduleWithDates.map(vaccine => `
+        ${vaccineScheduleWithDates
+          .map(
+            (vaccine) => `
           <tr>
             <td>${vaccine.vaccine}</td>
             <td>${vaccine.recommendedWeek}</td>
             <td>${vaccine.scheduledDate}</td>
-            <td><span class="badge badge-${vaccine.status === 'completed' ? 'success' : vaccine.status === 'overdue' ? 'danger' : 'info'}">${vaccine.status}</span></td>
+            <td><span class="badge badge-${vaccine.status === "completed" ? "success" : vaccine.status === "overdue" ? "danger" : "info"}">${vaccine.status}</span></td>
             <td>${vaccine.importance}</td>
             <td>${vaccine.sideEffects}</td>
           </tr>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </tbody>
     </table>
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
-  ${aiAnalysis ? `
+  ${
+    aiAnalysis
+      ? `
   <div class="page-break"></div>
   
   <div class="section">
@@ -1743,7 +1787,7 @@ Ensure all recommendations are:
     <div class="two-column">
       <div>
         <strong>Risk Level:</strong> 
-        <span class="badge badge-${aiAnalysis.riskLevel === 'high' ? 'danger' : aiAnalysis.riskLevel === 'moderate' ? 'warning' : 'success'}">${aiAnalysis.riskLevel.toUpperCase()}</span>
+        <span class="badge badge-${aiAnalysis.riskLevel === "high" ? "danger" : aiAnalysis.riskLevel === "moderate" ? "warning" : "success"}">${aiAnalysis.riskLevel.toUpperCase()}</span>
       </div>
       <div>
         <strong>Assessment:</strong> ${aiAnalysis.riskAssessment.substring(0, 100)}...
@@ -1755,32 +1799,38 @@ Ensure all recommendations are:
     <div class="section-header">📋 CLINICAL RECOMMENDATIONS</div>
     <div class="compact-list">
       <ul>
-        ${aiAnalysis.recommendations.map(rec => `<li>• ${rec}</li>`).join('')}
+        ${aiAnalysis.recommendations.map((rec) => `<li>• ${rec}</li>`).join("")}
       </ul>
     </div>
   </div>
 
-  ${aiAnalysis.warnings.length > 0 ? `
+  ${
+    aiAnalysis.warnings.length > 0
+      ? `
   <div class="section">
     <div class="section-header">⚠️ CRITICAL WARNINGS</div>
     <div class="compact-list">
       <ul>
-        ${aiAnalysis.warnings.map(warning => `<li>• ${warning}</li>`).join('')}
+        ${aiAnalysis.warnings.map((warning) => `<li>• ${warning}</li>`).join("")}
       </ul>
     </div>
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
   <div class="section">
     <div class="section-header">📝 IMMEDIATE NEXT STEPS</div>
     <div class="compact-list">
       <ul>
-        ${aiAnalysis.nextSteps.map(step => `<li>• ${step}</li>`).join('')}
+        ${aiAnalysis.nextSteps.map((step) => `<li>• ${step}</li>`).join("")}
       </ul>
     </div>
   </div>
 
-  ${aiAnalysis.dietPlan ? `
+  ${
+    aiAnalysis.dietPlan
+      ? `
   <div class="section">
     <div class="section-header">🍽️ PERSONALIZED DIET PLAN</div>
     <div class="three-column" style="margin-bottom: 6px;">
@@ -1799,20 +1849,24 @@ Ensure all recommendations are:
     </div>
     
     <div style="margin-bottom: 4px;">
-      <strong>Key Nutrients:</strong> ${aiAnalysis.dietPlan.keyNutrients.join(', ')}
+      <strong>Key Nutrients:</strong> ${aiAnalysis.dietPlan.keyNutrients.join(", ")}
     </div>
     
     <div style="margin-bottom: 4px;">
-      <strong>Foods to Avoid:</strong> ${aiAnalysis.dietPlan.avoidFoods.join(', ')}
+      <strong>Foods to Avoid:</strong> ${aiAnalysis.dietPlan.avoidFoods.join(", ")}
     </div>
     
     <div>
       <strong>Hydration:</strong> ${aiAnalysis.dietPlan.hydration}
     </div>
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
-  ${aiAnalysis.supplements && aiAnalysis.supplements.length > 0 ? `
+  ${
+    aiAnalysis.supplements && aiAnalysis.supplements.length > 0
+      ? `
   <div class="section">
     <div class="section-header">💊 RECOMMENDED SUPPLEMENTS</div>
     <table>
@@ -1826,7 +1880,9 @@ Ensure all recommendations are:
         </tr>
       </thead>
       <tbody>
-        ${aiAnalysis.supplements.map(supplement => `
+        ${aiAnalysis.supplements
+          .map(
+            (supplement) => `
           <tr>
             <td>${supplement.name}</td>
             <td>${supplement.dosage}</td>
@@ -1834,13 +1890,19 @@ Ensure all recommendations are:
             <td>${supplement.benefits}</td>
             <td>${supplement.price}</td>
           </tr>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </tbody>
     </table>
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
-  ${aiAnalysis.weeklyPredictions && aiAnalysis.weeklyPredictions.length > 0 ? `
+  ${
+    aiAnalysis.weeklyPredictions && aiAnalysis.weeklyPredictions.length > 0
+      ? `
   <div class="section">
     <div class="section-header">📈 WEEKLY PREDICTIONS</div>
     <table>
@@ -1853,56 +1915,84 @@ Ensure all recommendations are:
         </tr>
       </thead>
       <tbody>
-        ${aiAnalysis.weeklyPredictions.map(prediction => `
+        ${aiAnalysis.weeklyPredictions
+          .map(
+            (prediction) => `
           <tr>
             <td>${prediction.week}</td>
-            <td>${prediction.expectedChanges.join(', ')}</td>
-            <td>${prediction.recommendedActions.join(', ')}</td>
-            <td>${prediction.warningSignsToWatch.join(', ')}</td>
+            <td>${prediction.expectedChanges.join(", ")}</td>
+            <td>${prediction.recommendedActions.join(", ")}</td>
+            <td>${prediction.warningSignsToWatch.join(", ")}</td>
           </tr>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </tbody>
     </table>
   </div>
-  ` : ''}
-  ` : ''}
+  `
+      : ""
+  }
+  `
+      : ""
+  }
 
-  ${availableHospitals.length > 0 ? `
+  ${
+    availableHospitals.length > 0
+      ? `
   <div class="section">
     <div class="section-header">🏥 NEARBY HOSPITALS</div>
-    ${availableHospitals.map(hospital => `
+    ${availableHospitals
+      .map(
+        (hospital) => `
       <div class="facility-compact">
-        <div class="facility-name">${hospital.name} ${formData.selectedHospital?.id === hospital.id ? '✓ SELECTED' : ''}</div>
+        <div class="facility-name">${hospital.name} ${formData.selectedHospital?.id === hospital.id ? "✓ SELECTED" : ""}</div>
         <div>📍 ${hospital.address} • 📏 ${hospital.distance} • ⭐ ${hospital.rating}</div>
         <div>🏥 ${hospital.specialties}</div>
         <div>📞 ${hospital.phone} • 🚨 ${hospital.emergency}</div>
       </div>
-    `).join('')}
+    `,
+      )
+      .join("")}
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
-  ${availableLabCenters.length > 0 ? `
+  ${
+    availableLabCenters.length > 0
+      ? `
   <div class="section">
     <div class="section-header">🧪 NEARBY LAB CENTERS</div>
-    ${availableLabCenters.map(lab => `
+    ${availableLabCenters
+      .map(
+        (lab) => `
       <div class="facility-compact">
-        <div class="facility-name">${lab.name} ${formData.selectedLabCenter?.id === lab.id ? '✓ SELECTED' : ''}</div>
+        <div class="facility-name">${lab.name} ${formData.selectedLabCenter?.id === lab.id ? "✓ SELECTED" : ""}</div>
         <div>📍 ${lab.address} • 📏 ${lab.distance} • ⭐ ${lab.rating}</div>
         <div>🔬 ${lab.specialties}</div>
         <div>📞 ${lab.phone} • 🏠 ${lab.emergency}</div>
       </div>
-    `).join('')}
+    `,
+      )
+      .join("")}
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
-  ${aiAnalysis?.clinicalNotes ? `
+  ${
+    aiAnalysis?.clinicalNotes
+      ? `
   <div class="section">
     <div class="section-header">👨‍⚕️ CLINICAL NOTES FOR HEALTHCARE PROVIDERS</div>
     <div style="font-size: 8px; line-height: 1.3;">
       ${aiAnalysis.clinicalNotes}
     </div>
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
   <div class="section">
     <div class="section-header">⚠️ MEDICAL DISCLAIMER</div>
@@ -1914,13 +2004,13 @@ Ensure all recommendations are:
   <div class="footer">
     <p><strong>MyMedi.ai</strong> - AI-Powered Maternal Health Care | Report Generated: ${currentDate} ${currentTime} IST</p>
     <p>🌐 www.mymedi.ai | 📧 support@mymedi.ai | Emergency: 108 | Report ID: PRC-${Date.now().toString().slice(-8)}</p>
-    <p>This report contains comprehensive pregnancy care information including ${formData.currentWeek ? `Week ${formData.currentWeek}` : 'pregnancy'} details, medical history, lifestyle factors, and AI-driven recommendations.</p>
+    <p>This report contains comprehensive pregnancy care information including ${formData.currentWeek ? `Week ${formData.currentWeek}` : "pregnancy"} details, medical history, lifestyle factors, and AI-driven recommendations.</p>
   </div>
 </body>
 </html>
   `
 
-    const printWindow = window.open('', '_blank')
+    const printWindow = window.open("", "_blank")
     if (printWindow) {
       printWindow.document.write(reportContent)
       printWindow.document.close()
@@ -1977,8 +2067,16 @@ Ensure all recommendations are:
   ]
 
   const chronicConditions = [
-    "Diabetes Type 1", "Diabetes Type 2", "Gestational Diabetes (previous)", "Hypertension",
-    "Heart Disease", "Asthma", "COPD", "Thyroid Disease (Hypo/Hyper)", "Kidney Disease", "Liver Disease",
+    "Diabetes Type 1",
+    "Diabetes Type 2",
+    "Gestational Diabetes (previous)",
+    "Hypertension",
+    "Heart Disease",
+    "Asthma",
+    "COPD",
+    "Thyroid Disease (Hypo/Hyper)",
+    "Kidney Disease",
+    "Liver Disease",
     "Autoimmune Disease",
     "Depression",
     "Anxiety",
@@ -1992,9 +2090,26 @@ Ensure all recommendations are:
   ]
 
   const allergyOptions = [
-    "Penicillin", "Sulfa Drugs", "Aspirin", "Ibuprofen", "Codeine", "Latex", "Peanuts", "Tree Nuts",
-    "Shellfish", "Fish", "Eggs", "Milk", "Soy", "Wheat", "Sesame", "Mustard",
-    "Celery", "Lupin", "Mollusks", "Sulfites",
+    "Penicillin",
+    "Sulfa Drugs",
+    "Aspirin",
+    "Ibuprofen",
+    "Codeine",
+    "Latex",
+    "Peanuts",
+    "Tree Nuts",
+    "Shellfish",
+    "Fish",
+    "Eggs",
+    "Milk",
+    "Soy",
+    "Wheat",
+    "Sesame",
+    "Mustard",
+    "Celery",
+    "Lupin",
+    "Mollusks",
+    "Sulfites",
   ]
 
   const surgeryOptions = [
@@ -2684,6 +2799,7 @@ Ensure all recommendations are:
                       </div>
                     </div>
                   </div>
+                </div>
 
                 {/* Family Medical History - Enhanced */}
                 <div className="space-y-4">
@@ -3744,5 +3860,5 @@ Ensure all recommendations are:
         </Tabs>
       </div>
     </div>
-  )\
+  )
 }
