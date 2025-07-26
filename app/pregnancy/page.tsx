@@ -12,7 +12,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import MyMedLogo from "@/components/mymed-logo"
 import { Textarea } from "@/components/ui/textarea"
-import { Apple, AlertTriangle, Loader2, Download, Printer, RotateCcw } from "lucide-react"
+import {
+  Baby,
+  Apple,
+  AlertTriangle,
+  Brain,
+  Loader2,
+  MapPin,
+  Pill,
+  Utensils,
+  Building2,
+  TestTube,
+  Syringe,
+  Calendar,
+  Download,
+  Printer,
+  RotateCcw,
+} from "lucide-react"
 import LocationService from "@/lib/location-service"
 
 interface PregnancyFormData {
@@ -251,6 +267,16 @@ interface DietPlan {
   whoRecommendations: string[]
 }
 
+interface DailyMealPlan {
+  day: string
+  breakfast: MealDetail
+  morningSnack: MealDetail
+  lunch: MealDetail
+  afternoonSnack: MealDetail
+  dinner: MealDetail
+  eveningSnack: MealDetail
+}
+
 interface MealDetail {
   name: string
   ingredients: string[]
@@ -258,9 +284,6 @@ interface MealDetail {
   protein: number
   preparation: string
   benefits: string[]
-  waterIntake: string
-  timing: string
-  nutrients: string
 }
 
 interface ExercisePlan {
@@ -277,16 +300,6 @@ interface WeeklyPrediction {
   expectedChanges: string[]
   recommendedActions: string[]
   warningSignsToWatch: string[]
-}
-
-interface DailyMealPlan {
-  day: string
-  breakfast: MealDetail
-  morningSnack: MealDetail
-  lunch: MealDetail
-  afternoonSnack: MealDetail
-  dinner: MealDetail
-  eveningSnack: MealDetail
 }
 
 export default function PregnancyPage() {
@@ -906,228 +919,59 @@ Ensure all recommendations are:
     const baseCalories = trimester === 1 ? 2000 : trimester === 2 ? 2340 : 2450
     const baseProtein = trimester === 1 ? 71 : trimester === 2 ? 81 : 91
 
-    // Generate 7-day Indian meal plan based on preferences with detailed nutritional info
+    // Generate 7-day Indian meal plan based on preferences
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    const weeklyMealPlan: DailyMealPlan[] = days.map((day, dayIndex) => ({
+    const weeklyMealPlan: DailyMealPlan[] = days.map((day) => ({
       day,
       breakfast: {
-        name: `${day} Traditional Indian Breakfast`,
-        ingredients: getBreakfastIngredients(dayIndex, formData.dietType, formData.culturalDietPreferences),
-        calories: 380 + dayIndex * 10, // Slight variation per day
-        protein: 15 + (dayIndex % 3),
-        preparation: getBreakfastPreparation(dayIndex),
-        benefits: ["Folic acid", "Iron", "Fiber", "Calcium", "B-vitamins"],
-        waterIntake: "250ml",
-        timing: "7:00-8:00 AM",
-        nutrients: "Carbs: 45g, Fat: 12g, Fiber: 8g",
+        name: `${day} Indian Breakfast`,
+        ingredients: ["Poha/Upma", "Milk", "Fruits", "Nuts"],
+        calories: 380,
+        protein: 15,
+        preparation: "Traditional Indian preparation with vegetables",
+        benefits: ["Folic acid", "Iron", "Fiber", "Calcium"],
       },
       morningSnack: {
-        name: `${day} Mid-Morning Snack`,
-        ingredients: getMorningSnackIngredients(dayIndex),
-        calories: 150 + dayIndex * 5,
-        protein: 8 + (dayIndex % 2),
-        preparation: "Fresh preparation with minimal cooking",
-        benefits: ["Protein", "Probiotics", "Healthy fats"],
-        waterIntake: "200ml",
-        timing: "10:00-10:30 AM",
-        nutrients: "Carbs: 15g, Fat: 6g, Fiber: 3g",
+        name: "Mid-Morning Snack",
+        ingredients: ["Buttermilk", "Roasted chana"],
+        calories: 150,
+        protein: 8,
+        preparation: "Fresh buttermilk with roasted gram",
+        benefits: ["Protein", "Probiotics"],
       },
       lunch: {
-        name: `${day} Complete Indian Thali`,
-        ingredients: getLunchIngredients(dayIndex, formData.dietType, formData.culturalDietPreferences),
-        calories: 520 + dayIndex * 15,
-        protein: 35 + (dayIndex % 4),
-        preparation: getLunchPreparation(dayIndex),
-        benefits: ["Complete protein", "Complex carbs", "Vitamins", "Minerals", "Antioxidants"],
-        waterIntake: "300ml",
-        timing: "12:30-1:30 PM",
-        nutrients: "Carbs: 65g, Fat: 18g, Fiber: 12g",
+        name: `${day} Indian Lunch`,
+        ingredients: ["Dal", "Rice/Roti", "Vegetables", "Curd"],
+        calories: 520,
+        protein: 35,
+        preparation: "Balanced Indian thali with seasonal vegetables",
+        benefits: ["Complete protein", "Complex carbs", "Vitamins"],
       },
       afternoonSnack: {
-        name: `${day} Healthy Evening Snack`,
-        ingredients: getAfternoonSnackIngredients(dayIndex),
-        calories: 180 + dayIndex * 8,
-        protein: 6 + (dayIndex % 2),
-        preparation: "Quick and nutritious preparation",
-        benefits: ["Fiber", "Healthy fats", "Natural sugars", "Vitamins"],
-        waterIntake: "200ml",
-        timing: "4:00-4:30 PM",
-        nutrients: "Carbs: 25g, Fat: 8g, Fiber: 5g",
+        name: "Evening Snack",
+        ingredients: ["Seasonal fruit", "Dry fruits"],
+        calories: 180,
+        protein: 6,
+        preparation: "Fresh seasonal fruit with almonds/walnuts",
+        benefits: ["Fiber", "Healthy fats"],
       },
       dinner: {
-        name: `${day} Light Indian Dinner`,
-        ingredients: getDinnerIngredients(dayIndex, formData.dietType),
-        calories: 480 + dayIndex * 12,
-        protein: 40 + (dayIndex % 5),
-        preparation: getDinnerPreparation(dayIndex),
-        benefits: ["Omega-3", "Beta-carotene", "Folate", "Iron", "Protein"],
-        waterIntake: "250ml",
-        timing: "7:00-8:00 PM",
-        nutrients: "Carbs: 45g, Fat: 15g, Fiber: 10g",
+        name: `${day} Indian Dinner`,
+        ingredients: ["Fish/Chicken curry", "Rice", "Green vegetables"],
+        calories: 480,
+        protein: 40,
+        preparation: "Light Indian curry with steamed rice and vegetables",
+        benefits: ["Omega-3", "Beta-carotene", "Folate"],
       },
       eveningSnack: {
-        name: `${day} Bedtime Snack`,
-        ingredients: getEveningSnackIngredients(dayIndex),
-        calories: 120 + dayIndex * 3,
-        protein: 6 + (dayIndex % 2),
-        preparation: "Warm and comforting preparation",
-        benefits: ["Calcium", "Protein", "Tryptophan", "Magnesium"],
-        waterIntake: "200ml",
-        timing: "9:30-10:00 PM",
-        nutrients: "Carbs: 18g, Fat: 4g, Fiber: 2g",
+        name: "Bedtime Snack",
+        ingredients: ["Warm milk", "Dates"],
+        calories: 120,
+        protein: 6,
+        preparation: "Warm milk with dates or almonds",
+        benefits: ["Calcium", "Protein"],
       },
     }))
-
-    // Helper functions for ingredient selection based on preferences
-    const getBreakfastIngredients = (dayIndex: number, dietType: string, culturalPref: string): string[] => {
-      const vegetarianOptions = [
-        ["Poha with vegetables", "Peanuts", "Curry leaves", "Mustard seeds", "Green chilies"],
-        ["Upma with semolina", "Mixed vegetables", "Cashews", "Ginger", "Coriander"],
-        ["Idli with sambar", "Coconut chutney", "Curry leaves", "Dal", "Vegetables"],
-        ["Dosa with potato filling", "Coconut chutney", "Sambar", "Onions", "Green chilies"],
-        ["Paratha with curd", "Seasonal vegetables", "Ghee", "Pickles", "Mint chutney"],
-        ["Oats porridge", "Milk", "Nuts", "Honey", "Fruits"],
-        ["Daliya upma", "Vegetables", "Peanuts", "Curry leaves", "Lemon"],
-      ]
-
-      const nonVegOptions = [
-        ["Egg paratha", "Curd", "Pickles", "Onions", "Green chilies"],
-        ["Chicken sandwich", "Whole wheat bread", "Vegetables", "Cheese", "Mint chutney"],
-        ["Fish curry with rice", "Coconut", "Curry leaves", "Tamarind", "Spices"],
-        ["Egg bhurji with roti", "Onions", "Tomatoes", "Green chilies", "Coriander"],
-        ["Chicken upma", "Semolina", "Vegetables", "Curry leaves", "Coconut"],
-        ["Mutton keema paratha", "Onions", "Spices", "Curd", "Pickles"],
-        ["Egg dosa", "Coconut chutney", "Sambar", "Curry leaves", "Spices"],
-      ]
-
-      return dietType === "vegetarian" || dietType === "vegan" ? vegetarianOptions[dayIndex] : nonVegOptions[dayIndex]
-    }
-
-    const getMorningSnackIngredients = (dayIndex: number): string[] => {
-      const options = [
-        ["Buttermilk", "Roasted cumin", "Mint", "Salt"],
-        ["Coconut water", "Roasted chana", "Peanuts"],
-        ["Fresh fruit", "Almonds", "Walnuts"],
-        ["Vegetable juice", "Ginger", "Lemon", "Mint"],
-        ["Lassi", "Yogurt", "Honey", "Cardamom"],
-        ["Green tea", "Digestive biscuits", "Nuts"],
-        ["Lemon water", "Mixed nuts", "Dates"],
-      ]
-      return options[dayIndex]
-    }
-
-    const getLunchIngredients = (dayIndex: number, dietType: string, culturalPref: string): string[] => {
-      const vegetarianLunch = [
-        ["Dal tadka", "Jeera rice", "Mixed vegetable curry", "Roti", "Curd", "Salad"],
-        ["Rajma curry", "Brown rice", "Aloo gobi", "Chapati", "Buttermilk", "Pickle"],
-        ["Sambar", "Rice", "Vegetable curry", "Rasam", "Curd", "Papad"],
-        ["Chole curry", "Bhature", "Onion salad", "Mint chutney", "Lassi"],
-        ["Paneer curry", "Roti", "Dal", "Vegetable stir-fry", "Curd", "Salad"],
-        ["Vegetable biryani", "Raita", "Boiled egg", "Pickle", "Papad"],
-        ["Mixed dal", "Rice", "Seasonal vegetable", "Chapati", "Curd", "Salad"],
-      ]
-
-      const nonVegLunch = [
-        ["Chicken curry", "Rice", "Dal", "Vegetable", "Roti", "Salad"],
-        ["Fish curry", "Rice", "Sambar", "Vegetable stir-fry", "Curd"],
-        ["Mutton curry", "Biryani rice", "Raita", "Boiled egg", "Pickle"],
-        ["Chicken biryani", "Raita", "Boiled egg", "Pickle", "Salad"],
-        ["Fish fry", "Rice", "Dal", "Vegetable curry", "Curd"],
-        ["Egg curry", "Roti", "Dal", "Vegetable", "Curd", "Salad"],
-        ["Chicken stir-fry", "Rice", "Sambar", "Vegetable", "Curd"],
-      ]
-
-      return dietType === "vegetarian" || dietType === "vegan" ? vegetarianLunch[dayIndex] : nonVegLunch[dayIndex]
-    }
-
-    const getAfternoonSnackIngredients = (dayIndex: number): string[] => {
-      const options = [
-        ["Apple slices", "Peanut butter", "Cinnamon"],
-        ["Banana", "Almonds", "Honey"],
-        ["Orange", "Walnuts", "Dates"],
-        ["Pomegranate", "Cashews", "Raisins"],
-        ["Seasonal fruit", "Mixed nuts", "Coconut"],
-        ["Fruit salad", "Nuts", "Honey", "Mint"],
-        ["Smoothie", "Yogurt", "Fruits", "Nuts"],
-      ]
-      return options[dayIndex]
-    }
-
-    const getDinnerIngredients = (dayIndex: number, dietType: string): string[] => {
-      const vegetarianDinner = [
-        ["Vegetable khichdi", "Ghee", "Curd", "Pickle", "Papad"],
-        ["Roti", "Dal", "Vegetable curry", "Curd", "Salad"],
-        ["Rice", "Sambar", "Vegetable stir-fry", "Curd", "Pickle"],
-        ["Chapati", "Paneer curry", "Dal", "Salad", "Buttermilk"],
-        ["Vegetable pulao", "Raita", "Dal", "Papad", "Pickle"],
-        ["Roti", "Mixed vegetable", "Dal", "Curd", "Salad"],
-        ["Rice", "Vegetable curry", "Dal", "Curd", "Pickle"],
-      ]
-
-      const nonVegDinner = [
-        ["Chicken curry", "Rice", "Vegetable", "Curd", "Salad"],
-        ["Fish curry", "Roti", "Dal", "Vegetable", "Curd"],
-        ["Egg curry", "Rice", "Dal", "Vegetable", "Salad"],
-        ["Chicken stir-fry", "Chapati", "Dal", "Curd", "Pickle"],
-        ["Fish fry", "Rice", "Sambar", "Vegetable", "Curd"],
-        ["Mutton curry", "Roti", "Dal", "Salad", "Buttermilk"],
-        ["Chicken biryani", "Raita", "Boiled egg", "Pickle", "Salad"],
-      ]
-
-      return dietType === "vegetarian" || dietType === "vegan" ? vegetarianDinner[dayIndex] : nonVegDinner[dayIndex]
-    }
-
-    const getEveningSnackIngredients = (dayIndex: number): string[] => {
-      const options = [
-        ["Warm milk", "Turmeric", "Honey", "Almonds"],
-        ["Herbal tea", "Dates", "Walnuts"],
-        ["Golden milk", "Turmeric", "Ginger", "Honey"],
-        ["Warm milk", "Cardamom", "Pistachios", "Saffron"],
-        ["Chamomile tea", "Honey", "Almonds"],
-        ["Warm milk", "Cinnamon", "Dates", "Cashews"],
-        ["Ginger tea", "Honey", "Mixed nuts"],
-      ]
-      return options[dayIndex]
-    }
-
-    const getBreakfastPreparation = (dayIndex: number): string => {
-      const preparations = [
-        "Heat oil, add mustard seeds, curry leaves. Add poha, vegetables, peanuts. Cook for 5-7 minutes.",
-        "Roast semolina, add water, vegetables, and spices. Cook until thick consistency.",
-        "Steam idli batter, serve with sambar and coconut chutney.",
-        "Make dosa batter, spread on pan, add potato filling, serve with chutney.",
-        "Knead dough, stuff with vegetables, cook on tawa with ghee.",
-        "Cook oats in milk, add nuts and honey when warm.",
-        "Roast daliya, add vegetables and spices, cook with water until soft.",
-      ]
-      return preparations[dayIndex]
-    }
-
-    const getLunchPreparation = (dayIndex: number): string => {
-      const preparations = [
-        "Cook dal with turmeric, temper with cumin, serve with rice and vegetables.",
-        "Soak rajma overnight, pressure cook, make curry with spices.",
-        "Cook dal with vegetables and tamarind, temper with mustard seeds.",
-        "Cook chickpeas with spices, serve with fried bread and salad.",
-        "Make paneer curry with tomatoes and spices, serve with roti.",
-        "Layer rice with vegetables and spices, cook in dum style.",
-        "Mix different dals, cook with spices, serve with rice and vegetables.",
-      ]
-      return preparations[dayIndex]
-    }
-
-    const getDinnerPreparation = (dayIndex: number): string => {
-      const preparations = [
-        "Cook rice and dal together with vegetables and ghee.",
-        "Make simple dal and vegetable curry, serve with fresh roti.",
-        "Cook sambar with vegetables, serve with rice and stir-fried vegetables.",
-        "Make paneer curry with minimal oil, serve with chapati.",
-        "Cook rice with vegetables and mild spices, serve with raita.",
-        "Prepare mixed vegetables with minimal oil and spices.",
-        "Light vegetable curry with dal, easy to digest for dinner.",
-      ]
-      return preparations[dayIndex]
-    }
 
     return {
       trimester,
@@ -2193,47 +2037,66 @@ Ensure all recommendations are:
   ${
     aiAnalysis.dietPlan?.weeklyMealPlan
       ? `
-<div class="section">
-  <div class="section-header">🍎 DETAILED WEEKLY MEAL PLAN WITH NUTRITIONAL INFORMATION</div>
-  
-  <!-- Daily Totals Summary -->
-  <div style="margin-bottom: 10px;">
+  <div class="section">
+    <div class="section-header">🍎 DETAILED WEEKLY MEAL PLAN</div>
+    ${aiAnalysis.dietPlan.weeklyMealPlan
+      .map(
+        (dayPlan) => `
+      <div class="meal-compact">
+        <div class="meal-header">
+          <span>${dayPlan.day}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 6px;">
+          <div>
+            <strong>🌅 Breakfast:</strong> ${dayPlan.breakfast.name}<br>
+            <em>Cal: ${dayPlan.breakfast.calories}, Protein: ${dayPlan.breakfast.protein}g</em>
+          </div>
+          <div>
+            <strong>🥗 Lunch:</strong> ${dayPlan.lunch.name}<br>
+            <em>Cal: ${dayPlan.lunch.calories}, Protein: ${dayPlan.lunch.protein}g</em>
+          </div>
+          <div>
+            <strong>🍽️ Dinner:</strong> ${dayPlan.dinner.name}<br>
+            <em>Cal: ${dayPlan.dinner.calories}, Protein: ${dayPlan.dinner.protein}g</em>
+          </div>
+        </div>
+        <div style="margin-top: 2px; font-size: 6px;">
+          <strong>Snacks:</strong> ${dayPlan.morningSnack.name}, ${dayPlan.afternoonSnack.name}, ${dayPlan.eveningSnack.name}
+        </div>
+      </div>
+    `,
+      )
+      .join("")}
+  </div>
+  `
+      : ""
+  }
+
+  ${
+    aiAnalysis.supplements && aiAnalysis.supplements.length > 0
+      ? `
+  <div class="section">
+    <div class="section-header">💊 RECOMMENDED SUPPLEMENTS</div>
     <table>
       <thead>
         <tr>
-          <th>Day</th>
-          <th>Total Calories</th>
-          <th>Total Protein</th>
-          <th>Total Water</th>
-          <th>Meals Count</th>
-          <th>Key Focus</th>
+          <th>Supplement</th>
+          <th>Dosage</th>
+          <th>Timing</th>
+          <th>Benefits</th>
+          <th>Price</th>
         </tr>
       </thead>
       <tbody>
-        ${aiAnalysis.dietPlan.weeklyMealPlan
+        ${aiAnalysis.supplements
           .map(
-            (dayPlan) => `
+            (supplement) => `
           <tr>
-            <td><strong>${dayPlan.day}</strong></td>
-            <td>${
-              dayPlan.breakfast.calories +
-              dayPlan.morningSnack.calories +
-              dayPlan.lunch.calories +
-              dayPlan.afternoonSnack.calories +
-              dayPlan.dinner.calories +
-              dayPlan.eveningSnack.calories
-            } kcal</td>
-            <td>${
-              dayPlan.breakfast.protein +
-              dayPlan.morningSnack.protein +
-              dayPlan.lunch.protein +
-              dayPlan.afternoonSnack.protein +
-              dayPlan.dinner.protein +
-              dayPlan.eveningSnack.protein
-            }g</td>
-            <td>1400ml</td>
-            <td>6 meals</td>
-            <td>Balanced nutrition</td>
+            <td>${supplement.name}</td>
+            <td>${supplement.dosage}</td>
+            <td>${supplement.timing}</td>
+            <td>${supplement.benefits}</td>
+            <td>${supplement.price}</td>
           </tr>
         `,
           )
@@ -2241,197 +2104,15 @@ Ensure all recommendations are:
       </tbody>
     </table>
   </div>
-
-  <!-- Detailed Daily Meal Plans -->
-  ${aiAnalysis.dietPlan.weeklyMealPlan
-    .map(
-      (dayPlan) => `
-    <div style="page-break-inside: avoid; margin-bottom: 15px;">
-      <h4 style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 8px; text-align: center; border-radius: 6px; margin-bottom: 8px; font-size: 12px;">
-        📅 ${dayPlan.day.toUpperCase()} - COMPLETE MEAL PLAN
-      </h4>
-      
-      <table style="margin-bottom: 10px;">
-        <thead>
-          <tr>
-            <th style="width: 15%;">Meal Time</th>
-            <th style="width: 20%;">Meal Name</th>
-            <th style="width: 25%;">Ingredients</th>
-            <th style="width: 10%;">Calories</th>
-            <th style="width: 8%;">Protein</th>
-            <th style="width: 10%;">Water</th>
-            <th style="width: 12%;">Nutrients</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="background: #fff3cd;">
-            <td><strong>${dayPlan.breakfast.timing || "7:00-8:00 AM"}</strong><br><span style="font-size: 6px;">🌅 BREAKFAST</span></td>
-            <td><strong>${dayPlan.breakfast.name}</strong><br><span style="font-size: 6px; color: #666;">${dayPlan.breakfast.preparation}</span></td>
-            <td style="font-size: 6px;">${dayPlan.breakfast.ingredients.join(", ")}</td>
-            <td style="text-align: center; font-weight: bold; color: #d97706;">${dayPlan.breakfast.calories}</td>
-            <td style="text-align: center; font-weight: bold; color: #059669;">${dayPlan.breakfast.protein}g</td>
-            <td style="text-align: center; color: #0ea5e9;">${dayPlan.breakfast.waterIntake || "250ml"}</td>
-            <td style="font-size: 6px;">${dayPlan.breakfast.nutrients || "Carbs: 45g, Fat: 12g, Fiber: 8g"}</td>
-          </tr>
-          <tr style="background: #dcfce7;">
-            <td><strong>${dayPlan.morningSnack.timing || "10:00-10:30 AM"}</strong><br><span style="font-size: 6px;">☕ MID-MORNING</span></td>
-            <td><strong>${dayPlan.morningSnack.name}</strong><br><span style="font-size: 6px; color: #666;">${dayPlan.morningSnack.preparation}</span></td>
-            <td style="font-size: 6px;">${dayPlan.morningSnack.ingredients.join(", ")}</td>
-            <td style="text-align: center; font-weight: bold; color: #d97706;">${dayPlan.morningSnack.calories}</td>
-            <td style="text-align: center; font-weight: bold; color: #059669;">${dayPlan.morningSnack.protein}g</td>
-            <td style="text-align: center; color: #0ea5e9;">${dayPlan.morningSnack.waterIntake || "200ml"}</td>
-            <td style="font-size: 6px;">${dayPlan.morningSnack.nutrients || "Carbs: 15g, Fat: 6g, Fiber: 3g"}</td>
-          </tr>
-          <tr style="background: #dbeafe;">
-            <td><strong>${dayPlan.lunch.timing || "12:30-1:30 PM"}</strong><br><span style="font-size: 6px;">🥗 LUNCH</span></td>
-            <td><strong>${dayPlan.lunch.name}</strong><br><span style="font-size: 6px; color: #666;">${dayPlan.lunch.preparation}</span></td>
-            <td style="font-size: 6px;">${dayPlan.lunch.ingredients.join(", ")}</td>
-            <td style="text-align: center; font-weight: bold; color: #d97706;">${dayPlan.lunch.calories}</td>
-            <td style="text-align: center; font-weight: bold; color: #059669;">${dayPlan.lunch.protein}g</td>
-            <td style="text-align: center; color: #0ea5e9;">${dayPlan.lunch.waterIntake || "300ml"}</td>
-            <td style="font-size: 6px;">${dayPlan.lunch.nutrients || "Carbs: 65g, Fat: 18g, Fiber: 12g"}</td>
-          </tr>
-          <tr style="background: #fed7aa;">
-            <td><strong>${dayPlan.afternoonSnack.timing || "4:00-4:30 PM"}</strong><br><span style="font-size: 6px;">🍎 AFTERNOON</span></td>
-            <td><strong>${dayPlan.afternoonSnack.name}</strong><br><span style="font-size: 6px; color: #666;">${dayPlan.afternoonSnack.preparation}</span></td>
-            <td style="font-size: 6px;">${dayPlan.afternoonSnack.ingredients.join(", ")}</td>
-            <td style="text-align: center; font-weight: bold; color: #d97706;">${dayPlan.afternoonSnack.calories}</td>
-            <td style="text-align: center; font-weight: bold; color: #059669;">${dayPlan.afternoonSnack.protein}g</td>
-            <td style="text-align: center; color: #0ea5e9;">${dayPlan.afternoonSnack.waterIntake || "200ml"}</td>
-            <td style="font-size: 6px;">${dayPlan.afternoonSnack.nutrients || "Carbs: 25g, Fat: 8g, Fiber: 5g"}</td>
-          </tr>
-          <tr style="background: #e9d5ff;">
-            <td><strong>${dayPlan.dinner.timing || "7:00-8:00 PM"}</strong><br><span style="font-size: 6px;">🍽️ DINNER</span></td>
-            <td><strong>${dayPlan.dinner.name}</strong><br><span style="font-size: 6px; color: #666;">${dayPlan.dinner.preparation}</span></td>
-            <td style="font-size: 6px;">${dayPlan.dinner.ingredients.join(", ")}</td>
-            <td style="text-align: center; font-weight: bold; color: #d97706;">${dayPlan.dinner.calories}</td>
-            <td style="text-align: center; font-weight: bold; color: #059669;">${dayPlan.dinner.protein}g</td>
-            <td style="text-align: center; color: #0ea5e9;">${dayPlan.dinner.waterIntake || "250ml"}</td>
-            <td style="font-size: 6px;">${dayPlan.dinner.nutrients || "Carbs: 45g, Fat: 15g, Fiber: 10g"}</td>
-          </tr>
-          <tr style="background: #e0e7ff;">
-            <td><strong>${dayPlan.eveningSnack.timing || "9:30-10:00 PM"}</strong><br><span style="font-size: 6px;">🥛 BEDTIME</span></td>
-            <td><strong>${dayPlan.eveningSnack.name}</strong><br><span style="font-size: 6px; color: #666;">${dayPlan.eveningSnack.preparation}</span></td>
-            <td style="font-size: 6px;">${dayPlan.eveningSnack.ingredients.join(", ")}</td>
-            <td style="text-align: center; font-weight: bold; color: #d97706;">${dayPlan.eveningSnack.calories}</td>
-            <td style="text-align: center; font-weight: bold; color: #059669;">${dayPlan.eveningSnack.protein}g</td>
-            <td style="text-align: center; color: #0ea5e9;">${dayPlan.eveningSnack.waterIntake || "200ml"}</td>
-            <td style="font-size: 6px;">${dayPlan.eveningSnack.nutrients || "Carbs: 18g, Fat: 4g, Fiber: 2g"}</td>
-          </tr>
-        </tbody>
-      </table>
-      
-      <!-- Daily Benefits Summary -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
-        <div style="background: #f0fdf4; padding: 4px; border-radius: 4px; font-size: 7px;">
-          <strong style="color: #166534;">🌟 Key Benefits:</strong><br>
-          ${[...new Set([...dayPlan.breakfast.benefits, ...dayPlan.lunch.benefits, ...dayPlan.dinner.benefits])]
-            .slice(0, 6)
-            .join(", ")}
-        </div>
-        <div style="background: #eff6ff; padding: 4px; border-radius: 4px; font-size: 7px;">
-          <strong style="color: #1e40af;">💧 Hydration Plan:</strong><br>
-          Total: 1400ml water + 200ml milk + herbal teas as needed
-        </div>
-      </div>
-    </div>
-  `,
-    )
-    .join("")}
-
-  <!-- Weekly Nutrition Summary -->
-  <div style="margin-top: 15px; page-break-inside: avoid;">
-    <h4 style="background: #1f2937; color: white; padding: 8px; text-align: center; border-radius: 6px; margin-bottom: 8px; font-size: 12px;">
-      📊 WEEKLY NUTRITION SUMMARY & GUIDELINES
-    </h4>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-      <div style="background: #fef3c7; padding: 8px; border-radius: 6px;">
-        <div style="font-weight: bold; color: #92400e; margin-bottom: 4px; font-size: 9px;">📈 DAILY AVERAGES</div>
-        <div style="font-size: 7px; color: #92400e;">
-          • Calories: ${Math.round(aiAnalysis.dietPlan.dailyCalories)} kcal<br>
-          • Protein: ${aiAnalysis.dietPlan.dailyProtein}g<br>
-          • Water: 1400ml + beverages<br>
-          • Meals: 6 per day<br>
-          • Fiber: 25-30g daily
-        </div>
-      </div>
-      
-      <div style="background: #dcfce7; padding: 8px; border-radius: 6px;">
-        <div style="font-weight: bold; color: #166534; margin-bottom: 4px; font-size: 9px;">🥗 KEY NUTRIENTS</div>
-        <div style="font-size: 7px; color: #166534;">
-          ${aiAnalysis.dietPlan.keyNutrients.map((nutrient) => `• ${nutrient}`).join("<br>")}
-        </div>
-      </div>
-      
-      <div style="background: #fecaca; padding: 8px; border-radius: 6px;">
-        <div style="font-weight: bold; color: #991b1b; margin-bottom: 4px; font-size: 9px;">⚠️ FOODS TO AVOID</div>
-        <div style="font-size: 7px; color: #991b1b;">
-          ${aiAnalysis.dietPlan.avoidFoods
-            .slice(0, 6)
-            .map((food) => `• ${food}`)
-            .join("<br>")}
-        </div>
-      </div>
-    </div>
-    
-</div>
-`
-      : ""
-  }
-
-  ${
-    aiAnalysis.exercisePlan
-      ? `
-  <div class="section">
-    <div class="section-header">💪 EXERCISE RECOMMENDATIONS</div>
-    <div class="three-column" style="margin-bottom: 6px;">
-      <div class="vital-item">
-        <div style="font-weight: bold;">${aiAnalysis.exercisePlan.weeklyMinutes}</div>
-        <div>Minutes/Week</div>
-      </div>
-      <div class="vital-item">
-        <div style="font-weight: bold;">T${aiAnalysis.exercisePlan.trimester}</div>
-        <div>Trimester</div>
-      </div>
-    </div>
-    
-    <div style="margin-bottom: 4px;">
-      <strong>Recommended Activities:</strong> ${aiAnalysis.exercisePlan.recommendedActivities.join(", ")}
-    </div>
-    
-    <div style="margin-bottom: 4px;">
-      <strong>Restrictions:</strong> ${aiAnalysis.exercisePlan.restrictions.join(", ")}
-    </div>
-    
-    <div>
-      <strong>Warning Signs:</strong> ${aiAnalysis.exercisePlan.warningSigns.join(", ")}
-    </div>
-  </div>
   `
       : ""
   }
 
   ${
-    aiAnalysis.monitoringSchedule.length > 0
+    aiAnalysis.weeklyPredictions && aiAnalysis.weeklyPredictions.length > 0
       ? `
   <div class="section">
-    <div class="section-header">📅 MONITORING SCHEDULE</div>
-    <div class="compact-list">
-      <ul>
-        ${aiAnalysis.monitoringSchedule.map((item) => `<li>• ${item}</li>`).join("")}
-      </ul>
-    </div>
-  </div>
-  `
-      : ""
-  }
-
-  ${
-    aiAnalysis.weeklyPredictions.length > 0
-      ? `
-  <div class="section">
-    <div class="section-header">🔮 WEEKLY PREDICTIONS</div>
+    <div class="section-header">📈 WEEKLY PREDICTIONS</div>
     <table>
       <thead>
         <tr>
@@ -2460,1373 +2141,1748 @@ Ensure all recommendations are:
   `
       : ""
   }
+  `
+      : ""
+  }
 
   ${
-    aiAnalysis.supplements.length > 0
+    formData.selectedHospital || availableHospitals.length > 0
       ? `
   <div class="section">
-    <div class="section-header">💊 SUPPLEMENT RECOMMENDATIONS</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Supplement</th>
-          <th>Dosage</th>
-          <th>Timing</th>
-          <th>Benefits</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${aiAnalysis.supplements
-          .map(
-            (supplement) => `
-          <tr>
-            <td>${supplement.name}</td>
-            <td>${supplement.dosage}</td>
-            <td>${supplement.timing}</td>
-            <td>${supplement.benefits}</td>
-          </tr>
-        `,
-          )
-          .join("")}
-      </tbody>
-    </table>
+    <div class="section-header">🏥 SELECTED HOSPITAL FOR DELIVERY</div>
+    ${
+      formData.selectedHospital
+        ? `
+      <div class="facility-compact">
+        <div class="facility-name">✓ SELECTED: ${formData.selectedHospital.name}</div>
+        <div>📍 ${formData.selectedHospital.address} • 📏 ${formData.selectedHospital.distance} • ⭐ ${formData.selectedHospital.rating}</div>
+        <div>🏥 ${formData.selectedHospital.specialties}</div>
+        <div>📞 ${formData.selectedHospital.phone} • 🚨 ${formData.selectedHospital.emergency}</div>
+      </div>
+    `
+        : availableHospitals.length > 0
+          ? `
+      <div style="font-size: 8px; color: #666; margin-bottom: 4px;">No hospital selected. Available options:</div>
+      ${availableHospitals
+        .slice(0, 3)
+        .map(
+          (hospital) => `
+        <div class="facility-compact">
+          <div class="facility-name">${hospital.name}</div>
+          <div>📍 ${hospital.address} • 📏 ${hospital.distance} • ⭐ ${hospital.rating}</div>
+          <div>🏥 ${hospital.specialties}</div>
+          <div>📞 ${hospital.phone} • 🚨 ${hospital.emergency}</div>
+        </div>
+      `,
+        )
+        .join("")}
+    `
+          : ""
+    }
   </div>
   `
       : ""
   }
 
   ${
-    aiAnalysis.nearbyHospitals.length > 0
+    formData.selectedLabCenter || availableLabCenters.length > 0
       ? `
   <div class="section">
-    <div class="section-header">🏥 NEARBY HOSPITALS</div>
-    ${aiAnalysis.nearbyHospitals
-      .map(
-        (hospital) => `
-    <div class="facility-compact">
-      <div class="facility-name">${hospital.name}</div>
-      <div><strong>Address:</strong> ${hospital.address}</div>
-      <div><strong>Distance:</strong> ${hospital.distance}</div>
-      <div><strong>Specialties:</strong> ${hospital.specialties}</div>
-      <div><strong>Phone:</strong> ${hospital.phone}</div>
-      <div><strong>Rating:</strong> ${hospital.rating}</div>
-      <div><strong>Emergency:</strong> ${hospital.emergency}</div>
+    <div class="section-header">🧪 SELECTED LAB CENTER</div>
+    ${
+      formData.selectedLabCenter
+        ? `
+      <div class="facility-compact">
+        <div class="facility-name">✓ SELECTED: ${formData.selectedLabCenter.name}</div>
+        <div>📍 ${formData.selectedLabCenter.address} • 📏 ${formData.selectedLabCenter.distance} • ⭐ ${formData.selectedLabCenter.rating}</div>
+        <div>🔬 ${formData.selectedLabCenter.specialties}</div>
+        <div>📞 ${formData.selectedLabCenter.phone} • 🏠 ${formData.selectedLabCenter.emergency}</div>
+      </div>
+    `
+        : availableLabCenters.length > 0
+          ? `
+      <div style="font-size: 8px; color: #666; margin-bottom: 4px;">No lab center selected. Available options:</div>
+      ${availableLabCenters
+        .slice(0, 3)
+        .map(
+          (lab) => `
+        <div class="facility-compact">
+          <div class="facility-name">${lab.name}</div>
+          <div>📍 ${lab.address} • 📏 ${lab.distance} • ⭐ ${lab.rating}</div>
+          <div>🔬 ${lab.specialties}</div>
+          <div>📞 ${lab.phone} • 🏠 ${lab.emergency}</div>
+        </div>
+      `,
+        )
+        .join("")}
+    `
+          : ""
+    }
+  </div>
+  `
+      : ""
+  }
+
+  ${
+    aiAnalysis?.clinicalNotes
+      ? `
+  <div class="section">
+    <div class="section-header">👨‍⚕️ CLINICAL NOTES FOR HEALTHCARE PROVIDERS</div>
+    <div style="font-size: 8px; line-height: 1.3;">
+      ${aiAnalysis.clinicalNotes}
     </div>
-    `,
-      )
-      .join("")}
   </div>
   `
       : ""
   }
 
-  ${
-    aiAnalysis.labCenters.length > 0
-      ? `
   <div class="section">
-    <div class="section-header">🧪 NEARBY LAB CENTERS</div>
-    ${aiAnalysis.labCenters
-      .map(
-        (lab) => `
-    <div class="facility-compact">
-      <div class="facility-name">${lab.name}</div>
-      <div><strong>Address:</strong> ${lab.address}</div>
-      <div><strong>Distance:</strong> ${lab.distance}</div>
-      <div><strong>Specialties:</strong> ${lab.specialties}</div>
-      <div><strong>Phone:</strong> ${lab.phone}</div>
-      <div><strong>Rating:</strong> ${lab.rating}</div>
-      <div><strong>Emergency:</strong> ${lab.emergency}</div>
+    <div class="section-header">⚠️ MEDICAL DISCLAIMER</div>
+    <div style="font-size: 7px; line-height: 1.2;">
+      <strong>IMPORTANT:</strong> This AI-generated report is for informational purposes only and should not replace professional medical advice, diagnosis, or treatment. All recommendations must be reviewed and approved by qualified healthcare professionals before implementation. In case of medical emergencies, contact emergency services immediately (108 for India). The medications, dosages, and treatment recommendations are AI-generated suggestions that require medical validation. Always consult with licensed medical practitioners before making any medical decisions.
     </div>
-    `,
-      )
-      .join("")}
   </div>
-  `
-      : ""
-  }
-
-  ${
-    aiAnalysis.clinicalNotes
-      ? `
-  <div class="section">
-    <div class="section-header">🩺 AI CLINICAL NOTES FOR DOCTORS</div>
-    <div>${aiAnalysis.clinicalNotes}</div>
-  </div>
-  `
-      : ""
-  }
-  `
-      : ""
-  }
 
   <div class="footer">
-    MyMedi.ai - Empowering Maternal Health with AI | Disclaimer: This report is AI-generated and should be reviewed by a qualified healthcare professional.
+    <p><strong>MyMedi.ai</strong> - AI-Powered Maternal Health Care | Report Generated: ${currentDate} ${currentTime} IST</p>
+    <p>🌐 www.mymedi.ai | 📧 support@mymedi.ai | Emergency: 108 | Report ID: PRC-${Date.now().toString().slice(-8)}</p>
+    <p>This report contains comprehensive pregnancy care information including ${formData.currentWeek ? `Week ${formData.currentWeek}` : "pregnancy"} details, medical history, lifestyle factors, and AI-driven recommendations.</p>
   </div>
 </body>
 </html>
-`
+  `
 
     const printWindow = window.open("", "_blank")
     if (printWindow) {
-      printWindow.document.open()
       printWindow.document.write(reportContent)
       printWindow.document.close()
-
+      printWindow.focus()
       setTimeout(() => {
         printWindow.print()
-        printWindow.close()
-      }, 500)
-    } else {
-      alert("Please allow pop-ups for this site to enable printing.")
+      }, 1000)
     }
   }
 
+  const handleReset = () => {
+    if (confirm("Are you sure you want to reset all data? This action cannot be undone.")) {
+      // Reset all form data to initial state
+      setFormData({
+        // Personal Information
+        motherName: "",
+        motherAge: 0,
+        motherHeight: 0,
+        motherWeight: 0,
+        prePregnancyWeight: 0,
+        motherBloodType: "",
+        motherRhFactor: "",
+        motherOccupation: "",
+        motherEducation: "",
+        motherIncome: "",
+        fatherName: "",
+        fatherAge: 0,
+        fatherBloodType: "",
+        fatherRhFactor: "",
+        fatherOccupation: "",
+        fatherEducation: "",
+        maritalStatus: "",
+        marriageDuration: "",
+
+        // Pregnancy Details
+        lastPeriodDate: "",
+        expectedDeliveryDate: "",
+        currentWeek: 0,
+        currentTrimester: 1,
+        pregnancyType: "",
+        plannedPregnancy: false,
+        conceptionMethod: "",
+        previousMiscarriages: 0,
+        previousAbortions: 0,
+
+        // Medical History
+        chronicConditions: [],
+        allergies: [],
+        previousSurgeries: [],
+        currentMedications: [],
+        familyDiabetes: false,
+        familyHypertension: false,
+        familyHeartDisease: false,
+        familyThalassemia: false,
+        familyMentalHealth: false,
+        previousPregnancies: 0,
+        previousComplications: [],
+        bloodTransfusionHistory: false,
+        vaccinationStatus: [],
+
+        // Current Health & Vitals
+        bloodPressureSystolic: 0,
+        bloodPressureDiastolic: 0,
+        heartRate: 0,
+        temperature: 0,
+        weight: 0,
+        bmi: 0,
+        fundalHeight: 0,
+        fetalHeartRate: 0,
+        respiratoryRate: 0,
+        oxygenSaturation: 0,
+        bloodSugar: 0,
+        hemoglobin: 0,
+        currentSymptoms: [],
+        vitalsTiming: "",
+        vitalsNotes: "",
+
+        // Scans & Tests
+        scansAndTests: [],
+
+        // Lifestyle & Diet
+        smokingStatus: "",
+        alcoholConsumption: "",
+        tobaccoUse: "",
+        exerciseFrequency: "",
+        dietType: "",
+        stressLevel: 0,
+        sleepHours: 0,
+        workEnvironment: "",
+        exposureToChemicals: false,
+        domesticViolence: "",
+
+        // Diet Customization
+        dietaryRestrictions: [],
+        foodAllergies: [],
+        culturalDietPreferences: "",
+        mealPreferences: [],
+        cookingTime: "",
+        budgetRange: "",
+        favoriteIngredients: [],
+        dislikedFoods: [],
+        waterIntake: 0,
+        supplementsUsed: [],
+
+        // Location
+        location: undefined,
+      })
+
+      // Reset other states
+      setAiAnalysis(null)
+      setAnalysisGenerated(false)
+      setPregnancyScanSchedule([])
+      setVaccineScheduleWithDates([])
+      setAvailableHospitals([])
+      setAvailableLabCenters([])
+      setSuggestedTests([])
+      setActiveTab("form")
+    }
+  }
+
+  // Options for form dropdowns
+  const educationOptions = [
+    "No formal education",
+    "Primary education",
+    "Secondary education",
+    "Higher secondary",
+    "Graduate",
+    "Post-graduate",
+    "Professional degree",
+  ]
+
+  const occupationOptions = [
+    "Homemaker",
+    "Student",
+    "Teacher",
+    "Healthcare worker",
+    "Government employee",
+    "Private employee",
+    "Business owner",
+    "Farmer",
+    "Laborer",
+    "Professional",
+    "Retired",
+    "Unemployed",
+  ]
+
+  const incomeOptions = [
+    "Below ₹1 lakh/year",
+    "₹1-3 lakhs/year",
+    "₹3-5 lakhs/year",
+    "₹5-10 lakhs/year",
+    "₹10-20 lakhs/year",
+    "Above ₹20 lakhs/year",
+  ]
+
+  const conceptionMethodOptions = [
+    "Natural conception",
+    "IUI (Intrauterine Insemination)",
+    "IVF (In Vitro Fertilization)",
+    "ICSI (Intracytoplasmic Sperm Injection)",
+    "Donor egg",
+    "Donor sperm",
+    "Surrogacy",
+  ]
+
+  const chronicConditions = [
+    "Diabetes Type 1",
+    "Diabetes Type 2",
+    "Gestational Diabetes (previous)",
+    "Hypertension",
+    "Heart Disease",
+    "Asthma",
+    "COPD",
+    "Thyroid Disease (Hypo/Hyper)",
+    "Kidney Disease",
+    "Liver Disease",
+    "Autoimmune Disease",
+    "Depression",
+    "Anxiety",
+    "Epilepsy",
+    "Migraine",
+    "Arthritis",
+    "Osteoporosis",
+    "Cancer History",
+    "PCOS",
+    "Endometriosis",
+  ]
+
+  const allergyOptions = [
+    "Penicillin",
+    "Sulfa Drugs",
+    "Aspirin",
+    "Ibuprofen",
+    "Codeine",
+    "Latex",
+    "Peanuts",
+    "Tree Nuts",
+    "Shellfish",
+    "Fish",
+    "Eggs",
+    "Milk",
+    "Soy",
+    "Wheat",
+    "Sesame",
+    "Mustard",
+    "Celery",
+    "Lupin",
+    "Mollusks",
+    "Sulfites",
+  ]
+
+  const surgeryOptions = [
+    "Appendectomy",
+    "Gallbladder Surgery",
+    "Hernia Repair",
+    "C-Section",
+    "Hysterectomy",
+    "Ovarian Surgery",
+    "Breast Surgery",
+    "Thyroid Surgery",
+    "Heart Surgery",
+    "Orthopedic Surgery",
+    "Laparoscopy",
+    "D&C (Dilation and Curettage)",
+  ]
+
+  const medicationOptions = [
+    "Insulin",
+    "Metformin",
+    "Blood Pressure Medications",
+    "Thyroid Medications",
+    "Antidepressants",
+    "Anti-anxiety Medications",
+    "Asthma Inhalers",
+    "Birth Control Pills",
+    "Pain Medications",
+    "Vitamins",
+    "Iron supplements",
+    "Calcium supplements",
+    "Folic acid",
+  ]
+
+  const complicationOptions = [
+    "Gestational Diabetes",
+    "Preeclampsia",
+    "Eclampsia",
+    "Placenta Previa",
+    "Placental Abruption",
+    "Preterm Labor",
+    "IUGR (Intrauterine Growth Restriction)",
+    "Polyhydramnios",
+    "Oligohydramnios",
+    "Hyperemesis Gravidarum",
+    "Cholestasis",
+    "HELLP Syndrome",
+    "Postpartum Hemorrhage",
+    "Postpartum Depression",
+    "Cervical Incompetence",
+    "Antepartum Hemorrhage",
+  ]
+
+  const vaccinationOptions = [
+    "Tetanus Toxoid (TT)",
+    "Hepatitis B",
+    "Influenza",
+    "COVID-19",
+    "Tdap (Tetanus, Diphtheria, Pertussis)",
+    "MMR (Measles, Mumps, Rubella)",
+    "Varicella (Chickenpox)",
+    "HPV",
+  ]
+
+  const dietaryRestrictionOptions = [
+    "Vegetarian",
+    "Vegan",
+    "Jain Vegetarian",
+    "Gluten-Free",
+    "Dairy-Free",
+    "Low-Sodium",
+    "Low-Sugar",
+    "Diabetic Diet",
+    "High-Protein",
+    "Low-Fat",
+    "DASH Diet",
+  ]
+
+  const foodAllergyOptions = [
+    "Peanuts",
+    "Tree Nuts",
+    "Shellfish",
+    "Fish",
+    "Eggs",
+    "Milk",
+    "Soy",
+    "Wheat",
+    "Sesame",
+    "Mustard",
+    "Celery",
+    "Lupin",
+    "Mollusks",
+    "Sulfites",
+  ]
+
+  const mealPreferenceOptions = [
+    "Traditional Indian",
+    "North Indian",
+    "South Indian",
+    "Bengali",
+    "Gujarati",
+    "Punjabi",
+    "Quick & Easy",
+    "Home-cooked",
+    "Spicy Food",
+    "Mild Flavors",
+    "Fresh & Raw",
+    "Cooked & Warm",
+  ]
+
+  const ingredientOptions = [
+    "Chicken",
+    "Fish",
+    "Mutton",
+    "Eggs",
+    "Paneer",
+    "Tofu",
+    "Dal/Lentils",
+    "Beans",
+    "Quinoa",
+    "Rice",
+    "Wheat/Roti",
+    "Vegetables",
+    "Fruits",
+    "Nuts",
+    "Seeds",
+    "Dairy",
+    "Coconut",
+    "Ghee",
+  ]
+
+  const symptomOptions = [
+    "Nausea",
+    "Vomiting",
+    "Fatigue",
+    "Headache",
+    "Back Pain",
+    "Heartburn",
+    "Constipation",
+    "Swelling",
+    "Shortness of Breath",
+    "Dizziness",
+    "Mood Changes",
+    "Sleep Issues",
+    "Breast Tenderness",
+    "Frequent Urination",
+    "Food Cravings",
+    "Food Aversions",
+  ]
+
+  const workEnvironmentOptions = [
+    "Office/Indoor",
+    "Factory/Industrial",
+    "Healthcare facility",
+    "Educational institution",
+    "Outdoor/Field work",
+    "Home-based",
+    "Laboratory",
+    "Construction site",
+    "Agricultural",
+    "Transportation",
+  ]
+
+  const supplementOptions = [
+    "Prenatal Multivitamin",
+    "Folic Acid",
+    "Iron",
+    "Calcium",
+    "Vitamin D",
+    "Omega-3/DHA",
+    "Vitamin B12",
+    "Zinc",
+    "Magnesium",
+    "Probiotics",
+  ]
+
   return (
-    <>
-      <div className="container mx-auto py-10">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <MyMedLogo className="h-8 w-auto" />
-            <h1 className="text-2xl font-bold">Pregnancy Care</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <MyMedLogo className="h-12 w-12" />
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Comprehensive Pregnancy Care
+              </h1>
+              <p className="text-gray-600">Following IMC & WHO Guidelines for Maternal Care</p>
+            </div>
           </div>
 
-          <div className="space-x-4">
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Reset Form
+          {/* Home and Reset Navigation Buttons */}
+          <div className="flex justify-center gap-4 mb-6">
+            <Button
+              onClick={() => (window.location.href = "/")}
+              variant="outline"
+              className="flex items-center gap-2 bg-transparent border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              <MapPin className="h-4 w-4" />
+              Home
             </Button>
-            {analysisGenerated && (
-              <>
-                <Button onClick={handlePrint}>
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print Report
-                </Button>
-                <Button onClick={handleDownloadPDF}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </Button>
-              </>
-            )}
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="flex items-center gap-2 bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reset All Data
+            </Button>
           </div>
+
+          {/* Location Status */}
+          {isLoadingLocation && (
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              <span className="text-sm text-gray-600">Detecting location...</span>
+            </div>
+          )}
+
+          {formData.location && (
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <MapPin className="h-4 w-4 text-green-600" />
+              <span className="text-sm text-gray-600">
+                📍 {formData.location.city}, {formData.location.state}, {formData.location.country}
+              </span>
+            </div>
+          )}
+
+          {locationError && (
+            <Alert className="mb-4 max-w-md mx-auto">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{locationError}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
-        <Tabs defaultValue="form" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="form" onClick={() => setActiveTab("form")}>
-              Pregnancy Form
+        {/* Print/Download Buttons */}
+        {aiAnalysis && (
+          <div className="flex justify-center gap-4 mb-6">
+            <Button onClick={handlePrint} className="flex items-center gap-2">
+              <Printer className="h-4 w-4" />
+              Print Report
+            </Button>
+            <Button onClick={handleDownloadPDF} variant="outline" className="flex items-center gap-2 bg-transparent">
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Button>
+          </div>
+        )}
+
+        {/* Colored Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-8 mb-6 bg-gradient-to-r from-blue-100 to-purple-100">
+            <TabsTrigger
+              value="form"
+              className="flex items-center gap-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            >
+              <Baby className="h-3 w-3" />
+              Form
             </TabsTrigger>
-            {formData.motherName && (
-              <TabsTrigger value="analysis" disabled={!formData.motherName} onClick={() => setActiveTab("analysis")}>
-                AI Analysis
-              </TabsTrigger>
-            )}
-            {aiAnalysis && (
-              <TabsTrigger value="detailed-diet" onClick={() => setActiveTab("detailed-diet")}>
-                Detailed Diet
-              </TabsTrigger>
-            )}
+            <TabsTrigger
+              value="scan-schedule"
+              className="flex items-center gap-1 data-[state=active]:bg-purple-500 data-[state=active]:text-white"
+            >
+              <Calendar className="h-3 w-3" />
+              Scan Schedule
+            </TabsTrigger>
+            <TabsTrigger
+              value="vaccine-schedule"
+              className="flex items-center gap-1 data-[state=active]:bg-red-500 data-[state=active]:text-white"
+            >
+              <Syringe className="h-3 w-3" />
+              Vaccines
+            </TabsTrigger>
+            <TabsTrigger
+              value="diet"
+              className="flex items-center gap-1 data-[state=active]:bg-green-500 data-[state=active]:text-white"
+            >
+              <Utensils className="h-3 w-3" />
+              Diet
+            </TabsTrigger>
+            <TabsTrigger
+              value="supplements"
+              className="flex items-center gap-1 data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+            >
+              <Pill className="h-3 w-3" />
+              Supplements
+            </TabsTrigger>
+            <TabsTrigger
+              value="hospitals"
+              className="flex items-center gap-1 data-[state=active]:bg-teal-500 data-[state=active]:text-white"
+            >
+              <Building2 className="h-3 w-3" />
+              Hospitals
+            </TabsTrigger>
+            <TabsTrigger
+              value="labs"
+              className="flex items-center gap-1 data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+            >
+              <TestTube className="h-3 w-3" />
+              Labs
+            </TabsTrigger>
+            <TabsTrigger
+              value="detailed-diet"
+              className="flex items-center gap-1 data-[state=active]:bg-pink-500 data-[state=active]:text-white"
+            >
+              <Apple className="h-3 w-3" />
+              Detailed Diet
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="form" className="space-y-4">
-            {locationError && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{locationError}</AlertDescription>
-              </Alert>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label htmlFor="motherName">Mother's Name</Label>
-                  <Input
-                    type="text"
-                    id="motherName"
-                    value={formData.motherName}
-                    onChange={(e) => handleInputChange("motherName", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="motherAge">Mother's Age</Label>
-                  <Input
-                    type="number"
-                    id="motherAge"
-                    value={formData.motherAge}
-                    onChange={(e) => handleInputChange("motherAge", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="motherHeight">Mother's Height (cm)</Label>
-                  <Input
-                    type="number"
-                    id="motherHeight"
-                    value={formData.motherHeight}
-                    onChange={(e) => handleInputChange("motherHeight", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="motherWeight">Mother's Weight (kg)</Label>
-                  <Input
-                    type="number"
-                    id="motherWeight"
-                    value={formData.motherWeight}
-                    onChange={(e) => handleInputChange("motherWeight", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="prePregnancyWeight">Pre-Pregnancy Weight (kg)</Label>
-                  <Input
-                    type="number"
-                    id="prePregnancyWeight"
-                    value={formData.prePregnancyWeight}
-                    onChange={(e) => handleInputChange("prePregnancyWeight", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="motherBloodType">Mother's Blood Type</Label>
-                  <Select onValueChange={(value) => handleInputChange("motherBloodType", value)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select" defaultValue={formData.motherBloodType} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="A">A</SelectItem>
-                      <SelectItem value="B">B</SelectItem>
-                      <SelectItem value="AB">AB</SelectItem>
-                      <SelectItem value="O">O</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="motherRhFactor">Mother's Rh Factor</Label>
-                  <Select onValueChange={(value) => handleInputChange("motherRhFactor", value)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select" defaultValue={formData.motherRhFactor} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="+">+</SelectItem>
-                      <SelectItem value="-">-</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="motherOccupation">Mother's Occupation</Label>
-                  <Input
-                    type="text"
-                    id="motherOccupation"
-                    value={formData.motherOccupation}
-                    onChange={(e) => handleInputChange("motherOccupation", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="motherEducation">Mother's Education</Label>
-                  <Input
-                    type="text"
-                    id="motherEducation"
-                    value={formData.motherEducation}
-                    onChange={(e) => handleInputChange("motherEducation", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="motherIncome">Mother's Income</Label>
-                  <Input
-                    type="text"
-                    id="motherIncome"
-                    value={formData.motherIncome}
-                    onChange={(e) => handleInputChange("motherIncome", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fatherName">Father's Name</Label>
-                  <Input
-                    type="text"
-                    id="fatherName"
-                    value={formData.fatherName}
-                    onChange={(e) => handleInputChange("fatherName", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fatherAge">Father's Age</Label>
-                  <Input
-                    type="number"
-                    id="fatherAge"
-                    value={formData.fatherAge}
-                    onChange={(e) => handleInputChange("fatherAge", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fatherBloodType">Father's Blood Type</Label>
-                  <Select onValueChange={(value) => handleInputChange("fatherBloodType", value)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select" defaultValue={formData.fatherBloodType} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="A">A</SelectItem>
-                      <SelectItem value="B">B</SelectItem>
-                      <SelectItem value="AB">AB</SelectItem>
-                      <SelectItem value="O">O</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="fatherRhFactor">Father's Rh Factor</Label>
-                  <Select onValueChange={(value) => handleInputChange("fatherRhFactor", value)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select" defaultValue={formData.fatherRhFactor} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="+">+</SelectItem>
-                      <SelectItem value="-">-</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="fatherOccupation">Father's Occupation</Label>
-                  <Input
-                    type="text"
-                    id="fatherOccupation"
-                    value={formData.fatherOccupation}
-                    onChange={(e) => handleInputChange("fatherOccupation", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fatherEducation">Father's Education</Label>
-                  <Input
-                    type="text"
-                    id="fatherEducation"
-                    value={formData.fatherEducation}
-                    onChange={(e) => handleInputChange("fatherEducation", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maritalStatus">Marital Status</Label>
-                  <Input
-                    type="text"
-                    id="maritalStatus"
-                    value={formData.maritalStatus}
-                    onChange={(e) => handleInputChange("maritalStatus", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="marriageDuration">Marriage Duration</Label>
-                  <Input
-                    type="text"
-                    id="marriageDuration"
-                    value={formData.marriageDuration}
-                    onChange={(e) => handleInputChange("marriageDuration", e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Pregnancy Details</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label htmlFor="lastPeriodDate">Last Period Date</Label>
-                  <Input
-                    type="date"
-                    id="lastPeriodDate"
-                    value={formData.lastPeriodDate}
-                    onChange={(e) => handleInputChange("lastPeriodDate", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="pregnancyType">Pregnancy Type</Label>
-                  <Input
-                    type="text"
-                    id="pregnancyType"
-                    value={formData.pregnancyType}
-                    onChange={(e) => handleInputChange("pregnancyType", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="plannedPregnancy">Planned Pregnancy</Label>
-                  <Checkbox
-                    id="plannedPregnancy"
-                    checked={formData.plannedPregnancy}
-                    onCheckedChange={(checked) => handleInputChange("plannedPregnancy", !!checked)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="conceptionMethod">Conception Method</Label>
-                  <Input
-                    type="text"
-                    id="conceptionMethod"
-                    value={formData.conceptionMethod}
-                    onChange={(e) => handleInputChange("conceptionMethod", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="previousMiscarriages">Previous Miscarriages</Label>
-                  <Input
-                    type="number"
-                    id="previousMiscarriages"
-                    value={formData.previousMiscarriages}
-                    onChange={(e) => handleInputChange("previousMiscarriages", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="previousAbortions">Previous Abortions</Label>
-                  <Input
-                    type="number"
-                    id="previousAbortions"
-                    value={formData.previousAbortions}
-                    onChange={(e) => handleInputChange("previousAbortions", Number.parseInt(e.target.value))}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Medical History</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label>Chronic Conditions</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="diabetesType1"
-                        checked={formData.chronicConditions.includes("Diabetes Type 1")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Diabetes Type 1", !!checked)
-                        }
-                      />
-                      <Label htmlFor="diabetesType1">Diabetes Type 1</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="diabetesType2"
-                        checked={formData.chronicConditions.includes("Diabetes Type 2")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Diabetes Type 2", !!checked)
-                        }
-                      />
-                      <Label htmlFor="diabetesType2">Diabetes Type 2</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="gestationalDiabetes"
-                        checked={formData.chronicConditions.includes("Gestational Diabetes (previous)")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Gestational Diabetes (previous)", !!checked)
-                        }
-                      />
-                      <Label htmlFor="gestationalDiabetes">Gestational Diabetes (previous)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="hypertension"
-                        checked={formData.chronicConditions.includes("Hypertension")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "Hypertension", !!checked)}
-                      />
-                      <Label htmlFor="hypertension">Hypertension</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="heartDisease"
-                        checked={formData.chronicConditions.includes("Heart Disease")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Heart Disease", !!checked)
-                        }
-                      />
-                      <Label htmlFor="heartDisease">Heart Disease</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="asthma"
-                        checked={formData.chronicConditions.includes("Asthma")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "Asthma", !!checked)}
-                      />
-                      <Label htmlFor="asthma">Asthma</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="copd"
-                        checked={formData.chronicConditions.includes("COPD")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "COPD", !!checked)}
-                      />
-                      <Label htmlFor="copd">COPD</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="thyroidDisease"
-                        checked={formData.chronicConditions.includes("Thyroid Disease (Hypo/Hyper)")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Thyroid Disease (Hypo/Hyper)", !!checked)
-                        }
-                      />
-                      <Label htmlFor="thyroidDisease">Thyroid Disease (Hypo/Hyper)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="kidneyDisease"
-                        checked={formData.chronicConditions.includes("Kidney Disease")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Kidney Disease", !!checked)
-                        }
-                      />
-                      <Label htmlFor="kidneyDisease">Kidney Disease</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="liverDisease"
-                        checked={formData.chronicConditions.includes("Liver Disease")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Liver Disease", !!checked)
-                        }
-                      />
-                      <Label htmlFor="liverDisease">Liver Disease</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="autoimmuneDisease"
-                        checked={formData.chronicConditions.includes("Autoimmune Disease")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Autoimmune Disease", !!checked)
-                        }
-                      />
-                      <Label htmlFor="autoimmuneDisease">Autoimmune Disease</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="depression"
-                        checked={formData.chronicConditions.includes("Depression")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "Depression", !!checked)}
-                      />
-                      <Label htmlFor="depression">Depression</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="anxiety"
-                        checked={formData.chronicConditions.includes("Anxiety")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "Anxiety", !!checked)}
-                      />
-                      <Label htmlFor="anxiety">Anxiety</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="epilepsy"
-                        checked={formData.chronicConditions.includes("Epilepsy")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "Epilepsy", !!checked)}
-                      />
-                      <Label htmlFor="epilepsy">Epilepsy</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="migraine"
-                        checked={formData.chronicConditions.includes("Migraine")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "Migraine", !!checked)}
-                      />
-                      <Label htmlFor="migraine">Migraine</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="arthritis"
-                        checked={formData.chronicConditions.includes("Arthritis")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "Arthritis", !!checked)}
-                      />
-                      <Label htmlFor="arthritis">Arthritis</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="osteoporosis"
-                        checked={formData.chronicConditions.includes("Osteoporosis")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "Osteoporosis", !!checked)}
-                      />
-                      <Label htmlFor="osteoporosis">Osteoporosis</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="cancerHistory"
-                        checked={formData.chronicConditions.includes("Cancer History")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Cancer History", !!checked)
-                        }
-                      />
-                      <Label htmlFor="cancerHistory">Cancer History</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="pcos"
-                        checked={formData.chronicConditions.includes("PCOS")}
-                        onCheckedChange={(checked) => handleMultiSelect("chronicConditions", "PCOS", !!checked)}
-                      />
-                      <Label htmlFor="pcos">PCOS</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="endometriosis"
-                        checked={formData.chronicConditions.includes("Endometriosis")}
-                        onCheckedChange={(checked) =>
-                          handleMultiSelect("chronicConditions", "Endometriosis", !!checked)
-                        }
-                      />
-                      <Label htmlFor="endometriosis">Endometriosis</Label>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Allergies</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="penicillin"
-                        checked={formData.allergies.includes("Penicillin")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Penicillin", !!checked)}
-                      />
-                      <Label htmlFor="penicillin">Penicillin</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sulfaDrugs"
-                        checked={formData.allergies.includes("Sulfa Drugs")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Sulfa Drugs", !!checked)}
-                      />
-                      <Label htmlFor="sulfaDrugs">Sulfa Drugs</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="aspirin"
-                        checked={formData.allergies.includes("Aspirin")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Aspirin", !!checked)}
-                      />
-                      <Label htmlFor="aspirin">Aspirin</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="ibuprofen"
-                        checked={formData.allergies.includes("Ibuprofen")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Ibuprofen", !!checked)}
-                      />
-                      <Label htmlFor="ibuprofen">Ibuprofen</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="codeine"
-                        checked={formData.allergies.includes("Codeine")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Codeine", !!checked)}
-                      />
-                      <Label htmlFor="codeine">Codeine</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="latex"
-                        checked={formData.allergies.includes("Latex")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Latex", !!checked)}
-                      />
-                      <Label htmlFor="latex">Latex</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="peanuts"
-                        checked={formData.allergies.includes("Peanuts")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Peanuts", !!checked)}
-                      />
-                      <Label htmlFor="peanuts">Peanuts</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="treeNuts"
-                        checked={formData.allergies.includes("Tree Nuts")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Tree Nuts", !!checked)}
-                      />
-                      <Label htmlFor="treeNuts">Tree Nuts</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="shellfish"
-                        checked={formData.allergies.includes("Shellfish")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Shellfish", !!checked)}
-                      />
-                      <Label htmlFor="shellfish">Shellfish</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="fish"
-                        checked={formData.allergies.includes("Fish")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Fish", !!checked)}
-                      />
-                      <Label htmlFor="fish">Fish</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="eggs"
-                        checked={formData.allergies.includes("Eggs")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Eggs", !!checked)}
-                      />
-                      <Label htmlFor="eggs">Eggs</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="milk"
-                        checked={formData.allergies.includes("Milk")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Milk", !!checked)}
-                      />
-                      <Label htmlFor="milk">Milk</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="soy"
-                        checked={formData.allergies.includes("Soy")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Soy", !!checked)}
-                      />
-                      <Label htmlFor="soy">Soy</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="wheat"
-                        checked={formData.allergies.includes("Wheat")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Wheat", !!checked)}
-                      />
-                      <Label htmlFor="wheat">Wheat</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sesame"
-                        checked={formData.allergies.includes("Sesame")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Sesame", !!checked)}
-                      />
-                      <Label htmlFor="sesame">Sesame</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="mustard"
-                        checked={formData.allergies.includes("Mustard")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Mustard", !!checked)}
-                      />
-                      <Label htmlFor="mustard">Mustard</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="celery"
-                        checked={formData.allergies.includes("Celery")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Celery", !!checked)}
-                      />
-                      <Label htmlFor="celery">Celery</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="lupin"
-                        checked={formData.allergies.includes("Lupin")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Lupin", !!checked)}
-                      />
-                      <Label htmlFor="lupin">Lupin</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="mollusks"
-                        checked={formData.allergies.includes("Mollusks")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Mollusks", !!checked)}
-                      />
-                      <Label htmlFor="mollusks">Mollusks</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sulfites"
-                        checked={formData.allergies.includes("Sulfites")}
-                        onCheckedChange={(checked) => handleMultiSelect("allergies", "Sulfites", !!checked)}
-                      />
-                      <Label htmlFor="sulfites">Sulfites</Label>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="previousSurgeries">Previous Surgeries</Label>
-                  <Textarea
-                    id="previousSurgeries"
-                    value={formData.previousSurgeries.join(", ")}
-                    onChange={(e) => handleInputChange("previousSurgeries", e.target.value.split(","))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="currentMedications">Current Medications</Label>
-                  <Textarea
-                    id="currentMedications"
-                    value={formData.currentMedications.join(", ")}
-                    onChange={(e) => handleInputChange("currentMedications", e.target.value.split(","))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="previousComplications">Previous Pregnancy Complications</Label>
-                  <Textarea
-                    id="previousComplications"
-                    value={formData.previousComplications.join(", ")}
-                    onChange={(e) => handleInputChange("previousComplications", e.target.value.split(","))}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="bloodTransfusionHistory">Blood Transfusion History</Label>
-                  <Checkbox
-                    id="bloodTransfusionHistory"
-                    checked={formData.bloodTransfusionHistory}
-                    onCheckedChange={(checked) => handleInputChange("bloodTransfusionHistory", !!checked)}
-                  />
-                </div>
-                <div>
-                  <Label>Vaccination Status</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="tetanus"
-                        checked={formData.vaccinationStatus.includes("Tetanus")}
-                        onCheckedChange={(checked) => handleMultiSelect("vaccinationStatus", "Tetanus", !!checked)}
-                      />
-                      <Label htmlFor="tetanus">Tetanus</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="influenza"
-                        checked={formData.vaccinationStatus.includes("Influenza")}
-                        onCheckedChange={(checked) => handleMultiSelect("vaccinationStatus", "Influenza", !!checked)}
-                      />
-                      <Label htmlFor="influenza">Influenza</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="mmr"
-                        checked={formData.vaccinationStatus.includes("MMR")}
-                        onCheckedChange={(checked) => handleMultiSelect("vaccinationStatus", "MMR", !!checked)}
-                      />
-                      <Label htmlFor="mmr">MMR</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="hepatitisB"
-                        checked={formData.vaccinationStatus.includes("Hepatitis B")}
-                        onCheckedChange={(checked) => handleMultiSelect("vaccinationStatus", "Hepatitis B", !!checked)}
-                      />
-                      <Label htmlFor="hepatitisB">Hepatitis B</Label>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Family Medical History</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label htmlFor="familyDiabetes">Family History of Diabetes</Label>
-                  <Checkbox
-                    id="familyDiabetes"
-                    checked={formData.familyDiabetes}
-                    onCheckedChange={(checked) => handleInputChange("familyDiabetes", !!checked)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="familyHypertension">Family History of Hypertension</Label>
-                  <Checkbox
-                    id="familyHypertension"
-                    checked={formData.familyHypertension}
-                    onCheckedChange={(checked) => handleInputChange("familyHypertension", !!checked)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="familyHeartDisease">Family History of Heart Disease</Label>
-                  <Checkbox
-                    id="familyHeartDisease"
-                    checked={formData.familyHeartDisease}
-                    onCheckedChange={(checked) => handleInputChange("familyHeartDisease", !!checked)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="familyThalassemia">Family History of Thalassemia</Label>
-                  <Checkbox
-                    id="familyThalassemia"
-                    checked={formData.familyThalassemia}
-                    onCheckedChange={(checked) => handleInputChange("familyThalassemia", !!checked)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="familyMentalHealth">Family History of Mental Health Issues</Label>
-                  <Checkbox
-                    id="familyMentalHealth"
-                    checked={formData.familyMentalHealth}
-                    onCheckedChange={(checked) => handleInputChange("familyMentalHealth", !!checked)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Health & Vitals (Today Only)</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label htmlFor="bloodPressureSystolic">Blood Pressure (Systolic)</Label>
-                  <Input
-                    type="number"
-                    id="bloodPressureSystolic"
-                    value={formData.bloodPressureSystolic}
-                    onChange={(e) => handleInputChange("bloodPressureSystolic", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="bloodPressureDiastolic">Blood Pressure (Diastolic)</Label>
-                  <Input
-                    type="number"
-                    id="bloodPressureDiastolic"
-                    value={formData.bloodPressureDiastolic}
-                    onChange={(e) => handleInputChange("bloodPressureDiastolic", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Input
-                    type="number"
-                    id="bloodPressureDiastolic"
-                    value={formData.bloodPressureDiastolic}
-                    onChange={(e) => handleInputChange("bloodPressureDiastolic", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="heartRate">Heart Rate (bpm)</Label>
-                  <Input
-                    type="number"
-                    id="heartRate"
-                    value={formData.heartRate}
-                    onChange={(e) => handleInputChange("heartRate", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="temperature">Temperature (°F)</Label>
-                  <Input
-                    type="number"
-                    id="temperature"
-                    value={formData.temperature}
-                    onChange={(e) => handleInputChange("temperature", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="weight">Weight (kg)</Label>
-                  <Input
-                    type="number"
-                    id="weight"
-                    value={formData.weight}
-                    onChange={(e) => handleInputChange("weight", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fundalHeight">Fundal Height (cm)</Label>
-                  <Input
-                    type="number"
-                    id="fundalHeight"
-                    value={formData.fundalHeight}
-                    onChange={(e) => handleInputChange("fundalHeight", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fetalHeartRate">Fetal Heart Rate (bpm)</Label>
-                  <Input
-                    type="number"
-                    id="fetalHeartRate"
-                    value={formData.fetalHeartRate}
-                    onChange={(e) => handleInputChange("fetalHeartRate", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="respiratoryRate">Respiratory Rate (breaths/min)</Label>
-                  <Input
-                    type="number"
-                    id="respiratoryRate"
-                    value={formData.respiratoryRate}
-                    onChange={(e) => handleInputChange("respiratoryRate", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="oxygenSaturation">Oxygen Saturation (%)</Label>
-                  <Input
-                    type="number"
-                    id="oxygenSaturation"
-                    value={formData.oxygenSaturation}
-                    onChange={(e) => handleInputChange("oxygenSaturation", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="bloodSugar">Blood Sugar (mg/dL)</Label>
-                  <Input
-                    type="number"
-                    id="bloodSugar"
-                    value={formData.bloodSugar}
-                    onChange={(e) => handleInputChange("bloodSugar", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="hemoglobin">Hemoglobin (g/dL)</Label>
-                  <Input
-                    type="number"
-                    id="hemoglobin"
-                    value={formData.hemoglobin}
-                    onChange={(e) => handleInputChange("hemoglobin", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="currentSymptoms">Current Symptoms</Label>
-                  <Textarea
-                    id="currentSymptoms"
-                    value={formData.currentSymptoms.join(", ")}
-                    onChange={(e) => handleInputChange("currentSymptoms", e.target.value.split(","))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="vitalsTiming">Vitals Timing</Label>
-                  <Input
-                    type="text"
-                    id="vitalsTiming"
-                    value={formData.vitalsTiming}
-                    onChange={(e) => handleInputChange("vitalsTiming", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="vitalsNotes">Vitals Notes</Label>
-                  <Textarea
-                    id="vitalsNotes"
-                    value={formData.vitalsNotes}
-                    onChange={(e) => handleInputChange("vitalsNotes", e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Lifestyle & Diet Customization</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label htmlFor="smokingStatus">Smoking Status</Label>
-                  <Input
-                    type="text"
-                    id="smokingStatus"
-                    value={formData.smokingStatus}
-                    onChange={(e) => handleInputChange("smokingStatus", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="alcoholConsumption">Alcohol Consumption</Label>
-                  <Input
-                    type="text"
-                    id="alcoholConsumption"
-                    value={formData.alcoholConsumption}
-                    onChange={(e) => handleInputChange("alcoholConsumption", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="tobaccoUse">Tobacco Use</Label>
-                  <Input
-                    type="text"
-                    id="tobaccoUse"
-                    value={formData.tobaccoUse}
-                    onChange={(e) => handleInputChange("tobaccoUse", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="exerciseFrequency">Exercise Frequency</Label>
-                  <Input
-                    type="text"
-                    id="exerciseFrequency"
-                    value={formData.exerciseFrequency}
-                    onChange={(e) => handleInputChange("exerciseFrequency", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dietType">Diet Type</Label>
-                  <Input
-                    type="text"
-                    id="dietType"
-                    value={formData.dietType}
-                    onChange={(e) => handleInputChange("dietType", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="stressLevel">Stress Level (1-10)</Label>
-                  <Input
-                    type="number"
-                    id="stressLevel"
-                    value={formData.stressLevel}
-                    onChange={(e) => handleInputChange("stressLevel", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="sleepHours">Sleep Hours</Label>
-                  <Input
-                    type="number"
-                    id="sleepHours"
-                    value={formData.sleepHours}
-                    onChange={(e) => handleInputChange("sleepHours", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="workEnvironment">Work Environment</Label>
-                  <Input
-                    type="text"
-                    id="workEnvironment"
-                    value={formData.workEnvironment}
-                    onChange={(e) => handleInputChange("workEnvironment", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="exposureToChemicals">Exposure to Chemicals</Label>
-                  <Checkbox
-                    id="exposureToChemicals"
-                    checked={formData.exposureToChemicals}
-                    onCheckedChange={(checked) => handleInputChange("exposureToChemicals", !!checked)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="domesticViolence">Domestic Violence</Label>
-                  <Input
-                    type="text"
-                    id="domesticViolence"
-                    value={formData.domesticViolence}
-                    onChange={(e) => handleInputChange("domesticViolence", e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Diet Customization Options</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label htmlFor="dietaryRestrictions">Dietary Restrictions</Label>
-                  <Textarea
-                    id="dietaryRestrictions"
-                    value={formData.dietaryRestrictions.join(", ")}
-                    onChange={(e) => handleInputChange("dietaryRestrictions", e.target.value.split(","))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="foodAllergies">Food Allergies</Label>
-                  <Textarea
-                    id="foodAllergies"
-                    value={formData.foodAllergies.join(", ")}
-                    onChange={(e) => handleInputChange("foodAllergies", e.target.value.split(","))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="culturalDietPreferences">Cultural Diet Preferences</Label>
-                  <Input
-                    type="text"
-                    id="culturalDietPreferences"
-                    value={formData.culturalDietPreferences}
-                    onChange={(e) => handleInputChange("culturalDietPreferences", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="mealPreferences">Meal Preferences</Label>
-                  <Textarea
-                    id="mealPreferences"
-                    value={formData.mealPreferences.join(", ")}
-                    onChange={(e) => handleInputChange("mealPreferences", e.target.value.split(","))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cookingTime">Cooking Time Available</Label>
-                  <Input
-                    type="text"
-                    id="cookingTime"
-                    value={formData.cookingTime}
-                    onChange={(e) => handleInputChange("cookingTime", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="budgetRange">Budget Range</Label>
-                  <Input
-                    type="text"
-                    id="budgetRange"
-                    value={formData.budgetRange}
-                    onChange={(e) => handleInputChange("budgetRange", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="favoriteIngredients">Favorite Ingredients</Label>
-                  <Textarea
-                    id="favoriteIngredients"
-                    value={formData.favoriteIngredients.join(", ")}
-                    onChange={(e) => handleInputChange("favoriteIngredients", e.target.value.split(","))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dislikedFoods">Disliked Foods</Label>
-                  <Textarea
-                    id="dislikedFoods"
-                    value={formData.dislikedFoods.join(", ")}
-                    onChange={(e) => handleInputChange("dislikedFoods", e.target.value.split(","))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="waterIntake">Water Intake (glasses/day)</Label>
-                  <Input
-                    type="number"
-                    id="waterIntake"
-                    value={formData.waterIntake}
-                    onChange={(e) => handleInputChange("waterIntake", Number.parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="supplementsUsed">Supplements Used</Label>
-                  <Textarea
-                    id="supplementsUsed"
-                    value={formData.supplementsUsed.join(", ")}
-                    onChange={(e) => handleInputChange("supplementsUsed", e.target.value.split(","))}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Button onClick={generateAIAnalysis} disabled={isGeneratingAnalysis}>
-              {isGeneratingAnalysis ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Analysis...
-                </>
-              ) : (
-                "Generate AI Analysis"
-              )}
-            </Button>
-          </TabsContent>
-
-          <TabsContent value="analysis">
-            {aiAnalysis ? (
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>AI Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Badge
-                      variant={
-                        aiAnalysis.riskLevel === "high"
-                          ? "destructive"
-                          : aiAnalysis.riskLevel === "moderate"
-                            ? "secondary"
-                            : "outline"
-                      }
-                    >
-                      Risk Level: {aiAnalysis.riskLevel}
-                    </Badge>
-                    <p>{aiAnalysis.riskAssessment}</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Clinical Recommendations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul>
-                      {aiAnalysis.recommendations.map((recommendation, index) => (
-                        <li key={index}>{recommendation}</li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Suggested Lab Tests</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul>
-                      {aiAnalysis.suggestedTests.map((test, index) => (
-                        <li key={index}>
-                          {test.name} - Due Date: {test.dueDate}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Diet Plan</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>Daily Calories: {aiAnalysis.dietPlan.dailyCalories}</p>
-                    <p>Daily Protein: {aiAnalysis.dietPlan.dailyProtein}</p>
-                    <p>Key Nutrients: {aiAnalysis.dietPlan.keyNutrients.join(", ")}</p>
-                    <p>Foods to Avoid: {aiAnalysis.dietPlan.avoidFoods.join(", ")}</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Exercise Plan</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>Recommended Activities: {aiAnalysis.exercisePlan.recommendedActivities.join(", ")}</p>
-                    <p>Restrictions: {aiAnalysis.exercisePlan.restrictions.join(", ")}</p>
-                    <p>Warning Signs: {aiAnalysis.exercisePlan.warningSigns.join(", ")}</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Nearby Hospitals</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul>
-                      {aiAnalysis.nearbyHospitals.map((hospital, index) => (
-                        <li key={index}>
-                          {hospital.name} - {hospital.address}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Nearby Lab Centers</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul>
-                      {aiAnalysis.labCenters.map((lab, index) => (
-                        <li key={index}>
-                          {lab.name} - {lab.address}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <Alert variant="info">
-                <AlertDescription>
-                  No AI analysis generated yet. Please fill out the form and click "Generate AI Analysis".
-                </AlertDescription>
-              </Alert>
-            )}
-          </TabsContent>
-          {/* Detailed Diet Tab */}
-          <TabsContent value="detailed-diet" className="space-y-6">
+          {/* Form Tab - Full Pregnancy Form */}
+          <TabsContent value="form" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Apple className="h-5 w-5" />
-                  Detailed Weekly Meal Plan with Nutritional Information
+                  <Baby className="h-5 w-5" />
+                  Comprehensive Pregnancy Care Form (IMC & WHO Guidelines)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Personal Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-blue-600 border-b pb-2">Personal Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="motherName">Mother's Full Name *</Label>
+                      <Input
+                        id="motherName"
+                        value={formData.motherName}
+                        onChange={(e) => handleInputChange("motherName", e.target.value)}
+                        placeholder="Enter full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="motherAge">Age *</Label>
+                      <Input
+                        id="motherAge"
+                        type="number"
+                        value={formData.motherAge}
+                        onChange={(e) => handleInputChange("motherAge", Number.parseInt(e.target.value) || 0)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="motherHeight">Height (cm) *</Label>
+                      <Input
+                        id="motherHeight"
+                        type="number"
+                        value={formData.motherHeight}
+                        onChange={(e) => handleInputChange("motherHeight", Number.parseInt(e.target.value) || 0)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="motherWeight">Current Weight (kg) *</Label>
+                      <Input
+                        id="motherWeight"
+                        type="number"
+                        value={formData.motherWeight}
+                        onChange={(e) => handleInputChange("motherWeight", Number.parseInt(e.target.value) || 0)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="prePregnancyWeight">Pre-pregnancy Weight (kg) *</Label>
+                      <Input
+                        id="prePregnancyWeight"
+                        type="number"
+                        value={formData.prePregnancyWeight}
+                        onChange={(e) => handleInputChange("prePregnancyWeight", Number.parseInt(e.target.value) || 0)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="motherEducation">Education Level</Label>
+                      <Select
+                        value={formData.motherEducation}
+                        onValueChange={(value) => handleInputChange("motherEducation", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select education level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {educationOptions.map((education) => (
+                            <SelectItem key={education} value={education}>
+                              {education}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="motherOccupation">Occupation</Label>
+                      <Select
+                        value={formData.motherOccupation}
+                        onValueChange={(value) => handleInputChange("motherOccupation", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select occupation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {occupationOptions.map((occupation) => (
+                            <SelectItem key={occupation} value={occupation}>
+                              {occupation}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="motherIncome">Annual Income</Label>
+                      <Select
+                        value={formData.motherIncome}
+                        onValueChange={(value) => handleInputChange("motherIncome", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select income range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {incomeOptions.map((income) => (
+                            <SelectItem key={income} value={income}>
+                              {income}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="motherBloodType">Blood Type</Label>
+                      <Select
+                        value={formData.motherBloodType}
+                        onValueChange={(value) => handleInputChange("motherBloodType", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select blood type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A</SelectItem>
+                          <SelectItem value="B">B</SelectItem>
+                          <SelectItem value="AB">AB</SelectItem>
+                          <SelectItem value="O">O</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="motherRhFactor">Rh Factor</Label>
+                      <Select
+                        value={formData.motherRhFactor}
+                        onValueChange={(value) => handleInputChange("motherRhFactor", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Rh" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="+">Positive (+)</SelectItem>
+                          <SelectItem value="-">Negative (-)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="maritalStatus">Marital Status</Label>
+                      <Select
+                        value={formData.maritalStatus}
+                        onValueChange={(value) => handleInputChange("maritalStatus", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select marital status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="married">Married</SelectItem>
+                          <SelectItem value="unmarried">Unmarried</SelectItem>
+                          <SelectItem value="divorced">Divorced</SelectItem>
+                          <SelectItem value="widowed">Widowed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="marriageDuration">Marriage Duration</Label>
+                      <Input
+                        id="marriageDuration"
+                        value={formData.marriageDuration}
+                        onChange={(e) => handleInputChange("marriageDuration", e.target.value)}
+                        placeholder="e.g., 2 years"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pregnancy Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-green-600 border-b pb-2">Pregnancy Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="lastPeriodDate">Last Menstrual Period (LMP) *</Label>
+                      <Input
+                        id="lastPeriodDate"
+                        type="date"
+                        value={formData.lastPeriodDate}
+                        onChange={(e) => handleInputChange("lastPeriodDate", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pregnancyType">Pregnancy Type</Label>
+                      <Select
+                        value={formData.pregnancyType}
+                        onValueChange={(value) => handleInputChange("pregnancyType", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select pregnancy type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="singleton">Singleton</SelectItem>
+                          <SelectItem value="twins">Twins</SelectItem>
+                          <SelectItem value="triplets">Triplets</SelectItem>
+                          <SelectItem value="higher-order">Higher Order Multiple</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="conceptionMethod">Conception Method</Label>
+                      <Select
+                        value={formData.conceptionMethod}
+                        onValueChange={(value) => handleInputChange("conceptionMethod", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select conception method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {conceptionMethodOptions.map((method) => (
+                            <SelectItem key={method} value={method}>
+                              {method}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="plannedPregnancy"
+                        checked={formData.plannedPregnancy}
+                        onCheckedChange={(checked) => handleInputChange("plannedPregnancy", checked as boolean)}
+                      />
+                      <Label htmlFor="plannedPregnancy">This is a planned pregnancy</Label>
+                    </div>
+                    <div>
+                      <Label htmlFor="previousPregnancies">Number of Previous Pregnancies</Label>
+                      <Input
+                        id="previousPregnancies"
+                        type="number"
+                        value={formData.previousPregnancies}
+                        onChange={(e) => handleInputChange("previousPregnancies", Number.parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="previousMiscarriages">Previous Miscarriages</Label>
+                      <Input
+                        id="previousMiscarriages"
+                        type="number"
+                        value={formData.previousMiscarriages}
+                        onChange={(e) =>
+                          handleInputChange("previousMiscarriages", Number.parseInt(e.target.value) || 0)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="previousAbortions">Previous Abortions</Label>
+                      <Input
+                        id="previousAbortions"
+                        type="number"
+                        value={formData.previousAbortions}
+                        onChange={(e) => handleInputChange("previousAbortions", Number.parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                  {formData.currentWeek > 0 && (
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg">
+                      <div>
+                        <Label>Current Week</Label>
+                        <div className="text-2xl font-bold text-blue-600">{formData.currentWeek} weeks</div>
+                      </div>
+                      <div>
+                        <Label>Trimester</Label>
+                        <div className="text-2xl font-bold text-purple-600">{formData.currentTrimester}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Medical History - Enhanced */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-red-600 border-b pb-2">Medical History</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Chronic Conditions</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {chronicConditions.map((condition) => (
+                          <div key={condition} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`chronic-${condition}`}
+                              checked={formData.chronicConditions.includes(condition)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("chronicConditions", condition, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`chronic-${condition}`} className="text-sm">
+                              {condition}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Known Allergies</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {allergyOptions.map((allergy) => (
+                          <div key={allergy} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`allergy-${allergy}`}
+                              checked={formData.allergies.includes(allergy)}
+                              onCheckedChange={(checked) => handleMultiSelect("allergies", allergy, checked as boolean)}
+                            />
+                            <Label htmlFor={`allergy-${allergy}`} className="text-sm">
+                              {allergy}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Previous Surgeries</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {surgeryOptions.map((surgery) => (
+                          <div key={surgery} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`surgery-${surgery}`}
+                              checked={formData.previousSurgeries.includes(surgery)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("previousSurgeries", surgery, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`surgery-${surgery}`} className="text-sm">
+                              {surgery}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Current Medications</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {medicationOptions.map((medication) => (
+                          <div key={medication} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`medication-${medication}`}
+                              checked={formData.currentMedications.includes(medication)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("currentMedications", medication, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`medication-${medication}`} className="text-sm">
+                              {medication}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Previous Pregnancy Complications</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {complicationOptions.map((complication) => (
+                          <div key={complication} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`complication-${complication}`}
+                              checked={formData.previousComplications.includes(complication)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("previousComplications", complication, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`complication-${complication}`} className="text-sm">
+                              {complication}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Vaccination Status</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {vaccinationOptions.map((vaccine) => (
+                          <div key={vaccine} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`vaccine-${vaccine}`}
+                              checked={formData.vaccinationStatus.includes(vaccine)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("vaccinationStatus", vaccine, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`vaccine-${vaccine}`} className="text-sm">
+                              {vaccine}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Family Medical History - Enhanced */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-orange-600 border-b pb-2">Family Medical History</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="familyDiabetes"
+                        checked={formData.familyDiabetes}
+                        onCheckedChange={(checked) => handleInputChange("familyDiabetes", checked as boolean)}
+                      />
+                      <Label htmlFor="familyDiabetes">Family History of Diabetes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="familyHypertension"
+                        checked={formData.familyHypertension}
+                        onCheckedChange={(checked) => handleInputChange("familyHypertension", checked as boolean)}
+                      />
+                      <Label htmlFor="familyHypertension">Family History of Hypertension</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="familyHeartDisease"
+                        checked={formData.familyHeartDisease}
+                        onCheckedChange={(checked) => handleInputChange("familyHeartDisease", checked as boolean)}
+                      />
+                      <Label htmlFor="familyHeartDisease">Family History of Heart Disease</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="familyThalassemia"
+                        checked={formData.familyThalassemia}
+                        onCheckedChange={(checked) => handleInputChange("familyThalassemia", checked as boolean)}
+                      />
+                      <Label htmlFor="familyThalassemia">Family History of Thalassemia</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="familyMentalHealth"
+                        checked={formData.familyMentalHealth}
+                        onCheckedChange={(checked) => handleInputChange("familyMentalHealth", checked as boolean)}
+                      />
+                      <Label htmlFor="familyMentalHealth">Family History of Mental Health Issues</Label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current Vitals - Enhanced */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-pink-600 border-b pb-2">Current Vitals & Health Status</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="bloodPressureSystolic">Blood Pressure (Systolic)</Label>
+                      <Input
+                        id="bloodPressureSystolic"
+                        type="number"
+                        value={formData.bloodPressureSystolic}
+                        onChange={(e) =>
+                          handleInputChange("bloodPressureSystolic", Number.parseInt(e.target.value) || 0)
+                        }
+                        placeholder="e.g., 120"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bloodPressureDiastolic">Blood Pressure (Diastolic)</Label>
+                      <Input
+                        id="bloodPressureDiastolic"
+                        type="number"
+                        value={formData.bloodPressureDiastolic}
+                        onChange={(e) =>
+                          handleInputChange("bloodPressureDiastolic", Number.parseInt(e.target.value) || 0)
+                        }
+                        placeholder="e.g., 80"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="heartRate">Heart Rate (bpm)</Label>
+                      <Input
+                        id="heartRate"
+                        type="number"
+                        value={formData.heartRate}
+                        onChange={(e) => handleInputChange("heartRate", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 72"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="temperature">Temperature (°F)</Label>
+                      <Input
+                        id="temperature"
+                        type="number"
+                        step="0.1"
+                        value={formData.temperature}
+                        onChange={(e) => handleInputChange("temperature", Number.parseFloat(e.target.value) || 0)}
+                        placeholder="e.g., 98.6"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="respiratoryRate">Respiratory Rate (/min)</Label>
+                      <Input
+                        id="respiratoryRate"
+                        type="number"
+                        value={formData.respiratoryRate}
+                        onChange={(e) => handleInputChange("respiratoryRate", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 16"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="oxygenSaturation">Oxygen Saturation (%)</Label>
+                      <Input
+                        id="oxygenSaturation"
+                        type="number"
+                        value={formData.oxygenSaturation}
+                        onChange={(e) => handleInputChange("oxygenSaturation", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 98"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bloodSugar">Blood Sugar (mg/dL)</Label>
+                      <Input
+                        id="bloodSugar"
+                        type="number"
+                        value={formData.bloodSugar}
+                        onChange={(e) => handleInputChange("bloodSugar", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 90"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="hemoglobin">Hemoglobin (g/dL)</Label>
+                      <Input
+                        id="hemoglobin"
+                        type="number"
+                        step="0.1"
+                        value={formData.hemoglobin}
+                        onChange={(e) => handleInputChange("hemoglobin", Number.parseFloat(e.target.value) || 0)}
+                        placeholder="e.g., 12.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="fundalHeight">Fundal Height (cm)</Label>
+                      <Input
+                        id="fundalHeight"
+                        type="number"
+                        value={formData.fundalHeight}
+                        onChange={(e) => handleInputChange("fundalHeight", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 24"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="fetalHeartRate">Fetal Heart Rate (bpm)</Label>
+                      <Input
+                        id="fetalHeartRate"
+                        type="number"
+                        value={formData.fetalHeartRate}
+                        onChange={(e) => handleInputChange("fetalHeartRate", Number.parseInt(e.target.value) || 0)}
+                        placeholder="e.g., 140"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="vitalsTiming">When were vitals taken?</Label>
+                      <Input
+                        id="vitalsTiming"
+                        value={formData.vitalsTiming}
+                        onChange={(e) => handleInputChange("vitalsTiming", e.target.value)}
+                        placeholder="e.g., Today morning, Yesterday"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Current Symptoms</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                      {symptomOptions.map((symptom) => (
+                        <div key={symptom} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`symptom-${symptom}`}
+                            checked={formData.currentSymptoms.includes(symptom)}
+                            onCheckedChange={(checked) =>
+                              handleMultiSelect("currentSymptoms", symptom, checked as boolean)
+                            }
+                          />
+                          <Label htmlFor={`symptom-${symptom}`} className="text-sm">
+                            {symptom}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="vitalsNotes">Additional Notes about Current Health</Label>
+                    <Textarea
+                      id="vitalsNotes"
+                      value={formData.vitalsNotes}
+                      onChange={(e) => handleInputChange("vitalsNotes", e.target.value)}
+                      placeholder="Any additional information about your current health status..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Lifestyle & Diet Preferences - Enhanced */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-indigo-600 border-b pb-2">Lifestyle & Diet Preferences</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="smokingStatus">Smoking Status</Label>
+                      <Select
+                        value={formData.smokingStatus}
+                        onValueChange={(value) => handleInputChange("smokingStatus", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select smoking status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="never">Never smoked</SelectItem>
+                          <SelectItem value="former">Former smoker</SelectItem>
+                          <SelectItem value="current">Current smoker</SelectItem>
+                          <SelectItem value="occasional">Occasional smoker</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="alcoholConsumption">Alcohol Consumption</Label>
+                      <Select
+                        value={formData.alcoholConsumption}
+                        onValueChange={(value) => handleInputChange("alcoholConsumption", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select alcohol consumption" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="never">Never</SelectItem>
+                          <SelectItem value="rarely">Rarely</SelectItem>
+                          <SelectItem value="occasionally">Occasionally</SelectItem>
+                          <SelectItem value="regularly">Regularly</SelectItem>
+                          <SelectItem value="stopped-for-pregnancy">Stopped for pregnancy</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="tobaccoUse">Tobacco Use</Label>
+                      <Select
+                        value={formData.tobaccoUse}
+                        onValueChange={(value) => handleInputChange("tobaccoUse", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select tobacco use" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="never">Never used</SelectItem>
+                          <SelectItem value="former">Former user</SelectItem>
+                          <SelectItem value="current">Current user</SelectItem>
+                          <SelectItem value="chewing">Chewing tobacco</SelectItem>
+                          <SelectItem value="smoking">Smoking tobacco</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="exerciseFrequency">Exercise Frequency</Label>
+                      <Select
+                        value={formData.exerciseFrequency}
+                        onValueChange={(value) => handleInputChange("exerciseFrequency", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select exercise frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No exercise</SelectItem>
+                          <SelectItem value="light">Light (1-2 times/week)</SelectItem>
+                          <SelectItem value="moderate">Moderate (3-4 times/week)</SelectItem>
+                          <SelectItem value="active">Active (5-6 times/week)</SelectItem>
+                          <SelectItem value="very-active">Very active (daily)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="dietType">Diet Type</Label>
+                      <Select value={formData.dietType} onValueChange={(value) => handleInputChange("dietType", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select diet type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="omnivore">Omnivore</SelectItem>
+                          <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                          <SelectItem value="vegan">Vegan</SelectItem>
+                          <SelectItem value="jain-vegetarian">Jain Vegetarian</SelectItem>
+                          <SelectItem value="pescatarian">Pescatarian</SelectItem>
+                          <SelectItem value="eggetarian">Eggetarian</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="culturalDietPreferences">Cultural Diet Preferences</Label>
+                      <Input
+                        id="culturalDietPreferences"
+                        value={formData.culturalDietPreferences}
+                        onChange={(e) => handleInputChange("culturalDietPreferences", e.target.value)}
+                        placeholder="e.g., North Indian, South Indian, Bengali"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="stressLevel">Stress Level (1-10)</Label>
+                      <Input
+                        id="stressLevel"
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={formData.stressLevel}
+                        onChange={(e) => handleInputChange("stressLevel", Number.parseInt(e.target.value) || 5)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sleepHours">Average Sleep Hours</Label>
+                      <Input
+                        id="sleepHours"
+                        type="number"
+                        min="1"
+                        max="12"
+                        value={formData.sleepHours}
+                        onChange={(e) => handleInputChange("sleepHours", Number.parseInt(e.target.value) || 8)}
+                        placeholder="e.g., 8"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="waterIntake">Daily Water Intake (glasses)</Label>
+                      <Input
+                        id="waterIntake"
+                        type="number"
+                        value={formData.waterIntake}
+                        onChange={(e) => handleInputChange("waterIntake", Number.parseInt(e.target.value) || 8)}
+                        placeholder="e.g., 8"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detailed Diet Preferences */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-emerald-600 border-b pb-2">Detailed Diet Preferences</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Dietary Restrictions</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {dietaryRestrictionOptions.map((restriction) => (
+                          <div key={restriction} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`diet-restriction-${restriction}`}
+                              checked={formData.dietaryRestrictions.includes(restriction)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("dietaryRestrictions", restriction, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`diet-restriction-${restriction}`} className="text-sm">
+                              {restriction}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Food Allergies</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {foodAllergyOptions.map((allergy) => (
+                          <div key={allergy} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`food-allergy-${allergy}`}
+                              checked={formData.foodAllergies.includes(allergy)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("foodAllergies", allergy, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`food-allergy-${allergy}`} className="text-sm">
+                              {allergy}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Meal Preferences</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {mealPreferenceOptions.map((preference) => (
+                          <div key={preference} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`meal-pref-${preference}`}
+                              checked={formData.mealPreferences.includes(preference)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("mealPreferences", preference, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`meal-pref-${preference}`} className="text-sm">
+                              {preference}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Favorite Ingredients</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {ingredientOptions.map((ingredient) => (
+                          <div key={ingredient} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`ingredient-${ingredient}`}
+                              checked={formData.favoriteIngredients.includes(ingredient)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("favoriteIngredients", ingredient, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`ingredient-${ingredient}`} className="text-sm">
+                              {ingredient}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Current Supplements</Label>
+                      <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
+                        {supplementOptions.map((supplement) => (
+                          <div key={supplement} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`supplement-${supplement}`}
+                              checked={formData.supplementsUsed.includes(supplement)}
+                              onCheckedChange={(checked) =>
+                                handleMultiSelect("supplementsUsed", supplement, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`supplement-${supplement}`} className="text-sm">
+                              {supplement}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="cookingTime">Available Cooking Time</Label>
+                      <Select
+                        value={formData.cookingTime}
+                        onValueChange={(value) => handleInputChange("cookingTime", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cooking time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="minimal">Minimal (15-30 min)</SelectItem>
+                          <SelectItem value="moderate">Moderate (30-60 min)</SelectItem>
+                          <SelectItem value="extensive">Extensive (1+ hours)</SelectItem>
+                          <SelectItem value="meal-prep">Meal prep on weekends</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="budgetRange">Food Budget Range</Label>
+                      <Select
+                        value={formData.budgetRange}
+                        onValueChange={(value) => handleInputChange("budgetRange", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select budget range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low (₹3000-5000/month)</SelectItem>
+                          <SelectItem value="moderate">Moderate (₹5000-8000/month)</SelectItem>
+                          <SelectItem value="high">High (₹8000-12000/month)</SelectItem>
+                          <SelectItem value="premium">Premium (₹12000+/month)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Generate Analysis Button */}
+                <div className="flex justify-center pt-6">
+                  <Button
+                    onClick={generateAIAnalysis}
+                    disabled={isGeneratingAnalysis || !formData.motherName || !formData.lastPeriodDate}
+                    className="px-8 py-3 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    {isGeneratingAnalysis ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Generating AI Analysis...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="mr-2 h-5 w-5" />
+                        Generate AI Analysis (IMC & WHO Guidelines)
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Scan Schedule Tab */}
+          <TabsContent value="scan-schedule" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Pregnancy Scan Schedule with Dates
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {aiAnalysis?.dietPlan?.weeklyMealPlan ? (
+                {pregnancyScanSchedule.length > 0 ? (
+                  <div className="space-y-4">
+                    {pregnancyScanSchedule.map((scan) => (
+                      <Card
+                        key={scan.id}
+                        className={`p-4 border-l-4 ${
+                          scan.status === "completed"
+                            ? "border-l-green-500 bg-green-50"
+                            : scan.status === "overdue"
+                              ? "border-l-red-500 bg-red-50"
+                              : "border-l-blue-500 bg-blue-50"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-semibold text-lg">{scan.scanName}</h4>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                scan.importance === "essential"
+                                  ? "destructive"
+                                  : scan.importance === "recommended"
+                                    ? "default"
+                                    : "secondary"
+                              }
+                            >
+                              {scan.importance}
+                            </Badge>
+                            <Badge
+                              variant={
+                                scan.status === "completed"
+                                  ? "default"
+                                  : scan.status === "overdue"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                            >
+                              {scan.status}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Label>Recommended Week</Label>
+                            <div className="text-sm font-medium">Week {scan.recommendedWeek}</div>
+                          </div>
+                          <div>
+                            <Label>Scheduled Date</Label>
+                            <Input
+                              type="date"
+                              value={scan.scheduledDate}
+                              onChange={(e) => updateScanSchedule(scan.id, "scheduledDate", e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Actual Date (if completed)</Label>
+                            <Input
+                              type="date"
+                              value={scan.actualDate || ""}
+                              onChange={(e) => updateScanSchedule(scan.id, "actualDate", e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Cost</Label>
+                            <div className="text-sm font-medium text-green-600">{scan.cost}</div>
+                          </div>
+                        </div>
+
+                        <div className="text-sm text-gray-600 mb-2">
+                          <strong>Description:</strong> {scan.description}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                          <div className="p-2 bg-blue-50 rounded">
+                            <strong>IMC Guideline:</strong> {scan.imcGuideline}
+                          </div>
+                          <div className="p-2 bg-green-50 rounded">
+                            <strong>WHO Guideline:</strong> {scan.whoGuideline}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Please enter your pregnancy details to view the scan schedule.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Vaccine Schedule Tab */}
+          <TabsContent value="vaccine-schedule" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Syringe className="h-5 w-5" />
+                  Pregnancy Vaccination Schedule with Dates
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {vaccineScheduleWithDates.length > 0 ? (
+                  <div className="space-y-4">
+                    {vaccineScheduleWithDates.map((vaccine) => (
+                      <Card
+                        key={vaccine.id}
+                        className={`p-4 border-l-4 ${
+                          vaccine.status === "completed"
+                            ? "border-l-green-500 bg-green-50"
+                            : vaccine.status === "overdue"
+                              ? "border-l-red-500 bg-red-50"
+                              : "border-l-blue-500 bg-blue-50"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-semibold text-lg">{vaccine.vaccine}</h4>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{vaccine.importance}</Badge>
+                            <Badge
+                              variant={
+                                vaccine.status === "completed"
+                                  ? "default"
+                                  : vaccine.status === "overdue"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                            >
+                              {vaccine.status}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Label>Recommended Week</Label>
+                            <div className="text-sm font-medium">Week {vaccine.recommendedWeek}</div>
+                          </div>
+                          <div>
+                            <Label>Scheduled Date</Label>
+                            <Input
+                              type="date"
+                              value={vaccine.scheduledDate}
+                              onChange={(e) => updateVaccineSchedule(vaccine.id, "scheduledDate", e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Actual Date (if given)</Label>
+                            <Input
+                              type="date"
+                              value={vaccine.actualDate || ""}
+                              onChange={(e) => updateVaccineSchedule(vaccine.id, "actualDate", e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="text-sm text-gray-600 mb-2">
+                          <strong>Description:</strong> {vaccine.description}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mb-2">
+                          <div className="p-2 bg-yellow-50 rounded">
+                            <strong>Side Effects:</strong> {vaccine.sideEffects}
+                          </div>
+                          <div className="p-2 bg-red-50 rounded">
+                            <strong>Contraindications:</strong> {vaccine.contraindications}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                          <div className="p-2 bg-blue-50 rounded">
+                            <strong>IMC Guideline:</strong> {vaccine.imcGuideline}
+                          </div>
+                          <div className="p-2 bg-green-50 rounded">
+                            <strong>WHO Guideline:</strong> {vaccine.whoGuideline}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Syringe className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">
+                      Please enter your pregnancy details to view the vaccination schedule.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Diet Tab */}
+          <TabsContent value="diet" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Utensils className="h-5 w-5" />
+                  Personalized Diet Plan
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {aiAnalysis?.dietPlan ? (
                   <div className="space-y-6">
-                    {/* Weekly Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">{aiAnalysis.dietPlan.dailyCalories}</div>
                         <div className="text-sm text-gray-600">Daily Calories</div>
@@ -3836,273 +3892,399 @@ Ensure all recommendations are:
                         <div className="text-sm text-gray-600">Daily Protein</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">1400ml</div>
-                        <div className="text-sm text-gray-600">Daily Water</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">6</div>
-                        <div className="text-sm text-gray-600">Meals/Day</div>
+                        <div className="text-2xl font-bold text-purple-600">
+                          Trimester {aiAnalysis.dietPlan.trimester}
+                        </div>
+                        <div className="text-sm text-gray-600">Current Phase</div>
                       </div>
                     </div>
 
-                    {/* Daily Meal Plans */}
+                    <div>
+                      <h4 className="font-semibold mb-2">Key Nutrients</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {aiAnalysis.dietPlan.keyNutrients.map((nutrient, index) => (
+                          <Badge key={index} variant="outline" className="bg-green-50">
+                            {nutrient}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-2">Foods to Avoid</h4>
+                      <div className="p-3 bg-red-50 rounded-lg">
+                        <div className="text-sm text-red-700">{aiAnalysis.dietPlan.avoidFoods.join(", ")}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-2">Hydration Guidelines</h4>
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <div className="text-sm text-blue-700">{aiAnalysis.dietPlan.hydration}</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <h4 className="font-semibold mb-2 text-blue-700">IMC Recommendations</h4>
+                        <ul className="text-sm space-y-1">
+                          {aiAnalysis.dietPlan.imcRecommendations.map((rec, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-blue-600">•</span>
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <h4 className="font-semibold mb-2 text-green-700">WHO Recommendations</h4>
+                        <ul className="text-sm space-y-1">
+                          {aiAnalysis.dietPlan.whoRecommendations.map((rec, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-green-600">•</span>
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Utensils className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Generate AI analysis to view your personalized diet plan.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Supplements Tab */}
+          <TabsContent value="supplements" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Pill className="h-5 w-5" />
+                  Recommended Supplements
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {aiAnalysis?.supplements ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {aiAnalysis.supplements.map((supplement, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-lg">{supplement.name}</h4>
+                          <Badge variant="outline">{supplement.price}</Badge>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <strong>Dosage:</strong> {supplement.dosage}
+                          </div>
+                          <div>
+                            <strong>Timing:</strong> {supplement.timing}
+                          </div>
+                          <div>
+                            <strong>Benefits:</strong> {supplement.benefits}
+                          </div>
+                          <div>
+                            <strong>Brands:</strong> {supplement.brands}
+                          </div>
+                          {supplement.warnings && (
+                            <div className="p-2 bg-yellow-50 rounded text-yellow-800">
+                              <strong>Warnings:</strong> {supplement.warnings}
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Pill className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Generate AI analysis to view your supplement recommendations.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Hospitals Tab */}
+          <TabsContent value="hospitals" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Nearby Hospitals for Delivery
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Hospital Selection for Report */}
+                {availableHospitals.length > 0 && (
+                  <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-semibold text-blue-800 mb-3">Select Hospital for Report</h4>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Choose your preferred hospital to include in the printed report:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {availableHospitals.map((hospital) => (
+                        <Button
+                          key={hospital.id}
+                          onClick={() => handleHospitalSelection(hospital)}
+                          variant={formData.selectedHospital?.id === hospital.id ? "default" : "outline"}
+                          className={`text-sm ${
+                            formData.selectedHospital?.id === hospital.id
+                              ? "bg-blue-600 text-white"
+                              : "bg-transparent border-blue-300 text-blue-700 hover:bg-blue-100"
+                          }`}
+                        >
+                          {hospital.name}
+                          {formData.selectedHospital?.id === hospital.id && " ✓"}
+                        </Button>
+                      ))}
+                    </div>
+                    {formData.selectedHospital && (
+                      <div className="mt-3 p-3 bg-white rounded border border-blue-200">
+                        <p className="text-sm text-green-700">
+                          ✓ Selected: <strong>{formData.selectedHospital.name}</strong> will be included in your report
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {availableHospitals.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {availableHospitals.map((hospital) => (
+                      <Card
+                        key={hospital.id}
+                        className={`p-4 cursor-pointer transition-colors ${
+                          formData.selectedHospital?.id === hospital.id
+                            ? "border-blue-500 bg-blue-50"
+                            : "hover:bg-gray-50"
+                        }`}
+                        onClick={() => handleHospitalSelection(hospital)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-lg">{hospital.name}</h4>
+                          <Badge variant="outline">{hospital.rating}</Badge>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <strong>Address:</strong> {hospital.address}
+                          </div>
+                          <div>
+                            <strong>Distance:</strong> {hospital.distance}
+                          </div>
+                          <div>
+                            <strong>Specialties:</strong> {hospital.specialties}
+                          </div>
+                          <div>
+                            <strong>Phone:</strong> {hospital.phone}
+                          </div>
+                          <div className="p-2 bg-green-50 rounded text-green-800">
+                            <strong>Emergency:</strong> {hospital.emergency}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Building2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Location detection required to show nearby hospitals.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Labs Tab */}
+          <TabsContent value="labs" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TestTube className="h-5 w-5" />
+                  Nearby Lab Centers
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Lab Selection for Report */}
+                {availableLabCenters.length > 0 && (
+                  <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <h4 className="font-semibold text-purple-800 mb-3">Select Lab Center for Report</h4>
+                    <p className="text-sm text-purple-700 mb-3">
+                      Choose your preferred lab center to include in the printed report:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {availableLabCenters.map((lab) => (
+                        <Button
+                          key={lab.id}
+                          onClick={() => handleLabSelection(lab)}
+                          variant={formData.selectedLabCenter?.id === lab.id ? "default" : "outline"}
+                          className={`text-sm ${
+                            formData.selectedLabCenter?.id === lab.id
+                              ? "bg-purple-600 text-white"
+                              : "bg-transparent border-purple-300 text-purple-700 hover:bg-purple-100"
+                          }`}
+                        >
+                          {lab.name}
+                          {formData.selectedLabCenter?.id === lab.id && " ✓"}
+                        </Button>
+                      ))}
+                    </div>
+                    {formData.selectedLabCenter && (
+                      <div className="mt-3 p-3 bg-white rounded border border-purple-200">
+                        <p className="text-sm text-green-700">
+                          ✓ Selected: <strong>{formData.selectedLabCenter.name}</strong> will be included in your report
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {availableLabCenters.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {availableLabCenters.map((lab) => (
+                      <Card
+                        key={lab.id}
+                        className={`p-4 cursor-pointer transition-colors ${
+                          formData.selectedLabCenter?.id === lab.id
+                            ? "border-purple-500 bg-purple-50"
+                            : "hover:bg-gray-50"
+                        }`}
+                        onClick={() => handleLabSelection(lab)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-lg">{lab.name}</h4>
+                          <Badge variant="outline">{lab.rating}</Badge>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <strong>Address:</strong> {lab.address}
+                          </div>
+                          <div>
+                            <strong>Distance:</strong> {lab.distance}
+                          </div>
+                          <div>
+                            <strong>Specialties:</strong> {lab.specialties}
+                          </div>
+                          <div>
+                            <strong>Phone:</strong> {lab.phone}
+                          </div>
+                          <div className="p-2 bg-blue-50 rounded text-blue-800">
+                            <strong>Services:</strong> {lab.emergency}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <TestTube className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Location detection required to show nearby lab centers.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Detailed Diet Tab */}
+          <TabsContent value="detailed-diet" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Apple className="h-5 w-5" />
+                  Detailed Weekly Meal Plan
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {aiAnalysis?.dietPlan?.weeklyMealPlan ? (
+                  <div className="space-y-6">
                     {aiAnalysis.dietPlan.weeklyMealPlan.map((dayPlan, index) => (
                       <Card key={index} className="p-4">
                         <h4 className="font-semibold text-lg mb-4 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                          📅 {dayPlan.day} - Complete Meal Plan
+                          {dayPlan.day}
                         </h4>
-
-                        {/* Tabular Format */}
-                        <div className="overflow-x-auto">
-                          <table className="w-full border-collapse border border-gray-300">
-                            <thead>
-                              <tr className="bg-gray-100">
-                                <th className="border border-gray-300 p-2 text-left text-sm">Time</th>
-                                <th className="border border-gray-300 p-2 text-left text-sm">Meal</th>
-                                <th className="border border-gray-300 p-2 text-left text-sm">Ingredients</th>
-                                <th className="border border-gray-300 p-2 text-center text-sm">Calories</th>
-                                <th className="border border-gray-300 p-2 text-center text-sm">Protein</th>
-                                <th className="border border-gray-300 p-2 text-center text-sm">Water</th>
-                                <th className="border border-gray-300 p-2 text-left text-sm">Nutrients</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr className="bg-yellow-50">
-                                <td className="border border-gray-300 p-2 text-sm font-medium">
-                                  {dayPlan.breakfast.timing || "7:00-8:00 AM"}
-                                  <br />
-                                  <span className="text-xs text-gray-600">🌅 Breakfast</span>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-sm">
-                                  <div className="font-medium">{dayPlan.breakfast.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">{dayPlan.breakfast.preparation}</div>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.breakfast.ingredients.join(", ")}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-orange-600">
-                                  {dayPlan.breakfast.calories}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-green-600">
-                                  {dayPlan.breakfast.protein}g
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center text-blue-600">
-                                  {dayPlan.breakfast.waterIntake || "250ml"}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.breakfast.nutrients || "Carbs: 45g, Fat: 12g, Fiber: 8g"}
-                                </td>
-                              </tr>
-                              <tr className="bg-green-50">
-                                <td className="border border-gray-300 p-2 text-sm font-medium">
-                                  {dayPlan.morningSnack.timing || "10:00-10:30 AM"}
-                                  <br />
-                                  <span className="text-xs text-gray-600">☕ Mid-Morning</span>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-sm">
-                                  <div className="font-medium">{dayPlan.morningSnack.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">{dayPlan.morningSnack.preparation}</div>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.morningSnack.ingredients.join(", ")}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-orange-600">
-                                  {dayPlan.morningSnack.calories}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-green-600">
-                                  {dayPlan.morningSnack.protein}g
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center text-blue-600">
-                                  {dayPlan.morningSnack.waterIntake || "200ml"}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.morningSnack.nutrients || "Carbs: 15g, Fat: 6g, Fiber: 3g"}
-                                </td>
-                              </tr>
-                              <tr className="bg-blue-50">
-                                <td className="border border-gray-300 p-2 text-sm font-medium">
-                                  {dayPlan.lunch.timing || "12:30-1:30 PM"}
-                                  <br />
-                                  <span className="text-xs text-gray-600">🥗 Lunch</span>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-sm">
-                                  <div className="font-medium">{dayPlan.lunch.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">{dayPlan.lunch.preparation}</div>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.lunch.ingredients.join(", ")}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-orange-600">
-                                  {dayPlan.lunch.calories}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-green-600">
-                                  {dayPlan.lunch.protein}g
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center text-blue-600">
-                                  {dayPlan.lunch.waterIntake || "300ml"}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.lunch.nutrients || "Carbs: 65g, Fat: 18g, Fiber: 12g"}
-                                </td>
-                              </tr>
-                              <tr className="bg-orange-50">
-                                <td className="border border-gray-300 p-2 text-sm font-medium">
-                                  {dayPlan.afternoonSnack.timing || "4:00-4:30 PM"}
-                                  <br />
-                                  <span className="text-xs text-gray-600">🍎 Afternoon</span>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-sm">
-                                  <div className="font-medium">{dayPlan.afternoonSnack.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">{dayPlan.afternoonSnack.preparation}</div>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.afternoonSnack.ingredients.join(", ")}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-orange-600">
-                                  {dayPlan.afternoonSnack.calories}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-green-600">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-3">
+                            <div className="p-3 bg-yellow-50 rounded-lg">
+                              <h5 className="font-medium text-yellow-800 mb-2">🌅 Breakfast</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.breakfast.name}</div>
+                                <div className="text-gray-600">
+                                  Ingredients: {dayPlan.breakfast.ingredients.join(", ")}
+                                </div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.breakfast.calories} | Protein: {dayPlan.breakfast.protein}g
+                                </div>
+                                <div className="text-green-600 text-xs mt-1">
+                                  Benefits: {dayPlan.breakfast.benefits.join(", ")}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-3 bg-green-50 rounded-lg">
+                              <h5 className="font-medium text-green-800 mb-2">☕ Morning Snack</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.morningSnack.name}</div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.morningSnack.calories} | Protein: {dayPlan.morningSnack.protein}g
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                              <h5 className="font-medium text-blue-800 mb-2">🥗 Lunch</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.lunch.name}</div>
+                                <div className="text-gray-600">Ingredients: {dayPlan.lunch.ingredients.join(", ")}</div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.lunch.calories} | Protein: {dayPlan.lunch.protein}g
+                                </div>
+                                <div className="text-green-600 text-xs mt-1">
+                                  Benefits: {dayPlan.lunch.benefits.join(", ")}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-3 bg-orange-50 rounded-lg">
+                              <h5 className="font-medium text-orange-800 mb-2">🍎 Afternoon Snack</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.afternoonSnack.name}</div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.afternoonSnack.calories} | Protein:{" "}
                                   {dayPlan.afternoonSnack.protein}g
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center text-blue-600">
-                                  {dayPlan.afternoonSnack.waterIntake || "200ml"}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.afternoonSnack.nutrients || "Carbs: 25g, Fat: 8g, Fiber: 5g"}
-                                </td>
-                              </tr>
-                              <tr className="bg-purple-50">
-                                <td className="border border-gray-300 p-2 text-sm font-medium">
-                                  {dayPlan.dinner.timing || "7:00-8:00 PM"}
-                                  <br />
-                                  <span className="text-xs text-gray-600">🍽️ Dinner</span>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-sm">
-                                  <div className="font-medium">{dayPlan.dinner.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">{dayPlan.dinner.preparation}</div>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.dinner.ingredients.join(", ")}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-orange-600">
-                                  {dayPlan.dinner.calories}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-green-600">
-                                  {dayPlan.dinner.protein}g
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center text-blue-600">
-                                  {dayPlan.dinner.waterIntake || "250ml"}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.dinner.nutrients || "Carbs: 45g, Fat: 15g, Fiber: 10g"}
-                                </td>
-                              </tr>
-                              <tr className="bg-indigo-50">
-                                <td className="border border-gray-300 p-2 text-sm font-medium">
-                                  {dayPlan.eveningSnack.timing || "9:30-10:00 PM"}
-                                  <br />
-                                  <span className="text-xs text-gray-600">🥛 Bedtime</span>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-sm">
-                                  <div className="font-medium">{dayPlan.eveningSnack.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">{dayPlan.eveningSnack.preparation}</div>
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.eveningSnack.ingredients.join(", ")}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-orange-600">
-                                  {dayPlan.eveningSnack.calories}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center font-bold text-green-600">
-                                  {dayPlan.eveningSnack.protein}g
-                                </td>
-                                <td className="border border-gray-300 p-2 text-center text-blue-600">
-                                  {dayPlan.eveningSnack.waterIntake || "200ml"}
-                                </td>
-                                <td className="border border-gray-300 p-2 text-xs">
-                                  {dayPlan.eveningSnack.nutrients || "Carbs: 18g, Fat: 4g, Fiber: 2g"}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* Daily Summary */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                          <div className="p-3 bg-green-50 rounded-lg">
-                            <h5 className="font-medium text-green-800 mb-2">🌟 Daily Benefits</h5>
-                            <div className="text-sm text-green-700">
-                              {[
-                                ...new Set([
-                                  ...dayPlan.breakfast.benefits,
-                                  ...dayPlan.lunch.benefits,
-                                  ...dayPlan.dinner.benefits,
-                                ]),
-                              ]
-                                .slice(0, 6)
-                                .join(", ")}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="p-3 bg-blue-50 rounded-lg">
-                            <h5 className="font-medium text-blue-800 mb-2">💧 Hydration Plan</h5>
-                            <div className="text-sm text-blue-700">
-                              Total: 1400ml water + 200ml milk + herbal teas as needed
+                          <div className="space-y-3">
+                            <div className="p-3 bg-purple-50 rounded-lg">
+                              <h5 className="font-medium text-purple-800 mb-2">🍽️ Dinner</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.dinner.name}</div>
+                                <div className="text-gray-600">
+                                  Ingredients: {dayPlan.dinner.ingredients.join(", ")}
+                                </div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.dinner.calories} | Protein: {dayPlan.dinner.protein}g
+                                </div>
+                                <div className="text-green-600 text-xs mt-1">
+                                  Benefits: {dayPlan.dinner.benefits.join(", ")}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="p-3 bg-orange-50 rounded-lg">
-                            <h5 className="font-medium text-orange-800 mb-2">📊 Daily Totals</h5>
-                            <div className="text-sm text-orange-700">
-                              Calories:{" "}
-                              {dayPlan.breakfast.calories +
-                                dayPlan.morningSnack.calories +
-                                dayPlan.lunch.calories +
-                                dayPlan.afternoonSnack.calories +
-                                dayPlan.dinner.calories +
-                                dayPlan.eveningSnack.calories}{" "}
-                              kcal
-                              <br />
-                              Protein:{" "}
-                              {dayPlan.breakfast.protein +
-                                dayPlan.morningSnack.protein +
-                                dayPlan.lunch.protein +
-                                dayPlan.afternoonSnack.protein +
-                                dayPlan.dinner.protein +
-                                dayPlan.eveningSnack.protein}
-                              g
+                            <div className="p-3 bg-indigo-50 rounded-lg">
+                              <h5 className="font-medium text-indigo-800 mb-2">🥛 Evening Snack</h5>
+                              <div className="text-sm">
+                                <div className="font-medium">{dayPlan.eveningSnack.name}</div>
+                                <div className="text-gray-600">
+                                  Calories: {dayPlan.eveningSnack.calories} | Protein: {dayPlan.eveningSnack.protein}g
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </Card>
                     ))}
-
-                    {/* Weekly Summary */}
-                    <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
-                      <h4 className="font-semibold text-lg mb-4 text-center">📊 Weekly Nutrition Summary</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <h5 className="font-semibold mb-2 text-blue-700">🇮🇳 IMC Recommendations</h5>
-                          <ul className="text-sm space-y-1">
-                            {aiAnalysis.dietPlan.imcRecommendations.map((rec, index) => (
-                              <li key={index} className="flex items-start gap-2">
-                                <span className="text-blue-600">•</span>
-                                {rec}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                          <h5 className="font-semibold mb-2 text-green-700">🌍 WHO Recommendations</h5>
-                          <ul className="text-sm space-y-1">
-                            {aiAnalysis.dietPlan.whoRecommendations.map((rec, index) => (
-                              <li key={index} className="flex items-start gap-2">
-                                <span className="text-green-600">•</span>
-                                {rec}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </Card>
                   </div>
                 ) : (
                   <div className="text-center py-12">
@@ -4115,6 +4297,6 @@ Ensure all recommendations are:
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </div>
   )
 }
