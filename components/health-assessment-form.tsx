@@ -1059,24 +1059,30 @@ CRITICAL INSTRUCTIONS:
 <!DOCTYPE html>
 <html>
 <head>
-  <title>MyMedi.ai - Comprehensive Health Assessment Report</title>
+  <title>MyMedi.ai - Health Assessment Report</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
     
     body { 
       font-family: 'Arial', sans-serif; 
-      font-size: 11px;
-      line-height: 1.4;
-      color: #333;
+      font-size: 10px;
+      line-height: 1.3;
+      color: #000;
       background: white;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     
     .page {
       width: 210mm;
       min-height: 297mm;
-      padding: 15mm;
+      padding: 10mm;
       margin: 0 auto;
       background: white;
       page-break-after: always;
@@ -1088,218 +1094,135 @@ CRITICAL INSTRUCTIONS:
     
     .header {
       text-align: center;
-      border-bottom: 3px solid #667eea;
-      padding-bottom: 15px;
-      margin-bottom: 20px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      padding: 20px;
-      border-radius: 10px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
     }
     
     .logo {
-      width: 50px;
-      height: 50px;
-      background: white;
-      border-radius: 50%;
-      margin: 0 auto 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
-      color: #667eea;
+      margin-bottom: 5px;
     }
     
     .header h1 {
-      font-size: 24px;
-      margin-bottom: 8px;
-      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 3px;
+      font-weight: bold;
     }
     
     .header p {
-      font-size: 14px;
-      opacity: 0.9;
+      font-size: 10px;
     }
     
     .patient-info {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
+      border: 1px solid #000;
+      padding: 8px;
+      margin-bottom: 10px;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 15px;
+      gap: 10px;
     }
     
     .patient-info h3 {
       grid-column: 1 / -1;
-      font-size: 14px;
-      margin-bottom: 10px;
+      font-size: 11px;
+      margin-bottom: 5px;
       text-align: center;
+      border-bottom: 1px solid #000;
+      padding-bottom: 3px;
     }
     
     .section {
-      margin-bottom: 15px;
-      border: 1px solid #e0e7ff;
-      border-radius: 8px;
-      overflow: hidden;
+      margin-bottom: 10px;
+      border: 1px solid #000;
       page-break-inside: avoid;
     }
     
     .section-header {
-      background: linear-gradient(135deg, #f8f9ff, #e0e7ff);
-      padding: 10px 15px;
-      border-bottom: 1px solid #d1d9ff;
+      background: #f5f5f5;
+      padding: 5px 8px;
+      border-bottom: 1px solid #000;
       font-weight: bold;
-      font-size: 13px;
-      color: #4338ca;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 10px;
     }
     
     .section-content {
-      padding: 12px;
-    }
-    
-    .two-column {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-    
-    .three-column {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
+      padding: 8px;
     }
     
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 10px;
-      margin-bottom: 10px;
+      font-size: 8px;
+      margin-bottom: 5px;
     }
     
     th, td {
-      border: 1px solid #d1d5db;
-      padding: 6px;
+      border: 1px solid #000;
+      padding: 3px;
       text-align: left;
       vertical-align: top;
     }
     
     th {
-      background: #f3f4f6;
+      background: #f0f0f0;
       font-weight: bold;
-      font-size: 10px;
+      font-size: 8px;
     }
     
-    .priority-urgent { background: #fee2e2; color: #dc2626; }
-    .priority-high { background: #fef3c7; color: #d97706; }
-    .priority-medium { background: #dcfce7; color: #16a34a; }
-    .priority-low { background: #e0e7ff; color: #3730a3; }
-    
     .meal-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 10px;
-      margin-bottom: 8px;
+      border: 1px solid #000;
+      margin-bottom: 5px;
+      padding: 5px;
     }
     
     .meal-header {
       font-weight: bold;
-      color: #1e40af;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-    
-    .meal-time {
-      background: #dbeafe;
-      color: #1e40af;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 9px;
-    }
-    
-    .meal-calories {
-      background: #fef3c7;
-      color: #d97706;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 9px;
-      font-weight: bold;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 2px;
     }
     
     .meal-details {
-      font-size: 10px;
-      color: #4b5563;
-      margin-top: 5px;
-    }
-    
-    .nutrition-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 5px;
-    }
-    
-    .nutrition-item {
-      background: #f0fdf4;
-      padding: 4px 6px;
-      border-radius: 4px;
-      font-size: 9px;
-      color: #166534;
+      font-size: 8px;
+      margin-top: 3px;
     }
     
     .facility-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 8px;
-      margin-bottom: 6px;
+      border: 1px solid #000;
+      padding: 5px;
+      margin-bottom: 4px;
     }
     
     .facility-name {
       font-weight: bold;
-      color: #1e40af;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
     
     .facility-details {
-      font-size: 9px;
-      color: #4b5563;
-      line-height: 1.3;
-    }
-    
-    .emergency-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      font-size: 8px;
+      line-height: 1.2;
     }
     
     .emergency-section {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 6px;
-      padding: 8px;
+      border: 1px solid #000;
+      padding: 5px;
+      margin-bottom: 5px;
     }
     
     .emergency-title {
       font-weight: bold;
-      color: #dc2626;
-      margin-bottom: 5px;
-      font-size: 11px;
+      margin-bottom: 3px;
+      font-size: 9px;
     }
     
     .emergency-item {
-      font-size: 9px;
-      color: #7f1d1d;
-      margin-bottom: 2px;
+      font-size: 8px;
+      margin-bottom: 1px;
       padding-left: 8px;
       position: relative;
     }
@@ -1308,27 +1231,63 @@ CRITICAL INSTRUCTIONS:
       content: "•";
       position: absolute;
       left: 0;
-      color: #dc2626;
     }
     
     .disclaimer {
-      background: #fffbeb;
-      border: 2px solid #fbbf24;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 15px;
-      font-size: 10px;
-      color: #92400e;
+      border: 2px solid #000;
+      padding: 8px;
+      margin-top: 10px;
+      font-size: 8px;
+      background: #f9f9f9;
     }
     
     .footer {
       text-align: center;
-      margin-top: 20px;
-      padding: 15px;
-      background: #f9fafb;
-      border-radius: 8px;
-      font-size: 10px;
-      color: #6b7280;
+      margin-top: 15px;
+      padding: 8px;
+      border-top: 1px solid #000;
+      font-size: 8px;
+    }
+    
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    
+    .three-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .bmi-summary {
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid #000;
+      background: #f9f9f9;
+    }
+    
+    .bmi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      text-align: center;
+    }
+    
+    .bmi-item {
+      border: 1px solid #000;
+      padding: 5px;
+      background: white;
+    }
+    
+    .bmi-value {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .bmi-label {
+      font-size: 8px;
     }
     
     .page-break {
@@ -1336,47 +1295,96 @@ CRITICAL INSTRUCTIONS:
     }
     
     @media print {
-      body { margin: 0; }
-      .page { margin: 0; padding: 10mm; }
-      .section { page-break-inside: avoid; }
+      body { 
+        margin: 0; 
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .page { 
+        margin: 0; 
+        padding: 5mm; 
+        box-shadow: none;
+      }
+      .section { 
+        page-break-inside: avoid; 
+      }
+      .header {
+        background: #f5f5f5 !important;
+      }
+      .section-header {
+        background: #f0f0f0 !important;
+      }
+      th {
+        background: #f0f0f0 !important;
+      }
     }
     
     @media screen and (max-width: 768px) {
-      .page { width: 100%; padding: 10px; }
-      .two-column, .three-column { grid-template-columns: 1fr; }
-      .patient-info { grid-template-columns: 1fr; }
+      .page { 
+        width: 100%; 
+        padding: 5px; 
+      }
+      .two-column, .three-column, .bmi-grid { 
+        grid-template-columns: 1fr; 
+      }
+      .patient-info { 
+        grid-template-columns: 1fr; 
+      }
     }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="header">
-      <div class="logo">����</div>
-      <h1>MyMedi.ai</h1>
-      <p>Comprehensive Health Assessment Report</p>
+      <div class="logo">🏥 MyMedi.ai</div>
+      <h1>Health Assessment Report</h1>
       <p>AI-Powered Medical Analysis & Treatment Plan</p>
     </div>
 
     <div class="patient-info">
-      <h3>👤 PATIENT INFORMATION</h3>
+      <h3>PATIENT INFORMATION</h3>
       <div><strong>Name:</strong> ${formData.fullName}</div>
       <div><strong>Age:</strong> ${formData.age} years</div>
       <div><strong>Gender:</strong> ${formData.gender}</div>
       <div><strong>Height:</strong> ${formData.height} cm</div>
       <div><strong>Weight:</strong> ${formData.weight} kg</div>
       <div><strong>BMI:</strong> ${formData.height && formData.weight ? `${calculateBMI(formData.height, formData.weight).bmi} (${calculateBMI(formData.height, formData.weight).category})` : "Not calculated"}</div>
-      <div><strong>Daily Calories:</strong> ${formData.age && formData.gender && formData.height && formData.weight && formData.exerciseFrequency ? `${calculateDailyCaloricNeeds(formData.age, formData.gender, formData.height, formData.weight, formData.exerciseFrequency).tdee} kcal/day` : "Not calculated"}</div>
-      <div><strong>Caloric Goal:</strong> ${formData.age && formData.gender && formData.height && formData.weight && formData.exerciseFrequency ? calculateDailyCaloricNeeds(formData.age, formData.gender, formData.height, formData.weight, formData.exerciseFrequency).goal : "Not available"}</div>
       <div><strong>Location:</strong> ${formData.location}</div>
-      <div><strong>Assessment Date:</strong> ${currentDate}</div>
-      <div><strong>Assessment Time:</strong> ${currentTime}</div>
-      <div><strong>Report ID:</strong> MMA-${Date.now().toString().slice(-8)}</div>
+      <div><strong>Date:</strong> ${currentDate}</div>
+      <div><strong>Time:</strong> ${currentTime}</div>
     </div>
 
-    <div class="section">
-      <div class="section-header">
-        💊 PRESCRIBED MEDICATIONS
+    ${
+      formData.height && formData.weight
+        ? `
+    <div class="bmi-summary">
+      <div class="bmi-grid">
+        <div class="bmi-item">
+          <div class="bmi-value">${calculateBMI(formData.height, formData.weight).bmi}</div>
+          <div class="bmi-label">BMI</div>
+          <div class="bmi-label">${calculateBMI(formData.height, formData.weight).category}</div>
+        </div>
+        <div class="bmi-item">
+          <div class="bmi-value">${formData.age && formData.gender && formData.exerciseFrequency ? calculateDailyCaloricNeeds(formData.age, formData.gender, formData.height, formData.weight, formData.exerciseFrequency).bmr : "N/A"}</div>
+          <div class="bmi-label">BMR (kcal)</div>
+          <div class="bmi-label">Base Metabolic Rate</div>
+        </div>
+        <div class="bmi-item">
+          <div class="bmi-value">${formData.age && formData.gender && formData.exerciseFrequency ? calculateDailyCaloricNeeds(formData.age, formData.gender, formData.height, formData.weight, formData.exerciseFrequency).tdee : "N/A"}</div>
+          <div class="bmi-label">TDEE (kcal)</div>
+          <div class="bmi-label">Daily Calories</div>
+        </div>
       </div>
+      <div style="text-align: center; margin-top: 5px; padding: 3px; border: 1px solid #000; background: white;">
+        <strong>Caloric Goal:</strong> ${formData.age && formData.gender && formData.exerciseFrequency ? calculateDailyCaloricNeeds(formData.age, formData.gender, formData.height, formData.weight, formData.exerciseFrequency).goal : "Complete profile for goal"}
+      </div>
+    </div>
+    `
+        : ""
+    }
+
+    <div class="section">
+      <div class="section-header">PRESCRIBED MEDICATIONS</div>
       <div class="section-content">
         <table>
           <thead>
@@ -1386,7 +1394,6 @@ CRITICAL INSTRUCTIONS:
               <th>Frequency</th>
               <th>Timing</th>
               <th>Duration</th>
-              <th>Category</th>
               <th>Price (₹)</th>
             </tr>
           </thead>
@@ -1400,7 +1407,6 @@ CRITICAL INSTRUCTIONS:
                 <td>${med.frequency}</td>
                 <td>${med.timing}</td>
                 <td>${med.duration}</td>
-                <td>${med.category}</td>
                 <td>${med.price}</td>
               </tr>
             `,
@@ -1412,9 +1418,7 @@ CRITICAL INSTRUCTIONS:
     </div>
 
     <div class="section">
-      <div class="section-header">
-        📊 VITAL SIGNS MONITORING
-      </div>
+      <div class="section-header">VITAL SIGNS MONITORING</div>
       <div class="section-content">
         <table>
           <thead>
@@ -1424,7 +1428,6 @@ CRITICAL INSTRUCTIONS:
               <th>Timing</th>
               <th>Target Range</th>
               <th>Importance</th>
-              <th>Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -1436,8 +1439,7 @@ CRITICAL INSTRUCTIONS:
                 <td>${vital.frequency}</td>
                 <td>${vital.timing}</td>
                 <td>${vital.targetRange}</td>
-                <td><span class="priority-${vital.importance.toLowerCase()}">${vital.importance}</span></td>
-                <td>${vital.notes}</td>
+                <td>${vital.importance}</td>
               </tr>
             `,
               )
@@ -1450,9 +1452,7 @@ CRITICAL INSTRUCTIONS:
 
   <div class="page">
     <div class="section">
-      <div class="section-header">
-        🧪 RECOMMENDED LABORATORY TESTS
-      </div>
+      <div class="section-header">RECOMMENDED LABORATORY TESTS</div>
       <div class="section-content">
         <table>
           <thead>
@@ -1460,7 +1460,6 @@ CRITICAL INSTRUCTIONS:
               <th>Test Name</th>
               <th>Priority</th>
               <th>Reason</th>
-              <th>Preparation</th>
               <th>Cost (₹)</th>
               <th>Normal Range</th>
             </tr>
@@ -1471,9 +1470,8 @@ CRITICAL INSTRUCTIONS:
                 (test) => `
               <tr>
                 <td><strong>${test.test}</strong></td>
-                <td><span class="priority-${test.priority.toLowerCase()}">${test.priority}</span></td>
+                <td>${test.priority}</td>
                 <td>${test.reason}</td>
-                <td>${test.preparation}</td>
                 <td>${test.cost}</td>
                 <td>${test.normalRange}</td>
               </tr>
@@ -1486,77 +1484,34 @@ CRITICAL INSTRUCTIONS:
     </div>
 
     <div class="section">
-      <div class="section-header">
-        🍽️ PERSONALIZED DIET PLAN
-      </div>
+      <div class="section-header">PERSONALIZED DIET PLAN</div>
       <div class="section-content">
-        <div style="margin-bottom: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px;">
-          <div class="three-column">
-            <div style="text-align: center;">
-              <div style="font-size: 16px; font-weight: bold; color: #1e40af;">${formData.height && formData.weight ? calculateBMI(formData.height, formData.weight).bmi : "N/A"}</div>
-              <div style="font-size: 10px; color: #1e40af;">BMI</div>
-              <div style="font-size: 9px; color: ${formData.height && formData.weight ? calculateBMI(formData.height, formData.weight).color.replace("text-", "") : "gray"};">${formData.height && formData.weight ? calculateBMI(formData.height, formData.weight).category : "Not calculated"}</div>
-            </div>
-            <div style="text-align: center;">
-              <div style="font-size: 16px; font-weight: bold; color: #059669;">${formData.age && formData.gender && formData.height && formData.weight && formData.exerciseFrequency ? calculateDailyCaloricNeeds(formData.age, formData.gender, formData.height, formData.weight, formData.exerciseFrequency).bmr : "N/A"}</div>
-              <div style="font-size: 10px; color: #059669;">BMR (kcal)</div>
-              <div style="font-size: 9px; color: #059669;">Base Metabolic Rate</div>
-            </div>
-            <div style="text-align: center;">
-              <div style="font-size: 16px; font-weight: bold; color: #d97706;">${formData.age && formData.gender && formData.height && formData.weight && formData.exerciseFrequency ? calculateDailyCaloricNeeds(formData.age, formData.gender, formData.height, formData.weight, formData.exerciseFrequency).tdee : "N/A"}</div>
-              <div style="font-size: 10px; color: #d97706;">TDEE (kcal)</div>
-              <div style="font-size: 9px; color: #d97706;">Daily Calories</div>
-            </div>
-          </div>
-          <div style="text-align: center; margin-top: 10px; padding: 8px; background: white; border-radius: 4px;">
-            <div style="font-size: 11px; font-weight: bold; color: #7c3aed;">🎯 Caloric Goal: ${formData.age && formData.gender && formData.height && formData.weight && formData.exerciseFrequency ? calculateDailyCaloricNeeds(formData.age, formData.gender, formData.height, formData.weight, formData.exerciseFrequency).goal : "Complete profile for goal"}</div>
-          </div>
+        <div style="margin-bottom: 8px; text-align: center; font-weight: bold;">
+          Daily Total: ${result.dietPlan.reduce((sum, meal) => sum + meal.calories, 0)} kcal | 
+          Water: ${result.dietPlan.length * 200}ml recommended
         </div>
-
         ${result.dietPlan
           .map(
             (meal) => `
           <div class="meal-card">
             <div class="meal-header">
-              <span>🍽️ ${meal.meal}</span>
-              <div>
-                <span class="meal-time">⏰ ${meal.time}</span>
-                <span class="meal-calories">${meal.calories} kcal</span>
-              </div>
+              <span>${meal.meal}</span>
+              <span>${meal.time} | ${meal.calories} kcal</span>
             </div>
             <div class="meal-details">
-              <strong>Food Items:</strong> ${meal.items}
-            </div>
-            <div class="nutrition-grid">
-              <div class="nutrition-item">💧 Water: ${meal.water}</div>
-              <div class="nutrition-item">🥗 Nutrients: ${meal.nutrients}</div>
-            </div>
-            <div style="margin-top: 5px; font-size: 9px; color: #6b7280; font-style: italic;">
-              💡 ${meal.notes}
+              <strong>Food:</strong> ${meal.items}<br>
+              <strong>Water:</strong> ${meal.water} | <strong>Nutrients:</strong> ${meal.nutrients}<br>
+              <strong>Notes:</strong> ${meal.notes}
             </div>
           </div>
         `,
           )
           .join("")}
-
-        <div style="margin-top: 15px; padding: 10px; background: #ecfdf5; border: 1px solid #bbf7d0; border-radius: 6px;">
-          <div style="font-weight: bold; color: #166534; margin-bottom: 5px;">📋 Daily Nutrition Summary:</div>
-          <div style="font-size: 10px; color: #166534;">
-            • Total Daily Calories: ${result.dietPlan.reduce((sum, meal) => sum + meal.calories, 0)} kcal<br>
-            • Total Water Intake: ${result.dietPlan.length * 200}ml (recommended)<br>
-            • Meals Distribution: ${result.dietPlan.length} meals throughout the day<br>
-            • Balanced macro and micronutrients included in each meal
-          </div>
-        </div>
       </div>
     </div>
-  </div>
 
-  <div class="page">
     <div class="section">
-      <div class="section-header">
-        💊 RECOMMENDED SUPPLEMENTS
-      </div>
+      <div class="section-header">RECOMMENDED SUPPLEMENTS</div>
       <div class="section-content">
         <table>
           <thead>
@@ -1565,9 +1520,7 @@ CRITICAL INSTRUCTIONS:
               <th>Dosage</th>
               <th>Timing</th>
               <th>Benefits</th>
-              <th>Recommended Brands</th>
               <th>Price (₹)</th>
-              <th>Warnings</th>
             </tr>
           </thead>
           <tbody>
@@ -1579,9 +1532,7 @@ CRITICAL INSTRUCTIONS:
                 <td>${supplement.dosage}</td>
                 <td>${supplement.timing}</td>
                 <td>${supplement.benefits}</td>
-                <td>${supplement.brands}</td>
                 <td>${supplement.price}</td>
-                <td>${supplement.warnings}</td>
               </tr>
             `,
               )
@@ -1590,20 +1541,19 @@ CRITICAL INSTRUCTIONS:
         </table>
       </div>
     </div>
+  </div>
 
+  <div class="page">
     <div class="section">
-      <div class="section-header">
-        🌿 AYURVEDIC TREATMENT OPTIONS
-      </div>
+      <div class="section-header">AYURVEDIC TREATMENT OPTIONS</div>
       <div class="section-content">
         <table>
           <thead>
             <tr>
               <th>Treatment</th>
-              <th>Herbs/Ingredients</th>
-              <th>Preparation Method</th>
+              <th>Herbs</th>
+              <th>Preparation</th>
               <th>Dosage</th>
-              <th>Timing</th>
               <th>Benefits</th>
               <th>Duration</th>
             </tr>
@@ -1617,7 +1567,6 @@ CRITICAL INSTRUCTIONS:
                 <td>${treatment.herbs}</td>
                 <td>${treatment.preparation}</td>
                 <td>${treatment.dosage}</td>
-                <td>${treatment.timing}</td>
                 <td>${treatment.benefits}</td>
                 <td>${treatment.duration}</td>
               </tr>
@@ -1630,25 +1579,22 @@ CRITICAL INSTRUCTIONS:
     </div>
 
     <div class="section">
-      <div class="section-header">
-        🏥 NEARBY HEALTHCARE FACILITIES
-      </div>
+      <div class="section-header">NEARBY HEALTHCARE FACILITIES</div>
       <div class="section-content">
         <div class="two-column">
           <div>
-            <h4 style="color: #1e40af; margin-bottom: 8px; font-size: 12px;">🏥 Hospitals & Medical Centers</h4>
+            <h4 style="margin-bottom: 5px; font-size: 9px; border-bottom: 1px solid #000; padding-bottom: 2px;">HOSPITALS</h4>
             ${result.nearbyHospitals
               .map(
                 (hospital) => `
               <div class="facility-card">
                 <div class="facility-name">${hospital.name}</div>
                 <div class="facility-details">
-                  📍 ${hospital.address}<br>
-                  📏 Distance: ${hospital.distance}<br>
-                  🏥 Specialties: ${hospital.specialties}<br>
-                  ⭐ Rating: ${hospital.rating}<br>
-                  📞 Phone: ${hospital.phone}<br>
-                  🚨 Emergency: ${hospital.emergency}
+                  Address: ${hospital.address}<br>
+                  Distance: ${hospital.distance}<br>
+                  Specialties: ${hospital.specialties}<br>
+                  Phone: ${hospital.phone}<br>
+                  Rating: ${hospital.rating}
                 </div>
               </div>
             `,
@@ -1656,19 +1602,18 @@ CRITICAL INSTRUCTIONS:
               .join("")}
           </div>
           <div>
-            <h4 style="color: #1e40af; margin-bottom: 8px; font-size: 12px;">🧪 Laboratory Centers</h4>
+            <h4 style="margin-bottom: 5px; font-size: 9px; border-bottom: 1px solid #000; padding-bottom: 2px;">LAB CENTERS</h4>
             ${result.labCenters
               .map(
                 (lab) => `
               <div class="facility-card">
                 <div class="facility-name">${lab.name}</div>
                 <div class="facility-details">
-                  📍 ${lab.address}<br>
-                  📏 Distance: ${lab.distance}<br>
-                  🔬 Services: ${lab.services}<br>
-                  📞 Phone: ${lab.phone}<br>
-                  ⏰ Timings: ${lab.timings}<br>
-                  🏠 Home Collection: ${lab.homeCollection}
+                  Address: ${lab.address}<br>
+                  Distance: ${lab.distance}<br>
+                  Services: ${lab.services}<br>
+                  Phone: ${lab.phone}<br>
+                  Timings: ${lab.timings}
                 </div>
               </div>
             `,
@@ -1678,36 +1623,32 @@ CRITICAL INSTRUCTIONS:
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="page">
     <div class="section">
-      <div class="section-header">
-        🚨 EMERGENCY ACTION PLAN
-      </div>
+      <div class="section-header">EMERGENCY ACTION PLAN</div>
       <div class="section-content">
-        <div class="emergency-grid">
+        <div class="two-column">
           <div class="emergency-section">
-            <div class="emergency-title">⚠️ WARNING SIGNS TO WATCH</div>
+            <div class="emergency-title">WARNING SIGNS TO WATCH</div>
             ${result.emergencyPlan.warningSignsToWatch
               .map((sign) => `<div class="emergency-item">${sign}</div>`)
               .join("")}
           </div>
           <div class="emergency-section">
-            <div class="emergency-title">🏥 WHEN TO SEEK IMMEDIATE HELP</div>
+            <div class="emergency-title">WHEN TO SEEK IMMEDIATE HELP</div>
             ${result.emergencyPlan.whenToSeekHelp.map((when) => `<div class="emergency-item">${when}</div>`).join("")}
           </div>
         </div>
         
-        <div class="emergency-grid" style="margin-top: 10px;">
+        <div class="two-column" style="margin-top: 5px;">
           <div class="emergency-section">
-            <div class="emergency-title">📞 EMERGENCY CONTACTS</div>
+            <div class="emergency-title">EMERGENCY CONTACTS</div>
             ${result.emergencyPlan.emergencyContacts
               .map((contact) => `<div class="emergency-item">${contact}</div>`)
               .join("")}
           </div>
           <div class="emergency-section">
-            <div class="emergency-title">🩹 FIRST AID STEPS</div>
+            <div class="emergency-title">FIRST AID STEPS</div>
             ${result.emergencyPlan.firstAidSteps.map((step) => `<div class="emergency-item">${step}</div>`).join("")}
           </div>
         </div>
@@ -1715,49 +1656,47 @@ CRITICAL INSTRUCTIONS:
     </div>
 
     <div class="section">
-      <div class="section-header">
-        📅 FOLLOW-UP CARE PLAN
-      </div>
+      <div class="section-header">FOLLOW-UP CARE PLAN</div>
       <div class="section-content">
-        <div style="margin-bottom: 12px;">
-          <strong style="color: #1e40af;">🗓️ Next Appointment:</strong><br>
-          <div style="margin-left: 15px; margin-top: 5px; font-size: 10px;">${result.followUpPlan.nextAppointment}</div>
+        <div style="margin-bottom: 8px;">
+          <strong>Next Appointment:</strong><br>
+          <div style="margin-left: 10px; margin-top: 3px; font-size: 8px;">${result.followUpPlan.nextAppointment}</div>
         </div>
         
-        <div style="margin-bottom: 12px;">
-          <strong style="color: #1e40af;">📊 Monitoring Schedule:</strong><br>
+        <div style="margin-bottom: 8px;">
+          <strong>Monitoring Schedule:</strong><br>
           ${result.followUpPlan.monitoringSchedule
-            .map((schedule) => `<div style="margin-left: 15px; margin-top: 3px; font-size: 10px;">• ${schedule}</div>`)
+            .map((schedule) => `<div style="margin-left: 10px; margin-top: 2px; font-size: 8px;">• ${schedule}</div>`)
             .join("")}
         </div>
         
-        <div style="margin-bottom: 12px;">
-          <strong style="color: #1e40af;">🔄 Lifestyle Changes:</strong><br>
+        <div style="margin-bottom: 8px;">
+          <strong>Lifestyle Changes:</strong><br>
           ${result.followUpPlan.lifestyleChanges
-            .map((change) => `<div style="margin-left: 15px; margin-top: 3px; font-size: 10px;">• ${change}</div>`)
+            .map((change) => `<div style="margin-left: 10px; margin-top: 2px; font-size: 8px;">• ${change}</div>`)
             .join("")}
         </div>
         
         <div>
-          <strong style="color: #1e40af;">📈 Expected Improvement:</strong><br>
-          <div style="margin-left: 15px; margin-top: 5px; font-size: 10px;">${result.followUpPlan.expectedImprovement}</div>
+          <strong>Expected Improvement:</strong><br>
+          <div style="margin-left: 10px; margin-top: 3px; font-size: 8px;">${result.followUpPlan.expectedImprovement}</div>
         </div>
       </div>
     </div>
 
     <div class="disclaimer">
-      <strong>⚠️ IMPORTANT MEDICAL DISCLAIMER:</strong><br>
-      This AI-generated assessment is for informational purposes only and should not replace professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare professionals before making any medical decisions or changes to your treatment plan. The medications, dosages, and treatment recommendations provided are AI-generated suggestions and must be reviewed and approved by a licensed medical practitioner before use. In case of medical emergencies, contact emergency services immediately (108 for India). The diet plan and caloric recommendations are based on general guidelines and may need adjustment based on individual medical conditions, allergies, and specific health requirements. Always consult with a registered dietitian or nutritionist for personalized dietary advice.
+      <strong>IMPORTANT MEDICAL DISCLAIMER:</strong><br>
+      This AI-generated assessment is for informational purposes only and should not replace professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare professionals before making any medical decisions or changes to your treatment plan. The medications, dosages, and treatment recommendations provided are AI-generated suggestions and must be reviewed and approved by a licensed medical practitioner before use. In case of medical emergencies, contact emergency services immediately (108 for India).
     </div>
 
     <div class="footer">
-      <p><strong>MyMedi.ai</strong> - Your AI-Powered Health Companion | Generated on ${currentDate} at ${currentTime} IST</p>
-      <p>🌐 www.mymedi.ai | 📧 support@mymedi.ai | Emergency: 108 | Report ID: MMA-${Date.now().toString().slice(-8)}</p>
-      <p>This report is confidential and intended solely for the named patient. Please store securely and share only with authorized healthcare providers.</p>
-      <p style="margin-top: 8px; font-size: 9px; color: #9ca3af;">
-        Generated using advanced AI technology for preliminary health assessment. This report contains ${result.medications.length} medication recommendations, 
-        ${result.dietPlan.length} meal plans with detailed nutritional information, ${result.supplements.length} supplement suggestions, 
-        ${result.labTests.length} laboratory test recommendations, and comprehensive emergency and follow-up care instructions.
+      <p><strong>MyMedi.ai</strong> - Your AI-Powered Health Companion</p>
+      <p>Generated on ${currentDate} at ${currentTime} IST | Report ID: MMA-${Date.now().toString().slice(-8)}</p>
+      <p>www.mymedi.ai | support@mymedi.ai | Emergency: 108</p>
+      <p style="margin-top: 5px; font-size: 7px;">
+        This report contains ${result.medications.length} medication recommendations, 
+        ${result.dietPlan.length} meal plans, ${result.supplements.length} supplement suggestions, 
+        and ${result.labTests.length} laboratory test recommendations.
       </p>
     </div>
   </div>
