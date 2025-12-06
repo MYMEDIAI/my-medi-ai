@@ -64,7 +64,7 @@ IMPORTANT: Always provide actionable, accurate medical insights while emphasizin
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: systemMessage },
         { role: "user", content: prompt },
