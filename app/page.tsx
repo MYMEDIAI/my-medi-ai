@@ -942,14 +942,12 @@ Format the response as structured recommendations with clear sections.
         <div className="container mx-auto px-4">
           <div className="flex items-start gap-8">
             <div className="flex-shrink-0">
-              <div className="w-80 max-w-sm bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden shadow-lg">
+              <div className="relative w-80 max-w-sm aspect-[4/5] bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden shadow-lg">
                 <Image
                   src="/images/harsha-founder.jpeg"
                   alt="Bandarla Harshavardhan - Founder & CEO of MyMedi.ai"
-                  width={320}
-                  height={400}
+                  fill
                   className="object-cover"
-                  style={{ width: '100%', height: 'auto' }}
                   priority
                 />
               </div>
