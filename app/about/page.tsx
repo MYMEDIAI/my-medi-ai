@@ -89,7 +89,8 @@ export default function AboutPage() {
                   alt="Bandarla Harshavardhan - Founder & CEO of MyMedi.ai"
                   width={320}
                   height={400}
-                  className="w-full h-auto object-cover"
+                  className="object-cover"
+                  style={{ width: '100%', height: 'auto' }}
                   priority
                 />
               </div>
