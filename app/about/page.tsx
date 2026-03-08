@@ -83,14 +83,12 @@ export default function AboutPage() {
 
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="flex-shrink-0">
-              <div className="w-80 max-w-sm bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden shadow-lg">
+              <div className="relative w-80 max-w-sm aspect-[4/5] bg-gradient-to-br from-purple-200 to-blue-200 rounded-2xl overflow-hidden shadow-lg">
                 <Image
                   src="/images/harsha-founder.jpeg"
                   alt="Bandarla Harshavardhan - Founder & CEO of MyMedi.ai"
-                  width={320}
-                  height={400}
+                  fill
                   className="object-cover"
-                  style={{ width: '100%', height: 'auto' }}
                   priority
                 />
               </div>
